@@ -3,7 +3,6 @@ import { Heart, MessageCircle, ChevronDown, Settings } from "lucide-react";
 import { useT } from "@/lib/i18n";
 import { fetchComments, type TraktComment } from "@/lib/trakt/comments";
 import type { IdResolution } from "@/lib/trakt/ids";
-import { useSettings } from "@/lib/settings";
 import { useView } from "@/lib/view";
 import { openUrl } from "@/lib/window";
 
@@ -82,9 +81,16 @@ export function TraktComments({ resolution }: { resolution: IdResolution | null 
   const [sort, setSort] = useState<string>("likes");
   const [showSort, setShowSort] = useState(false);
   const sortRef = useRef<HTMLDivElement>(null);
-  const { settings } = useSettings();
   const { openSettings } = useView();
-  const connected = !!(settings.traktAccessToken || settings.traktRefreshToken);
+
+  const connected = (() => {
+    try {
+      const raw = localStorage.getItem("harbor.settings");
+      if (!raw) return false;
+      const s = JSON.parse(raw);
+      return !!(s.traktAccessToken || s.traktRefreshToken);
+    } catch { return false; }
+  })();
 
   const target = resolution?.ok ? resolution.target : null;
 
@@ -131,7 +137,7 @@ export function TraktComments({ resolution }: { resolution: IdResolution | null 
     <section>
       <div className="mb-5 flex items-center justify-between">
         <h2 className="text-[20px] font-bold text-ink">{t("Trakt Comments")}</h2>
-        {target && connected && (
+        {target && (
           <div className="flex items-center gap-3">
             <div ref={sortRef} className="relative">
               <button
@@ -192,7 +198,7 @@ export function TraktComments({ resolution }: { resolution: IdResolution | null 
         </div>
       )}
 
-      {connected && target && loading && (
+      {target && loading && (
         <div className="flex flex-col gap-3">
           {[1, 2, 3].map((i) => (
             <div key={i} className="flex gap-3 rounded-xl bg-elevated p-4 ring-1 ring-edge">
@@ -207,11 +213,11 @@ export function TraktComments({ resolution }: { resolution: IdResolution | null 
         </div>
       )}
 
-      {connected && target && !loading && comments.length === 0 && (
+      {target && !loading && comments.length === 0 && (
         <p className="text-[14px] text-ink-muted">{t("No comments yet")}</p>
       )}
 
-      {connected && target && !loading && comments.length > 0 && (
+      {target && !loading && comments.length > 0 && (
         <div className="flex flex-col gap-3">
           {comments.map((c) => (
             <CommentCard key={c.id} comment={c} />
