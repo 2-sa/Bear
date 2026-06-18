@@ -89,7 +89,7 @@ export async function fetchComments(
 ): Promise<TraktComment[]> {
   const path = commentsPath(target, sort) + "?extended=images";
   const raw = await traktRequest<RawComment[]>(path).catch(() => [] as RawComment[]);
-  return raw.filter((c) => !c.spoiler).map(mapComment);
+  return raw.map(mapComment);
 }
 
 export async function likeComment(id: number): Promise<void> {
