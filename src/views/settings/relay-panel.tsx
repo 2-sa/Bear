@@ -5,6 +5,7 @@ import pubRelaySvg from "@/assets/pubrelay.svg";
 import { deleteRelay } from "@/lib/together/cf-deploy";
 import { HARBOR_PUBLIC_RELAY, isPublicRelay } from "@/lib/together/relay-version";
 import { useSettings } from "@/lib/settings";
+import { downloadText } from "@/lib/download-text";
 import { useRelayHealth } from "./relay-panel/use-relay-health";
 
 const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
@@ -47,7 +48,7 @@ export function TogetherRelayPanel({
     setTimeout(() => setCopied(false), 1400);
   };
 
-  const exportBackup = () => {
+  const exportBackup = async () => {
     const payload = {
       harbor: "relay-credentials",
       version: 1,
@@ -63,15 +64,12 @@ export function TogetherRelayPanel({
         "You can always delete the underlying Worker manually at dash.cloudflare.com -> Workers & Pages, even without this file.",
       ],
     };
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `harbor-relay-backup-${new Date().toISOString().slice(0, 10)}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    await downloadText(
+      `harbor-relay-backup-${new Date().toISOString().slice(0, 10)}.json`,
+      JSON.stringify(payload, null, 2),
+      ["json"],
+      "Harbor relay backup",
+    );
   };
 
   const stop = async () => {

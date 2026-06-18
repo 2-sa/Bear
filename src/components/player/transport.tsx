@@ -343,7 +343,7 @@ export function Transport({
           tight ? "px-3 pt-6 pb-3" : "px-7 pt-10 pb-5"
         } transition-opacity duration-300 ${visible ? "opacity-100" : "opacity-0"}`}
       >
-        <div className="pointer-events-auto flex items-center gap-3">
+        <div dir="ltr" className="pointer-events-auto flex items-center gap-3">
           {isLiveChannel ? (
             <>
               <LiveBadge />

@@ -28,17 +28,29 @@ export type ServiceHealth = {
   rawLine: string;
 };
 
+export type AioService = {
+  id: string;
+  name: string;
+  poster: string | null;
+  status: ServiceHealthStatus;
+  daysLeft: number | null;
+  quotaUsedPercent: number | null;
+  rawLine: string;
+};
+
 export type AioStatusSnapshot = {
   fetchedAt: number;
   addonName: string;
   addonLogo: string | null;
   health: Map<DebridSlug, ServiceHealth>;
+  services: AioService[];
 };
 
 type CatalogMeta = {
   id: string;
   name?: string;
   type?: string;
+  poster?: string;
 };
 
 type StatusStream = {
@@ -73,11 +85,10 @@ export async function fetchAioStatusHealth(
   dlog(`[aiostatus] catalog has ${catalog.length} services`);
 
   const health = new Map<DebridSlug, ServiceHealth>();
+  const services: AioService[] = [];
   await Promise.all(
     catalog.map(async (meta) => {
       if (!meta.id.startsWith("ds:")) return;
-      const slug = mapDsServiceId(meta.id);
-      if (!slug) return;
       const url = `${base}/stream/other/${encodeURIComponent(meta.id)}.json`;
       try {
         const res = await fetch(url, { signal });
@@ -85,24 +96,47 @@ export async function fetchAioStatusHealth(
         const json = (await res.json()) as { streams?: StatusStream[] };
         const stream = json.streams?.[0];
         if (!stream) return;
-        health.set(slug, parseStatusRow(slug, stream));
+        const parsed = parseStatus(stream);
+        services.push({
+          id: meta.id,
+          name: meta.name?.trim() || meta.id.slice(3),
+          poster: meta.poster ?? null,
+          ...parsed,
+        });
+        const slug = mapDsServiceId(meta.id);
+        if (slug) health.set(slug, { slug, ...parsed });
       } catch {
         /* ignore individual failures */
       }
     }),
   );
+  services.sort((a, b) => a.name.localeCompare(b.name));
 
   if (health.size === 0) {
     const fallback = await tryStreamFallback(base, signal);
-    for (const [slug, h] of fallback) health.set(slug, h);
+    for (const [slug, h] of fallback) {
+      health.set(slug, h);
+      if (!services.some((s) => mapDsServiceId(s.id) === slug)) {
+        services.push({
+          id: `ds:${slug}`,
+          name: slug.toUpperCase(),
+          poster: null,
+          status: h.status,
+          daysLeft: h.daysLeft,
+          quotaUsedPercent: h.quotaUsedPercent,
+          rawLine: h.rawLine,
+        });
+      }
+    }
   }
 
-  dlog(`[aiostatus] resolved ${health.size} services`);
+  dlog(`[aiostatus] resolved ${health.size} known + ${services.length} total services`);
   return {
     fetchedAt: Date.now(),
     addonName: status.manifest.name,
     addonLogo: (status.manifest.logo as string | undefined) ?? null,
     health,
+    services,
   };
 }
 
@@ -111,31 +145,37 @@ function mapDsServiceId(id: string): DebridSlug | null {
   return SERVICE_NAME_TO_SLUG[tail] ?? null;
 }
 
-function parseStatusRow(slug: DebridSlug, stream: StatusStream): ServiceHealth {
+function parseStatus(stream: StatusStream): {
+  status: ServiceHealthStatus;
+  daysLeft: number | null;
+  quotaUsedPercent: number | null;
+  rawLine: string;
+} {
   const text = `${stream.name ?? ""}\n${stream.title ?? ""}\n${stream.description ?? ""}`;
-  const daysMatch = text.match(/Days?\s+left[:\s]+(\d+)/i) ?? text.match(/(\d{1,4})\s*days?\s+(?:left|remaining)/i);
-  const days = daysMatch ? parseInt(daysMatch[1], 10) : null;
+  const daysMatch = text.match(/Days?\s+left[:\s]+(-?\d+)/i) ?? text.match(/(-?\d{1,4})\s*days?\s+(?:left|remaining)/i);
+  let days = daysMatch ? parseInt(daysMatch[1], 10) : null;
+  // A debrid subscription is realistically days to a couple of years. A 4-digit
+  // reading (e.g. Premiumize loyalty points like 4234) is a misparse, not days-left.
+  if (days != null && (days < 0 || days > 2000)) days = null;
   const quotaMatch = text.match(/(\d{1,3})\s*%/);
   const quota = quotaMatch ? parseInt(quotaMatch[1], 10) : null;
   let status: ServiceHealthStatus = "unknown";
-  if (/🔴|⛔|✗|EXPIRED|INACTIVE/iu.test(text)) {
+  if (/🔴|⛔|✗|❌|\bEXPIRED\b|\bINACTIVE\b|\bSUSPENDED\b|NOT[\s_-]*PREMIUM/iu.test(text)) {
     status = "expired";
-  } else if (/🟡|EXPIRING/iu.test(text) || (days != null && days <= 7)) {
+  } else if (/🟡|\bEXPIRING\b/iu.test(text) || (days != null && days <= 7)) {
     status = "expiring";
-  } else if (/🟢|ACTIVE/iu.test(text) || (days != null && days > 7)) {
+  } else if (/🟢|✅|\bACTIVE\b|\bPREMIUM\b/iu.test(text) || (days != null && days > 7)) {
     status = "active";
   }
   const rawLine =
     (stream.name ?? "").split(/\r?\n/).find((l) => l.trim().length > 2) ??
     (stream.title ?? "").split(/\r?\n/).find((l) => l.trim().length > 2) ??
     text.trim().slice(0, 100);
-  return {
-    slug,
-    status,
-    daysLeft: days,
-    quotaUsedPercent: quota,
-    rawLine,
-  };
+  return { status, daysLeft: days, quotaUsedPercent: quota, rawLine };
+}
+
+function parseStatusRow(slug: DebridSlug, stream: StatusStream): ServiceHealth {
+  return { slug, ...parseStatus(stream) };
 }
 
 async function tryStreamFallback(

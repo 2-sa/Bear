@@ -20,31 +20,33 @@ export function ProfileTile({
 
   return (
     <div className="group flex flex-col items-center gap-2">
-      <button
-        type="button"
-        onClick={onSelect}
-        className="relative cursor-pointer outline-none"
-        aria-label={`Switch to ${profile.name}`}
-      >
-        <span
-          className={`relative flex ${dim} items-center justify-center overflow-hidden rounded-full bg-elevated ${ring} transition-all duration-200 group-hover:scale-[1.04]`}
-          style={{ boxShadow: `0 0 0 3px ${profile.color}` }}
+      <div className="relative">
+        <button
+          type="button"
+          onClick={onSelect}
+          className="block cursor-pointer outline-none"
+          aria-label={`Switch to ${profile.name}`}
         >
-          {profile.avatar ? (
-            <img
-              src={profile.avatar}
-              alt=""
-              className="h-full w-full object-cover"
-              draggable={false}
-            />
-          ) : (
-            <CatAvatar className="h-full w-full" />
-          )}
-        </span>
+          <span
+            className={`relative flex ${dim} items-center justify-center overflow-hidden rounded-full bg-elevated ${ring} transition-all duration-200 group-hover:scale-[1.04]`}
+            style={{ boxShadow: `0 0 0 3px ${profile.color}` }}
+          >
+            {profile.avatar ? (
+              <img
+                src={profile.avatar}
+                alt=""
+                className="h-full w-full object-cover"
+                draggable={false}
+              />
+            ) : (
+              <CatAvatar className="h-full w-full" />
+            )}
+          </span>
+        </button>
         {profile.passwordHash && (
           <span
             aria-label="Locked"
-            className="absolute -bottom-1 -end-1 flex h-7 w-7 items-center justify-center rounded-full bg-canvas text-ink shadow-md ring-1 ring-edge"
+            className="pointer-events-none absolute -bottom-1 -end-1 flex h-7 w-7 items-center justify-center rounded-full bg-canvas text-ink shadow-md ring-1 ring-edge"
           >
             <Lock size={12} strokeWidth={2.4} />
           </span>
@@ -52,17 +54,14 @@ export function ProfileTile({
         {onEdit && (
           <button
             type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit();
-            }}
+            onClick={onEdit}
             aria-label={`Edit ${profile.name}`}
             className="absolute -end-1 -top-1 flex h-7 w-7 items-center justify-center rounded-full bg-canvas/95 text-ink opacity-0 ring-1 ring-edge transition-opacity duration-150 group-hover:opacity-100 hover:bg-elevated"
           >
             <Pencil size={12} strokeWidth={2.4} />
           </button>
         )}
-      </button>
+      </div>
       <div className="flex flex-col items-center gap-0.5">
         <span className={`font-medium text-ink ${fontName}`}>{profile.name}</span>
         {profile.isPrimary && size !== "sm" && (
