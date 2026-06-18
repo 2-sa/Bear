@@ -33,6 +33,7 @@ export const DEFAULT: Settings = {
   useAnilistAvatar: false,
   useTraktAvatar: false,
   useSimklAvatar: false,
+  blurComments: false,
   traktClientId: "",
   traktClientSecret: "",
   traktAccessToken: null,

@@ -16,6 +16,7 @@ import { traktRequest, TraktApiError } from "@/lib/trakt/client";
 import type { IdResolution } from "@/lib/trakt/ids";
 import { getSession, subscribeSession } from "@/lib/trakt/session";
 import { useView } from "@/lib/view";
+import { useSettings } from "@/lib/settings";
 import { openUrl } from "@/lib/window";
 
 function timeAgo(dateStr: string): string {
@@ -332,8 +333,10 @@ export function TraktComments({ resolution }: { resolution: IdResolution | null 
   const [userRating, setUserRating] = useState(0);
   const [ratinging, setRatinging] = useState(false);
   const [hoverRating, setHoverRating] = useState(0);
+  const [blurred, setBlurred] = useState(true);
   const sortRef = useRef<HTMLDivElement>(null);
   const { openSettings } = useView();
+  const { settings } = useSettings();
   const [session, setSessionState] = useState(() => getSession());
   const connected = !!session;
   const username = session?.username ?? null;
@@ -546,7 +549,19 @@ export function TraktComments({ resolution }: { resolution: IdResolution | null 
         )}
       </div>
 
-      {target && connected && (
+      <div className="relative">
+        {settings.blurComments && blurred && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center backdrop-blur-md bg-canvas/60">
+            <button
+              onClick={() => setBlurred(false)}
+              className="rounded-xl bg-ink px-5 py-2.5 text-[13px] font-semibold text-canvas transition-transform hover:scale-[1.03] active:scale-[0.97]"
+            >
+              {t("Reveal comments")}
+            </button>
+          </div>
+        )}
+
+        {target && connected && (
         <div className="mb-4 flex items-center gap-2">
           <span className="text-[12px] font-medium text-ink-muted">{t("Rating")}:</span>
           <StarRow value={userRating} interactive={true} onRate={handleRate} onHover={setHoverRating} />
@@ -686,6 +701,7 @@ export function TraktComments({ resolution }: { resolution: IdResolution | null 
           ))}
         </div>
       )}
+      </div>
     </section>
   );
 }
