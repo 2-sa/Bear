@@ -115,10 +115,10 @@ function CommentCard({
           </span>
           <span className="text-[11px] text-ink-muted">{timeAgo(comment.createdAt)}</span>
           {comment.userRating != null && (
-            <span className="ml-auto flex items-center gap-1 text-[12px] font-medium text-accent">
-              <span className="text-[10px]">★</span>
-              {comment.userRating}/10
-            </span>
+              <span className="ml-auto flex items-center gap-1 text-[12px] font-medium text-accent">
+                <span className="text-[10px]">★</span>
+                {comment.userRating}
+              </span>
           )}
         </div>
         <p className="mt-1.5 whitespace-pre-wrap break-words text-[13px] leading-relaxed text-ink" dir="auto">
@@ -351,7 +351,7 @@ export function TraktComments({ resolution }: { resolution: IdResolution | null 
           </div>
           {(hoverRating || userRating) > 0 && (
             <span className="text-[12px] font-medium text-ink-muted">
-              {hoverRating || userRating}/10
+              {hoverRating || userRating}
             </span>
           )}
           {userRating > 0 && !hoverRating && (
