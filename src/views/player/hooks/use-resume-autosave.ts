@@ -79,7 +79,7 @@ export function useResumeAutosave(params: {
       savePlayback(id, { title: s.meta.name, parsedTitle: s.meta.name }, se, ep);
     }
     if (
-      s.meta.type === "series" &&
+      (s.meta.type === "series" || s.meta.type === "anime" || isAnimeId(id)) &&
       typeof se === "number" &&
       typeof ep === "number" &&
       finished &&
@@ -93,10 +93,6 @@ export function useResumeAutosave(params: {
       });
       setManualWatched(id, se, ep, true);
     }
-    // Record local Continue Watching for any local file (even one matched to a
-    // cloud id like `tt…`), so locally-watched titles surface on Home whether or
-    // not the user is signed into Stremio. Streamed cloud content still relies on
-    // Stremio sync and is skipped (cloud id + http url → both conditions false).
     if (
       (s.meta.type === "series" || s.meta.type === "movie") &&
       (!CLOUD_OK.test(id) || isLocalUrl(s.url))

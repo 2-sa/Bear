@@ -17,6 +17,8 @@ import { getWatchedBy } from "@/lib/watched-by";
 import { playLocalAware } from "@/lib/local-library/playback";
 import { localPlayerSrc } from "@/lib/local-library/player-src";
 import { fetchSeasonEpisodes } from "@/lib/series-episodes";
+import { peekCachedLogo, resolveLogo } from "@/lib/logo";
+import { resolvePreferredAnimeTitle } from "@/lib/anime-title";
 
 type Props = {
   item: LibraryItem;
@@ -69,6 +71,7 @@ export const ContinueCard = memo(function ContinueCard({ item, watched = false, 
   const [hydratedMeta, setHydratedMeta] = useState<Meta | null>(null);
   const [kitsuVideo, setKitsuVideo] = useState<AnimeKitsuVideo | null>(null);
   const [epTitle, setEpTitle] = useState<string | null>(null);
+  const [translatedTitle, setTranslatedTitle] = useState<string | null>(null);
   const [imgIdx, setImgIdx] = useState(0);
   const cardRef = useRef<HTMLButtonElement>(null);
 
@@ -93,6 +96,7 @@ export const ContinueCard = memo(function ContinueCard({ item, watched = false, 
     setMetaBg(undefined);
     setHydratedMeta(null);
     setKitsuVideo(null);
+    setTranslatedTitle(null);
     setImgIdx(0);
     const el = cardRef.current;
     if (!el) return;
@@ -102,6 +106,11 @@ export const ContinueCard = memo(function ContinueCard({ item, watched = false, 
       if (started) return;
       started = true;
       if (/^(kitsu|mal|anilist|anidb):/.test(item._id)) {
+        resolvePreferredAnimeTitle(item._id, settingsRef.current.simklAnimeTitleLanguage)
+          .then((tt) => {
+            if (!cancelled && tt) setTranslatedTitle(tt);
+          })
+          .catch(() => {});
         animeKitsuMeta(item._id)
           .then((m) => {
             if (cancelled || !m) return;
@@ -114,6 +123,16 @@ export const ContinueCard = memo(function ContinueCard({ item, watched = false, 
               logo: m.logo,
             });
             if (m.logo) setLogo(m.logo);
+            else
+              resolveLogo(settingsRef.current.tmdbKey, {
+                id: item._id,
+                type: libraryMetaType(item.type),
+                name: m.name || item.name,
+              })
+                .then((l) => {
+                  if (!cancelled && l) setLogo(l);
+                })
+                .catch(() => {});
             const bg = m.background || (item.background ? undefined : m.poster);
             if (bg) setMetaBg(bg);
             if (kitsuThreeSeg) {
@@ -148,7 +167,15 @@ export const ContinueCard = memo(function ContinueCard({ item, watched = false, 
         .then((full) => {
           if (cancelled || !full) return;
           setHydratedMeta(full);
-          if (full.logo) setLogo(full.logo);
+          const key = settingsRef.current.tmdbKey;
+          const cachedLogo = peekCachedLogo(key, full);
+          if (cachedLogo) setLogo(cachedLogo);
+          else
+            void resolveLogo(key, full)
+              .then((l) => {
+                if (!cancelled && l) setLogo(l);
+              })
+              .catch(() => {});
           const bg = full.background || (item.background ? undefined : full.poster);
           if (bg) setMetaBg(bg);
         })
@@ -170,8 +197,6 @@ export const ContinueCard = memo(function ContinueCard({ item, watched = false, 
     };
   }, [item._id, item.type, item.state?.video_id]);
 
-  // Resolve the last-watched episode's title for the pill (non-anime series;
-  // anime reuses the already-hydrated kitsuVideo.title). Cached per season.
   useEffect(() => {
     setEpTitle(null);
     if (!ep || kitsuThreeSeg) return;
@@ -236,9 +261,6 @@ export const ContinueCard = memo(function ContinueCard({ item, watched = false, 
       resumeId: meta.id,
       playStream: () => openPicker(meta, episode, { autoPlay: settings.instantPlay, resume: true }),
       playLocal: (entry, o) => {
-        // Play the on-disk file but keep the catalog meta id so the player's
-        // per-episode resume lookup (readResumeMs by src.meta.id) resolves the
-        // Continue Watching offset and picks up where the user left off.
         const s = localPlayerSrc(entry);
         openPlayer({
           ...s,
@@ -362,7 +384,7 @@ export const ContinueCard = memo(function ContinueCard({ item, watched = false, 
         </div>
       </div>
       <p className="truncate text-[13px] font-medium text-ink">
-        {hydratedMeta?.name?.trim() || item.name}
+        {translatedTitle || hydratedMeta?.name?.trim() || item.name}
       </p>
       </button>
       <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex aspect-[16/9] items-center justify-center opacity-0 transition-opacity duration-[220ms] group-hover:opacity-100 group-focus-within:opacity-100">

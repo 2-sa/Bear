@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
-import { Play, Wifi, X } from "lucide-react";
+import { ArrowDownWideNarrow, ArrowUpNarrowWide, Play, Wifi, X } from "lucide-react";
 import { useT } from "@/lib/i18n";
+import { useSettings } from "@/lib/settings";
 import { useLocalLibrary, type LocalEntry } from "@/lib/local-library";
 import { meta as fetchCinemetaMeta, type Meta } from "@/lib/cinemeta";
 import { lastPlayedEpisode, readResumeEntry } from "@/lib/resume";
@@ -23,8 +24,10 @@ type SeasonMap = Map<number, Map<number, LocalEntry>>;
 
 function GridModal({ payload }: { payload: LocalEpisodesPayload }) {
   const t = useT();
+  const { settings, update } = useSettings();
   const { tmdbId, imdbId } = payload;
   const all = useLocalLibrary();
+  const sortDesc = settings.localEpisodeSortDesc;
 
   const localEps = useMemo(
     () =>
@@ -105,8 +108,6 @@ function GridModal({ payload }: { payload: LocalEpisodesPayload }) {
   );
   const hasSpecials = localBySeason.has(0);
 
-  // Local watch progress may be keyed under the imdb id or the tmdb:tv id (which
-  // one depends on how it was played), so probe both when reading resume state.
   const resumeIds = useMemo(
     () => [imdbId, tmdbId != null ? `tmdb:tv:${tmdbId}` : null].filter((x): x is string => !!x),
     [imdbId, tmdbId],
@@ -122,8 +123,6 @@ function GridModal({ payload }: { payload: LocalEpisodesPayload }) {
     };
   }, [resumeIds]);
 
-  // The last-watched episode (used as the highlight when the caller didn't pass a
-  // specific one — e.g. opened from the local library card).
   const lastWatched = useMemo(() => {
     let best: { season: number; episode: number; t: number } | null = null;
     for (const id of resumeIds) {
@@ -134,11 +133,10 @@ function GridModal({ payload }: { payload: LocalEpisodesPayload }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resumeIds.join("|"), all]);
 
-  // Effective highlight: the pressed episode when provided, else the last-watched.
-  const hlSeason = payload.highlightEpisode != null ? payload.initialSeason ?? null : lastWatched?.season ?? null;
+  const hlSeason =
+    payload.highlightEpisode != null ? payload.initialSeason ?? null : lastWatched?.season ?? null;
   const hlEpisode = payload.highlightEpisode ?? lastWatched?.episode ?? null;
 
-  // Prefer the pressed season, else the last-watched season, else the first local.
   const initialSeason =
     payload.initialSeason != null && localBySeason.has(payload.initialSeason)
       ? payload.initialSeason
@@ -151,13 +149,20 @@ function GridModal({ payload }: { payload: LocalEpisodesPayload }) {
     if (!valid) setSelected(localSeasons[0] ?? (hasSpecials ? 0 : 1));
   }, [localSeasons, hasSpecials, selected]);
 
-  const listEps = useMemo(
-    () =>
-      Array.from(localBySeason.get(selected)?.values() ?? []).sort(
-        (a, b) => (a.episode ?? 0) - (b.episode ?? 0),
-      ),
-    [localBySeason, selected],
-  );
+  const listEps = useMemo(() => {
+    const eps = Array.from(localBySeason.get(selected)?.values() ?? []).sort(
+      (a, b) => (a.episode ?? 0) - (b.episode ?? 0),
+    );
+    return sortDesc ? eps.reverse() : eps;
+  }, [localBySeason, selected, sortDesc]);
+
+  const epLabel = (n: number | null | undefined) => `E${String(n ?? 0).padStart(2, "0")}`;
+  const sortLabel =
+    listEps.length > 1
+      ? `${epLabel(listEps[0].episode)} → ${epLabel(listEps[listEps.length - 1].episode)}`
+      : sortDesc
+        ? t("Descending")
+        : t("Ascending");
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -280,20 +285,36 @@ function GridModal({ payload }: { payload: LocalEpisodesPayload }) {
             </div>
           </div>
 
-          {(localSeasons.length > 1 || hasSpecials) && (
-            <div className="flex shrink-0 items-center gap-1.5 overflow-x-auto pb-1">
-              {localSeasons.map((s) => (
-                <SeasonPill key={s} active={selected === s} onClick={() => setSelected(s)}>
-                  {seasonLabel(s)}
-                </SeasonPill>
-              ))}
-              {hasSpecials && (
-                <SeasonPill active={selected === 0} onClick={() => setSelected(0)}>
-                  {t("Specials")}
-                </SeasonPill>
+          <div className="flex shrink-0 items-center gap-1.5 pb-1">
+            {(localSeasons.length > 1 || hasSpecials) && (
+              <div className="flex min-w-0 items-center gap-1.5 overflow-x-auto">
+                {localSeasons.map((s) => (
+                  <SeasonPill key={s} active={selected === s} onClick={() => setSelected(s)}>
+                    {seasonLabel(s)}
+                  </SeasonPill>
+                ))}
+                {hasSpecials && (
+                  <SeasonPill active={selected === 0} onClick={() => setSelected(0)}>
+                    {t("Specials")}
+                  </SeasonPill>
+                )}
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => update({ localEpisodeSortDesc: !sortDesc })}
+              aria-label={t("Sort episodes")}
+              aria-pressed={sortDesc}
+              className="ms-auto flex shrink-0 items-center gap-1.5 rounded-full bg-elevated/40 px-3.5 py-1.5 text-[12.5px] font-semibold tabular-nums text-ink-muted ring-1 ring-edge-soft/60 transition-colors hover:bg-raised hover:text-ink"
+            >
+              {sortDesc ? (
+                <ArrowDownWideNarrow size={14} strokeWidth={2.2} />
+              ) : (
+                <ArrowUpNarrowWide size={14} strokeWidth={2.2} />
               )}
-            </div>
-          )}
+              {sortLabel}
+            </button>
+          </div>
 
           <div className="flex shrink-0 flex-col gap-1">
             {listEps.map((ep) => {
@@ -323,18 +344,19 @@ function GridModal({ payload }: { payload: LocalEpisodesPayload }) {
                       {ep.filename}
                     </span>
                   )}
-                  {pr && (ratio > 0.01 ? (
-                    <span className="text-[11px] text-accent/85">
-                      {t("{pct}% watched", { pct: Math.round(ratio * 100) })}
-                      {watchedAgo ? ` · ${watchedAgo}` : ""}
-                    </span>
-                  ) : (
-                    watchedAgo && (
-                      <span className="text-[11px] text-emerald-300/85">
-                        {t("Watched {ago}", { ago: watchedAgo })}
+                  {pr &&
+                    (ratio > 0.01 ? (
+                      <span className="text-[11px] text-accent/85">
+                        {t("{pct}% watched", { pct: Math.round(ratio * 100) })}
+                        {watchedAgo ? ` · ${watchedAgo}` : ""}
                       </span>
-                    )
-                  ))}
+                    ) : (
+                      watchedAgo && (
+                        <span className="text-[11px] text-emerald-300/85">
+                          {t("Watched {ago}", { ago: watchedAgo })}
+                        </span>
+                      )
+                    ))}
                 </span>
                 {ep.resolution && (
                   <span className="shrink-0 rounded-md bg-raised px-2 py-0.5 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-ink-muted">
