@@ -38,6 +38,7 @@ import { useLobbyGate } from "./player/hooks/use-lobby-gate";
 import { hostSourceMatchesMedia } from "@/lib/together/room-derive";
 import { useLiveChannelOverlay } from "./player/hooks/use-live-channel-overlay";
 import { useStreamSwitcher } from "./player/hooks/use-stream-switcher";
+import { useKeyboardNavigation } from "@/lib/keyboard-navigation";
 import { useMpvEmbed } from "./player/hooks/use-mpv-embed";
 import { usePlayerBridge } from "./player/hooks/use-player-bridge";
 import { useTextSync } from "./player/hooks/use-text-sync";
@@ -419,6 +420,17 @@ export function PlayerView({ src }: { src: PlayerSrc }) {
     exitPlayback,
     openPicker,
   });
+  useKeyboardNavigation({
+    // Keep Back/Escape handling while PiP is up — disabling the whole hook lets
+    // Esc reach the WebView and close the app. Only arrow focus is PiP-gated.
+    wrap: true,
+    arrows: chromeVisible && !pipMode,
+    onBack: () => {
+      void closePlayer();
+      return true;
+    },
+  });
+
   useEffect(() => {
     const onLocalBack = (e: Event) => {
       e.preventDefault();
@@ -944,11 +956,16 @@ export function PlayerView({ src }: { src: PlayerSrc }) {
     <main
       ref={stageRef}
       data-harbor-player
+      data-tv-focus-scope
       dir="ltr"
       className={`fixed inset-0 z-[100] overflow-hidden ${stageBg}`}
       style={cursorStyle}
       onMouseMove={wakeChrome}
       onMouseEnter={wakeChrome}
+      onScroll={(e) => {
+        e.currentTarget.scrollLeft = 0;
+        e.currentTarget.scrollTop = 0;
+      }}
     >
       <div
         ref={videoMountRef}

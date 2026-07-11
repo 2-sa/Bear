@@ -284,6 +284,7 @@ export function renderControl(id: PlayerControlId, ctx: ControlContext): ReactNo
         <Tooltip label={ctx.playing ? t("Pause") : t("Play")}>
           <button
             onClick={ctx.onPlayPause}
+            data-tv-initial-focus
             className={`flex items-center justify-center rounded-full bg-white/12 text-white backdrop-blur-md transition-[background-color,transform] hover:bg-white/22 active:scale-95 ${
               ctx.tight ? "h-12 w-12" : ctx.compact ? "h-14 w-14" : "h-16 w-16"
             }`}

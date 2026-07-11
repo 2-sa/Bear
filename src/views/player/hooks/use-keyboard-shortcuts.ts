@@ -117,6 +117,8 @@ export function useKeyboardShortcuts(params: {
       }
 
       if (match("playerClose")) {
+        e.preventDefault();
+        e.stopPropagation();
         if (getLeaveConfirm().open) return;
         if (drawMode) {
           setDrawMode(false);

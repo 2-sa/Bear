@@ -24,6 +24,7 @@ export function WindowControlButtons({ t }: { t: (key: string) => string }) {
       </button>
       <button
         onClick={close}
+        data-harbor-window-close
         aria-label={t("common.close")}
         className="flex h-9 w-9 items-center justify-center rounded-full bg-black/40 text-white/85 backdrop-blur-md transition-colors hover:bg-danger hover:text-white"
       >
