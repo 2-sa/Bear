@@ -469,13 +469,16 @@ function Shell() {
     onBack: handleTvBack,
     onBackToNav: handleTvBackToNav,
   });
-useEffect(() => {
+  useEffect(() => {
     if (settings.soundTheme) {
       SFX.setTheme(settings.soundTheme);
     }
-  }, [settings.soundTheme]);
-  useEffect(() => startMaintenance(), []);
-
+    
+    const volume = settings.sfxVolume ?? 50; 
+    
+    SFX.setVolume(volume / 100); 
+    
+  }, [settings.soundTheme, settings.sfxVolume]);
   useEffect(() => {
     const initAudio = () => SFX.init();
     window.addEventListener("pointerdown", initAudio, { once: true });
@@ -494,13 +497,19 @@ useEffect(() => {
       const btn = target.closest('button, a[href], [data-focusable="true"]');
       if (btn) {
         const ariaLabel = (btn.getAttribute('aria-label') || '').toLowerCase();
-        const isBack = ariaLabel.includes('back') || btn.closest('[data-harbor-nav]');
+        
+        const isBack = ariaLabel.includes('back') || ariaLabel.includes('close') || ariaLabel.includes('إغلاق') || ariaLabel.includes('رجوع') || btn.closest('.close-btn, [data-harbor-back]');
         
         const isMovieCard = btn.querySelector('img') || btn.hasAttribute('data-media-card') || btn.classList.contains('media-card') || btn.closest('[data-tv-hero-zone]');
+        const isMenuOrSettings = btn.closest('.settings-panel, [role="menu"], [role="dialog"]') || ariaLabel.includes('settings') || ariaLabel.includes('إعدادات');
 
-        if (isBack) SFX.close();
-        else if (isMovieCard) SFX.open();
-        else SFX.click();
+        if (isBack) {
+          SFX.close();
+        } else if (isMovieCard || isMenuOrSettings) {
+          SFX.open(); 
+        } else {
+          SFX.click();
+        }
       }
     };
 
@@ -514,7 +523,9 @@ useEffect(() => {
       window.removeEventListener("click", onClick, { capture: true });
     };
   }, []);
-  
+
+  useEffect(() => startMaintenance(), []);
+
   useEffect(() => {
     const onMouseDown = (e: MouseEvent) => {
       if (e.button === 3) {

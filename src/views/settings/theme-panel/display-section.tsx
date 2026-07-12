@@ -4,6 +4,7 @@ import previewPoster from "@/assets/preview/poster1.webp";
 import { useSettings } from "@/lib/settings";
 import { useT } from "@/lib/i18n";
 import { Section, Segmented, ToggleRow } from "../shared";
+import { SFX } from '@/lib/sfx.ts'
 
 export function DisplaySection() {
   const t = useT();
@@ -100,18 +101,44 @@ export function DisplaySection() {
         title={t("Sound Effects (SFX)")}
         subtitle={t("Choose your preferred audio feedback for navigation and actions.")}
       >
-        <div className="flex max-w-sm flex-col gap-3">
+        <div className="flex max-w-sm flex-col gap-4">
+          
+          
           <select
             value={settings.soundTheme || 'glass'}
             onChange={(e) => update({ soundTheme: e.target.value as any })}
             className="flex h-10 w-full items-center justify-between rounded-xl border border-edge-soft bg-surface px-4 text-sm font-medium text-text outline-none transition-colors hover:border-edge hover:bg-surface-hover focus:border-primary focus:ring-1 focus:ring-primary"
           >
-            <option value="none">{t("None")}</option>
-            <option value="glass">{t("Glassy (Soft & Glassy)")}</option>
-            <option value="modern">{t("Modern (Apple TV Style)")}</option>
-            <option value="retro">{t("Retro (8-Bit Gaming)")}</option>
-            <option value="cinematic">{t("Cinematic (Deep Bass)")}</option>
+            <option value="none">{t("None 🔇 (No audio feedback)")}</option>
+            <option value="glass">{t("Glassy 🪟 (Soft & Glassy)")}</option>
+            <option value="modern">{t("Modern 🍎 (Apple TV Style)")}</option>
+            <option value="retro">{t("Retro 🕹️ (8-Bit Clean)")}</option>
+            <option value="cinematic">{t("Cinematic 🎬 (Deep Bass)")}</option>
+            <option value="cloudy">{t("Cloudy 💧 (Bubbles & Drops)")}</option>
           </select>
+
+          
+          {(settings.soundTheme || 'glass') !== 'none' && (
+            <div className="flex flex-col gap-2 rounded-lg border border-edge-soft bg-surface/50 p-3">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-semibold text-text/80">{t("SFX Volume")}</label>
+                <span className="text-xs font-medium text-primary">{settings.sfxVolume ?? 50}%</span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                step="5"
+                value={settings.sfxVolume ?? 50}
+                onChange={(e) => {
+                  update({ sfxVolume: parseInt(e.target.value, 10) });
+                  SFX.click(); 
+                }}
+                className="h-2 w-full appearance-none rounded-full bg-canvas outline-none [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary"
+              />
+            </div>
+          )}
+          
         </div>
       </Section>
       <Section

@@ -7,6 +7,7 @@ import { useSettings } from "@/lib/settings";
 import { isAnyFullscreen, exitAnyFullscreen } from "@/lib/fullscreen-state";
 import { getLeaveConfirm, openLeaveConfirm } from "@/lib/player/leave-confirm";
 import { round2 } from "../player-utils";
+import { SFX } from "@/lib/sfx";
 
 export function useKeyboardShortcuts(params: {
   bridgeRef: RefObject<PlayerBridge | null>;
@@ -160,11 +161,13 @@ export function useKeyboardShortcuts(params: {
       if (match("playerSeekBack10")) {
         e.preventDefault();
         seekStep(-seekBackStepSec);
+        SFX.volumeChange(true);
         return;
       }
       if (match("playerSeekForward10")) {
         e.preventDefault();
         seekStep(seekForwardStepSec);
+        SFX.volumeChange(false);
         return;
       }
       if (match("playerSeekBack30")) {
@@ -196,6 +199,7 @@ export function useKeyboardShortcuts(params: {
         bridgeRef.current?.setMuted(false);
         writePlayerVolume({ volume: next, muted: false });
         onVolumeFeedback?.(next, false);
+        SFX.volumeChange(true);
         return;
       }
       if (match("playerVolumeDown")) {
@@ -207,6 +211,7 @@ export function useKeyboardShortcuts(params: {
         bridgeRef.current?.setMuted(false);
         writePlayerVolume({ volume: next, muted: false });
         onVolumeFeedback?.(next, false);
+        SFX.volumeChange(false);
         return;
       }
       if (match("playerMute")) {
@@ -215,6 +220,7 @@ export function useKeyboardShortcuts(params: {
         bridgeRef.current?.setMuted(next);
         writePlayerVolume({ muted: next });
         onVolumeFeedback?.(snap.volume, next);
+        SFX.volumeChange(true);
         return;
       }
       if (match("playerFullscreen")) {

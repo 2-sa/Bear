@@ -76,6 +76,7 @@ import { setSkipSegmentsView } from "@/lib/skip-intro/segment-store";
 import { markStreamDead, STUB_TTL_MS } from "@/lib/dead-streams";
 import type { VolumeIndicatorState } from "@/components/player/volume-indicator";
 import type { ToastInfo } from "@/views/addons/addons-types";
+import { SFX } from "@/lib/sfx";
 
 let hdrFallbackNoticeShown = false;
 
@@ -762,6 +763,8 @@ export function PlayerView({ src }: { src: PlayerSrc }) {
     bridgeRef.current?.setVolume(next);
     bridgeRef.current?.setMuted(false);
     writePlayerVolume({ volume: next, muted: false });
+
+    SFX.volumeChange(dir > 0);
     showVolumeFeedback(next, false);
   }, [showVolumeFeedback, isKid]);
 
