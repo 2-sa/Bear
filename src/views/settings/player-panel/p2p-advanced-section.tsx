@@ -236,11 +236,42 @@ export function P2PAdvancedSection() {
         subtitle={t("Low-level knobs for the peer-to-peer engine, plus quick ways to grab debug info when a stream misbehaves.")}
       >
         <ToggleRow
+          label={t("Disable torrents entirely")}
+          sub={t("Harbor will not start the torrent engine, contact trackers, or run DHT. Use this if you only want debrid and direct links. Turn off to re-enable torrent streaming.")}
+          value={settings.torrentsDisabled}
+          onChange={(v) => {
+            update({ torrentsDisabled: v });
+            if (isTauri) {
+              // Lazy re-read on the Rust side will pick this up the next
+              // time the engine is asked to start.
+              void import("@tauri-apps/api/core").then(({ invoke }) => {
+                if (v) {
+                  // Best effort: stop any in-flight engine so DHT/trackers
+                  // go quiet immediately. The next call into the engine
+                  // (if the user re-enables) will lazy-init from scratch.
+                  invoke("torrent_engine_hard_reset").catch(() => {});
+                }
+              });
+            }
+          }}
+        />
+        {settings.torrentsDisabled && (
+          <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[12px] leading-relaxed text-amber-200">
+            {t("Torrents are disabled. Uncached streams will not play unless they come from a debrid service or a direct link. To use torrents, toggle this off.")}
+          </p>
+        )}
+        <ToggleRow
           label={t("Direct torrent streaming")}
           sub={t("Stream torrents straight from Harbor's built-in engine when you have no debrid set up, or a torrent isn't cached. This connects to peers over your own connection. Turn off to only ever play debrid and direct links.")}
           value={settings.directTorrentStream}
           onChange={(v) => update({ directTorrentStream: v })}
-          lockReason={strictRemote ? t("Disabled while strict remote streaming is on") : undefined}
+          lockReason={
+            settings.torrentsDisabled
+              ? t("Disabled because torrents are disabled above")
+              : strictRemote
+                ? t("Disabled while strict remote streaming is on")
+                : undefined
+          }
         />
         <ToggleRow
           label={t("Auto-confirm peer-to-peer streaming")}

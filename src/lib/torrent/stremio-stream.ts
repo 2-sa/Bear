@@ -119,12 +119,28 @@ export function localTorrentAllowed(): boolean {
   }
 }
 
+/// Hard kill-switch for torrent streaming. When this returns `true`, the
+/// torrent engine is not started, DHT/tracker traffic is disabled, and the
+/// picker will never call into the engine. The user must explicitly opt back
+/// in via Settings → Player.
+export function torrentsDisabled(): boolean {
+  try {
+    const raw = localStorage.getItem("harbor.settings");
+    if (!raw) return false;
+    return (JSON.parse(raw) as { torrentsDisabled?: boolean }).torrentsDisabled === true;
+  } catch {
+    return false;
+  }
+}
+
 export function directTorrentEnabled(): boolean {
+  if (torrentsDisabled()) return false;
   if (remoteStreamServerUrl()) return true;
   return localTorrentAllowed();
 }
 
 export function directStreamAvailable(stream: { infoHash?: string | null }): boolean {
+  if (torrentsDisabled()) return false;
   if (!stream.infoHash) return false;
   if (!("__TAURI_INTERNALS__" in window)) return false;
   return directTorrentEnabled();
@@ -133,6 +149,7 @@ export function directStreamAvailable(stream: { infoHash?: string | null }): boo
 const P2P_MIN_SEEDERS = 2;
 
 export function engineP2pEligible(stream: { infoHash?: string | null; seeders?: number | null }): boolean {
+  if (torrentsDisabled()) return false;
   if (!directStreamAvailable(stream)) return false;
   if (stream.seeders != null && stream.seeders < P2P_MIN_SEEDERS) return false;
   return true;

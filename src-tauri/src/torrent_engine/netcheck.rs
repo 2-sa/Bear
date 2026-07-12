@@ -1,9 +1,35 @@
+use std::collections::HashMap;
+use std::net::SocketAddr;
+use std::sync::{Mutex, OnceLock};
 use std::time::Duration;
 
 use librqbit::dht::Dht;
 use serde::Serialize;
 use tokio::net::UdpSocket;
 use tokio::time::{sleep, timeout, Instant};
+
+fn dns_cache() -> &'static Mutex<HashMap<String, Vec<SocketAddr>>> {
+    static CACHE: OnceLock<Mutex<HashMap<String, Vec<SocketAddr>>>> = OnceLock::new();
+    CACHE.get_or_init(|| Mutex::new(HashMap::new()))
+}
+
+async fn lookup_cached(host_port: &str) -> Option<SocketAddr> {
+    if let Ok(cache) = dns_cache().lock() {
+        if let Some(addrs) = cache.get(host_port) {
+            if let Some(addr) = addrs.first() {
+                return Some(*addr);
+            }
+        }
+    }
+    let result = tokio::net::lookup_host(host_port).await.ok()?.next();
+    if let Some(addr) = result {
+        if let Ok(mut cache) = dns_cache().lock() {
+            cache.entry(host_port.to_string()).or_default().push(addr);
+        }
+        return Some(addr);
+    }
+    None
+}
 
 #[derive(Serialize, Clone)]
 pub struct NetStep {
@@ -77,11 +103,7 @@ async fn udp_tracker_reachable(host_port: &str) -> bool {
     let Ok(sock) = UdpSocket::bind("0.0.0.0:0").await else {
         return false;
     };
-    let Some(addr) = tokio::net::lookup_host(host_port)
-        .await
-        .ok()
-        .and_then(|mut a| a.next())
-    else {
+    let Some(addr) = lookup_cached(host_port).await else {
         return false;
     };
     if sock.connect(addr).await.is_err() {
@@ -108,13 +130,20 @@ async fn udp_tracker_reachable(host_port: &str) -> bool {
     )
 }
 
+fn https_client() -> Option<&'static reqwest::Client> {
+    static CLIENT: OnceLock<Option<reqwest::Client>> = OnceLock::new();
+    CLIENT.get_or_init(|| {
+        reqwest::Client::builder()
+            .timeout(Duration::from_secs(6))
+            .build()
+            .ok()
+    })
+    .as_ref()
+}
+
 async fn https_step() -> NetStep {
-    let client = match reqwest::Client::builder()
-        .timeout(Duration::from_secs(6))
-        .build()
-    {
-        Ok(c) => c,
-        Err(_) => return st("https egress", false, "client build failed"),
+    let Some(client) = https_client() else {
+        return st("https egress", false, "client build failed");
     };
     for url in super::trackers::ALL.iter().filter(|u| u.starts_with("https://")) {
         if let Some(host) = announce_host(url) {

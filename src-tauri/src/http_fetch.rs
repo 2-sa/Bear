@@ -1,10 +1,38 @@
 use std::collections::HashMap;
+use std::sync::OnceLock;
 use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
+use tokio::sync::Semaphore;
 
 const BROWSER_UA: &str =
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36";
+
+/// Maximum concurrent HTTP fetch requests. This caps the number of DNS
+/// lookups that can happen simultaneously, preventing systemd-resolved
+/// from being overwhelmed by a burst of requests to different hosts.
+const MAX_CONCURRENT_FETCHES: usize = 10;
+
+fn fetch_semaphore() -> &'static Semaphore {
+    static SEM: OnceLock<Semaphore> = OnceLock::new();
+    SEM.get_or_init(|| Semaphore::new(MAX_CONCURRENT_FETCHES))
+}
+
+fn http_client() -> Result<&'static reqwest::Client, String> {
+    static CLIENT: OnceLock<Result<reqwest::Client, String>> = OnceLock::new();
+    CLIENT.get_or_init(|| {
+        reqwest::Client::builder()
+            .no_proxy()
+            .hickory_dns(true)
+            .timeout(Duration::from_secs(30))
+            .pool_idle_timeout(Duration::from_secs(30))
+            .pool_max_idle_per_host(4)
+            .build()
+            .map_err(|e| format!("client: {e}"))
+    })
+    .as_ref()
+    .map_err(|e| e.clone())
+}
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -27,12 +55,12 @@ pub struct HarborFetchResponse {
 
 #[tauri::command]
 pub async fn harbor_fetch(args: HarborFetchArgs) -> Result<HarborFetchResponse, String> {
-    let timeout = Duration::from_millis(args.timeout_ms.unwrap_or(30_000));
-    let client = reqwest::Client::builder()
-        .timeout(timeout)
-        .no_proxy()
-        .build()
-        .map_err(|e| format!("client: {}", e))?;
+    let _permit = fetch_semaphore()
+        .acquire()
+        .await
+        .map_err(|e| format!("semaphore: {e}"))?;
+
+    let client = http_client()?;
 
     let method = args
         .method

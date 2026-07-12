@@ -179,7 +179,7 @@ fn engine_dir(app: &AppHandle, cfg: &EngineConfig) -> Result<std::path::PathBuf,
 }
 
 async fn init(app: AppHandle) -> Result<(), String> {
-    std::env::set_var("DHT_QUERIES_PER_SECOND", "100");
+    std::env::set_var("DHT_QUERIES_PER_SECOND", "20");
     let cfg = read_config(&app);
     let dir = engine_dir(&app, &cfg)?;
     std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
@@ -238,11 +238,21 @@ async fn ensure_session(app: &AppHandle) -> Result<Arc<Session>, String> {
     if let Some(s) = current_session() {
         return Ok(s);
     }
+    if crate::settings_store::read_torrents_disabled(app) {
+        return Err("torrents disabled in settings".to_string());
+    }
     init(app.clone()).await?;
     current_session().ok_or_else(|| "engine failed to initialize".to_string())
 }
 
 pub fn ensure_started_on_setup(app: &AppHandle) {
+    if crate::settings_store::read_torrents_disabled(app) {
+        eprintln!("[torrent-engine] torrents disabled in settings — skipping engine init");
+        let mut st = engine().lock().unwrap();
+        st.ready = false;
+        st.last_error = Some("torrents disabled in settings".to_string());
+        return;
+    }
     let app = app.clone();
     tauri::async_runtime::spawn(async move {
         if let Err(e) = init(app).await {
