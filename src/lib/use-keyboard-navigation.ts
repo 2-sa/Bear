@@ -328,8 +328,6 @@ export function useKeyboardNavigation(options: TVNavigationOptions = {}) {
 
       if (isEditable(target)) return;
 
-      const activeModal = getActiveModal(target);
-
       if (isBackKey(e)) {
         if (activeModal) return;
         e.preventDefault();
