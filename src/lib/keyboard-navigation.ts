@@ -53,22 +53,18 @@ function isEditable(el: HTMLElement | null) {
   return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el.isContentEditable;
 }
 
-function isSearchLikeField(el: HTMLElement | null) {
+/**
+ * Fields that use HTPC search-edit mode (Enter arms caret typing).
+ * Prefer type/role/inputmode — not translated label text.
+ */
+export function isSearchLikeField(el: HTMLElement | null) {
   if (!el) return false;
   if (!(el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement)) return false;
 
-  const type = (el.getAttribute('type') || '').toLowerCase();
-  const role = (el.getAttribute('role') || '').toLowerCase();
-  const inputMode = (el.getAttribute('inputmode') || '').toLowerCase();
-  const ariaLabel = (el.getAttribute('aria-label') || '').toLowerCase();
-  const placeholder = (el.getAttribute('placeholder') || '').toLowerCase();
-  const name = (el.getAttribute('name') || '').toLowerCase();
-
-  return (
-    type === 'search' || role === 'searchbox' || inputMode === 'search' ||
-    ariaLabel.includes('search') || placeholder.includes('search') ||
-    placeholder.includes('بحث') || name.includes('search') || name.includes('query')
-  );
+  const type = (el.getAttribute("type") || "").toLowerCase();
+  const role = (el.getAttribute("role") || "").toLowerCase();
+  const inputMode = (el.getAttribute("inputmode") || "").toLowerCase();
+  return type === "search" || role === "searchbox" || inputMode === "search";
 }
 
 export function isVisible(el: HTMLElement) {
@@ -302,8 +298,9 @@ function focusElement(el: HTMLElement, scroll: "center" | "nearest" | "none" = "
     window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
     return;
   }
-  // Fixed chrome/sidebar must not scroll the page.
-  if (scroll === "none" || isInSidebar(el) || isInTopChrome(el) || isInNav(el)) return;
+  // Fixed chrome must not scroll the page; opt in with data-tv-scroll-focus (e.g. settings nav).
+  if (scroll === "none" || isInTopChrome(el)) return;
+  if ((isInSidebar(el) || isInNav(el)) && !el.closest("[data-tv-scroll-focus]")) return;
   // Vertical moves center the focused row/card; horizontal stays nearest so
   // Left/Right in a shelf doesn't yank the page up/down.
   el.scrollIntoView({
@@ -483,7 +480,7 @@ export function moveFocus(dir: Dir, wrap: boolean = true): void {
     const ordered = getSpatialOrder(all);
     const idx = ordered.indexOf(active);
     if (idx >= 0) {
-      const next = dir === 'down' || dir === 'right' ? ordered[idx + 1] ?? ordered[0] : ordered[idx - 1] ?? ordered[ordered.length - 1];
+      const next = dir === 'down' ? ordered[idx + 1] ?? ordered[0] : ordered[idx - 1] ?? ordered[ordered.length - 1];
       if (next) {
         SFX.navigate(dir, getSoundType(next));
         focusElement(next, scroll);

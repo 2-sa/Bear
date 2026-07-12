@@ -1218,7 +1218,11 @@ export function SettingsNav({
   };
 
   return (
-    <nav className="relative flex w-72 shrink-0 flex-col bg-surface pt-24 shadow-[1px_0_0_var(--color-edge)]">
+    <nav
+      data-harbor-sidebar
+      data-tv-scroll-focus
+      className="relative flex w-72 shrink-0 flex-col bg-surface pt-24 shadow-[1px_0_0_var(--color-edge)]"
+    >
       <div data-tauri-drag-region className="h-3 shrink-0" />
       {showBack && (
         <div className="px-3 pb-1.5">
