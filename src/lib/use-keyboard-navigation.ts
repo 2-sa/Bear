@@ -79,18 +79,7 @@ function zoneOf(el: HTMLElement): 'nav' | 'hero' | 'content' {
   return 'content';
 }
 
-function getSoundType(el: HTMLElement): 'light' | 'movie' {
-  if (isInNav(el)) return 'light';
-  if (el.closest('[role="dialog"], [role="menu"], [role="tablist"], [role="switch"], form, .settings-panel')) return 'light';
-  
-  const href = el.getAttribute('href') || '';
-  if (href.includes('/detail') || href.includes('/player') || href.includes('/movie') || href.includes('/series')) return 'movie';
-  
-  const isMovieContainer = el.closest('[data-media-card], [data-movie-card], .media-card, [data-tv-hero-zone], .poster');
-  if (isMovieContainer || el.querySelector('img') || el.hasAttribute('data-media-card')) return 'movie';
-  
-  return 'light';
-}
+
 
 function getFocusable(root: ParentNode = document): HTMLElement[] {
   const all = Array.from(root.querySelectorAll<HTMLElement>(SELECTOR)).filter(isVisible);
