@@ -100,8 +100,11 @@ pub(crate) fn locate_mpv() -> Option<PathBuf> {
         candidates.push("/usr/local/bin/mpv".into());
         candidates.push("mpv".into());
     } else {
-        candidates.push("mpv".into());
-        candidates.push("/usr/bin/mpv".into());
+        candidates.extend(
+            crate::binary_lookup::linux_binary_candidates("mpv")
+                .into_iter()
+                .map(|path| path.to_string_lossy().into_owned()),
+        );
     }
     for c in candidates {
         let p = PathBuf::from(&c);

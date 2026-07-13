@@ -99,8 +99,8 @@ pub fn locate_ffmpeg() -> Option<std::path::PathBuf> {
                 );
             }
         }
-        for p in ["ffmpeg", "/usr/bin/ffmpeg", "/usr/local/bin/ffmpeg"] {
-            owned.push(p.into());
+        for path in crate::binary_lookup::linux_binary_candidates("ffmpeg") {
+            owned.push(path.to_string_lossy().into_owned());
         }
     }
     let candidates: Vec<&str> = owned.iter().map(|s| s.as_str()).collect();

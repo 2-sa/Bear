@@ -1,4 +1,5 @@
 mod anime4k;
+mod binary_lookup;
 mod browser;
 mod cast;
 mod cast_hls;

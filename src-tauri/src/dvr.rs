@@ -64,15 +64,18 @@ impl DvrState {
 
 pub(crate) fn locate_mpv() -> Option<PathBuf> {
     let candidates = if cfg!(windows) {
-        vec!["mpv.exe", "mpv"]
+        vec![PathBuf::from("mpv.exe"), PathBuf::from("mpv")]
     } else if cfg!(target_os = "macos") {
-        vec!["/opt/homebrew/bin/mpv", "/usr/local/bin/mpv", "mpv"]
+        vec![
+            PathBuf::from("/opt/homebrew/bin/mpv"),
+            PathBuf::from("/usr/local/bin/mpv"),
+            PathBuf::from("mpv"),
+        ]
     } else {
-        vec!["mpv", "/usr/bin/mpv"]
+        crate::binary_lookup::linux_binary_candidates("mpv")
     };
     for c in candidates {
-        let p = PathBuf::from(c);
-        let mut cmd = std::process::Command::new(&p);
+        let mut cmd = std::process::Command::new(&c);
         cmd.arg("--version");
         #[cfg(windows)]
         {
@@ -81,7 +84,7 @@ pub(crate) fn locate_mpv() -> Option<PathBuf> {
         }
         if let Ok(out) = cmd.output() {
             if out.status.success() {
-                return Some(p);
+                return Some(c);
             }
         }
     }
