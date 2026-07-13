@@ -42,6 +42,8 @@ export function useChromeVisibility(params: {
       setChromeHidden(true);
     }, wait);
   }, [playing, drawMode, pipMode, setChromeHidden]);
+  const wakeChromeRef = useRef(wakeChrome);
+  wakeChromeRef.current = wakeChrome;
 
   const hideForResume = useCallback(() => {
     resumeHideRef.current = true;
@@ -144,9 +146,9 @@ export function useChromeVisibility(params: {
       setChromeVisible(true);
       if (hideTimer.current) window.clearTimeout(hideTimer.current);
     } else {
-      wakeChrome();
+      wakeChromeRef.current();
     }
-  }, [anyMenuOpen, wakeChrome]);
+  }, [anyMenuOpen]);
 
   const cursorStyle: CSSProperties = drawMode
     ? { cursor: "none" }
