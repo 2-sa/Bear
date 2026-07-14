@@ -86,7 +86,7 @@ import { AnilistProvider } from "@/lib/anilist/provider";
 import { MalProvider } from "@/lib/mal/provider";
 import { SimklProvider } from "@/lib/simkl/provider";
 import { LetterboxdProvider } from "@/lib/stremboxd/provider";
-import { useKeyboardNavigation } from "@/lib/keyboard-navigation";
+import { focusTvPageDefault, useKeyboardNavigation } from "@/lib/keyboard-navigation";
 import { SFX } from "@/lib/sfx";
 
 const importAnime = () => import("@/views/anime");
@@ -449,7 +449,7 @@ function Shell() {
     layout === "stremio";
   useViewPreloader();
 
-  
+
   const handleTvBack = useCallback(() => {
     if (searchOpen) {
       setSearchOpen(false);
@@ -485,54 +485,59 @@ function Shell() {
   }, []);
 
   useKeyboardNavigation({
-    enabled: !player && !picker,
+    enabled: settings.tvNavigation && !player,
     wrap: false,
     onBack: handleTvBack,
     onBackToNav: handleTvBackToNav,
   });
   useEffect(() => {
+    if (!settings.tvNavigation || searchOpen || topKind === "player") return;
+    const id = window.requestAnimationFrame(() => focusTvPageDefault());
+    return () => window.cancelAnimationFrame(id);
+  }, [settings.tvNavigation, topKind, meta?.id, searchOpen]);
+  useEffect(() => {
     if (settings.soundTheme) {
       SFX.setTheme(settings.soundTheme);
     }
-    
-    const volume = settings.sfxVolume ?? 50; 
-    
-    SFX.setVolume(volume / 100); 
-    
+
+    const volume = settings.sfxVolume ?? 50;
+
+    SFX.setVolume(volume / 100);
+
   }, [settings.soundTheme, settings.sfxVolume]);
-  
+
   useEffect(() => {
     const initAudio = () => SFX.init();
-  
+
     window.addEventListener("pointerdown", initAudio, { once: true });
     window.addEventListener("keydown", initAudio, { once: true });
-  
+
     const onMouseOver = (e: MouseEvent) => {
       const target = e.target as HTMLElement | null;
       if (!target) return;
-  
+
       const interactive = target.closest(
         'a[href], button, [data-focusable="true"], [role="button"]'
       ) as HTMLElement | null;
-  
+
       if (!interactive) return;
-  
+
       const related = e.relatedTarget as Node | null;
       if (related && interactive.contains(related)) return;
-  
+
       SFX.hover();
     };
-  
+
     const onClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement | null;
       if (!target) return;
-    
+
       const btn = target.closest(
         'button, a[href], [data-focusable="true"], [role="button"]'
       ) as HTMLElement | null;
-    
+
       if (!btn) return;
-    
+
       const isCloseAction =
         btn.matches(
           '[data-harbor-back], [data-back], [data-close], [data-tv-modal-close], .close-btn, .back-btn'
@@ -540,57 +545,43 @@ function Shell() {
         !!btn.closest(
           '[data-harbor-back], [data-back], [data-close], [data-tv-modal-close], .close-btn, .back-btn'
         );
-    
+
       const isMovieCard =
         btn.hasAttribute("data-media-card") ||
         btn.hasAttribute("data-movie-card") ||
         btn.classList.contains("media-card") ||
         !!btn.querySelector("img") ||
         !!btn.closest("[data-tv-hero-zone]");
-    
+
       const isMenuOrSettings =
         !!btn.closest(
           '.settings-panel, [role="menu"], [role="dialog"], [data-settings-root], [data-settings-panel]'
         );
-    
+
       if (isCloseAction) {
         SFX.close();
         return;
       }
-    
+
       if (isMovieCard || isMenuOrSettings) {
         SFX.open();
         return;
       }
-    
+
       SFX.click();
     };
-  
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== "Escape" && e.key !== "Esc") return;
-  
-      SFX.close();
-  
-      const handled = handleTvBack();
-      if (handled) {
-        e.preventDefault();
-        e.stopPropagation();
-      }
-    };
-  
+
     window.addEventListener("mouseover", onMouseOver);
     window.addEventListener("click", onClick, true);
-    window.addEventListener("keydown", onKeyDown, true);
-  
+
     return () => {
       window.removeEventListener("pointerdown", initAudio);
       window.removeEventListener("keydown", initAudio);
       window.removeEventListener("mouseover", onMouseOver);
       window.removeEventListener("click", onClick, true);
-      window.removeEventListener("keydown", onKeyDown, true);
     };
   }, [handleTvBack]);
-  
+
   useEffect(() => startMaintenance(), []);
 
   useEffect(() => {

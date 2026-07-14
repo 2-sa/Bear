@@ -36,18 +36,6 @@ export function SearchOverlay() {
 
 
   useEffect(() => {
-    const closeSearch = () => {
-      setOpen(false);
-    };
-  
-    window.addEventListener('harbor:close-search', closeSearch);
-  
-    return () => {
-      window.removeEventListener('harbor:close-search', closeSearch);
-    };
-  }, [setOpen]);
-
-  useEffect(() => {
     if (!open) return;
     const id = window.setTimeout(() => inputRef.current?.focus(), 30);
     document.body.style.overflow = "hidden";

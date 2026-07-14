@@ -820,9 +820,9 @@ export function PlayerView({ src }: { src: PlayerSrc }) {
     bridgeRef.current?.setMuted(false);
     writePlayerVolume({ volume: next, muted: false });
 
-    SFX.volumeChange(dir > 0);
+    if (settings.playerVolumeSfx) SFX.volumeChange(dir > 0);
     showVolumeFeedback(next, false);
-  }, [showVolumeFeedback, isKid]);
+  }, [showVolumeFeedback, isKid, settings.playerVolumeSfx]);
 
   const overlayProps: PlayerOverlayLayersProps = {
     snap,

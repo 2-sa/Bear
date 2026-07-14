@@ -4,7 +4,7 @@ import previewPoster from "@/assets/preview/poster1.webp";
 import { useSettings } from "@/lib/settings";
 import { useT } from "@/lib/i18n";
 import { Section, Segmented, ToggleRow } from "../shared";
-import { SFX } from '@/lib/sfx.ts'
+import { SFX } from "@/lib/sfx";
 
 export function DisplaySection() {
   const t = useT();
@@ -12,6 +12,7 @@ export function DisplaySection() {
   const previewW = Math.round(108 * settings.posterScale);
   const cardW = Math.round(150 * settings.posterScale);
   const cardH = Math.round(cardW * 1.5);
+  const soundEffectsEnabled = settings.soundTheme !== "none";
   return (
     <>
       <Section
@@ -102,43 +103,65 @@ export function DisplaySection() {
         subtitle={t("Choose your preferred audio feedback for navigation and actions.")}
       >
         <div className="flex max-w-sm flex-col gap-4">
-          
-          
-          <select
-            value={settings.soundTheme || 'glass'}
-            onChange={(e) => update({ soundTheme: e.target.value as any })}
-            className="flex h-10 w-full items-center justify-between rounded-xl border border-edge-soft bg-surface px-4 text-sm font-medium text-text outline-none transition-colors hover:border-edge hover:bg-surface-hover focus:border-primary focus:ring-1 focus:ring-primary"
-          >
-            <option value="none">{t("None 🔇 (No audio feedback)")}</option>
-            <option value="glass">{t("Glassy 🪟 (Soft & Glassy)")}</option>
-            <option value="modern">{t("Modern 🍎 (Apple TV Style)")}</option>
-            <option value="retro">{t("Retro 🕹️ (8-Bit Clean)")}</option>
-            <option value="cinematic">{t("Cinematic 🎬 (Deep Bass)")}</option>
-            <option value="cloudy">{t("Bubbles 💧 (Bubbles & Drops)")}</option>
-          </select>
+          <ToggleRow
+            label={t("Enable sound effects")}
+            sub={t("Play sounds for navigation and actions.")}
+            value={soundEffectsEnabled}
+            onChange={(enabled) =>
+              update({
+                soundTheme: enabled
+                  ? settings.soundTheme === "none"
+                    ? "glass"
+                    : settings.soundTheme || "glass"
+                  : "none",
+              })
+            }
+          />
 
-          
-          {(settings.soundTheme || 'glass') !== 'none' && (
-            <div className="flex flex-col gap-2 rounded-lg border border-edge-soft bg-surface/50 p-3">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold text-text/80">{t("SFX Volume")}</label>
-                <span className="text-xs font-medium text-primary">{settings.sfxVolume ?? 50}%</span>
+          {soundEffectsEnabled && (
+            <>
+              <select
+                value={settings.soundTheme || "glass"}
+                onChange={(e) => update({ soundTheme: e.target.value as any })}
+                className="flex h-10 w-full items-center justify-between rounded-xl border border-edge-soft bg-surface px-4 text-sm font-medium text-text outline-none transition-colors hover:border-edge hover:bg-surface-hover focus:border-primary focus:ring-1 focus:ring-primary"
+              >
+                <option value="glass">{t("Glass")}</option>
+                <option value="modern">{t("Modern")}</option>
+                <option value="retro">{t("Retro")}</option>
+                <option value="cinematic">{t("Cinematic")}</option>
+              </select>
+
+              <div className="flex items-center gap-4 px-1 py-1.5">
+                <span className="w-32 shrink-0 text-[13.5px] font-medium text-ink">
+                  {t("Sound effects volume")}
+                </span>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="5"
+                  value={settings.sfxVolume ?? 50}
+                  onChange={(e) => {
+                    const volume = parseInt(e.target.value, 10);
+                    update({ sfxVolume: volume });
+                    SFX.setVolume(volume / 100);
+                    SFX.click();
+                  }}
+                  className="h-1 flex-1 appearance-none rounded-full bg-edge-soft accent-ink"
+                />
+                <span className="w-14 shrink-0 text-end text-[13px] tabular-nums text-ink-muted">
+                  {settings.sfxVolume ?? 50}%
+                </span>
               </div>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                step="5"
-                value={settings.sfxVolume ?? 50}
-                onChange={(e) => {
-                  update({ sfxVolume: parseInt(e.target.value, 10) });
-                  SFX.click(); 
-                }}
-                className="h-2 w-full appearance-none rounded-full bg-canvas outline-none [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary"
+
+              <ToggleRow
+                label={t("Player volume sounds")}
+                sub={t("Play a short sound when changing the player volume. Off by default.")}
+                value={settings.playerVolumeSfx}
+                onChange={(value) => update({ playerVolumeSfx: value })}
               />
-            </div>
+            </>
           )}
-          
         </div>
       </Section>
       <Section
