@@ -43,11 +43,28 @@ body:
   - type: input
     id: version
     attributes:
-      label: Harbor version or commit
-      description: Find the version in Harbor's About or build information, or provide the commit SHA.
-      placeholder: 0.9.21 or main @ abc1234
+      label: Harbor version
+      description: Enter the numeric version only, without a leading "v" or channel name.
+      placeholder: 0.9.21
     validations:
       required: true
+
+  - type: dropdown
+    id: channel
+    attributes:
+      label: Release channel
+      options:
+        - Stable
+        - Beta
+    validations:
+      required: true
+
+  - type: input
+    id: commit
+    attributes:
+      label: Commit
+      description: For a development build, provide the commit SHA separately.
+      placeholder: abc1234
 
   - type: dropdown
     id: installation

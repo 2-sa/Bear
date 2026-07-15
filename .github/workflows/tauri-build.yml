@@ -67,14 +67,14 @@ jobs:
           targets: ${{ matrix.platform.target }}
 
       - name: Cache Rust build
-        uses: Swatinem/rust-cache@42dc69e1aa15d09112580998cf2ef0119e2e91ae # v2
+        uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
         with:
           workspaces: |
             harbor-core
             src-tauri
 
       - name: Setup Vite+
-        uses: voidzero-dev/setup-vp@8a7496fd44e8a1b0a88a7459e36213b2fefc1d15 # v1
+        uses: voidzero-dev/setup-vp@250f29ce396baf5e8f24498e17c0dfdebabc26eb # v1
         with:
           node-version-file: .nvmrc
           cache: true
@@ -181,7 +181,7 @@ jobs:
           cargo test --all-targets
 
       - name: Tauri build
-        uses: tauri-apps/tauri-action@fce9c6108b31ea247710505d3aaaa893ee6768d4 # v0
+        uses: tauri-apps/tauri-action@84b9d35b5fc46c1e45415bdb6144030364f7ebc5 # v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
