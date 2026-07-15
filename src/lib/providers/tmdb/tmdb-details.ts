@@ -5,6 +5,7 @@ import { pickLogo, fetchMovieAssets } from "./tmdb-images";
 import { imageLangParam, imageLangRank } from "./tmdb-image-lang";
 import { pickTrailers, type Video } from "./tmdb-trailers";
 import type { PersonRef } from "./tmdb-people";
+import { genresFromIds } from "./tmdb-meta-mappers";
 
 export type CastEntry = {
   id: number;
@@ -273,6 +274,7 @@ export async function tmdbDetails(key: string, meta: Meta): Promise<TmdbDetail |
     releaseInfo: (r.release_date ?? r.first_air_date)?.slice(0, 4),
     releaseDate: r.release_date ?? r.first_air_date,
     imdbRating: r.vote_average > 0 ? Number(r.vote_average).toFixed(1) : undefined,
+    genres: genresFromIds(r.genre_ids, kind),
   });
 
   const recommendations: Meta[] = (raw.recommendations?.results ?? []).map(toMeta);

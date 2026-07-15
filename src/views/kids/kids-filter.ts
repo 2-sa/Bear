@@ -10,3 +10,14 @@ export function dropUnreleased(metas: Meta[]): Meta[] {
     return !Number.isFinite(y) || y <= yearNow;
   });
 }
+
+// Genres excluded from the kids catalogs (the `without_genres` used to build the
+// rows). Applied to cross-title recommendations, which — unlike the catalog rows
+// — are not certification-filtered upstream.
+const EXCLUDED_KID_GENRES = new Set(["horror", "thriller"]);
+
+export function dropUnsafeGenres(metas: Meta[]): Meta[] {
+  return metas.filter(
+    (m) => !(m.genres ?? []).some((g) => EXCLUDED_KID_GENRES.has(g.trim().toLowerCase())),
+  );
+}
