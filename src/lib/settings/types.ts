@@ -57,7 +57,7 @@ export interface SimklGranularFilters {
 }
 
 export type Settings = {
-  soundTheme: 'none' | 'glass' | 'modern' | 'retro' | 'cinematic';
+  soundTheme: "none" | "glass" | "modern" | "retro" | "cinematic";
   sfxVolume: number;
   playerVolumeSfx: boolean;
   blurComments: boolean;
@@ -141,7 +141,14 @@ export type Settings = {
   hdEpisodeImages: boolean;
   episodeArcGroups: boolean;
   episodeOrderProvider: "default" | "tmdb" | "tvdb";
-  tvdbSeasonType: "aired" | "official" | "dvd" | "absolute" | "tvdbabsolute" | "alternate" | "regional";
+  tvdbSeasonType:
+    | "aired"
+    | "official"
+    | "dvd"
+    | "absolute"
+    | "tvdbabsolute"
+    | "alternate"
+    | "regional";
   tvdbOrderPanel: boolean;
   tvdbPin: string;
   harborAvatar: string | null;
