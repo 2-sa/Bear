@@ -528,21 +528,6 @@ function EdgeArrow({
   const t = useT();
   const label = t(side === "left" ? "Scroll left" : "Scroll right");
 
-  const icon =
-    side === "left" ? (
-      <ChevronLeft
-        size={22}
-        strokeWidth={2.2}
-        className="dir-icon relative z-20 drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]"
-      />
-    ) : (
-      <ChevronRight
-        size={22}
-        strokeWidth={2.2}
-        className="dir-icon relative z-20 drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]"
-      />
-    );
-
   if (always) {
     return (
       <div

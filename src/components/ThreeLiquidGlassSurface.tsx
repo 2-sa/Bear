@@ -1,4 +1,11 @@
-import { useEffect, useRef, type CSSProperties, type HTMLAttributes, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  type CSSProperties,
+  type HTMLAttributes,
+  type ReactNode,
+} from "react";
 import * as THREE from "three";
 
 type ThreeLiquidGlassSurfaceProps = HTMLAttributes<HTMLDivElement> & {
@@ -768,7 +775,7 @@ export function ThreeLiquidGlassSurface({
 
   const focusedRef = useRef(false);
 
-  const activate = () => {
+  const activate = useCallback(() => {
     const canvas = canvasRef.current;
 
     if (!canvas) return;
@@ -780,7 +787,7 @@ export function ThreeLiquidGlassSurface({
       spectralStrength,
       lensStrength,
     });
-  };
+  }, [intensity, lensStrength, refractionStrength, shaderRadius, spectralStrength]);
 
   const deactivateWhenIdle = () => {
     const canvas = canvasRef.current;
@@ -804,7 +811,7 @@ export function ThreeLiquidGlassSurface({
         sharedEngine?.release(canvas);
       }
     };
-  }, [alwaysActive, intensity, lensStrength, refractionStrength, shaderRadius, spectralStrength]);
+  }, [activate, alwaysActive]);
 
   const glassStyle: CSSProperties = {
     position: "relative",
