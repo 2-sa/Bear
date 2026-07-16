@@ -36,6 +36,7 @@
     "@tauri-apps/plugin-updater": "^2.10.1",
     "gifenc": "^1.0.3",
     "hls.js": "^1.6.16",
+    "lottie-web": "^5.13.0",
     "lucide-react": "^1.24.0",
     "mpegts.js": "^1.8.0",
     "parse-torrent-title": "^3.0.1",
