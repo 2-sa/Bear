@@ -1,9 +1,16 @@
 // @ts-expect-error Node test types are intentionally outside the browser-only tsconfig.
 import assert from "node:assert/strict";
 // @ts-expect-error Node test types are intentionally outside the browser-only tsconfig.
+import { readFileSync } from "node:fs";
+// @ts-expect-error Node test types are intentionally outside the browser-only tsconfig.
 import test from "node:test";
 import { subtitleDownloadArgs } from "../src/lib/player/subtitle-load.ts";
 import { decodeSubtitleBytes } from "../src/lib/subtitles/encoding.ts";
+
+const html5BridgeSource = readFileSync(
+  new URL("../src/lib/player/html5/bridge.ts", import.meta.url),
+  "utf8",
+);
 
 test("passes provider format and encoding to the native subtitle downloader", () => {
   assert.deepEqual(
@@ -18,6 +25,13 @@ test("passes provider format and encoding to the native subtitle downloader", ()
       format: "ass",
       encoding: "windows-1256",
     },
+  );
+});
+
+test("keeps subtitle metadata on HTML5 tracks for decoding", () => {
+  assert.match(
+    html5BridgeSource,
+    /const track: SubTrack = \{[\s\S]*?loading: false,[\s\S]*?metadata,[\s\S]*?\};/,
   );
 });
 

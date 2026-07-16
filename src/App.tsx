@@ -245,7 +245,7 @@ function useIdleEvict(active: boolean, pin = false): boolean {
   return alive;
 }
 
-export function App() {
+export function App({ onReady }: { onReady?: () => void }) {
   if (isWeb() && isMobileDevice()) return <MobileNotice />;
   return (
     <SettingsProvider>
@@ -278,7 +278,7 @@ export function App() {
                                               <MiddleClickScroll />
                                               <ThemeBackdrop />
                                               <WatchlistSync />
-                                              <Shell />
+                                              <Shell onReady={onReady} />
                                               <Suspense fallback={null}>
                                                 <OnboardingModal />
                                               </Suspense>
@@ -446,7 +446,7 @@ function parseDeepLinkEpisode(videoId?: string): { season: number; episode: numb
   return { season, episode };
 }
 
-function Shell() {
+function Shell({ onReady }: { onReady?: () => void }) {
   const {
     topKind,
     service,
@@ -492,6 +492,11 @@ function Shell() {
     layout === "forest" ||
     layout === "stremio";
   useViewPreloader();
+
+  useEffect(() => {
+    if (topKind === "home") return;
+    onReady?.();
+  }, [onReady, topKind]);
 
   const handleTvBack = useCallback(() => {
     if (searchOpen) {
@@ -991,7 +996,7 @@ function Shell() {
         className={`relative flex min-h-0 min-w-0 flex-1 flex-col ${playerActive ? "invisible" : ""}`}
       >
         <div className={layer(homeTop)}>
-          <Home active={homeTop} />
+          <Home active={homeTop} onReady={onReady} />
         </div>
         {settingsAlive && (
           <div className={layer(settingsTop)}>

@@ -84,7 +84,7 @@ import { RowSkeleton } from "./home/row-skeleton";
 import { AddSourceModal } from "@/components/add-source-modal";
 import type { SourceRow } from "@/lib/custom-sources";
 
-export function Home({ active = true }: { active?: boolean }) {
+export function Home({ active = true, onReady }: { active?: boolean; onReady?: () => void }) {
   const { authKey, user } = useAuth();
   const { settings, update } = useSettings();
   const t = useT();
@@ -110,6 +110,10 @@ export function Home({ active = true }: { active?: boolean }) {
   useEffect(() => subscribePlayback(() => setLocalWatched(recentlyPlayed())), []);
   const [heroPool, setHeroPool] = useState<Meta[]>([]);
   const [heroReady, setHeroReady] = useState(false);
+  useEffect(() => {
+    if (!active || !heroReady) return;
+    onReady?.();
+  }, [active, heroReady, onReady]);
   const [items, setItems] = useState<LibraryItem[]>([]);
   const cwVersion = useCwDismissVersion();
   const [tmdbProvidedByAddon, setTmdbProvidedByAddon] = useState(false);
