@@ -76,7 +76,6 @@ const LOCAL_KEYBOARD_SELECTOR = [
 const AXIS_TOLERANCE = 24;
 
 let activeSearchEditEl: HTMLElement | null = null;
-let lastFocusedEl: HTMLElement | null = null;
 let focusStylesInjected = false;
 
 function isEditable(el: HTMLElement | null) {
@@ -494,7 +493,6 @@ function focusElement(el: HTMLElement, scroll: "center" | "nearest" | "none" = "
   clearTvFocusRing(el);
 
   el.setAttribute("data-tv-focused", "true");
-  lastFocusedEl = el;
 
   if (isSearchLikeField(el) && activeSearchEditEl !== el) {
     // Navigation focus is not editing mode.
@@ -540,8 +538,6 @@ function clearTvFocusRing(except?: HTMLElement) {
   });
 
   clearSearchVisualFocus();
-
-  if (!except) lastFocusedEl = null;
 }
 
 function setSearchNavMode(el: HTMLElement) {
@@ -578,7 +574,6 @@ function enterSearchEditMode(el: HTMLElement) {
     visual.setAttribute("data-tv-search-editing-focused", "true");
   }
 
-  lastFocusedEl = null;
   el.focus({ preventScroll: true });
 
   if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
