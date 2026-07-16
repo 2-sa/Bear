@@ -16,6 +16,7 @@ import { effectiveTmdbLanguage, setTmdbLanguage } from "@/lib/providers/tmdb/tmd
 import { setPosterBaseUrl } from "@/lib/providers/rpdb";
 import { setMdblistBatchKey } from "@/lib/providers/mdblist-batch";
 import { setUiLanguage } from "@/lib/i18n";
+import { setSnapshotRetentionDays } from "@/lib/snapshots";
 import { STORAGE_KEY } from "./settings/defaults";
 import { readSettingsFile, writeSettingsFile } from "./settings/file-store";
 import { loadFontData, saveFontData } from "./font-storage";
@@ -267,9 +268,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   }, [settings.blockTrackers]);
 
   useEffect(() => {
-    void import("@/lib/snapshots").then(({ setSnapshotRetentionDays }) => {
-      setSnapshotRetentionDays(settings.cwSnapshotRetentionDays);
-    });
+    setSnapshotRetentionDays(settings.cwSnapshotRetentionDays);
   }, [settings.cwSnapshotRetentionDays]);
 
   useEffect(() => {

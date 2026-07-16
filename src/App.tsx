@@ -88,6 +88,12 @@ import { SimklProvider } from "@/lib/simkl/provider";
 import { LetterboxdProvider } from "@/lib/stremboxd/provider";
 import { focusTvPageDefault, useKeyboardNavigation } from "@/lib/keyboard-navigation";
 import { SFX } from "@/lib/sfx";
+import {
+  onDeepLinkInstall,
+  onDeepLinkOpen,
+  onOpenLocalFile,
+  startDeepLinkBridge,
+} from "@/lib/deep-link";
 
 const importAnime = () => import("@/views/anime");
 const importCalendar = () => import("@/views/calendar");
@@ -785,41 +791,34 @@ function Shell({ onReady }: { onReady?: () => void }) {
 
   useEffect(() => {
     let dispose: (() => void) | null = null;
-    void import("@/lib/deep-link").then(
-      ({ startDeepLinkBridge, onDeepLinkInstall, onDeepLinkOpen, onOpenLocalFile }) => {
-        void startDeepLinkBridge().then((stopBridge) => {
-          const stopListener = onDeepLinkInstall(() => {
-            if (window.__harborInstallerOpen) return;
-            setView("addons");
-          });
-          const stopOpen = onDeepLinkOpen(({ type, id, videoId }) => {
-            const hint = parseDeepLinkEpisode(videoId);
-            openMeta(
-              { id, type: type as MetaType, name: "" },
-              hint ? { episodeHint: hint } : undefined,
-            );
-          });
-          const stopFile = onOpenLocalFile((path) => {
-            const name = (path.replace(/\\/g, "/").split("/").pop() || "Video").replace(
-              /\.[^.]+$/,
-              "",
-            );
-            openPlayer({
-              meta: { id: `local:${path}`, type: "movie", name },
-              url: path,
-              title: name,
-              notWebReady: true,
-            });
-          });
-          dispose = () => {
-            stopBridge();
-            stopListener();
-            stopOpen();
-            stopFile();
-          };
+    void startDeepLinkBridge().then((stopBridge) => {
+      const stopListener = onDeepLinkInstall(() => {
+        if (window.__harborInstallerOpen) return;
+        setView("addons");
+      });
+      const stopOpen = onDeepLinkOpen(({ type, id, videoId }) => {
+        const hint = parseDeepLinkEpisode(videoId);
+        openMeta(
+          { id, type: type as MetaType, name: "" },
+          hint ? { episodeHint: hint } : undefined,
+        );
+      });
+      const stopFile = onOpenLocalFile((path) => {
+        const name = (path.replace(/\\/g, "/").split("/").pop() || "Video").replace(/\.[^.]+$/, "");
+        openPlayer({
+          meta: { id: `local:${path}`, type: "movie", name },
+          url: path,
+          title: name,
+          notWebReady: true,
         });
-      },
-    );
+      });
+      dispose = () => {
+        stopBridge();
+        stopListener();
+        stopOpen();
+        stopFile();
+      };
+    });
     return () => {
       dispose?.();
     };

@@ -26,6 +26,14 @@ export default defineConfig({
     options: { typeAware: true, typeCheck: true },
   },
   plugins: lazyPlugins(() => [react(), tailwindcss()]),
+  build: {
+    rolldownOptions: {
+      onLog(level, log, handler) {
+        if (log.code === "EVAL" && log.id?.includes("/lottie-web/")) return;
+        handler(level, log);
+      },
+    },
+  },
   clearScreen: false,
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
