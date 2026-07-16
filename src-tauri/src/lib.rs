@@ -463,6 +463,14 @@ pub fn run() {
     });
 
     app_builder
+        .on_page_load(|webview, payload| {
+            if webview.label() == "main"
+                && matches!(payload.event(), tauri::webview::PageLoadEvent::Finished)
+            {
+                let _ = webview.window().show();
+                let _ = webview.window().set_focus();
+            }
+        })
         .setup(move |app| {
             #[cfg(windows)]
             {

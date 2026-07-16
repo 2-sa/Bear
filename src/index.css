@@ -55,7 +55,7 @@ body,
 #root {
   height: 100%;
   margin: 0;
-  background: transparent;
+  background: var(--color-canvas);
   color: var(--color-ink);
   overflow: hidden;
 }
