@@ -236,6 +236,13 @@ export function mergeRows(
   opts: { dedup?: boolean } = {},
 ): HomeRow[] {
   const dedup = opts.dedup ?? true;
+  const addonTypesByName = new Map<string, Set<string>>();
+  for (const addon of addons) {
+    const name = addon.name.trim().toLowerCase();
+    const types = addonTypesByName.get(name) ?? new Set<string>();
+    types.add(addon.type);
+    addonTypesByName.set(name, types);
+  }
   const seen = new Set<string>();
   const out: HomeRow[] = [];
   for (const r of built) {
@@ -252,10 +259,15 @@ export function mergeRows(
     const more = a.more;
     const origin = a.metas[0]?.addonOrigin;
     const canPage = !!more && step > 0;
+    const sameNameTypes = addonTypesByName.get(a.name.trim().toLowerCase());
+    const name =
+      sameNameTypes && sameNameTypes.size > 1
+        ? `${a.name}: ${a.type === "movie" ? "Movies" : a.type === "series" ? "Series" : a.type}`
+        : a.name;
     out.push({
       key: a.key,
       type: a.type as "movie" | "series",
-      name: a.name,
+      name,
       metas: a.metas,
       page: 1,
       hasMore: canPage,
