@@ -115,14 +115,7 @@ fn read_previous_report(dir: &Path) -> Option<StartupCrashReport> {
         }
         let _ = std::fs::remove_file(&panic_path);
     }
-    dir.join(RUNNING_FILE).exists().then(|| StartupCrashReport {
-        kind: "unclean".to_string(),
-        version: env!("CARGO_PKG_VERSION").to_string(),
-        platform: std::env::consts::OS.to_string(),
-        message: None,
-        location: None,
-        backtrace: None,
-    })
+    None
 }
 
 fn take_pending(
@@ -211,13 +204,13 @@ mod tests {
     }
 
     #[test]
-    fn marker_without_panic_becomes_unclean_shutdown() {
+    fn marker_without_panic_is_ignored() {
         let dir = temp_dir();
         std::fs::write(dir.join("running"), b"1").unwrap();
 
-        let report = read_previous_report(&dir).unwrap();
+        let report = read_previous_report(&dir);
 
-        assert_eq!(report.kind, "unclean");
+        assert!(report.is_none());
         std::fs::remove_dir_all(dir).unwrap();
     }
 

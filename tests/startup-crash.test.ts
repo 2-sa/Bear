@@ -1,6 +1,8 @@
 // @ts-expect-error Node test types are intentionally outside the browser-only tsconfig.
 import assert from "node:assert/strict";
 // @ts-expect-error Node test types are intentionally outside the browser-only tsconfig.
+import { readFileSync } from "node:fs";
+// @ts-expect-error Node test types are intentionally outside the browser-only tsconfig.
 import test from "node:test";
 import { startupCrashToHarborError } from "../src/lib/startup-crash.ts";
 
@@ -24,19 +26,8 @@ test("native panic recovery uses the existing opt-in error report experience", (
   assert.equal(error.fatal, false);
 });
 
-test("marker-only recovery explains an unclean shutdown without inventing a crash", () => {
-  const error = startupCrashToHarborError({
-    kind: "unclean",
-    version: "1.2.3",
-    platform: "linux",
-    message: null,
-    location: null,
-    backtrace: null,
-  });
-
-  assert.equal(error.code, "UncleanShutdown");
-  assert.equal(error.title, "Previous unclean shutdown");
-  assert.match(error.message, /did not close correctly/i);
-  assert.doesNotMatch(error.message, /crashed/i);
-  assert.equal(error.fatal, false);
+test("startup recovery does not classify marker-only exits as crashes", () => {
+  const source = readFileSync(new URL("../src/lib/startup-crash.ts", import.meta.url), "utf8");
+  assert.doesNotMatch(source, /UncleanShutdown/);
+  assert.doesNotMatch(source, /Previous unclean shutdown/);
 });

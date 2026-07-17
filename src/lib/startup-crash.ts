@@ -1,7 +1,7 @@
 import type { HarborError } from "@/components/error-view";
 
 export type StartupCrashReport = {
-  kind: "panic" | "unclean";
+  kind: "panic";
   version: string;
   platform: string;
   message: string | null;
@@ -20,13 +20,11 @@ export function loadStartupCrashReport(): Promise<StartupCrashReport | null> {
 }
 
 export function startupCrashToHarborError(report: StartupCrashReport): HarborError {
-  const panic = report.kind === "panic";
   return {
-    code: panic ? "NativePanic" : "UncleanShutdown",
-    title: panic ? "Previous native crash" : "Previous unclean shutdown",
-    message: panic
-      ? "Sorry — Harbor crashed the last time it was running. You can review the details and choose whether to send a report."
-      : "Sorry — Harbor did not close correctly last time. You can continue normally or send a report if this keeps happening.",
+    code: "NativePanic",
+    title: "Previous native crash",
+    message:
+      "Sorry — Harbor crashed the last time it was running. You can review the details and choose whether to send a report.",
     detail: [
       `Version: ${report.version}`,
       `Platform: ${report.platform}`,
