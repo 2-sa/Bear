@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { HarborLoader } from "@/components/harbor-loader";
+import { createPortal } from "react-dom";
 import { getPlaybackPosition } from "@/lib/player/playback-clock";
 import type { PlayerStatus } from "@/lib/player/bridge";
 import {
@@ -38,10 +38,15 @@ export function BufferingIndicator({
     return () => window.clearInterval(timer);
   }, [buffering, eligible]);
 
-  if (!visible) return null;
-  return (
-    <div className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center">
-      <HarborLoader size="sm" className="opacity-80" />
-    </div>
+  const playPauseButton = visible
+    ? document.querySelector<HTMLElement>("[data-player-play-pause]")
+    : null;
+  if (!playPauseButton) return null;
+  return createPortal(
+    <span
+      aria-hidden="true"
+      className="pointer-events-none absolute -inset-1 rounded-full border-2 border-white/15 border-r-white/35 border-t-white/70 motion-safe:animate-spin"
+    />,
+    playPauseButton,
   );
 }

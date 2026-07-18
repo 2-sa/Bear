@@ -1,6 +1,8 @@
 import { invoke } from "@tauri-apps/api/core";
 import { subtitleDownloadArgs } from "./subtitle-load";
+import { mpvFailureSnapshot } from "./mpv-failure";
 import { isMacDesktop, isWindowsDesktop } from "@/lib/platform";
+import { makeSafeTauriUnlisten } from "@/lib/tauri-unlisten";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import {
   emptySnapshot,
@@ -65,6 +67,7 @@ export type MpvRect = {
 export type MpvOptions = {
   anime4k: boolean;
   hdrToSdr: boolean;
+  rtxHdr?: boolean;
   embed?: boolean;
   anime4kShaders?: string[];
   d3d11Flip?: boolean;
@@ -149,7 +152,13 @@ export function createMpvBridge(mpvOptions?: MpvOptions): PlayerBridge {
       }
       return;
     }
-    if (raw.event === "property-change") {
+    if (raw.event === "player-failure") {
+      const reason = String((raw as { reason?: unknown }).reason ?? "");
+      snap = mpvFailureSnapshot(snap, reason);
+      mpvStarted = false;
+      invoke("mpv_stop").catch(() => {});
+      emit();
+    } else if (raw.event === "property-change") {
       const name = raw.name;
       const data = raw.data;
       if (name === "time-pos" && typeof data === "number") snap.positionSec = data;
@@ -307,10 +316,12 @@ export function createMpvBridge(mpvOptions?: MpvOptions): PlayerBridge {
       urlByExternalFilename.clear();
       emit();
       if (!unlistenEvent) {
-        unlistenEvent = await listen<MpvEvent>("mpv://event", (ev) => handleEvent(ev.payload));
+        unlistenEvent = makeSafeTauriUnlisten(
+          await listen<MpvEvent>("mpv://event", (ev) => handleEvent(ev.payload)),
+        );
       }
       if (!unlistenLog) {
-        unlistenLog = await listen<string>("mpv://log", () => {});
+        unlistenLog = makeSafeTauriUnlisten(await listen<string>("mpv://log", () => {}));
       }
       try {
         const opts = mpvOptions ?? { anime4k: false, hdrToSdr: true };
@@ -366,6 +377,7 @@ export function createMpvBridge(mpvOptions?: MpvOptions): PlayerBridge {
             subtitles: (src.subtitles ?? []).map((s) => ({ url: s.url, lang: s.lang ?? null })),
             anime4k: opts.anime4k,
             hdrToSdr,
+            rtxHdr: opts.rtxHdr === true,
             embed: opts.embed === true,
             anime4kShaders: opts.anime4kShaders ?? [],
             d3d11Flip: opts.d3d11Flip === true,
@@ -434,7 +446,10 @@ export function createMpvBridge(mpvOptions?: MpvOptions): PlayerBridge {
             const win = getCurrentWindow();
             const unResized = await win.onResized(() => geomKickHandler?.());
             const unMoved = await win.onMoved(() => geomKickHandler?.());
-            geomTauriUnlisten.push(unResized, unMoved);
+            geomTauriUnlisten.push(
+              makeSafeTauriUnlisten(unResized),
+              makeSafeTauriUnlisten(unMoved),
+            );
           } catch {
             /* noop */
           }

@@ -20,6 +20,7 @@ import { flushCloudSync } from "@/views/player/hooks/use-stremio-sync";
 import { setNativeMemoryActive } from "@/lib/native-memory";
 import { useOverlayPinned } from "@/lib/overlay-pin";
 import { isMobileDevice, isWeb } from "@/lib/platform";
+import { makeSafeTauriUnlisten } from "@/lib/tauri-unlisten";
 import { activeLayout } from "@/lib/theme";
 import { useThemePreview } from "@/lib/theme-preview";
 import { DevErrorTrigger } from "@/components/dev-error-trigger";
@@ -75,7 +76,7 @@ import { FavoritesProvider } from "@/lib/iptv/favorites";
 import { MediaFavoritesProvider } from "@/lib/media-favorites";
 import { LocalWatchlistProvider } from "@/lib/local-watchlist";
 import { useSettings } from "@/lib/settings";
-import { effectiveBinding, eventToBinding } from "@/lib/hotkeys";
+import { effectiveBinding, eventToBinding, shouldHandleGlobalKeyboardEvent } from "@/lib/hotkeys";
 import { ViewProvider, useView, type Frame, type MetaFilter, type View } from "@/lib/view";
 import type { MetaType } from "@/lib/cinemeta";
 import { useDiscordPresence } from "@/lib/discord/use-discord-presence";
@@ -218,7 +219,6 @@ function clampUiScale(scale: number): number {
 
 function useKeepAlive(active: boolean, requested: boolean, pin = false): boolean {
   const [mounted, setMounted] = useState(active && requested);
-  if (requested && (active || pin) && !mounted) setMounted(true);
   useEffect(() => {
     if (!requested) {
       setMounted(false);
@@ -231,13 +231,12 @@ function useKeepAlive(active: boolean, requested: boolean, pin = false): boolean
     const t = setTimeout(() => setMounted(false), KEEP_ALIVE_MS);
     return () => clearTimeout(t);
   }, [active, requested, pin]);
-  return mounted;
+  return requested && (mounted || active || pin);
 }
 
 function useIdleEvict(active: boolean, pin = false): boolean {
   const [alive, setAlive] = useState(active);
   const [pressure, setPressure] = useState(false);
-  if ((active || pin) && !alive) setAlive(true);
   useEffect(() => subscribeMemoryPressure(setPressure), []);
   useEffect(() => {
     if (active || pin) {
@@ -248,7 +247,7 @@ function useIdleEvict(active: boolean, pin = false): boolean {
     const t = setTimeout(() => setAlive(false), pressure ? PRESSURE_EVICT_MS : IDLE_EVICT_MS);
     return () => clearTimeout(t);
   }, [active, alive, pressure, pin]);
-  return alive;
+  return alive || active || pin;
 }
 
 export function App({ onReady }: { onReady?: () => void }) {
@@ -693,6 +692,7 @@ function Shell({ onReady }: { onReady?: () => void }) {
       usesZoomModifier(e) && (e.key === "-" || e.key === "_");
     const isDefaultUiScaleReset = (e: KeyboardEvent) => usesZoomModifier(e) && e.key === "0";
     const onKey = (e: KeyboardEvent) => {
+      if (!shouldHandleGlobalKeyboardEvent(e)) return;
       const binding = eventToBinding(e);
       const overrides = settings.hotkeys ?? {};
       const uiScaleUpCustom = "globalUiScaleUp" in overrides;
@@ -738,6 +738,8 @@ function Shell({ onReady }: { onReady?: () => void }) {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (!shouldHandleGlobalKeyboardEvent(e)) return;
+      if (e.repeat) return;
       if (e.key === "F11") {
         e.preventDefault();
         void toggleWindowFullscreen();
@@ -756,7 +758,8 @@ function Shell({ onReady }: { onReady?: () => void }) {
         await flushCloudSync().catch(() => {});
         const { invoke } = await import("@tauri-apps/api/core");
         await invoke("harbor_flush_done").catch(() => {});
-      }).then((u) => {
+      }).then((rawUnlisten) => {
+        const u = makeSafeTauriUnlisten(rawUnlisten);
         if (cancelled) u();
         else unlisten = u;
       }),
