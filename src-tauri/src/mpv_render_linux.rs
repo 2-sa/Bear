@@ -489,6 +489,9 @@ pub fn uninstall() -> Result<(), String> {
     let Some(embed) = EMBED.with(|slot| slot.borrow_mut().take()) else {
         return Ok(());
     };
+    // Make the GL context current before the render context is dropped
+    // to prevent driver crashes (especially on NVIDIA + Wayland).
+    embed.area.make_current();
     restore_webview(embed);
     eprintln!("[harbor::mpv_linux] uninstalled");
     Ok(())

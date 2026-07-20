@@ -340,6 +340,7 @@ fn apply_pre_init(
         // platform render APIs run on the application UI thread, so that wait
         // also stalls the WebKit overlay. Wake at the target time instead.
         set("video-timing-offset", "0");
+        set("video-sync", "audio");
     }
     set("input-default-bindings", "no");
     set("input-media-keys", "no");
@@ -1046,6 +1047,7 @@ fn mpv_property_blocked(name: &str) -> bool {
         "screenshot-directory",
         "screenshot-template",
         "sub-add",
+        "vo",
     ];
     BLOCKED.iter().any(|b| n.starts_with(b))
 }

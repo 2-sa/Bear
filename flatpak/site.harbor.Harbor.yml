@@ -1,7 +1,9 @@
 app-id: site.harbor.Harbor
 runtime: org.gnome.Platform
-runtime-version: '49'
+runtime-version: "49"
 sdk: org.gnome.Sdk
+required-runtime:
+  - org.freedesktop.Platform.codecs-extra/%%ARCH%%/49
 command: harbor
 
 sdk-extensions:
@@ -23,9 +25,9 @@ build-options:
   append-path: /usr/lib/sdk/rust-stable/bin:/usr/lib/sdk/node22/bin
   env:
     CARGO_HOME: /run/build/harbor/cargo
-    CARGO_NET_OFFLINE: 'true'
+    CARGO_NET_OFFLINE: "true"
     npm_config_cache: /run/build/harbor/npm-cache
-    CI: 'true'
+    CI: "true"
 
 modules:
   - shared-modules/libayatana-appindicator/libayatana-appindicator-gtk3.json
@@ -41,6 +43,13 @@ modules:
         url: https://github.com/libass/libass.git
         commit: e46aedea0a0d17da4c4ef49d84b94a7994664ab5
 
+  - name: libXpresent
+    buildsystem: autotools
+    sources:
+      - type: git
+        url: https://gitlab.freedesktop.org/xorg/lib/libxpresent.git
+        tag: libXpresent-1.0.2
+
   - name: libplacebo
     buildsystem: meson
     config-opts:
@@ -48,6 +57,7 @@ modules:
       - -Ddefault_library=shared
       - -Dtests=false
       - -Ddemos=false
+      - -Dvulkan=enabled
     sources:
       - type: git
         url: https://github.com/haasn/libplacebo.git
@@ -64,6 +74,20 @@ modules:
       - -Dtests=false
       - -Dlua=disabled
       - -Djavascript=disabled
+      - -Dwayland=enabled
+      - -Dx11=enabled
+      - -Dvulkan=enabled
+      - -Dgl=enabled
+      - -Degl=enabled
+      - -Degl-wayland=enabled
+      - -Degl-x11=enabled
+      - -Dvaapi=enabled
+      - -Dvaapi-wayland=enabled
+      - -Dvaapi-x11=enabled
+      - -Dcuda-hwaccel=enabled
+      - -Dcuda-interop=enabled
+      - -Dvdpau=enabled
+      - -Dvdpau-gl-x11=enabled
     sources:
       - type: git
         url: https://github.com/mpv-player/mpv.git
