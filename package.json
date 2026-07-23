@@ -9,6 +9,7 @@
     "build": "tsc -b && vp build",
     "check": "vp check",
     "test": "node --test tests/*.test.ts",
+    "test:vp": "vp test run",
     "typecheck": "tsc -b --pretty false",
     "fmt": "vp fmt",
     "lint": "vp lint",

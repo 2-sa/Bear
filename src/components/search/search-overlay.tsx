@@ -7,6 +7,7 @@ import { useSearch } from "@/lib/search-context";
 import { useView } from "@/lib/view";
 import { MOVIE_GENRES, TV_GENRES } from "@/lib/feed/tags";
 import { AnimeRow } from "./anime-row";
+import { MangaRow } from "./manga-row";
 import { EmptyState } from "./empty-state";
 import { GuideModal } from "./guide-modal";
 import { LiveTvRow } from "./live-tv-row";
@@ -283,6 +284,7 @@ export function SearchOverlay() {
                 <MetaList title={t("Series")} items={currentResults.series} onClose={close} />
               </div>
               <AnimeRow items={currentResults.anime} onClose={close} />
+              <MangaRow items={currentResults.manga} onClose={close} />
               <AddonResults groups={currentResults.addonGroups} onClose={close} />
             </div>
           )}

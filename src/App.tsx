@@ -75,6 +75,8 @@ import { TogetherProvider, useTogether } from "@/lib/together/provider";
 import { DvrProvider } from "@/lib/dvr/provider";
 import { FavoritesProvider } from "@/lib/iptv/favorites";
 import { MediaFavoritesProvider } from "@/lib/media-favorites";
+import { MangaFavoritesProvider } from "@/lib/manga-favorites";
+import { MangaTrackingRunner } from "@/lib/manga-tracking";
 import { LocalWatchlistProvider } from "@/lib/local-watchlist";
 import { useSettings } from "@/lib/settings";
 import { effectiveBinding, eventToBinding, shouldHandleGlobalKeyboardEvent } from "@/lib/hotkeys";
@@ -165,6 +167,7 @@ const MatchDetailView = lazy(() =>
 );
 const PlaylistVodView = lazy(() => importVod().then((m) => ({ default: m.PlaylistVodView })));
 const DownloadsView = lazy(() => importDownloads().then((m) => ({ default: m.DownloadsView })));
+const MangaView = lazy(() => import("@/views/manga").then((m) => ({ default: m.MangaView })));
 const OnboardingModal = lazy(() =>
   importOnboarding().then((m) => ({ default: m.OnboardingModal })),
 );
@@ -302,53 +305,56 @@ export function App({ onReady }: { onReady?: () => void }) {
                                     <DvrProvider>
                                       <FavoritesProvider>
                                         <MediaFavoritesProvider>
-                                          <LocalWatchlistProvider>
-                                            <ContextMenuProvider>
-                                              <TopRankModalProvider>
-                                                <HarborErrorBoundary>
-                                                  <RemoteHostMount />
-                                                  <ProfileIdentitySync />
-                                                  <SettingsProfileBridge />
-                                                  <TrackerProfileBridge />
-                                                  <AnilistAvatarSync />
-                                                  <MalAvatarSync />
-                                                  <MiddleClickScroll />
-                                                  <ThemeBackdrop />
-                                                  <WatchlistSync />
-                                                  <Shell onReady={onReady} />
-                                                  <Suspense fallback={null}>
-                                                    <OnboardingModal />
-                                                  </Suspense>
-                                                  <TogetherInviteToast />
-                                                  <TogetherFloater />
-                                                  <TogetherHostLeavingPrompt />
-                                                  <TogetherSummonToast />
-                                                  <TogetherParticipantLeftToast />
-                                                  <AnilistSyncToast />
-                                                  <MalSyncToast />
-                                                  <ListToastHost />
-                                                  <TogetherLeaveForLiveModal />
-                                                  <TogetherLocationPublisher />
-                                                  <DiscordPresence />
-                                                  <ContextMenu />
-                                                  <WatchLocalModal />
-                                                  <LocalEpisodesModal />
-                                                  <HoverPreview />
-                                                  <CustomHoverCssMount />
-                                                  <TopRankModal />
-                                                  <ProfilePickerModal />
-                                                  <CurfewGuard />
-                                                  <SearchOverlay />
-                                                  <SearchHotkey />
-                                                  <EmbedViewportRoot />
-                                                  <InstallerViewportRoot />
-                                                  <UpdateRoot />
-                                                </HarborErrorBoundary>
-                                                <ErrorView />
-                                                <DevErrorTrigger />
-                                              </TopRankModalProvider>
-                                            </ContextMenuProvider>
-                                          </LocalWatchlistProvider>
+                                          <MangaFavoritesProvider>
+                                            <LocalWatchlistProvider>
+                                              <ContextMenuProvider>
+                                                <TopRankModalProvider>
+                                                  <HarborErrorBoundary>
+                                                    <RemoteHostMount />
+                                                    <ProfileIdentitySync />
+                                                    <SettingsProfileBridge />
+                                                    <TrackerProfileBridge />
+                                                    <AnilistAvatarSync />
+                                                    <MalAvatarSync />
+                                                    <MangaTrackingRunner />
+                                                    <MiddleClickScroll />
+                                                    <ThemeBackdrop />
+                                                    <WatchlistSync />
+                                                    <Shell onReady={onReady} />
+                                                    <Suspense fallback={null}>
+                                                      <OnboardingModal />
+                                                    </Suspense>
+                                                    <TogetherInviteToast />
+                                                    <TogetherFloater />
+                                                    <TogetherHostLeavingPrompt />
+                                                    <TogetherSummonToast />
+                                                    <TogetherParticipantLeftToast />
+                                                    <AnilistSyncToast />
+                                                    <MalSyncToast />
+                                                    <ListToastHost />
+                                                    <TogetherLeaveForLiveModal />
+                                                    <TogetherLocationPublisher />
+                                                    <DiscordPresence />
+                                                    <ContextMenu />
+                                                    <WatchLocalModal />
+                                                    <LocalEpisodesModal />
+                                                    <HoverPreview />
+                                                    <CustomHoverCssMount />
+                                                    <TopRankModal />
+                                                    <ProfilePickerModal />
+                                                    <CurfewGuard />
+                                                    <SearchOverlay />
+                                                    <SearchHotkey />
+                                                    <EmbedViewportRoot />
+                                                    <InstallerViewportRoot />
+                                                    <UpdateRoot />
+                                                  </HarborErrorBoundary>
+                                                  <ErrorView />
+                                                  <DevErrorTrigger />
+                                                </TopRankModalProvider>
+                                              </ContextMenuProvider>
+                                            </LocalWatchlistProvider>
+                                          </MangaFavoritesProvider>
                                         </MediaFavoritesProvider>
                                       </FavoritesProvider>
                                     </DvrProvider>
@@ -866,6 +872,10 @@ function Shell({ onReady }: { onReady?: () => void }) {
   }, [topKind, settings.hideContent.anime, setView]);
 
   useEffect(() => {
+    if (topKind === "manga" && settings.hideContent.manga) setView("home");
+  }, [topKind, settings.hideContent.manga, setView]);
+
+  useEffect(() => {
     if (!kid || player) return;
     const allowed =
       topKind === "kids" ||
@@ -925,6 +935,7 @@ function Shell({ onReady }: { onReady?: () => void }) {
   const liveTop = topKind === "live";
   const vodTop = topKind === "vod";
   const downloadsTop = topKind === "downloads";
+  const mangaTop = topKind === "manga";
   const matchDetailTop = topKind === "match-detail";
 
   const [immersive, setImmersive] = useState(false);
@@ -988,6 +999,7 @@ function Shell({ onReady }: { onReady?: () => void }) {
   const liveAlive = useIdleEvict(liveTop);
   const vodAlive = useIdleEvict(vodTop);
   const downloadsAlive = useIdleEvict(downloadsTop);
+  const mangaAlive = useIdleEvict(mangaTop);
 
   return (
     <div data-kids={kidsTop || kid ? "on" : undefined} className="relative flex h-full">
@@ -1129,6 +1141,13 @@ function Shell({ onReady }: { onReady?: () => void }) {
           <div className={layer(downloadsTop)}>
             <Suspense fallback={null}>
               <DownloadsView />
+            </Suspense>
+          </div>
+        )}
+        {mangaAlive && (
+          <div className={layer(mangaTop)}>
+            <Suspense fallback={null}>
+              <MangaView />
             </Suspense>
           </div>
         )}

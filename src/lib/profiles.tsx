@@ -438,6 +438,8 @@ export function ProfilesProvider({ children }: { children: ReactNode }) {
       try {
         localStorage.removeItem(`harbor.auth.${id}`);
         localStorage.removeItem(`harbor.favorites.v1.${id}`);
+        localStorage.removeItem(`harbor.mangafav.v1.${id}`);
+        localStorage.removeItem(`harbor.mangaread.v1.${id}`);
         localStorage.removeItem(`harbor.localwatchlist.v1.${id}`);
         localStorage.removeItem(`harbor.settings.${id}`);
         localStorage.removeItem(`harbor.trakt.session.v1.${id}`);

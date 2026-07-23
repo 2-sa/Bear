@@ -27,7 +27,7 @@ export type WebhookTrigger =
   | { event: "fromTraktWatchlist" }
   | { event: "liveTvEvent"; channelIds?: string[]; favoritesOnly?: boolean; leadMinutes?: number };
 
-export type ContentCategory = "anime" | "liveTv" | "sports" | "adult";
+export type ContentCategory = "anime" | "liveTv" | "sports" | "adult" | "manga";
 
 export type ContentFilters = Record<ContentCategory, boolean>;
 export type LetterboxdSettings = {
@@ -454,6 +454,8 @@ export type Settings = {
   iptvEpgOffsetHours: number;
   sidebarCollapsed: boolean;
   wrappedButton: boolean;
+  /** Opt-in feature flag; Manga tab shows an enable gate until true. */
+  mangaEnabled: boolean;
   feedLocaleBias: boolean;
   uiLanguage: UiLanguage;
   cropMode: string;

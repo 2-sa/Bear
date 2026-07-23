@@ -22,6 +22,8 @@ import { searchAddonCatalogs, searchAddonGroups, mergeMetas } from "@/lib/search
 import { searchAddonIndex } from "@/lib/search-addon-index";
 import { createSearchRequestGuard } from "@/lib/search-request-guard";
 import { normalizeSearchQuery } from "@/lib/search-query";
+import { searchManga } from "@/lib/manga/api";
+import type { MangaSummary } from "@/lib/manga/model";
 import { gatherCatalogAddons, type Addon } from "@/lib/addons";
 import { useAuth } from "@/lib/auth";
 import { useSettings } from "@/lib/settings";
@@ -147,6 +149,7 @@ export function SearchProvider({ children }: { children: ReactNode }) {
     setResults(null);
     setStatus("typing");
     const animeAllowed = !hiddenTabs.anime;
+    const mangaAllowed = settings.mangaEnabled && !settings.hideContent.manga;
     const liveTvAllowed = !hiddenTabs.liveTv && settings.iptvPlaylists.length > 0;
     debounceRef.current = window.setTimeout(() => {
       if (!requestGuardRef.current.isCurrent(id)) return;
@@ -167,6 +170,9 @@ export function SearchProvider({ children }: { children: ReactNode }) {
             searchAnime(trimmed),
           )
         : Promise.resolve([]);
+      const mangaPromise: Promise<MangaSummary[]> = mangaAllowed
+        ? searchManga(trimmed).catch(() => [])
+        : Promise.resolve([]);
       const addonsP = ensureAddons();
       const addonPromise = addonsP
         .then((a) => searchAddonCatalogs(a, trimmed))
@@ -181,6 +187,7 @@ export function SearchProvider({ children }: { children: ReactNode }) {
       let tmdbResult: Awaited<typeof tmdbPromise> | null = null;
       const acc = {
         anime: [] as Awaited<typeof animePromise>,
+        manga: [] as MangaSummary[],
         addon: { movies: [], series: [] } as Awaited<typeof addonPromise>,
         cine: { movies: [], series: [] } as Awaited<typeof cinemetaPromise>,
         groups: [] as Awaited<typeof addonGroupsPromise>,
@@ -205,6 +212,7 @@ export function SearchProvider({ children }: { children: ReactNode }) {
           series: mergedSeries,
           liveTv,
           anime: acc.anime,
+          manga: acc.manga,
           addonGroups: dedupedGroups,
           addons: searchAddonIndex(trimmed),
         });
@@ -226,6 +234,7 @@ export function SearchProvider({ children }: { children: ReactNode }) {
             series: [],
             liveTv: [],
             anime: [],
+            manga: [],
             addonGroups: [],
             addons: [],
             intent: detectIntent(trimmed),
@@ -235,6 +244,10 @@ export function SearchProvider({ children }: { children: ReactNode }) {
         });
       void animePromise.then((a) => {
         acc.anime = a;
+        publish();
+      });
+      void mangaPromise.then((m) => {
+        acc.manga = m;
         publish();
       });
       void addonPromise.then((a) => {
@@ -262,6 +275,8 @@ export function SearchProvider({ children }: { children: ReactNode }) {
     settings.tmdbKey,
     settings.tmdbLanguage,
     settings.iptvPlaylists,
+    settings.mangaEnabled,
+    settings.hideContent.manga,
     excludeGenres,
     hiddenTabs.anime,
     hiddenTabs.liveTv,

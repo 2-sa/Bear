@@ -60,7 +60,55 @@ export type RemoteSnapshot = {
   canToggleSubtitles: boolean;
   /** Non-null when the host focus is in a text field. */
   textEntry: RemoteTextEntry | null;
+  /** Active manga reader on the host (phone flipbook remote). */
+  manga?: RemoteMangaState | null;
+  hostVersion?: string;
   updatedAt: number;
+};
+
+export type RemoteMangaChapter = {
+  id: string;
+  index: number;
+  label: string;
+  chapter: string | null;
+  title?: string;
+  group?: string;
+  sourceId?: string;
+  sourceName?: string;
+  downloaded?: boolean;
+};
+
+export type RemoteMangaBookmark = {
+  id: string;
+  chapterId: string;
+  chapterLabel: string;
+  page: number;
+  totalPages: number;
+  name: string;
+  createdAt: number;
+};
+
+export type RemoteMangaState = {
+  open: boolean;
+  seq: number;
+  mangaId: string;
+  title: string;
+  cover: string | null;
+  chapterId: string;
+  chapterIndex: number;
+  chapterLabel: string;
+  pageIndex: number;
+  pageCount: number;
+  spread?: number[];
+  pageUrls?: string[];
+  zoom: number;
+  canZoom: boolean;
+  rtl: boolean;
+  mode: "long" | "paged" | "double" | "book";
+  hasPrev: boolean;
+  hasNext: boolean;
+  chapters: RemoteMangaChapter[];
+  bookmarks: RemoteMangaBookmark[];
 };
 
 /** Host UI navigation (library browse via phone touchpad). */
@@ -89,6 +137,20 @@ export type RemoteCommand =
   | { action: "blurText" }
   /** Open host search (same as the "/" hotkey). */
   | { action: "openSearch" }
+  | { action: "mangaTurnPage"; dir: "next" | "prev" }
+  | { action: "mangaSetPage"; page: number }
+  | { action: "mangaJumpChapter"; index: number }
+  | { action: "mangaZoomIn" }
+  | { action: "mangaZoomOut" }
+  | { action: "mangaSetZoom"; zoom: number }
+  | { action: "mangaPan"; dx: number; dy: number }
+  | { action: "mangaFlipProgress"; p: number }
+  | { action: "mangaFlipEnd"; commit: boolean; dir: "next" | "prev" }
+  | { action: "mangaSetRtl"; rtl: boolean }
+  | { action: "mangaBookmark"; page?: number }
+  | { action: "mangaJumpBookmark"; id: string }
+  | { action: "mangaBookmarkRemove"; id: string }
+  | { action: "mangaCloseReader" }
   | { action: "ping" };
 
 export type RemoteServerMessage =
@@ -145,4 +207,8 @@ export function remoteWsUrl(host: string, port = WEB_PORT): string {
 
 export function remoteUiUrl(host: string, port = WEB_PORT): string {
   return `http://${host}:${port}/remote`;
+}
+
+export function mangaRemoteUiUrl(host: string, port = WEB_PORT): string {
+  return `http://${host}:${port}/reader`;
 }

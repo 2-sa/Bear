@@ -11,12 +11,15 @@ import {
   setRemoteCastDevices,
   subscribeRemoteSession,
 } from "./session";
-import { installTextEntryListeners } from "./text-entry";
 import {
-  REMOTE_PROTO,
-  parseClientMessage,
-  type RemoteServerMessage,
-} from "./protocol";
+  buildRemoteMangaState,
+  dispatchMangaCommand,
+  isMangaCommand,
+  subscribeRemoteManga,
+} from "./manga-session";
+import { subscribeMangaBookmarks } from "@/lib/manga-bookmarks";
+import { installTextEntryListeners } from "./text-entry";
+import { REMOTE_PROTO, parseClientMessage, type RemoteServerMessage } from "./protocol";
 
 const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
@@ -26,7 +29,10 @@ function broadcast(msg: RemoteServerMessage) {
 }
 
 function pushSnapshot() {
-  broadcast({ t: "snapshot", snapshot: buildRemoteSnapshot(getPlaybackPosition()) });
+  broadcast({
+    t: "snapshot",
+    snapshot: { ...buildRemoteSnapshot(getPlaybackPosition()), manga: buildRemoteMangaState() },
+  });
 }
 
 const SKIP_SNAPSHOT = new Set(["nav", "setText", "ping"]);
@@ -78,6 +84,11 @@ export function RemoteHostMount() {
               broadcast({ t: "pong", at: Date.now() });
               return;
             }
+            if (isMangaCommand(msg.command.action)) {
+              await dispatchMangaCommand(msg.command);
+              pushSnapshot();
+              return;
+            }
             await dispatchRemoteCommand(msg.command);
             // nav/setText: focusin/out + 400ms tick cover textEntry; skip churn.
             if (!SKIP_SNAPSHOT.has(msg.command.action)) pushSnapshot();
@@ -104,6 +115,19 @@ export function RemoteHostMount() {
     });
 
     unsubs.push(subscribeRemoteSession(() => pushSnapshot()));
+    let mangaRaf = 0;
+    const pushMangaCoalesced = () => {
+      if (mangaRaf) return;
+      mangaRaf = requestAnimationFrame(() => {
+        mangaRaf = 0;
+        pushSnapshot();
+      });
+    };
+    unsubs.push(subscribeRemoteManga(pushMangaCoalesced));
+    unsubs.push(subscribeMangaBookmarks(pushMangaCoalesced));
+    unsubs.push(() => {
+      if (mangaRaf) cancelAnimationFrame(mangaRaf);
+    });
     unsubs.push(
       subscribePlaybackClock(() => {
         // throttle via shared interval below
@@ -120,13 +144,15 @@ export function RemoteHostMount() {
     unsubs.push(installTextEntryListeners());
 
     setRemoteCastDiscovering(true);
-    void discoverCastDevices().then((devices) => {
-      if (!cancelled) {
-        setRemoteCastDevices(devices);
-      }
-    }).finally(() => {
-      if (!cancelled) setRemoteCastDiscovering(false);
-    });
+    void discoverCastDevices()
+      .then((devices) => {
+        if (!cancelled) {
+          setRemoteCastDevices(devices);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setRemoteCastDiscovering(false);
+      });
 
     timerRef.current = window.setInterval(() => {
       pushSnapshot();

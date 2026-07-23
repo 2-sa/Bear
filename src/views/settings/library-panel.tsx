@@ -30,7 +30,7 @@ import { RtRotten } from "@/components/icons/rt-rotten";
 import { useProfiles } from "@/lib/profiles";
 import { useSettings } from "@/lib/settings";
 import { clearAllSnapshots, snapshotCount } from "@/lib/snapshots";
-import { Bookmark, HelpCircle, Popcorn } from "lucide-react";
+import { BookOpen, Bookmark, HelpCircle, Popcorn } from "lucide-react";
 import { HoverTooltip } from "@/components/hover-tooltip";
 import { useT } from "@/lib/i18n";
 import { RegionField } from "./region-cascade";
@@ -118,7 +118,10 @@ export function LibraryPanel({
     if (extraTimerRef.current) window.clearTimeout(extraTimerRef.current);
     extraTimerRef.current = window.setTimeout(() => setExtraSaved(null), 1800);
   };
-  const pushHideContent = (key: "anime" | "sports" | "liveTv" | "adult", value: boolean) => {
+  const pushHideContent = (
+    key: "anime" | "sports" | "liveTv" | "adult" | "manga",
+    value: boolean,
+  ) => {
     const next = { ...settings.hideContent, [key]: value };
     update({ hideContent: next });
     if (activeProfile) updateProfile(activeProfile.id, { hideContent: next });
@@ -925,6 +928,17 @@ export function LibraryPanel({
           )}
           value={settings.hideContent.anime}
           onChange={(v) => pushHideContent("anime", v)}
+        />
+        <ToggleRow
+          label={t("Hide manga")}
+          leading={
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center text-ink drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]">
+              <BookOpen size={28} strokeWidth={2} />
+            </span>
+          }
+          sub={t("Removes the Manga tab from the sidebar.")}
+          value={settings.hideContent.manga}
+          onChange={(v) => pushHideContent("manga", v)}
         />
         <ToggleRow
           label={t("Hide Live TV")}

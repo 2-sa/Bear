@@ -26,6 +26,7 @@ export function getSearchDisplayState(
       currentResults.series.length ||
       currentResults.liveTv.length ||
       currentResults.anime.length ||
+      currentResults.manga.length ||
       currentResults.addons.length ||
       currentResults.addonGroups.length)
   );
