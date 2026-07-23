@@ -15,6 +15,7 @@ import { arabicAwareMatch } from "@/lib/iptv/rtl";
 import type { Settings } from "@/lib/settings";
 import { safeFetch } from "@/lib/safe-fetch";
 import { anilistAnimeSearch } from "@/lib/anilist/browse";
+import type { CharacterHit } from "@/lib/anilist/character";
 import type { MangaSummary } from "@/lib/manga/model";
 
 export type SearchPerson = {
@@ -77,6 +78,7 @@ export type SearchResults = {
   liveTv: LiveTvHit[];
   anime: AnimeHit[];
   manga: MangaSummary[];
+  characters: CharacterHit[];
   addonGroups: AddonResultGroup[];
   addons: AddonHit[];
   intent: SearchIntent;
@@ -223,6 +225,7 @@ export async function searchAll(
       liveTv: [],
       anime: [],
       manga: [],
+      characters: [],
       addonGroups: [],
       addons: [],
       intent: null,
@@ -238,6 +241,7 @@ export async function searchAll(
       liveTv: [],
       anime: [],
       manga: [],
+      characters: [],
       addonGroups: [],
       addons: [],
       intent: detectIntent(trimmed),
@@ -258,6 +262,7 @@ export async function searchAll(
       liveTv: [],
       anime: [],
       manga: [],
+      characters: [],
       addonGroups: [],
       addons: [],
       intent: detectIntent(trimmed),
@@ -349,6 +354,7 @@ export async function searchAll(
     liveTv: [],
     anime: [],
     manga: [],
+    characters: [],
     addonGroups: [],
     addons: [],
     intent: detectIntent(trimmed),

@@ -8,6 +8,7 @@ import { useView } from "@/lib/view";
 import { MOVIE_GENRES, TV_GENRES } from "@/lib/feed/tags";
 import { AnimeRow } from "./anime-row";
 import { MangaRow } from "./manga-row";
+import { CharacterGroup } from "./character-group";
 import { EmptyState } from "./empty-state";
 import { GuideModal } from "./guide-modal";
 import { LiveTvRow } from "./live-tv-row";
@@ -285,6 +286,7 @@ export function SearchOverlay() {
               </div>
               <AnimeRow items={currentResults.anime} onClose={close} />
               <MangaRow items={currentResults.manga} onClose={close} />
+              <CharacterGroup items={currentResults.characters} onClose={close} />
               <AddonResults groups={currentResults.addonGroups} onClose={close} />
             </div>
           )}

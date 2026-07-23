@@ -111,6 +111,9 @@ import { HeroBackdrop } from "./detail/hero-backdrop";
 import { isTitleUpcoming } from "./detail/helpers";
 import { HeroAwardsCorner } from "./detail/hero-awards";
 import { CrunchyrollAwardsCorner } from "./detail/crunchyroll-corner";
+import { AnimeRelatedRail } from "./detail/anime-related-rail";
+import { useAnimeAnilistDetails } from "./detail/use-anime-anilist-details";
+import { MangaAwardCorner } from "./manga/collection-badge";
 import { findAnyAwardWins, parseAwardYear } from "@/lib/anime-awards";
 
 function animeAwardLookupName(
@@ -239,7 +242,15 @@ export function DetailView({
   );
   const scrollRef = useRef<HTMLElement>(null);
 
-  const { setNavStack, openPicker, openPlayer, openFilter, promoteMetaToRoot } = useView();
+  const {
+    setNavStack,
+    openPicker,
+    openPlayer,
+    openFilter,
+    promoteMetaToRoot,
+    openMeta,
+    openManga,
+  } = useView();
   const { snapshot: roomSnapshot, claimHost } = useTogether();
   const { isConnected: traktConnected } = useTrakt();
   const inWatchlist = useInWatchlist(meta.id, [detail?.imdbId]);
@@ -352,6 +363,7 @@ export function DetailView({
 
   const idAnime = /^(kitsu|mal|anilist|anidb):/.test(meta.id);
   const isAnime = idAnime || detectedKitsu != null;
+  const anilistExtra = useAnimeAnilistDetails(animeCanonicalId, isAnime);
   const stickyAwardName = useRef<string | null>(null);
   useEffect(() => {
     stickyAwardName.current = null;
@@ -831,6 +843,13 @@ export function DetailView({
   const awardsNode = renderHeroAwards();
   const heroAwardsInline = awardsInDescription ? awardsNode : null;
   const heroAwardsCorner = awardsInDescription ? null : awardsNode;
+  const mangaAdaptationPoster = anilistExtra?.adaptations?.find(
+    (n) => n.mediaType === "manga" && n.poster,
+  )?.poster;
+  const mangaAwardCorner =
+    isAnime && !awardsInDescription ? (
+      <MangaAwardCorner title={title || meta.name} fallbackPoster={mangaAdaptationPoster} />
+    ) : null;
   const isSeries = detail?.kind != null ? detail.kind === "tv" : meta.type === "series";
   const traktResolution = useMemo((): IdResolution => {
     if (isAnime) return { ok: false, reason: "anime" };
@@ -1322,11 +1341,20 @@ export function DetailView({
                   {heroPills}
                 </div>
               ) : (
-                <div className="mt-6 flex items-center justify-between gap-8">
-                  <div className="flex max-w-3xl flex-wrap items-center gap-3 text-[13px] font-medium text-ink-muted">
+                <div className="relative mt-6">
+                  <div
+                    className={`flex flex-wrap items-center gap-3 text-[13px] font-medium text-ink-muted ${
+                      heroAwardsCorner || mangaAwardCorner ? "pe-[240px]" : "max-w-3xl"
+                    }`}
+                  >
                     {heroPills}
                   </div>
-                  {heroAwardsCorner && <div className="shrink-0">{heroAwardsCorner}</div>}
+                  {(heroAwardsCorner || mangaAwardCorner) && (
+                    <div className="absolute end-0 bottom-0 flex translate-y-4 flex-col items-end gap-1.5">
+                      {mangaAwardCorner}
+                      {heroAwardsCorner}
+                    </div>
+                  )}
                 </div>
               )}
               <div
@@ -1709,6 +1737,46 @@ export function DetailView({
                     <PickCard key={`s-${r.id}`} meta={r} />
                   ))}
                 </Row>
+              ),
+            });
+          }
+          if (isAnime && anilistExtra && anilistExtra.relatedAnime.length > 0) {
+            railSections.push({
+              key: "animeRelated",
+              label: t("Related Anime"),
+              minHeight: 240,
+              node: (
+                <AnimeRelatedRail
+                  title={t("Related Anime")}
+                  nodes={anilistExtra.relatedAnime}
+                  onOpen={(node) =>
+                    openMeta({
+                      id: `anilist:${node.anilistId}`,
+                      type: node.format === "Movie" ? "movie" : "series",
+                      name: node.title,
+                      poster: node.poster ?? undefined,
+                    })
+                  }
+                />
+              ),
+            });
+          }
+          if (isAnime && anilistExtra && anilistExtra.adaptations.length > 0) {
+            railSections.push({
+              key: "animeAdaptations",
+              label: t("Adaptations"),
+              minHeight: 240,
+              node: (
+                <AnimeRelatedRail
+                  title={t("Adaptations")}
+                  nodes={anilistExtra.adaptations}
+                  badgeCollections
+                  onOpen={async (node) => {
+                    const { searchManga } = await import("@/lib/manga/api");
+                    const found = (await searchManga(node.title, 0))[0];
+                    openManga(found?.id);
+                  }}
+                />
               ),
             });
           }

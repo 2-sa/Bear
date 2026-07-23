@@ -44,9 +44,16 @@ const PRUNABLE_EXACT = new Set<string>([
   "harbor.surprise.recent.v1",
   "harbor.stremio-addons.velocity.v1",
   "harbor.playback-history.v1",
+  "harbor.manga.popular.v1",
 ]);
 
-const PRUNABLE_PREFIXES = ["harbor.libraryNameRepair.v1.", "harbor.anilist.collection.v1."];
+const PRUNABLE_PREFIXES = [
+  "harbor.libraryNameRepair.v1.",
+  "harbor.anilist.collection.v1.",
+  "harbor.manga.cache.v1.",
+  "harbor.manga.cache.v2.",
+  "harbor.manga.art.",
+];
 
 function isPrunable(key: string): boolean {
   if (PRUNABLE_EXACT.has(key)) return true;
