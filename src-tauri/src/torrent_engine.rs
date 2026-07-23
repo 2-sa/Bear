@@ -285,7 +285,13 @@ async fn init(app: AppHandle) -> Result<(), String> {
         .await
         .map_err(|e| e.to_string())?;
     let port = listener.local_addr().map_err(|e| e.to_string())?.port();
-    let router = stream_route::router(session.clone());
+    // The loopback server only serves unprefixed routes that enforce
+    // require_loopback(); the token is not exposed to any caller. A
+    // throwaway UUID satisfies the router signature and ensures the
+    // /access/{token}/ routes on this listener are unreachable even from
+    // loopback without knowing the token (defense in depth).
+    let loopback_token = uuid::Uuid::new_v4().simple().to_string();
+    let router = stream_route::router(session.clone(), loopback_token);
     let server = tokio::spawn(async move {
         if let Err(e) = axum::serve(listener, router).await {
             eprintln!("[torrent-engine] server error: {e}");
