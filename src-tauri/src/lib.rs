@@ -424,7 +424,7 @@ pub fn run() {
     // spawned children such as yt-dlp / mpv).
     // SAFETY: run() executes single-threaded before `tauri::Builder::run()`.
     std::env::set_var("DHT_QUERIES_PER_SECOND", "20");
-    #[cfg(windows)]
+    #[cfg(any(windows, target_os = "linux"))]
     svp::prime_svp_env();
     #[cfg(target_os = "linux")]
     mpv_render_linux::configure_nvidia_graphics();
