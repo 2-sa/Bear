@@ -8,12 +8,15 @@ import { awardTypeLabel } from "@/lib/providers/wikidata";
 import { awardSourceMeta } from "@/lib/anime-awards";
 import { tmdbPerson, tmdbPersonCached } from "@/lib/providers/tmdb/tmdb-people";
 import type { Meta } from "@/lib/cinemeta";
-import { configureDiscord, setBrowsePresence, setPartyPresence, type BrowsePresence } from "./presence";
+import {
+  configureDiscord,
+  setBrowsePresence,
+  setPartyPresence,
+  type BrowsePresence,
+} from "./presence";
 import { useActivityHint } from "./activity-hint";
+import { controlledAssetUrl } from "@/lib/network-config";
 
-const JOIN_BASE = "https://app.harbor.site";
-
-const AWARD_IMG = "https://harbor.site/discord/awards";
 const NORMAL_AWARD_IMG: Record<string, string> = {
   oscar: "oscar.png",
   emmy: "emmy.png",
@@ -65,7 +68,8 @@ function filterBrowse(f: MetaFilter): BrowsePresence {
   const media = f.mediaType === "movie" ? "movies" : "shows";
   if (f.kind === "year") return { details: `Browsing ${f.value} ${media}` };
   if (f.kind === "runtime") return { details: `Browsing ${media} around ${f.value} min` };
-  if (f.kind === "country") return { details: `Browsing ${media} from ${f.name}`, largeText: f.name };
+  if (f.kind === "country")
+    return { details: `Browsing ${media} from ${f.name}`, largeText: f.name };
   return { details: `Browsing ${f.name} ${media}`, largeText: f.name };
 }
 
@@ -125,7 +129,7 @@ export function useDiscordPresence(): void {
       setBrowsePresence({
         details: `Browsing ${label}`,
         state: "Awards",
-        largeImage: file ? `${AWARD_IMG}/${file}?v=2` : undefined,
+        largeImage: file ? (controlledAssetUrl(`/discord/awards/${file}`) ?? undefined) : undefined,
         largeText: label,
       });
       return;
@@ -136,7 +140,7 @@ export function useDiscordPresence(): void {
       setBrowsePresence({
         details: name ? `Browsing ${name}` : "Browsing anime awards",
         state: "Awards",
-        largeImage: file ? `${AWARD_IMG}/${file}?v=2` : undefined,
+        largeImage: file ? (controlledAssetUrl(`/discord/awards/${file}`) ?? undefined) : undefined,
         largeText: name ?? "Anime awards",
       });
       return;
@@ -178,11 +182,11 @@ export function useDiscordPresence(): void {
       setPartyPresence(null);
       return;
     }
-    const joinUrl = relayUrl ? buildInviteUrl(relayUrl, snapshot.room, JOIN_BASE) : undefined;
+    const builtJoinUrl = relayUrl ? buildInviteUrl(relayUrl, snapshot.room) : "";
     setPartyPresence({
       id: snapshot.room,
       size: Math.max(1, snapshot.participants.length),
-      joinUrl,
+      joinUrl: builtJoinUrl || undefined,
     });
   }, [snapshot.state, snapshot.room, snapshot.participants.length, relayUrl]);
 }

@@ -1,6 +1,8 @@
+import { controlledAssetUrl } from "@/lib/network-config";
+
 const IS_TAURI = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
-const HARBOR_LOGO = "https://harbor.site/discord/harbordiscord.png";
+const HARBOR_LOGO = controlledAssetUrl("/discord/harbordiscord.png") ?? undefined;
 
 type DiscordConfig = {
   enabled: boolean;

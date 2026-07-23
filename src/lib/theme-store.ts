@@ -1,7 +1,7 @@
 import { parseThemeJson, saveCustomTheme, type CustomTheme } from "@/lib/custom-themes";
+import { validateControlledAssetUrl, workerRoutes } from "@/lib/network-config";
+import { safeFetch } from "@/lib/safe-fetch";
 
-const ORIGIN = "https://harbor.site";
-const API = `${ORIGIN}/themes/api`;
 const UPLOADS_KEY = "harbor.theme-uploads.v1";
 const CLIENT_KEY = "harbor.theme-client-id";
 
@@ -24,8 +24,7 @@ export type StoreTheme = {
 };
 
 function abs(u: string | null | undefined): string | null {
-  if (!u) return null;
-  return u.startsWith("http") ? u : `${ORIGIN}${u}`;
+  return validateControlledAssetUrl(u);
 }
 
 function normalize(t: Record<string, unknown>): StoreTheme {
@@ -37,28 +36,33 @@ function normalize(t: Record<string, unknown>): StoreTheme {
 }
 
 export function clientId(): string {
-  let id = localStorage.getItem(CLIENT_KEY);
+  let id = sessionStorage.getItem(CLIENT_KEY);
   if (!id) {
-    id = (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`).replace(/-/g, "").slice(0, 24);
-    localStorage.setItem(CLIENT_KEY, id);
+    id = (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`)
+      .replace(/-/g, "")
+      .slice(0, 24);
+    sessionStorage.setItem(CLIENT_KEY, id);
   }
   return id;
 }
 
 export async function browseThemes(sort = "top", q = ""): Promise<StoreTheme[]> {
-  const url = `${API}/themes?sort=${encodeURIComponent(sort)}${q ? `&q=${encodeURIComponent(q)}` : ""}`;
-  const r = await fetch(url);
+  const url = workerRoutes.themes(sort, q);
+  if (!url) throw new Error("The theme library is not configured.");
+  const r = await safeFetch(url);
   if (!r.ok) throw new Error("Could not reach the theme library.");
   const d = await r.json();
   return (d.themes || []).map(normalize);
 }
 
 export async function downloadTheme(id: string, preview?: string | null): Promise<CustomTheme> {
-  const r = await fetch(`${API}/themes/${id}/file`);
+  const url = workerRoutes.themeFile(id);
+  if (!url) throw new Error("The theme library is not configured.");
+  const r = await safeFetch(url);
   if (!r.ok) throw new Error("Download failed.");
   const parsed = parseThemeJson(await r.text());
   if (!parsed.ok) throw new Error(parsed.error);
-  const theme = preview ? { ...parsed.theme, previewImage: preview } : parsed.theme;
+  const theme = dataOnlyCommunityTheme(parsed.theme, preview);
   saveCustomTheme(theme);
   markUnseenDownload(theme.id);
   return theme;
@@ -106,7 +110,9 @@ export function subscribeUnseen(fn: () => void): () => void {
 }
 
 export async function rateTheme(id: string, value: number): Promise<StoreTheme> {
-  const r = await fetch(`${API}/themes/${id}/rate`, {
+  const url = workerRoutes.themeRate(id);
+  if (!url) throw new Error("The theme library is not configured.");
+  const r = await safeFetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ value, clientId: clientId() }),
@@ -148,19 +154,28 @@ export async function uploadTheme(
   screenshots: Blob[],
   author: string,
 ): Promise<{ id: string; ownerToken: string; share: string }> {
+  const url = workerRoutes.themeUpload();
+  if (!url) throw new Error("The theme library is not configured.");
+  const communityJson = dataOnlyCommunityJson(themeJson);
   const fd = new FormData();
-  fd.append("theme", new Blob([themeJson], { type: "application/json" }), "theme.json");
+  fd.append("theme", new Blob([communityJson], { type: "application/json" }), "theme.json");
   fd.append("cover", cover, "cover.png");
   for (const s of screenshots.slice(0, 6)) fd.append("screenshots", s, "shot.png");
   if (author) fd.append("author", author);
-  const r = await fetch(`${API}/themes`, { method: "POST", body: fd });
+  const r = await safeFetch(url, { method: "POST", body: fd });
   const d = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(d.error || "Upload failed.");
   return d;
 }
 
-export async function setVisibility(id: string, ownerToken: string, visibility: "public" | "unlisted"): Promise<void> {
-  const r = await fetch(`${API}/themes/${id}/visibility`, {
+export async function setVisibility(
+  id: string,
+  ownerToken: string,
+  visibility: "public" | "unlisted",
+): Promise<void> {
+  const url = workerRoutes.themeVisibility(id);
+  if (!url) throw new Error("The theme library is not configured.");
+  const r = await safeFetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${ownerToken}` },
     body: JSON.stringify({ visibility }),
@@ -169,10 +184,47 @@ export async function setVisibility(id: string, ownerToken: string, visibility: 
 }
 
 export async function deleteUpload(id: string, ownerToken: string): Promise<void> {
-  const r = await fetch(`${API}/themes/${id}/delete`, {
+  const url = workerRoutes.themeDelete(id);
+  if (!url) throw new Error("The theme library is not configured.");
+  const r = await safeFetch(url, {
     method: "POST",
     headers: { Authorization: `Bearer ${ownerToken}` },
   });
   if (!r.ok) throw new Error("Could not delete.");
   forgetUpload(id);
+}
+
+function dataOnlyCommunityTheme(theme: CustomTheme, preview?: string | null): CustomTheme {
+  const clean = { ...theme };
+  delete clean.css;
+  delete clean.js;
+  delete clean.html;
+  if (clean.background) {
+    const image = validateControlledAssetUrl(clean.background.image);
+    if (image) clean.background = { ...clean.background, image };
+    else delete clean.background;
+  }
+  if (clean.logo) {
+    const wordmark = validateControlledAssetUrl(clean.logo.wordmark);
+    const mark = validateControlledAssetUrl(clean.logo.mark);
+    if (wordmark || mark)
+      clean.logo = { ...(wordmark ? { wordmark } : {}), ...(mark ? { mark } : {}) };
+    else delete clean.logo;
+  }
+  const previewImage = validateControlledAssetUrl(preview);
+  if (previewImage) clean.previewImage = previewImage;
+  else delete clean.previewImage;
+  return clean;
+}
+
+function dataOnlyCommunityJson(themeJson: string): string {
+  const parsed = JSON.parse(themeJson) as unknown;
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw new Error("This theme is not valid community theme data.");
+  }
+  const data = { ...(parsed as Record<string, unknown>) };
+  delete data.css;
+  delete data.js;
+  delete data.html;
+  return JSON.stringify(data);
 }

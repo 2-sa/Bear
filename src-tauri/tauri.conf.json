@@ -111,7 +111,7 @@
       }
     },
     "updater": {
-      "endpoints": ["https://harbor.site/updates/latest.json"],
+      "endpoints": ["https://harbor-api-proxy.xyz7.workers.dev/v1/updates/latest.json"],
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEIyNjlEMjU4NjQ4OTM2MjAKUldRZ05vbGtXTkpwc3ZDQnlvZUYyL2VEWHgwODdJa2dkZ2xlNWk3emRWL1V0dXVrcUJlVmhCWEUK",
       "windows": {
         "installMode": "passive"

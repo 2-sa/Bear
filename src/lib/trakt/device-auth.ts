@@ -1,8 +1,5 @@
-import {
-  TRAKT_API_BASE,
-  TRAKT_CLIENT_ID,
-  TRAKT_DEVICE_TOKEN_PROXY,
-} from "./config";
+import { TRAKT_API_BASE, TRAKT_CLIENT_ID, TRAKT_DEVICE_TOKEN_PROXY } from "./config";
+import { safeFetch } from "@/lib/safe-fetch";
 import { setSession } from "./session";
 import type { DeviceCode, TraktSession, TraktUserMe } from "./types";
 
@@ -11,7 +8,7 @@ const baseHeaders = (): HeadersInit => ({
 });
 
 export async function requestDeviceCode(): Promise<DeviceCode> {
-  const res = await fetch(`${TRAKT_API_BASE}/oauth/device/code`, {
+  const res = await safeFetch(`${TRAKT_API_BASE}/oauth/device/code`, {
     method: "POST",
     headers: baseHeaders(),
     body: JSON.stringify({ client_id: TRAKT_CLIENT_ID }),
@@ -44,7 +41,10 @@ export type PollResult =
   | { kind: "error"; message: string };
 
 async function pollOnce(deviceCode: string): Promise<PollResult> {
-  const res = await fetch(TRAKT_DEVICE_TOKEN_PROXY, {
+  if (!TRAKT_DEVICE_TOKEN_PROXY) {
+    return { kind: "error", message: "Trakt sign-in proxy is not configured." };
+  }
+  const res = await safeFetch(TRAKT_DEVICE_TOKEN_PROXY, {
     method: "POST",
     headers: baseHeaders(),
     body: JSON.stringify({
@@ -118,7 +118,7 @@ export function pollForToken(
 }
 
 export async function fetchUsername(session: TraktSession): Promise<string | null> {
-  const res = await fetch(`${TRAKT_API_BASE}/users/me`, {
+  const res = await safeFetch(`${TRAKT_API_BASE}/users/me`, {
     headers: {
       "Content-Type": "application/json",
       "trakt-api-version": "2",

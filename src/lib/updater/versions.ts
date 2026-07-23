@@ -1,7 +1,7 @@
+import { workerRoutes } from "@/lib/network-config";
+import { validateControlledDownloadUrl } from "@/lib/network-config";
 import { isMacDesktop, isWindowsDesktop } from "@/lib/platform";
 import { safeFetch } from "@/lib/safe-fetch";
-
-const INDEX_URL = "https://harbor.site/updates/versions-beta.json";
 
 export type VersionEntry = {
   version: string;
@@ -15,7 +15,9 @@ export type VersionEntry = {
 export const currentVersion = __APP_VERSION__;
 
 export async function fetchVersionHistory(): Promise<VersionEntry[]> {
-  const res = await safeFetch(INDEX_URL, { cache: "no-store" });
+  const url = workerRoutes.updateVersions();
+  if (!url) throw new Error("Version history service is not configured.");
+  const res = await safeFetch(url, { cache: "no-store" });
   if (!res.ok) throw new Error(`history ${res.status}`);
   const data = (await res.json()) as { versions?: VersionEntry[] };
   const list = Array.isArray(data.versions) ? data.versions : [];
@@ -23,7 +25,7 @@ export async function fetchVersionHistory(): Promise<VersionEntry[]> {
 }
 
 export function installerUrl(entry: VersionEntry): string | null {
-  if (isWindowsDesktop()) return entry.win ?? null;
-  if (isMacDesktop()) return entry.mac ?? null;
+  if (isWindowsDesktop()) return validateControlledDownloadUrl(entry.win);
+  if (isMacDesktop()) return validateControlledDownloadUrl(entry.mac);
   return null;
 }

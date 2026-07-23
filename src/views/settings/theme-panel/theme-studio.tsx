@@ -24,6 +24,7 @@ import {
 import { useSettings } from "@/lib/settings";
 import { pushOverlayPin } from "@/lib/overlay-pin";
 import { pushActivityHint } from "@/lib/discord/activity-hint";
+import { sanitizeThemeHtml } from "@/lib/security";
 
 function cssColorToHex(input: string): string {
   const s = input.trim();
@@ -197,7 +198,11 @@ export function ThemeStudio({ seed, onClose }: { seed?: ThemePreset; onClose: ()
       overlay.style.cssText = "position:fixed;inset:0;z-index:59;pointer-events:none;";
       document.body.appendChild(overlay);
     }
-    overlay.innerHTML = draft.layout === "custom" ? draft.html : "";
+    // F-6: sanitize the custom-layout HTML through DOMPurify before it
+    // reaches the overlay root. Raw `innerHTML` here would otherwise let a
+    // malicious theme (or a crafted `.harborstyle` import) inject `<script>`,
+    // inline event handlers, or iframes into the main window.
+    overlay.innerHTML = draft.layout === "custom" ? sanitizeThemeHtml(draft.html) : "";
   }, [draft.html, draft.layout]);
 
   useEffect(() => {

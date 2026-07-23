@@ -34,9 +34,7 @@ export function InvitePanel({
       <div className="flex flex-col gap-3 rounded-xl border border-edge bg-canvas/60 p-3.5">
         <p className="text-[13px] text-ink">{t("Start a room first.")}</p>
         <p className="text-[12px] leading-snug text-ink-muted">
-          {t(
-            "Once you're in a room you can copy a link that joins anyone instantly: it sets the relay URL and the room code in one click.",
-          )}
+          {t("Once you're in a room you can copy a link with the relay URL and room code.")}
         </p>
         <button
           onClick={onClose}
@@ -51,7 +49,9 @@ export function InvitePanel({
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-edge bg-canvas/60 p-3.5">
       <div className="flex flex-col gap-1.5">
-        <span className="text-[10.5px] uppercase tracking-wider text-ink-subtle">{t("Invite link")}</span>
+        <span className="text-[10.5px] uppercase tracking-wider text-ink-subtle">
+          {t("Invite link")}
+        </span>
         <input
           readOnly
           value={inviteUrl}
@@ -77,7 +77,7 @@ export function InvitePanel({
       </button>
       <p className="text-[11.5px] leading-snug text-ink-subtle">
         {t(
-          "Anyone who opens this link gets the relay URL and room code set automatically. Works in the browser too: no install required for the joiner.",
+          "Invite links join automatically only when the relay is already trusted. Works in the browser too: no install required for the joiner.",
         )}
       </p>
     </div>

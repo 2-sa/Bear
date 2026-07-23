@@ -38,6 +38,7 @@ mod streams;
 mod stremio_auth;
 mod sub_extract;
 mod subsync;
+mod security;
 mod svp;
 mod thumbs;
 mod torrent_engine;
@@ -106,8 +107,12 @@ async fn deeplink_is_stremio_registered(app: tauri::AppHandle) -> Result<bool, S
 }
 
 #[tauri::command]
-async fn save_text_file(path: String, contents: String) -> Result<(), String> {
-    let target = std::path::PathBuf::from(&path);
+async fn save_text_file(app: tauri::AppHandle, path: String, contents: String) -> Result<(), String> {
+    // Filesystem gate — restrict writes to a small allowlist of known-safe
+    // filenames inside app-owned directories. Prevents a compromised frontend
+    // from dropping arbitrary files (executables, ssh keys, shell rc) on the
+    // host via this command.
+    let target = crate::security::assert_safe_text_dest(&app, &path)?;
     if let Some(parent) = target.parent() {
         if !parent.as_os_str().is_empty() {
             std::fs::create_dir_all(parent).map_err(|e| format!("create folder: {}", e))?;
@@ -413,6 +418,12 @@ pub fn run() {
             }
         }
     }
+    // SSRF-safe DHT tuning: set ONCE before any tokio threads spawn so we
+    // never mutate a shared process env after multi-threading begins (which
+    // is unsafe per Rust env::set_var contract and would also leak into
+    // spawned children such as yt-dlp / mpv).
+    // SAFETY: run() executes single-threaded before `tauri::Builder::run()`.
+    std::env::set_var("DHT_QUERIES_PER_SECOND", "20");
     #[cfg(windows)]
     svp::prime_svp_env();
     #[cfg(target_os = "linux")]

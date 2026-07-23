@@ -17,8 +17,8 @@
     <mediatype>x-scheme-handler/harbor</mediatype>
     <mediatype>x-scheme-handler/stremio</mediatype>
   </provides>
-  <url type="homepage">https://harbor.site/</url>
-  <url type="bugtracker">https://github.com/harborstremio/harbor/issues</url>
+  <url type="homepage">https://github.com/2-sa/Bear</url>
+  <url type="bugtracker">https://github.com/2-sa/Bear/issues</url>
   <content_rating type="oars-1.1" />
   <releases>
     <release version="0.9.21" date="2026-07-13" />

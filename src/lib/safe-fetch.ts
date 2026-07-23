@@ -1,7 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { fetch as tauriFetchImpl } from "@tauri-apps/plugin-http";
 import { TrackerBlockedError, isBlockedUrl, noteBlocked } from "./privacy/blocklist";
-import { canFallbackAfterNativeFetchError } from "./safe-fetch-policy";
 
 const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
@@ -76,11 +75,25 @@ type HarborFetchResponse = {
   contentType: string | null;
 };
 
+const MAX_NATIVE_REQUEST_BYTES = 16 * 1024 * 1024;
+
+function bytesToBase64(bytes: Uint8Array): string {
+  let binary = "";
+  for (let offset = 0; offset < bytes.length; offset += 0x8000) {
+    binary += String.fromCharCode(...bytes.subarray(offset, offset + 0x8000));
+  }
+  return btoa(binary);
+}
+
 function abortError(): DOMException {
   return new DOMException("The operation was aborted", "AbortError");
 }
 
-async function tauriHarborFetch(input: string, init?: RequestInit): Promise<Response> {
+async function tauriHarborFetch(
+  input: string,
+  init?: RequestInit,
+  allowPrivate = false,
+): Promise<Response> {
   if (init?.signal?.aborted) {
     throw abortError();
   }
@@ -92,14 +105,27 @@ async function tauriHarborFetch(input: string, init?: RequestInit): Promise<Resp
       headers[k] = v;
     });
   }
-  const body =
-    typeof init?.body === "string"
-      ? init.body
-      : init?.body instanceof URLSearchParams
-        ? init.body.toString()
-        : init?.body
-          ? JSON.stringify(init.body)
-          : undefined;
+  let body: string | undefined;
+  let bodyBase64: string | undefined;
+  if (typeof init?.body === "string") {
+    body = init.body;
+  } else if (init?.body instanceof URLSearchParams) {
+    body = init.body.toString();
+  } else if (init?.body) {
+    const encoded = new Request(input, {
+      method: init.method ?? "POST",
+      headers,
+      body: init.body,
+    });
+    encoded.headers.forEach((value, key) => {
+      headers[key] = value;
+    });
+    const bytes = new Uint8Array(await encoded.arrayBuffer());
+    if (bytes.byteLength > MAX_NATIVE_REQUEST_BYTES) {
+      throw new Error(`request body exceeds ${MAX_NATIVE_REQUEST_BYTES} bytes`);
+    }
+    bodyBase64 = bytesToBase64(bytes);
+  }
   const nativeRequest = invoke<HarborFetchResponse>("harbor_fetch", {
     args: {
       url: input,
@@ -107,6 +133,8 @@ async function tauriHarborFetch(input: string, init?: RequestInit): Promise<Resp
       method: init?.method ?? "GET",
       headers,
       body,
+      bodyBase64,
+      allowPrivate,
       timeoutMs: 30000,
     },
   });
@@ -131,11 +159,6 @@ async function tauriHarborFetch(input: string, init?: RequestInit): Promise<Resp
   });
 }
 
-function isIdempotent(method: string | undefined): boolean {
-  const m = (method ?? "GET").toUpperCase();
-  return m === "GET" || m === "HEAD" || m === "OPTIONS";
-}
-
 export const safeFetch: typeof fetch = (input, init) => {
   const target = typeof input === "string" ? input : input instanceof URL ? input.href : null;
   if (target && isBlockedUrl(target)) {
@@ -148,18 +171,6 @@ export const safeFetch: typeof fetch = (input, init) => {
   }
   if (isTauri) {
     if (typeof input === "string") {
-      if (isIdempotent(init?.method)) {
-        return tauriHarborFetch(input, init).catch((error) => {
-          if (
-            init?.signal?.aborted ||
-            (error instanceof DOMException && error.name === "AbortError")
-          ) {
-            throw abortError();
-          }
-          if (!canFallbackAfterNativeFetchError(error)) throw error;
-          return tauriFetchImpl(input as string, init as RequestInit) as Promise<Response>;
-        });
-      }
       return tauriHarborFetch(input, init);
     }
     return tauriFetchImpl(input as unknown as string, init as RequestInit) as Promise<Response>;
@@ -169,4 +180,18 @@ export const safeFetch: typeof fetch = (input, init) => {
     return fetch(r.url, r.init);
   }
   return fetch(input, init);
+};
+
+export const trustedLocalFetch: typeof fetch = (input, init) => {
+  const target = typeof input === "string" ? input : input instanceof URL ? input.href : null;
+  if (target && isBlockedUrl(target)) {
+    noteBlocked();
+    let host = target;
+    try {
+      host = new URL(target).hostname;
+    } catch {}
+    return Promise.reject(new TrackerBlockedError(host));
+  }
+  if (isTauri && target) return tauriHarborFetch(target, init, true);
+  return safeFetch(input, init);
 };

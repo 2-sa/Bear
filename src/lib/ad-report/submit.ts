@@ -1,8 +1,7 @@
+import { workerRoutes } from "@/lib/network-config";
 import { safeFetch } from "@/lib/safe-fetch";
 import { fingerprint } from "@/lib/skip-intro/fingerprint";
 import type { PlayerStreamRef } from "@/lib/view";
-
-const REPORT_URL = "https://bugs.harbor.site/v1/adreport";
 
 export type AdRange = { startSec: number; endSec: number };
 
@@ -13,7 +12,8 @@ export async function submitAdReport(input: {
   url: string;
   ranges: AdRange[];
 }): Promise<boolean> {
-  if (!REPORT_URL) return false;
+  const reportUrl = workerRoutes.adReport();
+  if (!reportUrl) return false;
   const { content, source } = fingerprint(input.metaId, input.imdbId, input.streamRef, input.url);
   if (!source.startsWith("ih_") && !source.startsWith("rg_")) return false;
   const ranges = input.ranges
@@ -24,7 +24,7 @@ export async function submitAdReport(input: {
     .filter((r) => r.end > r.start);
   if (ranges.length === 0) return false;
   try {
-    const res = await safeFetch(REPORT_URL, {
+    const res = await safeFetch(reportUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ content, source, ranges }),

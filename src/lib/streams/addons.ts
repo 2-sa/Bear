@@ -1,4 +1,4 @@
-import { safeFetch as fetch } from "@/lib/safe-fetch";
+import { trustedLocalFetch as fetch } from "@/lib/safe-fetch";
 import type { Addon } from "@/lib/addons";
 import { dlog, dwarn } from "@/lib/debug";
 import { isAddonRanked, isStatusOnlyAddon } from "./addon-detect";

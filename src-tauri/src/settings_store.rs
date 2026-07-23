@@ -18,6 +18,15 @@ pub fn settings_read(app: tauri::AppHandle) -> Result<Option<String>, String> {
 
 #[tauri::command]
 pub fn settings_write(app: tauri::AppHandle, content: String) -> Result<(), String> {
+    // F-8: Schema validation. Reject malformed JSON or a non-object root
+    // before writing to disk so a corrupted or malicious blob can't crash
+    // the frontend on next read or bypass expected field types.
+    if serde_json::from_str::<serde_json::Value>(&content).is_err() {
+        return Err("settings_write: content is not valid JSON".to_string());
+    }
+    if serde_json::from_str::<serde_json::Map<String, serde_json::Value>>(&content).is_err() {
+        return Err("settings_write: root must be a JSON object".to_string());
+    }
     let path = settings_path(&app)?;
     let tmp = path.with_extension("json.tmp");
     std::fs::write(&tmp, content.as_bytes()).map_err(|e| e.to_string())?;

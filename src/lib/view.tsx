@@ -209,6 +209,7 @@ export type SettingsSection =
   | "streaming"
   | "language"
   | "player"
+  | "bug"
   | "advanced";
 
 type ViewValue = {

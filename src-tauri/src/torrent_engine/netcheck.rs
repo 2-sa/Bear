@@ -1,30 +1,47 @@
 use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::{Mutex, OnceLock};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use librqbit::dht::Dht;
 use serde::Serialize;
 use tokio::net::UdpSocket;
-use tokio::time::{sleep, timeout, Instant};
+use tokio::time::{sleep, timeout};
 
-fn dns_cache() -> &'static Mutex<HashMap<String, Vec<SocketAddr>>> {
-    static CACHE: OnceLock<Mutex<HashMap<String, Vec<SocketAddr>>>> = OnceLock::new();
+/// DNS cache entry with a bounded lifetime so stale records do not survive
+/// DNS changes for the entire app lifetime — B-5 in HARBOR_MASTER_MAP.md.
+const DNS_CACHE_TTL: Duration = Duration::from_secs(300);
+
+struct DnsCacheEntry {
+    addrs: Vec<SocketAddr>,
+    inserted_at: Instant,
+}
+
+fn dns_cache() -> &'static Mutex<HashMap<String, DnsCacheEntry>> {
+    static CACHE: OnceLock<Mutex<HashMap<String, DnsCacheEntry>>> = OnceLock::new();
     CACHE.get_or_init(|| Mutex::new(HashMap::new()))
 }
 
 async fn lookup_cached(host_port: &str) -> Option<SocketAddr> {
     if let Ok(cache) = dns_cache().lock() {
-        if let Some(addrs) = cache.get(host_port) {
-            if let Some(addr) = addrs.first() {
-                return Some(*addr);
+        if let Some(entry) = cache.get(host_port) {
+            if entry.inserted_at.elapsed() < DNS_CACHE_TTL {
+                if let Some(addr) = entry.addrs.first() {
+                    return Some(*addr);
+                }
             }
         }
     }
     let result = tokio::net::lookup_host(host_port).await.ok()?.next();
     if let Some(addr) = result {
         if let Ok(mut cache) = dns_cache().lock() {
-            cache.entry(host_port.to_string()).or_default().push(addr);
+            cache.insert(
+                host_port.to_string(),
+                DnsCacheEntry {
+                    addrs: vec![addr],
+                    inserted_at: Instant::now(),
+                },
+            );
         }
         return Some(addr);
     }
@@ -152,13 +169,13 @@ async fn https_step() -> NetStep {
             }
         }
     }
-    if client.get("https://harbor.site").send().await.is_ok() {
-        return degraded(
-            "https egress",
-            "no HTTPS tracker replied but HTTPS works (trackers may be temporarily down)",
-        );
-    }
-    st("https egress", false, "no HTTPS tracker reachable")
+    // S-10 fix: removed the undeclared outbound dependency on
+    // The legacy developer endpoint is no longer contacted; netcheck reports based solely on
+    // whether the known HTTPS trackers are reachable.
+    degraded(
+        "https egress",
+        "no HTTPS tracker replied (trackers may be temporarily down; UDP/DHT may still work)",
+    )
 }
 
 fn announce_host(url: &str) -> Option<&str> {

@@ -33,6 +33,7 @@ struct EngineState {
     sweeper: Option<CacheSweeper>,
     lan_server: Option<tokio::task::JoinHandle<()>>,
     lan_port: Option<u16>,
+    lan_token: Option<String>,
     lan_error: Option<String>,
 }
 
@@ -50,9 +51,17 @@ fn engine() -> &'static Mutex<EngineState> {
             sweeper: None,
             lan_server: None,
             lan_port: None,
+            lan_token: None,
             lan_error: None,
         })
     })
+}
+
+/// Recover from a poisoned engine mutex instead of panicking. A single panic
+/// during a lock must not permanently disable the torrent engine for the
+/// session — see B-2 in HARBOR_MASTER_MAP.md.
+fn engine_lock() -> std::sync::MutexGuard<'static, EngineState> {
+    engine().lock().unwrap_or_else(|poisoned| poisoned.into_inner())
 }
 
 pub const LAN_SERVER_PORT: u16 = 11470;
@@ -133,15 +142,15 @@ fn spawn_cache_sweeper(app: AppHandle) -> CacheSweeper {
 }
 
 fn current_session() -> Option<Arc<Session>> {
-    engine().lock().unwrap().session.clone()
+    engine_lock().session.clone()
 }
 
 fn current_side_dht() -> Option<Dht> {
-    engine().lock().unwrap().side_dht.clone()
+    engine_lock().side_dht.clone()
 }
 
 fn current_port() -> Option<u16> {
-    engine().lock().unwrap().port
+    engine_lock().port
 }
 
 #[derive(Serialize)]
@@ -236,17 +245,17 @@ fn read_config(app: &AppHandle) -> EngineConfig {
 }
 
 fn engine_dir(app: &AppHandle, cfg: &EngineConfig) -> Result<std::path::PathBuf, String> {
-    if let Some(custom) = cfg.dir.as_deref().map(str::trim).filter(|s| !s.is_empty()) {
-        return Ok(std::path::PathBuf::from(custom).join("harbor-stream-cache"));
-    }
-    app.path()
-        .app_cache_dir()
-        .map_err(|e| e.to_string())
-        .map(|d| d.join("engine"))
+    // Security chokepoint: route every engine cache resolution through the
+    // shared canonicalizing validator so a tampered `engine.json` cannot
+    // point `hard_reset` at an arbitrary directory for `remove_dir_all`.
+    crate::security::assert_safe_engine_dir(app, cfg.dir.as_deref())
 }
 
 async fn init(app: AppHandle) -> Result<(), String> {
-    std::env::set_var("DHT_QUERIES_PER_SECOND", "20");
+    // DHT_QUERIES_PER_SECOND is set once at process startup in lib.rs::run()
+    // before any tokio threads spawn. Mutating process env here (inside an
+    // async task that may run after threads exist) is unsafe and leaks the
+    // var into spawned children — see S-8 in HARBOR_MASTER_MAP.md.
     let cfg = read_config(&app);
     let dir = engine_dir(&app, &cfg)?;
     std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
@@ -283,7 +292,7 @@ async fn init(app: AppHandle) -> Result<(), String> {
         }
     });
     let sweeper = spawn_cache_sweeper(app.clone());
-    let mut st = engine().lock().unwrap();
+    let mut st = engine_lock();
     if let Some(old) = st.server.take() {
         old.abort();
     }
@@ -316,7 +325,7 @@ async fn ensure_session(app: &AppHandle) -> Result<Arc<Session>, String> {
 pub fn ensure_started_on_setup(app: &AppHandle) {
     if crate::settings_store::read_torrents_disabled(app) {
         eprintln!("[torrent-engine] torrents disabled in settings — skipping engine init");
-        let mut st = engine().lock().unwrap();
+        let mut st = engine_lock();
         st.ready = false;
         st.last_error = Some("torrents disabled in settings".to_string());
         return;
@@ -325,7 +334,7 @@ pub fn ensure_started_on_setup(app: &AppHandle) {
     tauri::async_runtime::spawn(async move {
         if let Err(e) = init(app).await {
             eprintln!("[torrent-engine] init failed: {e}");
-            let mut st = engine().lock().unwrap();
+            let mut st = engine_lock();
             st.ready = false;
             st.last_error = Some(e);
         }
@@ -333,7 +342,7 @@ pub fn ensure_started_on_setup(app: &AppHandle) {
 }
 
 pub fn stop() {
-    let mut st = engine().lock().unwrap();
+    let mut st = engine_lock();
     if let Some(server) = st.server.take() {
         server.abort();
     }
@@ -350,7 +359,7 @@ pub fn stop() {
 #[tauri::command]
 pub fn torrent_engine_status() -> EngineStatusDto {
     let (port, ready, last_error, dht_tier) = {
-        let st = engine().lock().unwrap();
+        let st = engine_lock();
         (st.port, st.ready, st.last_error.clone(), st.dht_tier)
     };
     let active_torrents = current_session()
@@ -527,41 +536,64 @@ pub(crate) async fn ensure_added(
 }
 
 pub fn lan_status() -> (bool, Option<u16>, Option<String>) {
-    let st = engine().lock().unwrap();
+    let st = engine_lock();
     (st.lan_server.is_some(), st.lan_port, st.lan_error.clone())
+}
+
+pub fn lan_url() -> Option<String> {
+    let (port, token) = {
+        let st = engine_lock();
+        if st.lan_server.is_none() {
+            return None;
+        }
+        (st.lan_port?, st.lan_token.clone()?)
+    };
+    let host = crate::stream_proxy::lan_ip()?;
+    Some(format!("http://{host}:{port}/access/{token}"))
 }
 
 pub async fn start_lan_server(app: &AppHandle) -> Result<u16, String> {
     let session = ensure_session(app).await?;
     stop_lan_server();
-    let listener = match TcpListener::bind(SocketAddr::from(([0, 0, 0, 0], LAN_SERVER_PORT))).await
+    let token = uuid::Uuid::new_v4().simple().to_string();
+    // Starting the cast server is the explicit opt-in. LAN requests must use
+    // the rotating token; unprefixed compatibility routes accept loopback only.
+    let listener = match TcpListener::bind(SocketAddr::from(([0, 0, 0, 0], LAN_SERVER_PORT)))
+        .await
     {
         Ok(l) => l,
         Err(e) => {
             let msg = format!("port {LAN_SERVER_PORT} unavailable: {e}");
-            engine().lock().unwrap().lan_error = Some(msg.clone());
+            engine_lock().lan_error = Some(msg.clone());
             return Err(msg);
         }
     };
-    let router = stream_route::router(session);
+    let router = stream_route::router(session, token.clone());
     let server = tokio::spawn(async move {
-        if let Err(e) = axum::serve(listener, router).await {
+        if let Err(e) = axum::serve(
+            listener,
+            router.into_make_service_with_connect_info::<SocketAddr>(),
+        )
+        .await
+        {
             eprintln!("[torrent-engine] lan server error: {e}");
         }
     });
-    let mut st = engine().lock().unwrap();
+    let mut st = engine_lock();
     st.lan_server = Some(server);
     st.lan_port = Some(LAN_SERVER_PORT);
+    st.lan_token = Some(token);
     st.lan_error = None;
     Ok(LAN_SERVER_PORT)
 }
 
 pub fn stop_lan_server() {
-    let mut st = engine().lock().unwrap();
+    let mut st = engine_lock();
     if let Some(h) = st.lan_server.take() {
         h.abort();
     }
     st.lan_port = None;
+    st.lan_token = None;
 }
 
 #[tauri::command]
@@ -650,7 +682,7 @@ pub async fn torrent_engine_hard_reset(app: AppHandle) -> Result<EngineStatusDto
     if let Ok(dir) = engine_dir(&app, &cfg) {
         let _ = std::fs::remove_dir_all(&dir);
     }
-    engine().lock().unwrap().last_error = None;
+    engine_lock().last_error = None;
     init(app).await?;
     Ok(torrent_engine_status())
 }

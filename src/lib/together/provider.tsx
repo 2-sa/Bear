@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { useSettings } from "@/lib/settings";
+import { NETWORK_CONFIG, validateRelayUrl } from "@/lib/network-config";
 import { randomUuid } from "@/lib/uuid";
 import { TogetherClient, type RoomEvent, type RoomSnapshot } from "./client";
 import { useSelfIdentity } from "./use-self-identity";
@@ -154,7 +155,7 @@ async function resolveShareableAvatar(a: string | null): Promise<string | null> 
 export function TogetherProvider({ children }: { children: ReactNode }) {
   const { settings, update } = useSettings();
   const { avatar: effectiveAvatar, color: effectiveColor } = useSelfIdentity();
-  const relayUrl = settings.togetherRelayUrl;
+  const relayUrl = validateRelayUrl(settings.togetherRelayUrl) ?? "";
 
   const clientIdRef = useRef<string>(loadOrInitClientId());
   const [displayName, setDisplayNameState] = useState<string>(loadOrInitName());
@@ -292,14 +293,18 @@ export function TogetherProvider({ children }: { children: ReactNode }) {
     void (async () => {
       const invite = parseInviteFromLocation();
       if (!invite) return;
-      pendingInviteRef.current = invite;
       clearInviteParams();
+      const trustedRelay =
+        invite.relayUrl === settings.togetherRelayUrl ||
+        invite.relayUrl === NETWORK_CONFIG.publicRelayUrl;
+      setModalOpen(true);
+      if (!trustedRelay) return;
+      pendingInviteRef.current = invite;
       if (settings.togetherRelayUrl !== invite.relayUrl) {
         update({ togetherRelayUrl: invite.relayUrl });
       }
-      setModalOpen(true);
     })();
-  }, []);
+  }, [settings.togetherRelayUrl, update]);
 
   useEffect(() => {
     const pending = pendingInviteRef.current;

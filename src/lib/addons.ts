@@ -1,4 +1,4 @@
-import { safeFetch as fetch } from "@/lib/safe-fetch";
+import { trustedLocalFetch as fetch } from "@/lib/safe-fetch";
 import type { Meta } from "./cinemeta";
 import { fetchManifestAt, filterEnabled, loadInstalled } from "./addon-store";
 

@@ -6,6 +6,7 @@ import { deleteRelay } from "@/lib/together/cf-deploy";
 import { HARBOR_PUBLIC_RELAY, isPublicRelay } from "@/lib/together/relay-version";
 import { useSettings } from "@/lib/settings";
 import { useT } from "@/lib/i18n";
+import { validateRelayUrl } from "@/lib/network-config";
 import { downloadText } from "@/lib/download-text";
 import { useRelayHealth } from "./relay-panel/use-relay-health";
 
@@ -38,8 +39,8 @@ export function TogetherRelayPanel({
   const isPubRelay = hasUrl && isPublicRelay(settings.togetherRelayUrl);
 
   const commitDraftUrl = () => {
-    const v = draftUrl.trim();
-    if (v) update({ togetherRelayUrl: v });
+    const relay = validateRelayUrl(draftUrl);
+    if (relay) update({ togetherRelayUrl: relay });
   };
   const isManaged = settings.togetherCfDeployed && !!settings.togetherCfToken && !!settings.togetherCfAccountId;
 
@@ -339,7 +340,7 @@ export function TogetherRelayPanel({
             </button>
           </div>
           <p className="text-[11.5px] leading-relaxed text-ink-subtle">
-            {t("Only enter URLs for relays you operate or trust. A relay only carries Watch Together sync messages (play, pause, seek). Nothing else passes through it.")}
+            {t("Relays receive participant profiles, chat, viewing and source metadata, playback state, presence, cursors, and drawings. Harbor accepts only your configured public relay or Cloudflare workers.dev relays.")}
           </p>
           <div className="flex flex-col gap-2 rounded-xl border border-edge-soft bg-canvas/40 px-3.5 py-3">
             <span className="text-[12px] text-ink-muted">
@@ -347,6 +348,7 @@ export function TogetherRelayPanel({
             </span>
             <button
               onClick={() => update({ togetherRelayUrl: HARBOR_PUBLIC_RELAY })}
+              disabled={!HARBOR_PUBLIC_RELAY}
               className="flex h-9 w-fit items-center gap-1.5 rounded-lg border border-edge px-3 text-[12.5px] text-ink-muted transition-colors hover:bg-elevated hover:text-ink"
             >
               <Radio size={13} strokeWidth={1.9} />
@@ -381,5 +383,4 @@ export function TogetherRelayPanel({
     </>
   );
 }
-
 

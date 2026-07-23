@@ -7,6 +7,7 @@ import { useTogether } from "@/lib/together/provider";
 import { useSelfIdentity } from "@/lib/together/use-self-identity";
 import { useView } from "@/lib/view";
 import { useT } from "@/lib/i18n";
+import { NETWORK_CONFIG, validateRelayUrl } from "@/lib/network-config";
 import { Tooltip } from "@/views/detail/tooltip";
 import { Avatar } from "./together-modal/avatar";
 import { ChatPanel } from "./together-modal/chat-panel";
@@ -103,10 +104,18 @@ export function TogetherPopover({
         const relay = url.searchParams.get("harbor-relay");
         const room = url.searchParams.get("harbor-room");
         if (relay && room) {
-          if (settings.togetherRelayUrl !== relay) {
-            update({ togetherRelayUrl: relay });
-          }
+          const validatedRelay = validateRelayUrl(relay);
           setJoinCode(room.toUpperCase());
+          if (
+            !validatedRelay ||
+            (validatedRelay !== settings.togetherRelayUrl &&
+              validatedRelay !== NETWORK_CONFIG.publicRelayUrl)
+          ) {
+            return;
+          }
+          if (settings.togetherRelayUrl !== validatedRelay) {
+            update({ togetherRelayUrl: validatedRelay });
+          }
           setTimeout(() => joinSession(room), 200);
           return;
         }
@@ -198,7 +207,7 @@ export function TogetherPopover({
               </p>
               <p className={`mt-1 text-[12px] leading-relaxed ${mutedTextClass}`}>
                 {t(
-                  "A relay is a tiny Cloudflare Worker that passes play/pause/seek messages between you and your friends. No video data ever touches it. Deploy your own in one click (free tier is plenty), or paste a friend's invite link to use theirs.",
+                  "A relay carries profiles, chat, viewing and source metadata, playback state, presence, cursors, and drawings between participants. No video bytes pass through it. Use only a relay you trust.",
                 )}
               </p>
             </div>

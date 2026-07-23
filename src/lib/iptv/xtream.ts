@@ -89,8 +89,8 @@ async function xtreamFetchText(url: string): Promise<string> {
       } as unknown as RequestInit);
     } catch (e) {
       if (!/scope|not allowed/i.test(String(e))) throw e;
-      const { safeFetch } = await import("@/lib/safe-fetch");
-      res = await safeFetch(url, {
+      const { trustedLocalFetch } = await import("@/lib/safe-fetch");
+      res = await trustedLocalFetch(url, {
         headers: { "User-Agent": XTREAM_UA, Accept: "application/json, */*" },
       });
     }

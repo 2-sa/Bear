@@ -1,5 +1,16 @@
 const WORKER_VERSION = 11;
-const MAX_AVATAR_LENGTH = 600_000;
+const MAX_AVATAR_LENGTH = 128_000;
+const MAX_MESSAGE_LENGTH = 256_000;
+const MAX_CURSOR_PATH_LENGTH = 512;
+const MAX_DRAW_PATH_LENGTH = 8_192;
+const MAX_LOCATION_LENGTH = 1_024;
+const MESSAGE_WINDOW_MS = 1_000;
+const MESSAGE_WINDOW_LIMIT = 30;
+const TAURI_ORIGINS = new Set([
+  "tauri://localhost",
+  "http://tauri.localhost",
+  "https://tauri.localhost",
+]);
 
 function sanitizeAvatar(v) {
   if (typeof v !== "string") return null;
@@ -26,35 +37,36 @@ function sanitizeColor(v) {
   return v.toLowerCase();
 }
 const ALLOWED_PATH = /^\/r\/([A-Z0-9]{4,8})$/;
-const PROXY_HOSTS = new Set([
-  "api.knaben.org",
-  "apibay.org",
-  "1337x.bz",
-  "yts.mx",
-  "eztv.re",
-  "nyaa.si",
-  "bitsearch.to",
-  "rutor.info",
-  "torrentio.strem.fun",
-  "stremio.torbox.app",
-  "v3-cinemeta.strem.io",
-  "opensubtitles-v3.strem.io",
-  "opensubtitles.strem.io",
-  "opensubtitles.stremio.homes",
-]);
-const RATE_LIMIT = 60;
-const RATE_WINDOW_MS = 60_000;
-const RATE_BUCKET = new Map();
+
+function allowedOrigin(req, env) {
+  const origin = req.headers.get("origin");
+  if (!origin) return null;
+  const configured = String(env.ALLOWED_ORIGINS || "")
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+  if (TAURI_ORIGINS.has(origin) || configured.includes(origin)) return origin;
+  if (env.ENVIRONMENT !== "production" && /^http:\/\/localhost:\d+$/.test(origin)) {
+    return origin;
+  }
+  return false;
+}
 
 export default {
   async fetch(req, env) {
     const url = new URL(req.url);
+    const origin = allowedOrigin(req, env);
+    if (origin === false) return new Response("origin not allowed", { status: 403 });
     if (url.pathname === "/" || url.pathname === "/health") {
-      return new Response(JSON.stringify({ ok: true, version: WORKER_VERSION, hosts: [...PROXY_HOSTS] }), {
-        headers: { "content-type": "application/json", "access-control-allow-origin": "*" },
+      const headers = { "content-type": "application/json" };
+      if (origin) {
+        headers["access-control-allow-origin"] = origin;
+        headers.vary = "Origin";
+      }
+      return new Response(JSON.stringify({ ok: true, version: WORKER_VERSION }), {
+        headers,
       });
     }
-    if (url.pathname === "/proxy") return handleProxy(req, url);
     const m = url.pathname.match(ALLOWED_PATH);
     if (!m) return new Response("not found", { status: 404 });
     if (req.headers.get("upgrade") !== "websocket") {
@@ -66,78 +78,7 @@ export default {
   },
 };
 
-function checkRate(ip) {
-  if (!ip) return true;
-  const now = Date.now();
-  for (const [k, e] of RATE_BUCKET) {
-    if (now - e.windowStart > RATE_WINDOW_MS) RATE_BUCKET.delete(k);
-  }
-  const entry = RATE_BUCKET.get(ip);
-  if (!entry || now - entry.windowStart > RATE_WINDOW_MS) {
-    RATE_BUCKET.set(ip, { count: 1, windowStart: now });
-    return true;
-  }
-  entry.count += 1;
-  return entry.count <= RATE_LIMIT;
-}
-
-async function handleProxy(req, url) {
-  if (req.method === "OPTIONS") {
-    return new Response(null, {
-      status: 204,
-      headers: {
-        "access-control-allow-origin": "*",
-        "access-control-allow-methods": "GET, POST, OPTIONS",
-        "access-control-allow-headers": "content-type",
-      },
-    });
-  }
-  const ip = req.headers.get("cf-connecting-ip");
-  if (!checkRate(ip)) {
-    return new Response("rate limit exceeded", {
-      status: 429,
-      headers: { "access-control-allow-origin": "*", "retry-after": "60" },
-    });
-  }
-  const target = url.searchParams.get("u");
-  if (!target) return new Response("missing u", { status: 400 });
-  let parsed;
-  try {
-    parsed = new URL(target);
-  } catch {
-    return new Response("bad u", { status: 400 });
-  }
-  if (parsed.protocol !== "https:" || !PROXY_HOSTS.has(parsed.hostname)) {
-    return new Response("host not allowed", { status: 403 });
-  }
-  const init = {
-    method: req.method,
-    headers: {
-      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-      accept: req.headers.get("accept") || "application/json",
-    },
-  };
-  if (req.method !== "GET" && req.method !== "HEAD") {
-    init.body = await req.arrayBuffer();
-    const ct = req.headers.get("content-type");
-    if (ct) init.headers["content-type"] = ct;
-  }
-  let upstream;
-  try {
-    upstream = await fetch(parsed.toString(), init);
-  } catch {
-    return new Response("upstream fetch failed", { status: 502 });
-  }
-  return new Response(upstream.body, {
-    status: upstream.status,
-    headers: {
-      "content-type": upstream.headers.get("content-type") || "application/json",
-      "access-control-allow-origin": "*",
-    },
-  });
-}
-
-const ROOM_IDLE_MS = 1000 * 60 * 60 * 6;
+const EMPTY_ROOM_TTL_MS = 5 * 60 * 1000;
 
 function peerAttachment(p) {
   return { clientId: p.clientId, name: p.name, joinedAt: p.joinedAt, ready: p.ready, color: p.color };
@@ -150,7 +91,6 @@ export class Room {
     this.syncState = null;
     this.hostClientId = null;
     this.started = false;
-    this.lastActivity = Date.now();
     for (const ws of state.getWebSockets()) {
       const att = ws.deserializeAttachment();
       if (att && att.clientId) this.peers.set(ws, { ...att, avatar: null, lastStateAt: 0 });
@@ -190,7 +130,25 @@ export class Room {
     return new Response(null, { status: 101, webSocket: client });
   }
 
+  async alarm() {
+    if (this.state.getWebSockets().length > 0) return;
+    this.syncState = null;
+    this.hostClientId = null;
+    this.started = false;
+    await this.state.storage.deleteAll();
+  }
+
   webSocketMessage(ws, data) {
+    const length =
+      typeof data === "string"
+        ? data.length
+        : data instanceof ArrayBuffer
+          ? data.byteLength
+          : MAX_MESSAGE_LENGTH + 1;
+    if (length > MAX_MESSAGE_LENGTH) {
+      try { ws.close(1009, "message_too_large"); } catch {}
+      return;
+    }
     let msg;
     try {
       const text = typeof data === "string" ? data : new TextDecoder().decode(data);
@@ -210,7 +168,21 @@ export class Room {
   }
 
   onMessage(socket, msg) {
-    this.lastActivity = Date.now();
+    const peer = this.peers.get(socket);
+    if (peer) {
+      const now = Date.now();
+      if (now - (peer.messageWindowAt || 0) >= MESSAGE_WINDOW_MS) {
+        peer.messageWindowAt = now;
+        peer.messageCount = 0;
+      }
+      peer.messageCount = (peer.messageCount || 0) + 1;
+      if (peer.messageCount > MESSAGE_WINDOW_LIMIT) {
+        try { socket.close(1008, "rate_limited"); } catch {}
+        return;
+      }
+    } else if (msg?.t !== "hello" && msg?.t !== "ping") {
+      return;
+    }
     switch (msg.t) {
       case "hello":
         return this.handleHello(socket, msg);
@@ -258,6 +230,14 @@ export class Room {
   handleClaimHost(socket, msg) {
     const peer = this.peers.get(socket);
     if (!peer) return;
+    if (this.hostClientId && this.hostClientId !== peer.clientId) {
+      this.send(socket, {
+        t: "error",
+        code: "host_claim_rejected",
+        message: "Only the current host can refresh host ownership.",
+      });
+      return;
+    }
     if (this.hostClientId === peer.clientId && !msg.fresh) return;
     this.hostClientId = peer.clientId;
     this.saveHost();
@@ -315,7 +295,7 @@ export class Room {
         x: msg.x,
         y: msg.y,
         visible: !!msg.visible,
-        path: typeof msg.path === "string" ? msg.path : "",
+        path: typeof msg.path === "string" ? msg.path.slice(0, MAX_CURSOR_PATH_LENGTH) : "",
       },
       socket,
     );
@@ -341,7 +321,7 @@ export class Room {
         x: typeof msg.x === "number" ? msg.x : undefined,
         y: typeof msg.y === "number" ? msg.y : undefined,
         color: typeof msg.color === "string" ? msg.color.slice(0, 32) : undefined,
-        path: typeof msg.path === "string" ? msg.path : "",
+        path: typeof msg.path === "string" ? msg.path.slice(0, MAX_DRAW_PATH_LENGTH) : "",
       },
       socket,
     );
@@ -350,12 +330,21 @@ export class Room {
   handlePresence(socket, msg) {
     const peer = this.peers.get(socket);
     if (!peer) return;
+    let location;
+    if (msg && typeof msg.location === "object" && msg.location) {
+      try {
+        const serialized = JSON.stringify(msg.location);
+        if (serialized.length <= MAX_LOCATION_LENGTH) {
+          location = JSON.parse(serialized);
+        }
+      } catch {}
+    }
     this.broadcast(
       {
         t: "presence",
         from: peer.clientId,
         activeAt: Date.now(),
-        location: msg && typeof msg.location === "object" ? msg.location : undefined,
+        location,
       },
       socket,
     );
@@ -384,21 +373,27 @@ export class Room {
   }
 
   handleHello(socket, msg) {
-    if (!msg.clientId) {
+    if (typeof msg.clientId !== "string" || !msg.clientId) {
       this.send(socket, { t: "error", code: "missing_client_id", message: "clientId required" });
       try { socket.close(1008, "missing_client_id"); } catch {}
+      return;
+    }
+    const clientId = msg.clientId.slice(0, 128);
+    for (const [existingSocket, existingPeer] of this.peers) {
+      if (existingPeer.clientId !== clientId || existingSocket === socket) continue;
+      this.send(socket, {
+        t: "error",
+        code: "duplicate_client_id",
+        message: "clientId is already connected.",
+      });
+      try { socket.close(1008, "duplicate_client_id"); } catch {}
       return;
     }
     const name = (msg.name || "Guest").toString().slice(0, 32);
     const avatar = sanitizeAvatar(msg.avatar);
     const color = sanitizeColor(msg.color);
-    const peer = { clientId: msg.clientId, name, joinedAt: Date.now(), ready: false, avatar, color, lastStateAt: 0 };
-    for (const [s, p] of this.peers) {
-      if (p.clientId === msg.clientId && s !== socket) {
-        try { s.close(1000, "replaced"); } catch {}
-        this.peers.delete(s);
-      }
-    }
+    const peer = { clientId, name, joinedAt: Date.now(), ready: false, avatar, color, lastStateAt: 0, messageWindowAt: Date.now(), messageCount: 1 };
+    void this.state.storage.deleteAlarm();
     this.peers.set(socket, peer);
     this.attach(socket, peer);
     const becameHost = !this.hostClientId;
@@ -549,11 +544,8 @@ export class Room {
     this.peers.delete(socket);
     this.broadcast({ t: "participant-left", clientId: peer.clientId, name: peer.name });
     if (this.hostClientId === peer.clientId) this.reassignHost();
-    if (this.peers.size === 0 && Date.now() - this.lastActivity > ROOM_IDLE_MS) {
-      this.syncState = null;
-      this.hostClientId = null;
-      this.saveSync();
-      this.saveHost();
+    if (this.peers.size === 0) {
+      void this.state.storage.setAlarm(Date.now() + EMPTY_ROOM_TTL_MS);
     }
   }
 

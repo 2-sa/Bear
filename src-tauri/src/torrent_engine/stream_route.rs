@@ -1,9 +1,10 @@
 use std::io::SeekFrom;
+use std::net::SocketAddr;
 use std::path::Path as FsPath;
 use std::sync::Arc;
 
 use axum::body::Body;
-use axum::extract::{Json, Path, RawQuery, State};
+use axum::extract::{ConnectInfo, Json, Path, RawQuery, State};
 use axum::http::{header, HeaderMap, HeaderValue, StatusCode};
 use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
@@ -13,21 +14,91 @@ use librqbit::Session;
 use serde::Deserialize;
 use tokio::io::{AsyncReadExt, AsyncSeekExt};
 
-pub fn router(session: Arc<Session>) -> Router {
+#[derive(Clone)]
+struct LanRouteState {
+    session: Arc<Session>,
+    token: Arc<str>,
+}
+
+pub fn router(session: Arc<Session>, token: String) -> Router {
     Router::new()
         .route("/stream/{hash}/{file_id}", get(h_stream).head(h_stream))
         .route("/health", get(health))
         .route("/settings", get(h_settings))
         .route("/{hash}/create", post(h_create))
         .route("/{hash}/{file_id}", get(h_remote_stream).head(h_remote_stream))
-        .with_state(session)
+        .route(
+            "/access/{token}/stream/{hash}/{file_id}",
+            get(h_authorized_stream).head(h_authorized_stream),
+        )
+        .route("/access/{token}/health", get(authorized_health))
+        .route("/access/{token}/settings", get(authorized_settings))
+        .route("/access/{token}/{hash}/create", post(h_authorized_create))
+        .route(
+            "/access/{token}/{hash}/{file_id}",
+            get(h_authorized_remote_stream).head(h_authorized_remote_stream),
+        )
+        .with_state(LanRouteState {
+            session,
+            token: Arc::from(token),
+        })
 }
 
-async fn health() -> &'static str {
-    "ok"
+fn token_matches(expected: &str, supplied: &str) -> bool {
+    if expected.len() != supplied.len() {
+        return false;
+    }
+    expected
+        .as_bytes()
+        .iter()
+        .zip(supplied.as_bytes())
+        .fold(0u8, |difference, (left, right)| difference | (left ^ right))
+        == 0
 }
 
-async fn h_settings() -> Response {
+fn unauthorized() -> Response {
+    crate::security::log_security_event(
+        "lan_cast",
+        crate::security::SecurityDecision::Blocked,
+        "invalid_access_token",
+    );
+    (StatusCode::UNAUTHORIZED, "unauthorized").into_response()
+}
+
+fn require_loopback(remote: SocketAddr) -> Result<(), Response> {
+    if remote.ip().is_loopback() {
+        Ok(())
+    } else {
+        Err(unauthorized())
+    }
+}
+
+fn require_token(expected: &str, supplied: &str) -> Result<(), Response> {
+    if token_matches(expected, supplied) {
+        Ok(())
+    } else {
+        Err(unauthorized())
+    }
+}
+
+async fn health(ConnectInfo(remote): ConnectInfo<SocketAddr>) -> Response {
+    if let Err(response) = require_loopback(remote) {
+        return response;
+    }
+    "ok".into_response()
+}
+
+async fn authorized_health(
+    State(state): State<LanRouteState>,
+    Path(token): Path<String>,
+) -> Response {
+    if let Err(response) = require_token(&state.token, &token) {
+        return response;
+    }
+    "ok".into_response()
+}
+
+fn settings_response() -> Response {
     let body = serde_json::json!({
         "values": {
             "serverVersion": "harbor-engine",
@@ -43,6 +114,23 @@ async fn h_settings() -> Response {
         body.to_string(),
     )
         .into_response()
+}
+
+async fn h_settings(ConnectInfo(remote): ConnectInfo<SocketAddr>) -> Response {
+    if let Err(response) = require_loopback(remote) {
+        return response;
+    }
+    settings_response()
+}
+
+async fn authorized_settings(
+    State(state): State<LanRouteState>,
+    Path(token): Path<String>,
+) -> Response {
+    if let Err(response) = require_token(&state.token, &token) {
+        return response;
+    }
+    settings_response()
 }
 
 #[derive(Deserialize)]
@@ -103,10 +191,28 @@ fn urldecode(input: &str) -> Option<String> {
 }
 
 async fn h_create(
-    State(_session): State<Arc<Session>>,
+    ConnectInfo(remote): ConnectInfo<SocketAddr>,
     Path(hash): Path<String>,
     Json(body): Json<CreateBody>,
 ) -> Response {
+    if let Err(response) = require_loopback(remote) {
+        return response;
+    }
+    create_torrent(hash, body).await
+}
+
+async fn h_authorized_create(
+    State(state): State<LanRouteState>,
+    Path((token, hash)): Path<(String, String)>,
+    Json(body): Json<CreateBody>,
+) -> Response {
+    if let Err(response) = require_token(&state.token, &token) {
+        return response;
+    }
+    create_torrent(hash, body).await
+}
+
+async fn create_torrent(hash: String, body: CreateBody) -> Response {
     let trackers = trackers_from_sources(body.peer_search.and_then(|p| p.sources));
     match super::ensure_added(&hash, trackers, None).await {
         Ok((_info_hash, files)) => {
@@ -125,24 +231,65 @@ async fn h_create(
 }
 
 async fn h_remote_stream(
-    State(session): State<Arc<Session>>,
+    ConnectInfo(remote): ConnectInfo<SocketAddr>,
+    State(state): State<LanRouteState>,
     Path((hash, file_id)): Path<(String, usize)>,
     RawQuery(query): RawQuery,
+    headers: HeaderMap,
+) -> Response {
+    if let Err(response) = require_loopback(remote) {
+        return response;
+    }
+    remote_stream(&state.session, hash, file_id, query, headers).await
+}
+
+async fn h_authorized_remote_stream(
+    State(state): State<LanRouteState>,
+    Path((token, hash, file_id)): Path<(String, String, usize)>,
+    RawQuery(query): RawQuery,
+    headers: HeaderMap,
+) -> Response {
+    if let Err(response) = require_token(&state.token, &token) {
+        return response;
+    }
+    remote_stream(&state.session, hash, file_id, query, headers).await
+}
+
+async fn remote_stream(
+    session: &Arc<Session>,
+    hash: String,
+    file_id: usize,
+    query: Option<String>,
     headers: HeaderMap,
 ) -> Response {
     let trackers = trackers_from_query(query);
     if let Err(e) = super::ensure_added(&hash, trackers, Some(file_id)).await {
         return (StatusCode::NOT_FOUND, e).into_response();
     }
-    stream_file(&session, &hash, file_id, &headers).await
+    stream_file(session, &hash, file_id, &headers).await
 }
 
 async fn h_stream(
-    State(session): State<Arc<Session>>,
+    ConnectInfo(remote): ConnectInfo<SocketAddr>,
+    State(state): State<LanRouteState>,
     Path((hash, file_id)): Path<(String, usize)>,
     headers: HeaderMap,
 ) -> Response {
-    stream_file(&session, &hash, file_id, &headers).await
+    if let Err(response) = require_loopback(remote) {
+        return response;
+    }
+    stream_file(&state.session, &hash, file_id, &headers).await
+}
+
+async fn h_authorized_stream(
+    State(state): State<LanRouteState>,
+    Path((token, hash, file_id)): Path<(String, String, usize)>,
+    headers: HeaderMap,
+) -> Response {
+    if let Err(response) = require_token(&state.token, &token) {
+        return response;
+    }
+    stream_file(&state.session, &hash, file_id, &headers).await
 }
 
 async fn stream_file(
@@ -237,5 +384,25 @@ fn ct_for(path: &FsPath) -> &'static str {
         "srt" => "application/x-subrip",
         "vtt" => "text/vtt",
         _ => "application/octet-stream",
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn token_comparison_requires_exact_value() {
+        assert!(token_matches("0123456789abcdef", "0123456789abcdef"));
+        assert!(!token_matches("0123456789abcdef", "0123456789abcdee"));
+        assert!(!token_matches("0123456789abcdef", "short"));
+    }
+
+    #[test]
+    fn unprefixed_routes_are_loopback_only() {
+        let loopback = "127.0.0.1:40000".parse().unwrap();
+        let lan = "192.168.1.50:40000".parse().unwrap();
+        assert!(require_loopback(loopback).is_ok());
+        assert!(require_loopback(lan).is_err());
     }
 }

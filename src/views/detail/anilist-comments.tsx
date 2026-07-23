@@ -30,6 +30,7 @@ import { AnilistApiError } from "@/lib/anilist/client";
 import { useView } from "@/lib/view";
 import { useSettings } from "@/lib/settings";
 import { openUrl } from "@/lib/window";
+import { sanitizeHtmlStrict } from "@/lib/security";
 
 function extractAnilistError(e: unknown, fallback: string): string {
   if (e instanceof AnilistApiError) {
@@ -67,29 +68,13 @@ function timeAgo(timestamp: number): string {
   return `${months}mo ago`;
 }
 
-function sanitizeHtml(html: string): string {
-  const doc = new DOMParser().parseFromString(html, "text/html");
-  doc
-    .querySelectorAll("script, style, iframe, object, embed, link, meta, form, input, button, svg")
-    .forEach((el) => el.remove());
-  doc.querySelectorAll("*").forEach((el) => {
-    for (const attr of [...el.attributes]) {
-      const name = attr.name.toLowerCase();
-      const value = attr.value.replace(/\s+/g, "").toLowerCase();
-      if (
-        name.startsWith("on") ||
-        ((name === "href" || name === "src" || name === "xlink:href") &&
-          /^(javascript|data|vbscript):/.test(value))
-      ) {
-        el.removeAttribute(attr.name);
-      }
-    }
-  });
-  return doc.body.innerHTML;
-}
+// F-4: DOMPurify-based sanitizer lives in @/lib/security (sanitizeHtmlStrict).
+// The previous homegrown DOMParser sanitizer missed `<math>`, `<noscript>`,
+// `<template>`, the `style` attribute (CSS exfiltration), and non-http
+// schemes on href/src — all mutation-XSS vectors.
 
 function HtmlContent({ html, className }: { html: string; className?: string }) {
-  const safe = useMemo(() => sanitizeHtml(html), [html]);
+  const safe = useMemo(() => sanitizeHtmlStrict(html), [html]);
   const handleClick = useCallback((e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
     const anchor = target.closest("a");

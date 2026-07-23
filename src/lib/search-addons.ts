@@ -1,6 +1,6 @@
 import type { Addon } from "./addons";
 import type { Meta } from "./cinemeta";
-import { safeFetch } from "./safe-fetch";
+import { trustedLocalFetch } from "./safe-fetch";
 
 const CAP_PER_CATALOG = 20;
 const MAX_CATALOGS = 12;
@@ -38,7 +38,7 @@ export async function searchAddonCatalogs(
     targets.map(async ({ addon, type, id }) => {
       const base = addon.transportUrl.replace(/\/manifest\.json$/, "");
       const url = `${base}/catalog/${type}/${id}/search=${encodeURIComponent(q)}.json`;
-      const res = await safeFetch(url, { headers: { Accept: "application/json" } });
+      const res = await trustedLocalFetch(url, { headers: { Accept: "application/json" } });
       if (!res.ok) return { type, metas: [] as Meta[], origin: addonOrigin(addon) };
       const json = (await res.json()) as { metas?: Meta[] };
       return { type, metas: (json.metas ?? []).slice(0, CAP_PER_CATALOG), origin: addonOrigin(addon) };
@@ -108,7 +108,7 @@ export async function searchAddonGroups(addons: Addon[], query: string): Promise
       const settled = await Promise.allSettled(
         targets.map(async ({ type, id }) => {
           const url = `${base}/catalog/${type}/${id}/search=${encodeURIComponent(q)}.json`;
-          const res = await safeFetch(url, { headers: { Accept: "application/json" } });
+          const res = await trustedLocalFetch(url, { headers: { Accept: "application/json" } });
           if (!res.ok) return [] as Meta[];
           const json = (await res.json()) as { metas?: Meta[] };
           return (json.metas ?? []).slice(0, CAP_PER_GROUP);

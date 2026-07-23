@@ -1,8 +1,8 @@
-declare const __APP_VERSION__: string;
+import { workerRoutes } from "@/lib/network-config";
+import { safeFetch } from "@/lib/safe-fetch";
+import { redactDiagnosticText } from "@/lib/security-redaction";
 
-const ENDPOINT =
-  (import.meta.env.VITE_BUG_REPORT_ENDPOINT as string | undefined) ||
-  "https://bugs.harbor.site";
+declare const __APP_VERSION__: string;
 
 export type Severity = "low" | "normal" | "high" | "critical";
 
@@ -48,7 +48,10 @@ export function installBugReportErrorCapture() {
   if (installed || typeof window === "undefined") return;
   installed = true;
   window.addEventListener("error", (e) => {
-    push(`${e.message}${e.filename ? ` (${e.filename}:${e.lineno ?? "?"})` : ""}`, "window.onerror");
+    push(
+      `${e.message}${e.filename ? ` (${e.filename}:${e.lineno ?? "?"})` : ""}`,
+      "window.onerror",
+    );
   });
   window.addEventListener("unhandledrejection", (e) => {
     const r = e.reason as unknown;
@@ -58,7 +61,7 @@ export function installBugReportErrorCapture() {
 }
 
 function push(msg: string, src?: string) {
-  ERR_BUFFER.push({ ts: Date.now(), msg: msg.slice(0, 600), src });
+  ERR_BUFFER.push({ ts: Date.now(), msg: redactDiagnosticText(msg), src });
   while (ERR_BUFFER.length > MAX_ERRORS) ERR_BUFFER.shift();
 }
 
@@ -118,6 +121,8 @@ export async function submitErrorReport(args: {
   message: string;
   detail?: string;
 }): Promise<{ id: string }> {
+  const endpoint = workerRoutes.bugReports();
+  if (!endpoint) throw new Error("Bug reporting service is not configured.");
   const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
   const winMatch = ua.match(/Windows NT ([\d.]+)/i);
   const macMatch = ua.match(/Mac OS X ([\d_.]+)/i);
@@ -132,13 +137,14 @@ export async function submitErrorReport(args: {
   } else if (/linux/i.test(ua)) {
     os = "Linux";
   }
-  const summary = `[${args.code}] ${args.title}: ${args.message}`.slice(0, 240);
+  const safeMessage = redactDiagnosticText(args.message, 240);
+  const summary = redactDiagnosticText(`[${args.code}] ${args.title}: ${safeMessage}`, 240);
   const fd = new FormData();
   fd.set("summary", summary);
   fd.set("severity", "high");
   fd.set("steps", "");
   fd.set("expected", "");
-  fd.set("actual", args.message);
+  fd.set("actual", safeMessage);
   fd.set("reporter_name", "");
   fd.set("reporter_github", "");
   fd.set("reporter_contact", "");
@@ -158,15 +164,12 @@ export async function submitErrorReport(args: {
       source: "auto-error-report",
       code: args.code,
       title: args.title,
-      detail: args.detail || null,
-      path:
-        typeof window !== "undefined"
-          ? window.location.pathname + window.location.hash
-          : "",
+      detail: args.detail ? redactDiagnosticText(args.detail, 2000) : null,
+      path: typeof window !== "undefined" ? window.location.pathname + window.location.hash : "",
       recentErrors: getRecentErrors().slice(-20),
     }),
   );
-  const res = await fetch(`${ENDPOINT}/v1/reports`, { method: "POST", body: fd });
+  const res = await safeFetch(endpoint, { method: "POST", body: fd });
   if (!res.ok) {
     const j = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
     throw new Error(j.error || `HTTP ${res.status}`);
@@ -178,6 +181,8 @@ export async function submitBugReport(
   input: BugReportInput,
   diag: Diagnostics,
 ): Promise<{ id: string }> {
+  const endpoint = workerRoutes.bugReports();
+  if (!endpoint) throw new Error("Bug reporting service is not configured.");
   const fd = new FormData();
   fd.set("summary", input.summary);
   fd.set("severity", input.severity);
@@ -197,7 +202,7 @@ export async function submitBugReport(
   fd.set("diagnostics", JSON.stringify({ flags: diag.flags, recentErrors: diag.recentErrors }));
   for (const f of input.files) fd.append("files", f, f.name);
 
-  const res = await fetch(`${ENDPOINT}/v1/reports`, { method: "POST", body: fd });
+  const res = await safeFetch(endpoint, { method: "POST", body: fd });
   if (!res.ok) {
     const j = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
     throw new Error(j.error || `HTTP ${res.status}`);

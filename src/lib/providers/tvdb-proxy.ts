@@ -1,8 +1,6 @@
+import { workerRoutes } from "@/lib/network-config";
 import { safeFetch } from "@/lib/safe-fetch";
 import { kitsuToTvdb } from "./anime-mapping";
-
-const PROXY = "https://harbor.site/api/tvdb/images";
-const ART_PROXY = "https://harbor.site/api/tvdb/artwork";
 
 export type TvdbImageMap = Record<string, string>;
 
@@ -19,8 +17,10 @@ export async function fetchTvdbArtwork(opts: {
   if (series) q.set("series", String(series));
   else if (opts.imdb && opts.imdb.startsWith("tt")) q.set("imdb", opts.imdb);
   else return empty;
+  const endpoint = workerRoutes.tvdbArtwork();
+  if (!endpoint) return empty;
   try {
-    const res = await safeFetch(`${ART_PROXY}?${q.toString()}`);
+    const res = await safeFetch(`${endpoint}?${q.toString()}`);
     if (!res.ok) return empty;
     const j = (await res.json()) as Partial<TvdbArtwork>;
     return {
@@ -46,8 +46,10 @@ export async function fetchTvdbProxyImages(opts: {
   else if (opts.imdb && opts.imdb.startsWith("tt")) q.set("imdb", opts.imdb);
   else return {};
   q.set("type", opts.type && opts.type !== "aired" ? opts.type : "default");
+  const endpoint = workerRoutes.tvdbImages();
+  if (!endpoint) return {};
   try {
-    const res = await safeFetch(`${PROXY}?${q.toString()}`);
+    const res = await safeFetch(`${endpoint}?${q.toString()}`);
     if (!res.ok) return {};
     const j = (await res.json()) as { images?: TvdbImageMap };
     return j?.images ?? {};

@@ -1,7 +1,7 @@
 import type { Meta } from "@/lib/cinemeta";
+import { workerRoutes } from "@/lib/network-config";
 import { safeFetch } from "@/lib/safe-fetch";
 
-const HOSTED_URL = "https://harbor.site/api/hero/anime.json";
 const CACHE_KEY = "harbor.anime.hero.hosted.v2";
 const TTL_MS = 3 * 60 * 60 * 1000;
 
@@ -48,7 +48,7 @@ function readCache(): HostedHeroItem[] | null {
     const raw = localStorage.getItem(CACHE_KEY);
     if (!raw) return null;
     const c = JSON.parse(raw) as Cached;
-    if (!c?.items?.length) return null;
+    if (!c?.items?.length || !Number.isFinite(c.t) || Date.now() - c.t >= TTL_MS) return null;
     mem = c;
     return c.items;
   } catch {
@@ -63,8 +63,10 @@ export function peekHostedHero(): HostedHeroItem[] | null {
 export async function fetchHostedHero(): Promise<HostedHeroItem[] | null> {
   const cached = readCache();
   if (cached) return cached;
+  const url = workerRoutes.animeHero();
+  if (!url) return null;
   try {
-    const res = await safeFetch(HOSTED_URL);
+    const res = await safeFetch(url);
     if (!res.ok) return null;
     const j = (await res.json()) as { updated?: number; items?: RawItem[] };
     const items = (j?.items ?? []).map(toMeta).filter((m): m is HostedHeroItem => m != null);

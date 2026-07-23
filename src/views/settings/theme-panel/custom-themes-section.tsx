@@ -1,5 +1,6 @@
 import { AlertCircle } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { useT } from "@/lib/i18n";
 import { ActiveBanner } from "./custom-themes-section/active-banner";
 import { ExportBlock } from "./custom-themes-section/export-block";
 import { HeroCards } from "./custom-themes-section/hero-cards";
@@ -29,6 +30,7 @@ import {
 } from "@/lib/theme";
 
 export function CustomThemesSection() {
+  const t = useT();
   const { settings, update } = useSettings();
   const [themes, setThemes] = useState<CustomTheme[]>(() => getCustomThemes());
   const [error, setError] = useState<string | null>(null);
@@ -36,6 +38,8 @@ export function CustomThemesSection() {
   const [studioOpen, setStudioOpen] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [importedNotice, setImportedNotice] = useState<string | null>(null);
+  // F-5: pending theme awaiting user trust confirmation before import.
+  const [pendingTrustedTheme, setPendingTrustedTheme] = useState<CustomTheme | null>(null);
 
   useEffect(() => subscribeCustomThemes(() => setThemes(getCustomThemes())), []);
 
@@ -84,9 +88,16 @@ export function CustomThemesSection() {
         setError(result.error);
         return;
       }
-      saveCustomTheme(result.theme);
-      setImportedNotice(result.theme.name);
-      activateTheme(result.theme.id, result.theme.navCustomization);
+      // F-5: Every imported theme containing embedded JS or HTML requires
+      // explicit confirmation before it is saved or activated.
+      const hasCode = !!(result.theme.js?.trim() || result.theme.html?.trim());
+      if (!hasCode) {
+        saveCustomTheme(result.theme);
+        setImportedNotice(result.theme.name);
+        activateTheme(result.theme.id, result.theme.navCustomization);
+      } else {
+        setPendingTrustedTheme(result.theme);
+      }
     } catch {
       setError("Could not read file");
     }
@@ -190,6 +201,44 @@ export function CustomThemesSection() {
       )}
 
       {exportText && <ExportBlock text={exportText} onClose={() => setExportText("")} />}
+
+      {pendingTrustedTheme && (
+        <div className="fixed inset-0 z-[250] flex items-center justify-center bg-black/70 px-6">
+          <div className="max-w-sm rounded-2xl border border-danger/40 bg-elevated p-6 text-center shadow-2xl">
+            <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-danger/15">
+              <AlertCircle size={22} className="text-danger" strokeWidth={2.2} />
+            </div>
+            <h3 className="text-[15px] font-bold text-ink">
+              {t("This theme contains code")}
+            </h3>
+            <p className="mt-1.5 text-[12.5px] text-ink-muted">
+              {t("The theme \"{name}\" includes JavaScript or HTML blocks that will run in Harbor. Only install it if you trust the source.", { name: pendingTrustedTheme.name })}
+            </p>
+            <div className="mt-4 flex items-center justify-center gap-3">
+              <button
+                type="button"
+                onClick={() => setPendingTrustedTheme(null)}
+                className="flex h-9 items-center gap-1.5 rounded-full px-4 text-[13px] font-semibold text-ink-muted transition-colors hover:text-ink"
+              >
+                {t("Cancel")}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const theme = pendingTrustedTheme;
+                  saveCustomTheme(theme);
+                  activateTheme(theme.id, theme.navCustomization);
+                  setPendingTrustedTheme(null);
+                  setImportedNotice(theme.name);
+                }}
+                className="flex h-9 items-center gap-1.5 rounded-full bg-accent px-4 text-[13px] font-semibold text-canvas transition-opacity hover:opacity-90"
+              >
+                {t("Trust & Install")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

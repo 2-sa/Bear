@@ -1,7 +1,7 @@
+import { workerRoutes } from "@/lib/network-config";
 import { safeFetch } from "@/lib/safe-fetch";
 import type { SkipSegment } from "./types";
 
-const CORPUS_URL = "https://harbor.site/updates/ad-segments.json";
 const CORPUS_PUBKEY = "yszDA2+G0Rtep39h67iuhl8+5pCQkM+O4D4pMnpg4Ks=";
 
 type CorpusEntry = {
@@ -46,8 +46,10 @@ async function loadCorpus(fresh = false): Promise<CorpusEntry[]> {
 }
 
 async function load(): Promise<CorpusEntry[]> {
-  if (!CORPUS_URL || !CORPUS_PUBKEY) return [];
-  const res = await safeFetch(CORPUS_URL);
+  const url = workerRoutes.adSegments();
+  if (!url || !CORPUS_PUBKEY) return [];
+  const res = await safeFetch(url);
+  if (!res.ok) return [];
   const signed = (await res.json()) as { payload?: string; sig?: string };
   if (!signed.payload || !signed.sig) return [];
   if (!(await verify(signed.payload, signed.sig))) return [];

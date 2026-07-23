@@ -1,4 +1,5 @@
 import { MAL_AUTHORIZE_URL, MAL_CLIENT_ID, MAL_TOKEN_PROXY } from "./config";
+import { safeFetch } from "@/lib/safe-fetch";
 import { getSession, setSession } from "./session";
 import type { MalSession } from "./types";
 
@@ -14,7 +15,10 @@ function generateVerifier(): string {
 let storedVerifier: string | null = null;
 
 export function buildAuthorizeUrl(): string {
-  if (!MAL_CLIENT_ID) throw new Error("MAL_CLIENT_ID not configured. Set VITE_MAL_CLIENT_ID in your .env or register an app at https://myanimelist.net/apiconfig.");
+  if (!MAL_CLIENT_ID)
+    throw new Error(
+      "MAL_CLIENT_ID not configured. Set VITE_MAL_CLIENT_ID in your .env or register an app at https://myanimelist.net/apiconfig.",
+    );
   const verifier = generateVerifier();
   storedVerifier = verifier;
 
@@ -39,14 +43,6 @@ export function extractMalCode(input: string): string {
     }
   }
   return trimmed.replace(/^["'\s]+|["'\s]+$/g, "");
-}
-
-async function tauriFetch(input: string, init?: RequestInit): Promise<Response> {
-  if ("__TAURI_INTERNALS__" in window) {
-    const { fetch: tauriFetchFn } = await import("@tauri-apps/plugin-http");
-    return tauriFetchFn(input, init as Record<string, unknown>) as unknown as Response;
-  }
-  return fetch(input, init);
 }
 
 export async function completeAuthorization(pastedCode: string): Promise<MalSession> {
@@ -74,7 +70,8 @@ async function exchangeCode(
   code: string,
   codeVerifier: string,
 ): Promise<{ access_token: string; refresh_token: string; expires_in: number }> {
-  const res = await tauriFetch(MAL_TOKEN_PROXY, {
+  if (!MAL_TOKEN_PROXY) throw new Error("MyAnimeList sign-in proxy is not configured.");
+  const res = await safeFetch(MAL_TOKEN_PROXY, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -85,8 +82,7 @@ async function exchangeCode(
   });
 
   if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(`MAL rejected that code (HTTP ${res.status}): ${text.slice(0, 200)}`);
+    throw new Error(`MAL rejected that code (HTTP ${res.status}).`);
   }
   const json = await res.json();
   if (!json.access_token) throw new Error("MAL did not return a token. Try authorizing again.");
@@ -95,9 +91,9 @@ async function exchangeCode(
 
 export async function refreshAccessToken(): Promise<MalSession | null> {
   const current = getSession();
-  if (!current?.refreshToken) return null;
+  if (!current?.refreshToken || !MAL_TOKEN_PROXY) return null;
   try {
-    const res = await tauriFetch(MAL_TOKEN_PROXY, {
+    const res = await safeFetch(MAL_TOKEN_PROXY, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -109,7 +105,7 @@ export async function refreshAccessToken(): Promise<MalSession | null> {
       setSession(null);
       return null;
     }
-    const data = await res.json() as {
+    const data = (await res.json()) as {
       access_token: string;
       refresh_token: string;
       expires_in: number;
@@ -143,7 +139,7 @@ export function ensureRefreshed(): Promise<MalSession | null> {
 }
 
 async function fetchUserName(accessToken: string): Promise<string> {
-  const res = await tauriFetch("https://api.myanimelist.net/v2/users/@me", {
+  const res = await safeFetch("https://api.myanimelist.net/v2/users/@me", {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
   if (!res.ok) return "unknown";

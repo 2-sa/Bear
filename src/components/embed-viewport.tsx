@@ -1,6 +1,7 @@
 import { ArrowUpRight, ExternalLink, Loader2, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { assertSafeExternalUrl } from "@/lib/security";
 
 const EVENT = "harbor:open-embed-viewport";
 
@@ -71,8 +72,14 @@ function EmbedViewport({
   }, [loaded]);
 
   const openExternally = () => {
+    // F-7: scheme guard — the embed-viewport holds an attacker-controllable
+    // URL even though openInAppBrowser pre-validates; re-check here so the
+    // user's "open in browser" click on an iframe-injected page cannot
+    // escape the http(s) envelope.
+    const safe = assertSafeExternalUrl(url);
+    if (!safe) return;
     try {
-      window.open(url, "_blank", "noopener,noreferrer");
+      window.open(safe, "_blank", "noopener,noreferrer");
     } catch {
       return;
     }

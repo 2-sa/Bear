@@ -30,16 +30,6 @@
       ]
     },
     {
-      "identifier": "shell:allow-execute",
-      "allow": [
-        {
-          "name": "binaries/yt-dlp",
-          "sidecar": true,
-          "args": true
-        }
-      ]
-    },
-    {
       "identifier": "http:default",
       "allow": [
         { "url": "https://*:*/**" },
@@ -58,47 +48,173 @@
     "process:default",
     {
       "identifier": "fs:allow-write-file",
-      "allow": [{ "path": "**" }]
+      "allow": [
+        { "path": "$APPDATA/**" },
+        { "path": "$APPCONFIG/**" },
+        { "path": "$APPCACHE/**" },
+        { "path": "$APPLOCALDATA/**" },
+        { "path": "$DATA/**" },
+        { "path": "$CONFIG/**" },
+        { "path": "$CACHE/**" },
+        { "path": "$TEMP/**" }
+      ]
     },
     {
       "identifier": "fs:allow-write-text-file",
-      "allow": [{ "path": "**" }]
+      "allow": [
+        { "path": "$APPDATA/**" },
+        { "path": "$APPCONFIG/**" },
+        { "path": "$APPCACHE/**" },
+        { "path": "$APPLOCALDATA/**" },
+        { "path": "$DATA/**" },
+        { "path": "$CONFIG/**" },
+        { "path": "$CACHE/**" },
+        { "path": "$TEMP/**" }
+      ]
     },
     {
       "identifier": "fs:allow-create",
-      "allow": [{ "path": "**" }]
+      "allow": [
+        { "path": "$APPDATA/**" },
+        { "path": "$APPCONFIG/**" },
+        { "path": "$APPCACHE/**" },
+        { "path": "$APPLOCALDATA/**" },
+        { "path": "$DATA/**" },
+        { "path": "$CONFIG/**" },
+        { "path": "$CACHE/**" },
+        { "path": "$TEMP/**" }
+      ]
     },
     {
       "identifier": "fs:allow-remove",
-      "allow": [{ "path": "**" }]
+      "allow": [
+        { "path": "$APPDATA/**" },
+        { "path": "$APPCONFIG/**" },
+        { "path": "$APPCACHE/**" },
+        { "path": "$APPLOCALDATA/**" },
+        { "path": "$CACHE/**" },
+        { "path": "$TEMP/**" }
+      ]
     },
     {
       "identifier": "fs:allow-exists",
-      "allow": [{ "path": "**" }]
+      "allow": [
+        { "path": "$APPDATA/**" },
+        { "path": "$APPCONFIG/**" },
+        { "path": "$APPCACHE/**" },
+        { "path": "$APPLOCALDATA/**" },
+        { "path": "$DATA/**" },
+        { "path": "$CONFIG/**" },
+        { "path": "$CACHE/**" },
+        { "path": "$DOWNLOAD/**" },
+        { "path": "$VIDEO/**" },
+        { "path": "$AUDIO/**" },
+        { "path": "$PICTURE/**" },
+        { "path": "$DOCUMENT/**" },
+        { "path": "$DESKTOP/**" },
+        { "path": "$TEMP/**" }
+      ]
     },
     {
       "identifier": "fs:allow-mkdir",
-      "allow": [{ "path": "**" }]
+      "allow": [
+        { "path": "$APPDATA/**" },
+        { "path": "$APPCONFIG/**" },
+        { "path": "$APPCACHE/**" },
+        { "path": "$APPLOCALDATA/**" },
+        { "path": "$DATA/**" },
+        { "path": "$CONFIG/**" },
+        { "path": "$CACHE/**" },
+        { "path": "$TEMP/**" }
+      ]
     },
     {
       "identifier": "fs:allow-read-dir",
-      "allow": [{ "path": "**" }]
+      "allow": [
+        { "path": "$APPDATA/**" },
+        { "path": "$APPCONFIG/**" },
+        { "path": "$APPCACHE/**" },
+        { "path": "$APPLOCALDATA/**" },
+        { "path": "$DATA/**" },
+        { "path": "$CONFIG/**" },
+        { "path": "$CACHE/**" },
+        { "path": "$DOWNLOAD/**" },
+        { "path": "$VIDEO/**" },
+        { "path": "$AUDIO/**" },
+        { "path": "$PICTURE/**" },
+        { "path": "$DOCUMENT/**" },
+        { "path": "$DESKTOP/**" },
+        { "path": "$TEMP/**" }
+      ]
     },
     {
       "identifier": "fs:allow-read-file",
-      "allow": [{ "path": "**" }]
+      "allow": [
+        { "path": "$APPDATA/**" },
+        { "path": "$APPCONFIG/**" },
+        { "path": "$APPCACHE/**" },
+        { "path": "$APPLOCALDATA/**" },
+        { "path": "$DATA/**" },
+        { "path": "$CONFIG/**" },
+        { "path": "$CACHE/**" },
+        { "path": "$DOWNLOAD/**" },
+        { "path": "$VIDEO/**" },
+        { "path": "$AUDIO/**" },
+        { "path": "$PICTURE/**" },
+        { "path": "$DOCUMENT/**" },
+        { "path": "$DESKTOP/**" },
+        { "path": "$TEMP/**" }
+      ]
     },
     {
       "identifier": "fs:allow-read-text-file",
-      "allow": [{ "path": "**" }]
+      "allow": [
+        { "path": "$APPDATA/**" },
+        { "path": "$APPCONFIG/**" },
+        { "path": "$APPCACHE/**" },
+        { "path": "$APPLOCALDATA/**" },
+        { "path": "$DATA/**" },
+        { "path": "$CONFIG/**" },
+        { "path": "$CACHE/**" },
+        { "path": "$DOWNLOAD/**" },
+        { "path": "$VIDEO/**" },
+        { "path": "$AUDIO/**" },
+        { "path": "$PICTURE/**" },
+        { "path": "$DOCUMENT/**" },
+        { "path": "$DESKTOP/**" },
+        { "path": "$TEMP/**" }
+      ]
     },
     {
       "identifier": "fs:allow-stat",
-      "allow": [{ "path": "**" }]
+      "allow": [
+        { "path": "$APPDATA/**" },
+        { "path": "$APPCONFIG/**" },
+        { "path": "$APPCACHE/**" },
+        { "path": "$APPLOCALDATA/**" },
+        { "path": "$DATA/**" },
+        { "path": "$CONFIG/**" },
+        { "path": "$CACHE/**" },
+        { "path": "$DOWNLOAD/**" },
+        { "path": "$VIDEO/**" },
+        { "path": "$AUDIO/**" },
+        { "path": "$PICTURE/**" },
+        { "path": "$DOCUMENT/**" },
+        { "path": "$DESKTOP/**" },
+        { "path": "$TEMP/**" }
+      ]
     },
     {
       "identifier": "opener:allow-reveal-item-in-dir",
-      "allow": [{ "path": "**" }]
+      "allow": [
+        { "path": "$DOWNLOAD/**" },
+        { "path": "$VIDEO/**" },
+        { "path": "$AUDIO/**" },
+        { "path": "$PICTURE/**" },
+        { "path": "$DOCUMENT/**" },
+        { "path": "$DESKTOP/**" },
+        { "path": "$TEMP/**" }
+      ]
     }
   ]
 }

@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::net::IpAddr;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
@@ -6,8 +7,12 @@ use std::time::{Duration, Instant};
 use futures_util::StreamExt;
 use serde::Serialize;
 use tauri::ipc::Channel;
-use tauri::State;
+use tauri::{AppHandle, State};
 use tokio::io::AsyncWriteExt;
+
+use crate::security::{
+    assert_safe_dest, log_security_event, resolve_safe_url, ResolvedSafeUrl, SecurityDecision,
+};
 
 pub struct DownloadState {
     tasks: Arc<Mutex<HashMap<String, Arc<AtomicBool>>>>,
@@ -19,6 +24,14 @@ impl DownloadState {
             tasks: Arc::new(Mutex::new(HashMap::new())),
         }
     }
+}
+
+/// Recover from a poisoned mutex rather than panicking the download manager.
+/// We never want a single download failure to disable every subsequent one.
+fn tasks_lock(
+    tasks: &Arc<Mutex<HashMap<String, Arc<AtomicBool>>>>,
+) -> std::sync::MutexGuard<'_, HashMap<String, Arc<AtomicBool>>> {
+    tasks.lock().unwrap_or_else(|poisoned| poisoned.into_inner())
 }
 
 #[derive(Clone, Serialize)]
@@ -39,6 +52,7 @@ enum DownloadEnd {
 const EMIT_INTERVAL_MS: u128 = 250;
 const EMIT_BYTES: u64 = 4 * 1024 * 1024;
 const MIN_VIDEO_BYTES: u64 = 512 * 1024;
+const MAX_REDIRECTS: usize = 5;
 const BROWSER_UA: &str =
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36";
 
@@ -48,6 +62,7 @@ fn total_from_content_range(value: &str) -> Option<u64> {
 
 #[tauri::command]
 pub async fn download_start(
+    app: AppHandle,
     state: State<'_, DownloadState>,
     id: String,
     url: String,
@@ -55,11 +70,22 @@ pub async fn download_start(
     headers: Option<HashMap<String, String>>,
     on_event: Channel<DownloadEvent>,
 ) -> Result<(), String> {
-    let cancel = Arc::new(AtomicBool::new(false));
-    state.tasks.lock().unwrap().insert(id.clone(), cancel.clone());
+    // Destination gate — blocks traversal, symlinks escaping an allowlist
+    // root, and writes to system directories.
+    let safe_dest = assert_safe_dest(&app, &dest)?;
 
-    let outcome = run_download(&url, &dest, &headers.unwrap_or_default(), &cancel, &on_event).await;
-    state.tasks.lock().unwrap().remove(&id);
+    let cancel = Arc::new(AtomicBool::new(false));
+    tasks_lock(&state.tasks).insert(id.clone(), cancel.clone());
+
+    let outcome = run_download(
+        &url,
+        &safe_dest.to_string_lossy(),
+        &headers.unwrap_or_default(),
+        &cancel,
+        &on_event,
+    )
+    .await;
+    tasks_lock(&state.tasks).remove(&id);
 
     match outcome {
         Ok(()) => Ok(()),
@@ -78,9 +104,57 @@ pub async fn download_start(
 
 #[tauri::command]
 pub fn download_cancel(state: State<'_, DownloadState>, id: String) {
-    if let Some(flag) = state.tasks.lock().unwrap().get(&id) {
+    if let Some(flag) = tasks_lock(&state.tasks).get(&id) {
         flag.store(true, Ordering::Relaxed);
     }
+}
+
+fn download_client(target: &ResolvedSafeUrl) -> Result<reqwest::Client, String> {
+    let mut builder = reqwest::Client::builder()
+        .no_proxy()
+        .redirect(reqwest::redirect::Policy::none())
+        .user_agent(BROWSER_UA);
+    let host = target
+        .url
+        .host_str()
+        .ok_or_else(|| "url has no host".to_string())?;
+    if host.parse::<IpAddr>().is_err() {
+        builder = builder.resolve_to_addrs(host, &target.addresses);
+    }
+    builder.build().map_err(|error| format!("client: {error}"))
+}
+
+fn same_authority(left: &url::Url, right: &url::Url) -> bool {
+    left.scheme() == right.scheme()
+        && left.host_str() == right.host_str()
+        && left.port_or_known_default() == right.port_or_known_default()
+}
+
+fn download_redirect_target(
+    current: &url::Url,
+    response: &reqwest::Response,
+) -> Result<Option<url::Url>, String> {
+    if !matches!(response.status().as_u16(), 301 | 302 | 303 | 307 | 308) {
+        return Ok(None);
+    }
+    let location = response
+        .headers()
+        .get(reqwest::header::LOCATION)
+        .ok_or_else(|| "redirect response has no location".to_string())?
+        .to_str()
+        .map_err(|_| "redirect location is not valid text".to_string())?;
+    let next = current
+        .join(location)
+        .map_err(|_| "redirect location is not a valid URL".to_string())?;
+    if current.scheme() == "https" && next.scheme() != "https" {
+        log_security_event(
+            "download",
+            SecurityDecision::Blocked,
+            "redirect_downgrade",
+        );
+        return Err("redirect would downgrade HTTPS".to_string());
+    }
+    Ok(Some(next))
 }
 
 async fn run_download(
@@ -105,28 +179,59 @@ async fn run_download(
         Err(_) => 0,
     };
 
-    let client = reqwest::Client::builder()
-        .user_agent(BROWSER_UA)
-        .build()
-        .map_err(|e| DownloadEnd::Failed(format!("client: {}", e)))?;
-    let has = |name: &str| headers.keys().any(|k| k.eq_ignore_ascii_case(name));
-    let mut req = client.get(url);
-    if !has("accept") {
-        req = req.header(reqwest::header::ACCEPT, "*/*");
-    }
-    for (k, v) in headers {
-        req = req.header(k.as_str(), v.as_str());
-    }
-    if start_byte > 0 {
-        req = req.header(reqwest::header::RANGE, format!("bytes={}-", start_byte));
-    } else if !has("range") {
-        req = req.header(reqwest::header::RANGE, "bytes=0-");
-    }
-    eprintln!("[harbor::download] GET {} resume-from={}", log_host(url), start_byte);
-    let resp = tokio::select! {
-        biased;
-        _ = wait_cancelled(cancel) => return Err(DownloadEnd::Canceled(start_byte)),
-        r = req.send() => r.map_err(|e| DownloadEnd::Failed(format!("request: {}", e)))?,
+    let mut current_url = url.to_string();
+    let mut redirect_count = 0usize;
+    let mut request_headers = headers.clone();
+    let resp = loop {
+        let target = resolve_safe_url(&current_url)
+            .await
+            .map_err(DownloadEnd::Failed)?;
+        let client = download_client(&target).map_err(DownloadEnd::Failed)?;
+        let has = |name: &str| {
+            request_headers
+                .keys()
+                .any(|key| key.eq_ignore_ascii_case(name))
+        };
+        let mut req = client.get(target.url.clone());
+        if !has("accept") {
+            req = req.header(reqwest::header::ACCEPT, "*/*");
+        }
+        for (key, value) in &request_headers {
+            req = req.header(key.as_str(), value.as_str());
+        }
+        if start_byte > 0 {
+            req = req.header(reqwest::header::RANGE, format!("bytes={}-", start_byte));
+        } else if !has("range") {
+            req = req.header(reqwest::header::RANGE, "bytes=0-");
+        }
+        eprintln!(
+            "[harbor::download] GET {} resume-from={}",
+            log_host(target.url.as_str()),
+            start_byte
+        );
+        let response = tokio::select! {
+            biased;
+            _ = wait_cancelled(cancel) => return Err(DownloadEnd::Canceled(start_byte)),
+            result = req.send() => {
+                result.map_err(|error| DownloadEnd::Failed(format!("request: {error}")))?
+            },
+        };
+        let Some(next) = download_redirect_target(&target.url, &response)
+            .map_err(DownloadEnd::Failed)?
+        else {
+            break response;
+        };
+        if redirect_count >= MAX_REDIRECTS {
+            log_security_event("download", SecurityDecision::Blocked, "redirect_limit");
+            return Err(DownloadEnd::Failed(format!(
+                "redirect limit exceeds {MAX_REDIRECTS}"
+            )));
+        }
+        if !same_authority(&target.url, &next) {
+            request_headers.clear();
+        }
+        current_url = next.to_string();
+        redirect_count += 1;
     };
     let status = resp.status();
     eprintln!(
@@ -158,7 +263,28 @@ async fn run_download(
         || content_type.contains("json")
         || content_type.contains("xml");
     if non_video || declared.map(|n| n < 65_536).unwrap_or(false) {
-        let body = resp.text().await.unwrap_or_default();
+        // Cap the body before decoding so a chunked deceptive response cannot
+        // OOM us before we slice the 500-char preview.
+        const MAX_TEXT_PREVIEW_BYTES: usize = 1024 * 1024;
+        let mut buf: Vec<u8> = Vec::new();
+        let mut preview_stream = resp.bytes_stream();
+        while let Some(chunk) = preview_stream.next().await {
+            let chunk = match chunk {
+                Ok(c) => c,
+                Err(_) => break,
+            };
+            if buf.len() >= MAX_TEXT_PREVIEW_BYTES {
+                break;
+            }
+            let remaining = MAX_TEXT_PREVIEW_BYTES - buf.len();
+            if chunk.len() <= remaining {
+                buf.extend_from_slice(&chunk);
+            } else {
+                buf.extend_from_slice(&chunk[..remaining]);
+                break;
+            }
+        }
+        let body = String::from_utf8_lossy(&buf).into_owned();
         let snippet: String = body.chars().take(500).collect();
         eprintln!(
             "[harbor::download] NON-VIDEO response ({} bytes): {}",

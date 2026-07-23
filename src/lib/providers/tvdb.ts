@@ -1,9 +1,9 @@
 import { lruSet } from "@/lib/cache";
 import { registerCache } from "@/lib/memory-profiler";
+import { workerRoutes } from "@/lib/network-config";
 import { safeFetch as tauriFetch } from "@/lib/safe-fetch";
 
 const BASE = "https://api4.thetvdb.com/v4";
-const PROXY_V4 = "https://harbor.site/api/tvdb/v4";
 const TOKEN_KEY = "harbor.tvdb.token.v1";
 const TOKEN_TTL_MS = 23 * 60 * 60 * 1000;
 
@@ -141,7 +141,9 @@ async function getJson<T>(apiKey: string, path: string): Promise<T | null> {
         let url: string;
         let headers: Record<string, string>;
         if (useProxy) {
-          url = `${PROXY_V4}${path}`;
+          const proxyUrl = workerRoutes.tvdbV4(path);
+          if (!proxyUrl) return null;
+          url = proxyUrl;
           headers = { accept: "application/json" };
         } else {
           const token = await getToken(apiKey);

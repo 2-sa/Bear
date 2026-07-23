@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
+import { isSafeLanHost } from "@/lib/security";
 
 export const BUNDLED_SERVER_URL = "http://127.0.0.1:11470";
 const PROBE_TIMEOUT_MS = 1500;
@@ -47,6 +48,7 @@ export type CastServerStatus = {
   bundled: boolean;
   running: boolean;
   ready: boolean;
+  lan_url: string | null;
   last_error: string | null;
   restart_count: number;
 };
@@ -155,7 +157,16 @@ export function getStremioServerUrl(): string {
   const remote = remoteStreamServerUrl();
   if (remote) return remote;
   if (!isTauri && typeof window !== "undefined" && window.location.port === "11471") {
-    return `http://${window.location.hostname}:11470`;
+    // F-9: Validate that the hostname is loopback or RFC1918 before
+    // composing the LAN stream URL. A public hostname (DNS rebinding or
+    // hostile reverse proxy) must NOT be used — it would point the stream
+    // URL at an attacker's server.
+    const hostname = window.location.hostname;
+    if (isSafeLanHost(hostname)) {
+      return `http://${hostname}:11470`;
+    }
+    // Fall back to the safe loopback default.
+    return BUNDLED_SERVER_URL;
   }
   return BUNDLED_SERVER_URL;
 }

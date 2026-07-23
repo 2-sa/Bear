@@ -20,8 +20,8 @@ async function iptvFetch(url: string, signal: AbortSignal): Promise<Response> {
       } as unknown as RequestInit);
     } catch (e) {
       if (!/scope|not allowed/i.test(String(e))) throw e;
-      const { safeFetch } = await import("@/lib/safe-fetch");
-      return safeFetch(url, {
+      const { trustedLocalFetch } = await import("@/lib/safe-fetch");
+      return trustedLocalFetch(url, {
         signal,
         headers: {
           "User-Agent": "VLC/3.0.20 LibVLC/3.0.20",

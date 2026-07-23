@@ -4,6 +4,7 @@ import {
   ANILIST_PIN_REDIRECT_URI,
   ANILIST_TOKEN_EXCHANGE_URL,
 } from "./config";
+import { safeFetch } from "@/lib/safe-fetch";
 import { fetchViewer } from "./queries";
 import { setSession } from "./session";
 import type { AnilistSession } from "./types";
@@ -52,14 +53,16 @@ export async function completeAuthorization(pastedCode: string): Promise<Anilist
 }
 
 async function exchangeCode(code: string): Promise<string> {
-  const isTauri = "__TAURI__" in window || "__TAURI_INTERNALS__" in window;
-  const post = isTauri ? (await import("@tauri-apps/plugin-http")).fetch : fetch;
-  const res = await post(ANILIST_TOKEN_EXCHANGE_URL, {
+  if (!ANILIST_TOKEN_EXCHANGE_URL) {
+    throw new Error("AniList sign-in proxy is not configured.");
+  }
+  const res = await safeFetch(ANILIST_TOKEN_EXCHANGE_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "application/json" },
     body: JSON.stringify({ code }),
   });
-  if (!res.ok) throw new Error("AniList rejected that code. Authorize again and paste the newest one.");
+  if (!res.ok)
+    throw new Error("AniList rejected that code. Authorize again and paste the newest one.");
   const json = (await res.json()) as { access_token?: string };
   if (!json.access_token) throw new Error("AniList did not return a token. Try authorizing again.");
   return json.access_token;

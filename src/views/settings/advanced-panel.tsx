@@ -50,9 +50,10 @@ import { Signature } from "./signature";
 import { CustomCodeCard, DownloadsSection } from "./player-panel";
 import { DesktopOnlyBlock } from "./player-panel/internals";
 import { useT } from "@/lib/i18n";
+import { publicDownloadUrl } from "@/lib/network-config";
 
 const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
-const DOWNLOAD_URL = "https://harbor.site/download";
+const DOWNLOAD_URL = publicDownloadUrl();
 const SOURCE_URL = "https://github.com/harborstremio/harbor";
 
 export function AdvancedPanel() {
@@ -65,7 +66,7 @@ export function AdvancedPanel() {
         <Section
           title={t("Updates")}
           subtitle={t(
-            "Harbor checks harbor.site for new versions and installs them in place. Nothing installs until you choose to, and a dismissed update never nags you again.",
+            "Harbor checks the configured update service for new versions. Nothing installs until you choose to, and a dismissed update never nags you again.",
           )}
         >
           <div className="flex flex-col gap-2.5">
@@ -170,7 +171,7 @@ export function AdvancedPanel() {
 
       <Section
         title={t("About")}
-        subtitle={t("Build identity. Useful when filing a bug report at bugs@harbor.site.")}
+        subtitle={t("Build identity. Useful when filing an in-app bug report.")}
       >
         <AboutRow />
       </Section>
@@ -249,7 +250,8 @@ function WebBuildBanner() {
         <div className="mt-1 flex flex-wrap items-center gap-2">
           <button
             type="button"
-            onClick={() => openUrl(DOWNLOAD_URL)}
+            onClick={() => DOWNLOAD_URL && openUrl(DOWNLOAD_URL)}
+            disabled={!DOWNLOAD_URL}
             className="flex h-10 w-fit items-center gap-2 rounded-xl bg-ink px-4 text-[13.5px] font-semibold text-canvas transition-transform hover:scale-[1.02] active:scale-[0.97]"
           >
             <Download size={14} strokeWidth={2.4} />
@@ -376,7 +378,7 @@ function UpdatesRow() {
   const busy = u.status === "checking";
   const status =
     u.status === "checking"
-      ? t("Checking harbor.site for a newer build.")
+      ? t("Checking the configured update service for a newer build.")
       : u.status === "downloading"
         ? t("Downloading {pct}%", { pct: Math.round(u.progress * 100) })
         : u.status === "downloaded"
@@ -648,7 +650,7 @@ function AboutRow() {
         value={`${__APP_VERSION__}${IS_BETA_BUILD ? " (Beta)" : ""}`}
       />
       <InfoLine label={t("Build")} value={isTauri ? t("Desktop (Tauri 2 / WebView2)") : t("Web")} />
-      <InfoLine label={t("Bug reports")} value="bugs@harbor.site" />
+      <InfoLine label={t("Bug reports")} value={t("In-app report form")} />
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { addonAccepts, type Addon } from "@/lib/addons";
-import { safeFetch } from "@/lib/safe-fetch";
+import { trustedLocalFetch } from "@/lib/safe-fetch";
 import { dlog } from "@/lib/debug";
 import type { SubResult, SubSearchQuery } from "../types";
 import { normalizeLang } from "../language";
@@ -41,7 +41,7 @@ async function callOne(addon: Addon, type: string, id: string, extra: string): P
   const url = `${base}/subtitles/${type}/${id}${extra}.json`;
   dlog(`[addons] Fetching from ${addon.manifest.name}: ${url}`);
   try {
-    const res = await safeFetch(url, { headers: { Accept: "application/json" } });
+    const res = await trustedLocalFetch(url, { headers: { Accept: "application/json" } });
     if (!res.ok) {
       dlog(`[addons] ${addon.manifest.name} returned ${res.status}`);
       return [];

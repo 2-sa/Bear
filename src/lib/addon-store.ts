@@ -1,4 +1,4 @@
-import { safeFetch as fetch } from "@/lib/safe-fetch";
+import { trustedLocalFetch as fetch } from "@/lib/safe-fetch";
 import { readActiveStremioAuthKey } from "./auth";
 import { setUserAddons, userAddons, type Addon } from "./addons";
 import { applyOrderToItems } from "./addons-store/reorder";

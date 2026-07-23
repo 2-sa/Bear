@@ -109,6 +109,7 @@ export function ServerAddressSection() {
   const t = useT();
   const { settings, update } = useSettings();
   const [lanIp, setLanIp] = useState<string | null>(null);
+  const [lanUrl, setLanUrl] = useState<string | null>(null);
   const [engine, setEngine] = useState<EngineState>("checking");
   const [acting, setActing] = useState(false);
   const [webError, setWebError] = useState(false);
@@ -120,6 +121,7 @@ export function ServerAddressSection() {
     const s = await getCastServerStatus();
     if (aliveRef.current) {
       setEngine(next);
+      setLanUrl(s?.lan_url ?? null);
       setLastError(next === "stopped" ? s?.last_error ?? null : null);
     }
   };
@@ -195,7 +197,7 @@ export function ServerAddressSection() {
       </div>
 
       <AddressRow label={t("On this computer")} url={BUNDLED_SERVER_URL} openable={running} />
-      {lanIp && <AddressRow label={t("From other devices on your Wi-Fi")} url={`http://${lanIp}:11470`} />}
+      {lanUrl && <AddressRow label={t("From other devices on your Wi-Fi")} url={lanUrl} />}
       {engine === "stopped" && lastError && (
         <div className="rounded-xl border border-danger/30 bg-danger/8 px-3.5 py-2.5 text-[12.5px] leading-relaxed text-danger">
           <span className="font-semibold">{t("Server couldn't start:")}</span> {lastError}

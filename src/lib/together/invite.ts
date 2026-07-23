@@ -1,3 +1,4 @@
+import { NETWORK_CONFIG, validateRelayUrl } from "@/lib/network-config";
 import { normalizeRoomCode } from "./protocol";
 
 const RELAY_PARAM = "harbor-relay";
@@ -8,29 +9,25 @@ export type ParsedInvite = {
   roomCode: string;
 };
 
-export const WEB_JOIN_BASE = "https://app.harbor.site";
-
-export function buildInviteUrl(relayUrl: string, roomCode: string, origin?: string): string {
-  const local =
-    typeof window !== "undefined" && !("__TAURI_INTERNALS__" in window)
-      ? window.location.origin
-      : WEB_JOIN_BASE;
-  const base = origin ?? local;
+export function buildInviteUrl(relayUrl: string, roomCode: string): string {
+  const relay = validateRelayUrl(relayUrl);
+  if (!relay) return "";
+  const appOrigin = NETWORK_CONFIG.publicAppOrigin;
+  if (!appOrigin) return "";
   const params = new URLSearchParams();
-  params.set(RELAY_PARAM, relayUrl);
+  params.set(RELAY_PARAM, relay);
   params.set(ROOM_PARAM, roomCode.toUpperCase());
-  return `${base}/?${params.toString()}`;
+  return `${appOrigin}/?${params.toString()}`;
 }
 
 export function parseInviteFromLocation(): ParsedInvite | null {
   if (typeof window === "undefined") return null;
   const params = new URLSearchParams(window.location.search);
-  const relay = params.get(RELAY_PARAM)?.trim();
+  const relay = validateRelayUrl(params.get(RELAY_PARAM)?.trim() ?? "");
   const roomRaw = params.get(ROOM_PARAM)?.trim();
   if (!relay || !roomRaw) return null;
   const room = normalizeRoomCode(roomRaw);
   if (!room) return null;
-  if (!/^wss?:\/\//.test(relay)) return null;
   return { relayUrl: relay, roomCode: room };
 }
 

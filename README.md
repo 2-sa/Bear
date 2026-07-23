@@ -2,14 +2,14 @@
 <a name="readme-top"></a>
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://harbor.site/readme-media/harbor-wordmark-dark.svg">
-  <source media="(prefers-color-scheme: light)" srcset="https://harbor.site/readme-media/harbor-wordmark-light.svg">
-  <img src="https://harbor.site/readme-media/harbor-wordmark-light.svg" width="320">
+  <source media="(prefers-color-scheme: dark)" srcset="docs/media/harbor-wordmark-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="docs/media/harbor-wordmark-light.svg">
+  <img src="docs/media/harbor-wordmark-light.svg" width="320">
 </picture>
 
 ### A Stremio Client Built for Adventure!
 
-Offering things like a native player, a stream ranking engine, Wikidata, watch parties, PiP, DVR, Live TV, anime, a theme engine, and much more. Check out our website at www.harbor.site for an immersive experience.
+Offering things like a native player, a stream ranking engine, Wikidata, watch parties, PiP, DVR, Live TV, anime, a theme engine, and much more.
 
 <br/>
 
@@ -28,11 +28,7 @@ Offering things like a native player, a stream ranking engine, Wikidata, watch p
 
 <br/>
 <h4 align="center">💬 New: By popular demand, join our community discord for support and help (https://discord.gg/gUGg4YSsg)!</h4>
-<p align="center">
-  <img src="https://harbor.site/readme-media/hero.png" width="900">
-  <br/>
-  <sub>Harbor on launch: a rotating hero, Continue Watching, and full width rails. Works on Cinemeta out of the box; richer with a free TMDB key.</sub>
-</p>
+<p align="center"><sub>Harbor on launch: a rotating hero, Continue Watching, and full width rails. Works on Cinemeta out of the box; richer with a free TMDB key.</sub></p>
 
 > [!IMPORTANT]
 > Harbor is a media player and a client for the open Stremio addon protocol. It hosts, indexes, and ships no media, and it bundles no content addons. You bring your own addons and sources. See the [Disclaimer](#disclaimer).
@@ -40,7 +36,7 @@ Offering things like a native player, a stream ranking engine, Wikidata, watch p
 > Stremio has released their **[Supporter tier](https://blog.stremio.com/stremio-supporters-a-way-to-sustain-our-development/)** PLEASE CONSIDER SUPPORTING THEM AND BUYING THIS. We heavily encourage you to use Stremio's Official Apps on Mobile, and Tvs. Harbor is NOT a stremio competitor, it is a different flavor of player for the ecosystem. To get the most out of Harbor, please sign up with a [stremio account](https://stremio.com) (it's free) To Support Stremio visit : https://www.stremio.com/donate (P.S.A Harbor is not endorsed by or created by Stremio ltd or it's contributors it is a independent open sourced project)
 > <br/>
 
-ATTENTION: HARBOR DOES NOT AND WILL NOT ASK YOU FOR DONATIONS! If someone claims to be us and asks you for donations, IT IS NOT US. Have an issue? Open it on github so you and everyone else can know and see exactly how we messed up, and how we will fix it! Yes we do see your emails to bugs@harbor.site and Bug reports to the bug endpoint FYI the fastest way to get our attention is through github, we will still handle unique reports that have not been already sorted. Want to donate to a good cause visit: National Pediatric Cancer Foundation (https://nationalpcf.org/), Electronic Frontier Foundation (https://www.eff.org/) or St.Jude's (https://www.stjude.org/) email us with a receipt of your donation and we will implement your features in a priority manner. Include NPCF , EFF or SaintJude in title so we can track you! If you have a preferred cause visit https://www.charitynavigator.org/ and donate to a top rated charity of your choice and include CHARITY in email title
+ATTENTION: HARBOR DOES NOT AND WILL NOT ASK YOU FOR DONATIONS. If someone claims to be us and asks you for donations, it is not us. Report issues through the repository's public issue tracker so reports and resolutions remain visible to everyone.
 <br/>
 <br/>
 HARBOR IS A OPEN CONCEPT AND NOT A ENTITY. WE DO NOT PROFIT OR ACCEPT MONEY FOR IT. WE DO NOT PROVIDE ANY CONTENT OR TELL YOU HOW TO DO IT. IT IS JUST CODE ON A REPO. IT'S CONTRIBUTORS ARE NOT RESPONSIBLE FOR WHAT YOU DO WITH IT OR WHAT STREMIO ADDONS AND SOURCES YOU ALREADY HAVE. FOLLOW ALL LAWS OF YOUR JURIDSTICTION.
@@ -132,37 +128,30 @@ Eleven themes and seven font pairings, a live theme studio for every token, cust
 <table>
 <tr>
 <td width="50%" align="center">
-<img src="https://harbor.site/readme-media/detail.png" width="100%"><br/>
 <sub><b>Detail page</b> &middot; ratings from IMDb, Rotten Tomatoes, and MAL, award laurels, cast and crew, episodes, and region aware Watch on chips.</sub>
 </td>
 <td width="50%" align="center">
-<img src="https://harbor.site/readme-media/discover.png" width="100%"><br/>
 <sub><b>Discover</b> &middot; up to 14 rotating daily rails tuned by what you open, play, and save, plus a daily Critics Pick.</sub>
 </td>
 </tr>
 <tr>
 <td width="50%" align="center">
-<img src="https://harbor.site/readme-media/player.png" width="100%"><br/>
 <sub><b>Player</b> &middot; native libmpv, trickplay seek previews, skip intro/outro, and a customizable seek bar.</sub>
 </td>
 <td width="50%" align="center">
-<img src="https://harbor.site/readme-media/live-tv.png" width="100%"><br/>
 <sub><b>Live TV</b> &middot; M3U and Xtream playlists rendered as a real EPG grid guide with favorites and catchup.</sub>
 </td>
 </tr>
 <tr>
 <td width="50%" align="center">
-<img src="https://harbor.site/readme-media/multiview.png" width="100%"><br/>
 <sub><b>Multiview</b> &middot; one, two, three, or 2x2 streams at once, with independent audio focus per tile.</sub>
 </td>
 <td width="50%" align="center">
-<img src="https://harbor.site/readme-media/together.jpg" width="100%"><br/>
 <sub><b>Together</b> &middot; synced playback, a live chat overlay, on screen cursors, and collaborative drawing.</sub>
 </td>
 </tr>
 <tr>
 <td colspan="2" align="center">
-<img src="https://harbor.site/readme-media/themes.png" width="80%"><br/>
 <sub><b>Themes</b> &middot; eleven presets and a full visual studio. Colors, fonts, card and button shapes, backgrounds, and the entire nav layout.</sub>
 </td>
 </tr>
@@ -347,17 +336,9 @@ Awards laurels surface across detail pages, covering Oscar, Emmy, BAFTA, Golden 
 - **Custom CSS, JS, and HTML overlays** for power users.
 - **Trickplay scrub previews** decoded on the fly for torrents and local files, so the seek bar shows the exact frame you are hovering.
 
-<p align="left">
-  <img src="https://harbor.site/readme-media/trickplay.jpg" width="720">
-  <br/>
-  <sub>Trickplay seek previews, generated live for torrents and local files.</sub>
-</p>
+<p align="left"><sub>Trickplay seek previews, generated live for torrents and local files.</sub></p>
 
-<p align="left">
-  <img src="https://harbor.site/readme-media/richactivity.gif" width="320">
-  <br/>
-  <sub>Discord Rich Presence, cycling live as you browse and watch.</sub>
-</p>
+<p align="left"><sub>Discord Rich Presence, cycling live as you browse and watch.</sub></p>
 
 <p align="right"><a href="#readme-top">&#9650; back to top</a></p>
 
@@ -389,11 +370,7 @@ Download the latest build for macOS or Windows from the [Releases page][releases
 
 ### Linux (in testing, coming soon)
 
-<p align="center">
-  <img src="https://harbor.site/readme-media/linux.png" width="900">
-  <br/>
-  <sub>Harbor running natively on Linux, in a Together watch party.</sub>
-</p>
+<p align="center"><sub>Harbor running natively on Linux, in a Together watch party.</sub></p>
 
 Linux is up and running natively, and it is in active testing right now. We decided to take a couple extra weeks so the native player feels great for full time Linux users before we call it ready. Coming soon.
 
@@ -634,8 +611,8 @@ Thank you to everyone, named and unnamed, whose open work Harbor builds upon.
 
 <div align="center">
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://harbor.site/readme-media/harbor-mark.svg">
-  <img src="https://harbor.site/readme-media/harbor-mark.svg" width="48">
+  <source media="(prefers-color-scheme: dark)" srcset="docs/media/harbor-mark.svg">
+  <img src="docs/media/harbor-mark.svg" width="48">
 </picture>
 <br/><br/>
 <sub>Built with care for the people who love good cinema and an open web. <a href="#readme-top">&#9650; back to top</a></sub>

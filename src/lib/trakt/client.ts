@@ -1,9 +1,5 @@
-import {
-  TRAKT_API_BASE,
-  TRAKT_API_VERSION,
-  TRAKT_CLIENT_ID,
-  TRAKT_TOKEN_PROXY,
-} from "./config";
+import { TRAKT_API_BASE, TRAKT_API_VERSION, TRAKT_CLIENT_ID, TRAKT_TOKEN_PROXY } from "./config";
+import { safeFetch } from "@/lib/safe-fetch";
 import { getSession, setSession } from "./session";
 import type { TraktSession } from "./types";
 
@@ -32,10 +28,10 @@ function baseHeaders(): HeadersInit {
 
 async function refreshAccessToken(): Promise<TraktSession | null> {
   const current = getSession();
-  if (!current) return null;
-  const res = await fetch(TRAKT_TOKEN_PROXY, {
+  if (!current || !TRAKT_TOKEN_PROXY) return null;
+  const res = await safeFetch(TRAKT_TOKEN_PROXY, {
     method: "POST",
-    headers: baseHeaders(),
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       refresh_token: current.refreshToken,
       grant_type: "refresh_token",
@@ -87,10 +83,7 @@ async function doFetch(path: string, opts: TraktRequestOptions): Promise<Respons
   return fetch(`${TRAKT_API_BASE}${path}`, init);
 }
 
-export async function traktRequest<T>(
-  path: string,
-  opts: TraktRequestOptions = {},
-): Promise<T> {
+export async function traktRequest<T>(path: string, opts: TraktRequestOptions = {}): Promise<T> {
   let res = await doFetch(path, opts);
 
   if (res.status === 401 && opts.authed !== false) {

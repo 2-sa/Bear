@@ -4,6 +4,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { useEffect, useState } from "react";
 import { getWindowFullscreen } from "@/lib/fullscreen-state";
 import { isMacDesktop } from "@/lib/platform";
+import { assertSafeExternalUrl } from "@/lib/security";
 
 const win: Window | null = isTauri() ? getCurrentWindow() : null;
 
@@ -72,12 +73,18 @@ export function useMaximized(): boolean {
 }
 
 export function openUrl(url: string) {
-  if (!url) return;
+  // F-7: scheme validation. Anything other than http(s) is rejected before
+  // it reaches the OS opener or `window.open`, so callers holding an
+  // attacker-controlled string cannot trigger `javascript:`, `file:`, or
+  // scheme-namespace abuse on Windows. Magnets belong to the torrent
+  // engine — use `openMagnet` for those.
+  const safe = assertSafeExternalUrl(url);
+  if (!safe) return;
   if (isTauri()) {
-    tauriOpenUrl(url).catch(() => {
-      invoke("browser_open", { url }).catch(() => {
+    tauriOpenUrl(safe).catch(() => {
+      invoke("browser_open", { url: safe }).catch(() => {
         try {
-          window.open(url, "_blank", "noopener,noreferrer");
+          window.open(safe, "_blank", "noopener,noreferrer");
         } catch {
           /* swallow */
         }
@@ -86,7 +93,7 @@ export function openUrl(url: string) {
     return;
   }
   try {
-    window.open(url, "_blank", "noopener,noreferrer");
+    window.open(safe, "_blank", "noopener,noreferrer");
   } catch {
     /* swallow */
   }
@@ -117,14 +124,18 @@ function isIframeHostile(url: string): boolean {
 }
 
 export function openInAppBrowser(url: string, title?: string) {
-  if (!url) return;
-  if (isIframeHostile(url)) {
-    openUrl(url);
+  // F-7: validate scheme before forwarding to the embed-viewport — it also
+  // calls `window.open` and could otherwise be abused as a sink for the
+  // same dangerous protocols that `openUrl` now rejects.
+  const safe = assertSafeExternalUrl(url);
+  if (!safe) return;
+  if (isIframeHostile(safe)) {
+    openUrl(safe);
     return;
   }
   if (typeof window !== "undefined") {
     window.dispatchEvent(
-      new CustomEvent("harbor:open-embed-viewport", { detail: { url, title } }),
+      new CustomEvent("harbor:open-embed-viewport", { detail: { url: safe, title } }),
     );
   }
 }

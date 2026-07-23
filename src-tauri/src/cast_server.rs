@@ -5,6 +5,7 @@ pub struct CastServerStatus {
     pub bundled: bool,
     pub running: bool,
     pub ready: bool,
+    pub lan_url: Option<String>,
     pub last_error: Option<String>,
     pub restart_count: u32,
 }
@@ -44,6 +45,7 @@ pub fn cast_server_status() -> CastServerStatus {
         bundled: running,
         running,
         ready: running,
+        lan_url: crate::torrent_engine::lan_url(),
         last_error,
         restart_count: 0,
     }

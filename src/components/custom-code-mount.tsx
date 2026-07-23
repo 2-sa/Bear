@@ -3,6 +3,7 @@ import { useSettings } from "@/lib/settings";
 import { getThemeById } from "@/lib/theme";
 import { useView } from "@/lib/view";
 import type { CustomTheme } from "@/lib/custom-themes";
+import { sanitizeThemeHtml } from "@/lib/security";
 
 const STYLE_ID = "harbor-custom-css";
 const THEME_STYLE_ID = "harbor-theme-css";
@@ -85,7 +86,11 @@ export function CustomCodeMount() {
     return () => runThemeCleanup("__harborThemeCleanup");
   }, [themeExt?.js]);
 
-  const html = `${settings.customHtml ?? ""}${themeExt?.html ?? ""}`;
+  // F-6: sanitize both customHtml and theme html through DOMPurify before
+  // injecting via dangerouslySetInnerHTML, so a crafted .harborstyle or
+  // a compromised settings_write cannot inject scripts/iframes into the
+  // main window overlay.
+  const html = sanitizeThemeHtml(`${settings.customHtml ?? ""}${themeExt?.html ?? ""}`);
   return (
     <div
       id={OVERLAY_ID}

@@ -1,5 +1,5 @@
-import { ArrowUpRight, ClipboardCopy, ExternalLink, RotateCw, Sparkles, X } from "lucide-react";
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { ArrowUpRight, ClipboardCopy, ExternalLink, RotateCw, ShieldAlert, Sparkles, X } from "lucide-react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { installFromUrl } from "@/lib/addon-store";
 import { isAdultText } from "@/lib/addons-store/adult-filter";
@@ -61,7 +61,8 @@ type Phase =
   | { kind: "idle" }
   | { kind: "installing"; name: string | null }
   | { kind: "success"; name: string; logo: string | null }
-  | { kind: "error"; message: string };
+  | { kind: "error"; message: string }
+  | { kind: "confirm"; candidateUrl: string; origin: string };
 
 const STREMIO_PROTO = "stremio://";
 
@@ -95,6 +96,18 @@ function InstallerViewport({
   const [reloadKey, setReloadKey] = useState(0);
   const successTimerRef = useRef<number | null>(null);
   const blockedTimerRef = useRef<number | null>(null);
+
+  // F-1: Only postMessages from the iframe's origin (the addon marketplace
+  // page we loaded) should be honored. Any other origin — a window.opener,
+  // a malicious iframe, a redirect chain — is rejected before it can inject
+  // an addon URL. This closes the CSRF addon-injection vector.
+  const expectedOrigin = useMemo(() => {
+    try {
+      return new URL(url).origin;
+    } catch {
+      return null;
+    }
+  }, [url]);
 
   useLayoutEffect(() => {
     document.body.style.overflow = "hidden";
@@ -183,6 +196,10 @@ function InstallerViewport({
 
     const onMessage = (e: MessageEvent) => {
       if (isBusy()) return;
+      // F-1: Reject any message whose origin is NOT the iframe's origin.
+      // A malicious website holding a window.opener reference cannot
+      // inject addons — only the addon page we loaded can signal us.
+      if (!expectedOrigin || e.origin !== expectedOrigin) return;
       const data = e.data;
       if (!data) return;
       const candidate =
@@ -194,8 +211,22 @@ function InstallerViewport({
               ? data.manifestUrl
               : null;
       if (!candidate) return;
-      if (candidate.startsWith(STREMIO_PROTO) || candidate.includes("manifest.json")) {
-        void submitRef.current(candidate);
+      // F-1: Stricter URL validation — require either a stremio:// prefix
+      // or a well-formed https URL ending in manifest.json (not just
+      // `includes("manifest.json")` which could match an attacker's path
+      // segment). Show a confirmation dialog before installing so the user
+      // can see and approve the URL.
+      if (candidate.startsWith(STREMIO_PROTO)) {
+        setPhase({ kind: "confirm", candidateUrl: candidate, origin: e.origin });
+      } else {
+        try {
+          const u = new URL(candidate);
+          if (u.protocol === "https:" && u.pathname.endsWith("manifest.json")) {
+            setPhase({ kind: "confirm", candidateUrl: candidate, origin: e.origin });
+          }
+        } catch {
+          /* malformed — ignore */
+        }
       }
     };
     const onDeeplink = (e: Event) => {
@@ -213,7 +244,7 @@ function InstallerViewport({
       window.removeEventListener("message", onMessage);
       window.removeEventListener("harbor:deeplink-install", onDeeplink);
     };
-  }, []);
+  }, [expectedOrigin]);
 
   const readClipboard = async () => {
     try {
@@ -230,6 +261,14 @@ function InstallerViewport({
   };
 
   const dismissError = () => setPhase({ kind: "idle" });
+  const confirmInstall = () => {
+    if (phase.kind === "confirm") {
+      const candidate = phase.candidateUrl;
+      setPasteValue(candidate);
+      void submit(candidate);
+    }
+  };
+  const dismissConfirm = () => setPhase({ kind: "idle" });
   const reload = () => {
     setBlocked(false);
     setLoaded(false);
@@ -301,6 +340,39 @@ function InstallerViewport({
         {!loaded && !blocked && (
           <div className="absolute inset-0 z-10 flex items-center justify-center bg-canvas">
             <HarborLoader size="lg" caption={`Loading ${title}`} />
+          </div>
+        )}
+        {phase.kind === "confirm" && (
+          <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/70 px-6 text-center backdrop-blur-md">
+            <div className="max-w-md rounded-2xl border border-accent/40 bg-elevated p-6 shadow-2xl">
+              <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-accent/15">
+                <ShieldAlert size={22} className="text-accent" strokeWidth={2.2} />
+              </div>
+              <h3 className="text-[15px] font-bold text-ink">Install this addon?</h3>
+              <p className="mt-1.5 text-[12.5px] text-ink-muted">
+                A page at <span className="font-semibold text-ink">{phase.origin}</span> wants to install an addon.
+              </p>
+              <p className="mt-2 break-all rounded-lg bg-surface px-3 py-2 text-[11px] font-mono text-ink-muted">
+                {phase.candidateUrl}
+              </p>
+              <div className="mt-4 flex items-center justify-center gap-3">
+                <button
+                  type="button"
+                  onClick={dismissConfirm}
+                  className="flex h-9 items-center gap-1.5 rounded-full px-4 text-[13px] font-semibold text-ink-muted transition-colors hover:text-ink"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmInstall}
+                  className="flex h-9 items-center gap-1.5 rounded-full bg-accent px-4 text-[13px] font-semibold text-canvas transition-opacity hover:opacity-90"
+                >
+                  <Sparkles size={13} strokeWidth={2.4} />
+                  Install
+                </button>
+              </div>
+            </div>
           </div>
         )}
         {blocked && (

@@ -1,5 +1,5 @@
 import { meta as cinemetaMeta, type Meta } from "./cinemeta";
-import { safeFetch as fetch } from "./safe-fetch";
+import { trustedLocalFetch as fetch } from "./safe-fetch";
 import { addonAccepts, userAddons, type Addon } from "./addons";
 import { loadInstalled } from "./addon-store";
 

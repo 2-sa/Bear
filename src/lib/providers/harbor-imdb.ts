@@ -1,4 +1,5 @@
-const BASE = "https://harbor.site/api/imdb";
+import { workerRoutes } from "@/lib/network-config";
+import { safeFetch } from "@/lib/safe-fetch";
 
 export type ParentalCategory = { category: string; severity: string };
 
@@ -16,7 +17,9 @@ export async function harborImdbEpisodes(seriesTt: string): Promise<Map<string, 
   if (pending) return pending;
   const p = (async () => {
     try {
-      const res = await fetch(`${BASE}/episodes/${seriesTt}`);
+      const url = workerRoutes.imdbEpisodes(seriesTt);
+      if (!url) return new Map<string, number>();
+      const res = await safeFetch(url);
       const map = new Map<string, number>();
       if (res.ok) {
         const j = (await res.json()) as { ratings?: Record<string, number> };
@@ -47,7 +50,9 @@ export async function harborImdbTitle(tt: string): Promise<number | null> {
   if (!tt.startsWith("tt")) return null;
   if (titleCache.has(tt)) return titleCache.get(tt) ?? null;
   try {
-    const res = await fetch(`${BASE}/title/${tt}`);
+    const url = workerRoutes.imdbTitle(tt);
+    if (!url) return null;
+    const res = await safeFetch(url);
     if (!res.ok) {
       titleCache.set(tt, null);
       return null;
@@ -70,7 +75,9 @@ export async function harborImdbParental(tt: string): Promise<ParentalCategory[]
   if (pending) return pending;
   const p = (async () => {
     try {
-      const res = await fetch(`${BASE}/parental/${tt}`);
+      const url = workerRoutes.imdbParental(tt);
+      if (!url) return [];
+      const res = await safeFetch(url);
       const out: ParentalCategory[] = [];
       if (res.ok) {
         const j = (await res.json()) as { categories?: ParentalCategory[] };
