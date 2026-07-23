@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 
 const paths = readFileSync(new URL("../src/router/paths.ts", import.meta.url), "utf8");
 const router = readFileSync(new URL("../src/router/router.tsx", import.meta.url), "utf8");
