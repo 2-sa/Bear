@@ -197,9 +197,12 @@ export function MangaView() {
     return (
       <main className="animate-fade-in mx-auto flex min-h-[86vh] max-w-2xl flex-col items-center justify-center gap-6 px-12 pt-[9vh] text-center">
         <img
-          src="/nosources.png"
+          src="/manga/manga-no-sources.webp"
           alt=""
-          className="w-full max-w-[380px] object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.5)]"
+          width={760}
+          height={570}
+          decoding="async"
+          className="aspect-[4/3] w-full max-w-[380px] object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.5)]"
         />
         <div className="flex flex-col gap-3">
           <h1 className="font-display text-[32px] font-medium leading-tight text-ink">

@@ -34,10 +34,13 @@ export function MangaBootstrapError({
   return (
     <main className={SHELL}>
       <img
-        src="/manga-paper-boat.png"
+        src="/manga/manga-source-error.webp"
         alt=""
+        width={420}
+        height={420}
         draggable={false}
-        className="w-52 max-w-full object-contain drop-shadow-[0_16px_36px_rgba(0,0,0,0.4)]"
+        decoding="async"
+        className="aspect-square w-52 max-w-full object-contain drop-shadow-[0_16px_36px_rgba(0,0,0,0.4)]"
       />
       <div className="flex flex-col gap-2.5">
         <h1 className="font-display text-[26px] font-medium leading-tight text-ink">

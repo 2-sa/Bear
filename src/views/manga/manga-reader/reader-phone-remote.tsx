@@ -3,25 +3,17 @@ import { createPortal } from "react-dom";
 import { invoke } from "@tauri-apps/api/core";
 import { Check, Copy, Smartphone, X } from "lucide-react";
 import { mangaRemoteUiUrl } from "@/lib/remote/protocol";
-import { Tooltip } from "@/views/detail/tooltip";
 import { useT } from "@/lib/i18n";
+import { ReaderIconButton, READER_ICON_CLASS, READER_ICON_STROKE } from "./reader-icon-button";
 
 export function PhoneRemoteButton() {
   const t = useT();
   const [open, setOpen] = useState(false);
   return (
     <>
-      <Tooltip label={t("Control from your phone")} side="bottom">
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          onMouseDown={(e) => e.preventDefault()}
-          aria-label={t("Control from your phone")}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-ink-muted transition duration-150 hover:bg-elevated hover:text-ink active:scale-90"
-        >
-          <Smartphone className="h-5 w-5" strokeWidth={2.2} />
-        </button>
-      </Tooltip>
+      <ReaderIconButton label={t("Control from your phone")} onClick={() => setOpen(true)}>
+        <Smartphone className={READER_ICON_CLASS} strokeWidth={READER_ICON_STROKE} />
+      </ReaderIconButton>
       {open && <PhoneRemoteModal onClose={() => setOpen(false)} />}
     </>
   );

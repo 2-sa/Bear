@@ -11,7 +11,6 @@ import {
   VolumeX,
   X,
 } from "lucide-react";
-import { Tooltip } from "@/views/detail/tooltip";
 import { t, useT } from "@/lib/i18n";
 import { listMangaSources } from "@/lib/manga/sources";
 import {
@@ -22,6 +21,7 @@ import {
 } from "./reader-source-menu";
 import { PhoneRemoteButton } from "./reader-phone-remote";
 import type { MangaChapter } from "@/views/manga/manga-reader/reader-types";
+import { ReaderIconButton, READER_ICON_CLASS, READER_ICON_STROKE } from "./reader-icon-button";
 
 function chapterLabel(c: MangaChapter): string {
   return c.chapter ? t("Chapter {n}", { n: c.chapter }) : c.title || t("Oneshot");
@@ -42,9 +42,6 @@ function saveChapterDesc(desc: boolean): void {
     /* noop */
   }
 }
-
-const ICON_BTN =
-  "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-ink-muted transition duration-150 hover:bg-elevated hover:text-ink active:scale-90";
 
 export function ReaderBar({
   visible,
@@ -75,17 +72,9 @@ export function ReaderBar({
       data-tauri-drag-region
       className={`flex h-14 shrink-0 items-center gap-3 border-b border-edge-soft bg-canvas/70 px-3 text-ink backdrop-blur-xl transition-opacity duration-300 ${visible ? "opacity-100" : "pointer-events-none opacity-0"}`}
     >
-      <Tooltip label={t("Close reader")} side="bottom">
-        <button
-          type="button"
-          onClick={onExit}
-          onMouseDown={(e) => e.preventDefault()}
-          aria-label={t("Close reader")}
-          className={ICON_BTN}
-        >
-          <X className="h-5 w-5" strokeWidth={2.2} />
-        </button>
-      </Tooltip>
+      <ReaderIconButton label={t("Close reader")} onClick={onExit}>
+        <X className={READER_ICON_CLASS} strokeWidth={READER_ICON_STROKE} />
+      </ReaderIconButton>
 
       <div className="flex flex-1" data-tauri-drag-region />
 
@@ -94,52 +83,33 @@ export function ReaderBar({
       <div className="flex flex-1" data-tauri-drag-region />
 
       {flipSound != null && onToggleFlipSound && (
-        <Tooltip
+        <ReaderIconButton
           label={flipSound ? t("Mute page-turn sound") : t("Unmute page-turn sound")}
-          side="bottom"
+          onClick={onToggleFlipSound}
+          pressed={flipSound}
         >
-          <button
-            type="button"
-            onClick={onToggleFlipSound}
-            onMouseDown={(e) => e.preventDefault()}
-            aria-label={flipSound ? t("Mute page-turn sound") : t("Unmute page-turn sound")}
-            className={ICON_BTN}
-          >
-            {flipSound ? (
-              <Volume2 className="h-5 w-5" strokeWidth={2.2} />
-            ) : (
-              <VolumeX className="h-5 w-5" strokeWidth={2.2} />
-            )}
-          </button>
-        </Tooltip>
+          {flipSound ? (
+            <Volume2 className={READER_ICON_CLASS} strokeWidth={READER_ICON_STROKE} />
+          ) : (
+            <VolumeX className={READER_ICON_CLASS} strokeWidth={READER_ICON_STROKE} />
+          )}
+        </ReaderIconButton>
       )}
       <PhoneRemoteButton />
-      <Tooltip label={fullscreen ? t("Exit fullscreen") : t("Fullscreen")} side="bottom">
-        <button
-          type="button"
-          onClick={onToggleFullscreen}
-          onMouseDown={(e) => e.preventDefault()}
-          aria-label={fullscreen ? t("Exit fullscreen") : t("Fullscreen")}
-          className={ICON_BTN}
-        >
-          {fullscreen ? (
-            <Minimize2 className="h-5 w-5" strokeWidth={2.2} />
-          ) : (
-            <Maximize2 className="h-5 w-5" strokeWidth={2.2} />
-          )}
-        </button>
-      </Tooltip>
-      <Tooltip label={t("Reader settings")} side="bottom">
-        <button
-          type="button"
-          onClick={onOpenSettings}
-          onMouseDown={(e) => e.preventDefault()}
-          aria-label={t("Reader settings")}
-          className={ICON_BTN}
-        >
-          <Settings2 className="h-5 w-5" strokeWidth={2.2} />
-        </button>
-      </Tooltip>
+      <ReaderIconButton
+        label={fullscreen ? t("Exit fullscreen") : t("Fullscreen")}
+        onClick={onToggleFullscreen}
+        pressed={fullscreen}
+      >
+        {fullscreen ? (
+          <Minimize2 className={READER_ICON_CLASS} strokeWidth={READER_ICON_STROKE} />
+        ) : (
+          <Maximize2 className={READER_ICON_CLASS} strokeWidth={READER_ICON_STROKE} />
+        )}
+      </ReaderIconButton>
+      <ReaderIconButton label={t("Reader settings")} onClick={onOpenSettings}>
+        <Settings2 className={READER_ICON_CLASS} strokeWidth={READER_ICON_STROKE} />
+      </ReaderIconButton>
     </div>
   );
 }

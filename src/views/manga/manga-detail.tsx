@@ -120,7 +120,7 @@ function MangaDetailError({ onBack, onRetry }: { onBack: () => void; onRetry: ()
       </div>
       <div className="mx-auto flex min-h-[54vh] max-w-md flex-col items-center justify-center gap-6 text-center">
         <img
-          src="/manga-paper-boat.png"
+          src="/manga/manga-source-error.webp"
           alt=""
           draggable={false}
           className="w-60 max-w-full object-contain drop-shadow-[0_16px_36px_rgba(0,0,0,0.4)]"

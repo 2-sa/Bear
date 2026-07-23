@@ -150,7 +150,7 @@ export function SearchProvider({ children }: { children: ReactNode }) {
     setResults(null);
     setStatus("typing");
     const animeAllowed = !hiddenTabs.anime;
-    const mangaAllowed = settings.mangaEnabled && !settings.hideContent.manga;
+    const mangaAllowed = settings.mangaEnabled && !settings.hideContent.manga && !hiddenTabs.manga;
     const franchiseAllowed = animeAllowed || mangaAllowed;
     const liveTvAllowed = !hiddenTabs.liveTv && settings.iptvPlaylists.length > 0;
     debounceRef.current = window.setTimeout(() => {
@@ -298,6 +298,7 @@ export function SearchProvider({ children }: { children: ReactNode }) {
     settings.hideContent.manga,
     excludeGenres,
     hiddenTabs.anime,
+    hiddenTabs.manga,
     hiddenTabs.liveTv,
     ensureAddons,
   ]);

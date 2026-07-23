@@ -81,8 +81,10 @@ export function MangaHero({
     >
       <div className="absolute inset-0 z-0">
         <img
-          src="/mangahero.png"
+          src="/manga/manga-hero.webp"
           alt=""
+          width={1600}
+          height={900}
           decoding="async"
           className="absolute inset-0 h-full w-full object-cover"
           style={{ objectPosition: "center 20%" }}

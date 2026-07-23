@@ -21,6 +21,7 @@ import { BookmarksPanel, BookmarkPagePicker } from "./manga-reader/reader-bookma
 import { useReaderProgress } from "./manga-reader/hooks/use-reader-progress";
 import { useReaderPaging } from "./manga-reader/hooks/use-reader-paging";
 import { detectWebtoon } from "./manga-reader/reader-utils";
+import { pageStepForTap } from "./manga-reader/reader-direction";
 import { addMangaBookmark, type MangaBookmark } from "@/lib/manga-bookmarks";
 import { chapterSourceOf } from "./manga-reader/reader-source-menu";
 import { useMangaRemoteBinding } from "@/lib/remote/use-manga-remote-binding";
@@ -614,8 +615,9 @@ export function MangaReader({
               const x =
                 (e.clientX - e.currentTarget.getBoundingClientRect().left) /
                 e.currentTarget.clientWidth;
-              if (x < 0.35) (rtl ? nextPage : prevPage)();
-              else if (x > 0.65) (rtl ? prevPage : nextPage)();
+              const step = pageStepForTap(x, rtl);
+              if (step === "next") nextPage();
+              else if (step === "prev") prevPage();
             }}
           >
             {complete ? (

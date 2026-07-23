@@ -97,7 +97,7 @@ export const NAV_ITEMS: NavItem[] = [
     ),
     view: "manga",
     hideKey: "manga",
-    parentalKey: "anime",
+    parentalKey: "manga",
   },
   {
     id: "live",
