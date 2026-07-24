@@ -1,3 +1,4 @@
+// @ts-expect-error Node test types are intentionally outside the browser-only tsconfig.
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vite-plus/test";
 
