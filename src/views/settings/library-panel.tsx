@@ -931,11 +931,6 @@ export function LibraryPanel({
         />
         <ToggleRow
           label={t("Hide manga")}
-          leading={
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center text-ink drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]">
-              <BookOpen size={28} strokeWidth={2} />
-            </span>
-          }
           sub={t("Removes the Manga tab from the sidebar.")}
           value={settings.hideContent.manga}
           onChange={(v) => pushHideContent("manga", v)}
