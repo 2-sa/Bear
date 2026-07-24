@@ -1,10 +1,15 @@
-import { describe, expect, it } from "vite-plus/test";
+// @ts-expect-error Node test types are intentionally outside the browser-only tsconfig.
+import assert from "node:assert";
+// @ts-expect-error Node test types are intentionally outside the browser-only tsconfig.
+import { describe, it } from "node:test";
+
 import {
   horizontalScrollSign,
   nextPageKey,
   pageStepForTap,
   prevPageKey,
 } from "../src/views/manga/manga-reader/reader-direction.ts";
+
 import {
   DEFAULT_PREFS,
   loadPrefs,
@@ -13,60 +18,81 @@ import {
 
 describe("manga reader direction", () => {
   it("maps LTR tap zones to prev/next", () => {
-    expect(pageStepForTap(0.1, false)).toBe("prev");
-    expect(pageStepForTap(0.9, false)).toBe("next");
-    expect(pageStepForTap(0.5, false)).toBe(null);
+    assert.equal(pageStepForTap(0.1, false), "prev");
+    assert.equal(pageStepForTap(0.9, false), "next");
+    assert.equal(pageStepForTap(0.5, false), null);
   });
 
   it("swaps tap zones under RTL", () => {
-    expect(pageStepForTap(0.1, true)).toBe("next");
-    expect(pageStepForTap(0.9, true)).toBe("prev");
+    assert.equal(pageStepForTap(0.1, true), "next");
+    assert.equal(pageStepForTap(0.9, true), "prev");
   });
 
   it("chooses arrow keys for horizontal RTL", () => {
-    expect(nextPageKey(true, true)).toBe("ArrowLeft");
-    expect(prevPageKey(true, true)).toBe("ArrowRight");
-    expect(nextPageKey(false, true)).toBe("ArrowRight");
-    expect(prevPageKey(false, true)).toBe("ArrowLeft");
+    assert.equal(nextPageKey(true, true), "ArrowLeft");
+    assert.equal(prevPageKey(true, true), "ArrowRight");
+    assert.equal(nextPageKey(false, true), "ArrowRight");
+    assert.equal(prevPageKey(false, true), "ArrowLeft");
   });
 
   it("scrolls horizontal strips toward next in reading direction", () => {
-    expect(horizontalScrollSign(false)).toBe(1);
-    expect(horizontalScrollSign(true)).toBe(-1);
+    assert.equal(horizontalScrollSign(false), 1);
+    assert.equal(horizontalScrollSign(true), -1);
   });
 });
 
 describe("manga reader prefs", () => {
   it("defaults to RTL long-strip", () => {
-    expect(DEFAULT_PREFS.rtl).toBe(true);
-    expect(DEFAULT_PREFS.mode).toBe("long");
+    assert.equal(DEFAULT_PREFS.rtl, true);
+    assert.equal(DEFAULT_PREFS.mode, "long");
   });
 
   it("clamps invalid stored prefs", () => {
     const store = new Map<string, string>();
     const g = globalThis as { localStorage?: Storage };
-    const prev = g.localStorage;
+    const previousLocalStorage = g.localStorage;
+
     g.localStorage = {
-      getItem: (k) => store.get(k) ?? null,
-      setItem: (k, v) => {
-        store.set(k, v);
+      getItem: (key) => store.get(key) ?? null,
+
+      setItem: (key, value) => {
+        store.set(key, value);
       },
-      removeItem: (k) => {
-        store.delete(k);
+
+      removeItem: (key) => {
+        store.delete(key);
       },
-      clear: () => store.clear(),
-      key: () => null,
-      length: 0,
+
+      clear: () => {
+        store.clear();
+      },
+
+      key: (index) => [...store.keys()][index] ?? null,
+
+      get length() {
+        return store.size;
+      },
     };
+
     try {
-      store.set(PREFS_KEY, JSON.stringify({ mode: "nope", zoom: 99, rtl: 1, fit: "wide" }));
+      store.set(
+        PREFS_KEY,
+        JSON.stringify({
+          mode: "nope",
+          zoom: 99,
+          rtl: 1,
+          fit: "wide",
+        }),
+      );
+
       const prefs = loadPrefs();
-      expect(prefs.mode).toBe(DEFAULT_PREFS.mode);
-      expect(prefs.fit).toBe(DEFAULT_PREFS.fit);
-      expect(prefs.zoom).toBe(3);
-      expect(prefs.rtl).toBe(true);
+
+      assert.equal(prefs.mode, DEFAULT_PREFS.mode);
+      assert.equal(prefs.fit, DEFAULT_PREFS.fit);
+      assert.equal(prefs.zoom, 3);
+      assert.equal(prefs.rtl, true);
     } finally {
-      g.localStorage = prev;
+      g.localStorage = previousLocalStorage;
     }
   });
 });
