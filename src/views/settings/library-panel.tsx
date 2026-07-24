@@ -30,7 +30,7 @@ import { RtRotten } from "@/components/icons/rt-rotten";
 import { useProfiles } from "@/lib/profiles";
 import { useSettings } from "@/lib/settings";
 import { clearAllSnapshots, snapshotCount } from "@/lib/snapshots";
-import { BookOpen, Bookmark, HelpCircle, Popcorn } from "lucide-react";
+import { Bookmark, HelpCircle, Popcorn } from "lucide-react";
 import { HoverTooltip } from "@/components/hover-tooltip";
 import { useT } from "@/lib/i18n";
 import { RegionField } from "./region-cascade";
