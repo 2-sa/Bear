@@ -3,7 +3,12 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { applyAniZipEpisodeMapping, formatCwEpisodeLabel } from "../src/lib/cw-episode.ts";
 import { cwRowKey, dedupeCwFranchises } from "../src/lib/cw-list.ts";
-import { lastPlayedEpisode, readResumeEntry, saveResumeMs } from "../src/lib/resume.ts";
+import {
+  lastPlayedEpisode,
+  readResumeEntry,
+  saveResumeBatch,
+  saveResumeMs,
+} from "../src/lib/resume.ts";
 import { buildStreamIds } from "../src/lib/streams/stream-ids.ts";
 
 class MemoryStorage {
@@ -47,6 +52,15 @@ test("resume entries retain a separate display season", () => {
 
   assert.equal(readResumeEntry("kitsu:10", 1, 7)?.displaySeason, 3);
   assert.equal(lastPlayedEpisode("kitsu:10")?.displaySeason, 3);
+});
+
+test("cloud resume batches do not erase a known display season", () => {
+  storage.clear();
+  saveResumeMs("kitsu:10", 90_000, 1, 7, 3);
+
+  saveResumeBatch([{ id: "kitsu:10", ms: 120_000, season: 1, episode: 7 }]);
+
+  assert.equal(readResumeEntry("kitsu:10", 1, 7)?.displaySeason, 3);
 });
 
 test("formats Continue Watching labels from the most specific season mapping", () => {
