@@ -278,6 +278,7 @@ export function PlayerView({ src }: { src: PlayerSrc }) {
   const sleepAtEndArmed = useSleepAtEnd();
   const queueOwnsCurrent = queueIndexOf(src.meta, src.episode) >= 0;
   const queueOrSleepArmed = queueOwnsCurrent || sleepAtEndArmed;
+  const showAdjacentUpNext = !queueOwnsCurrent && canChangeEpisode && !autoNextCancelled;
 
   const quickToolsEnabled = !inRoom || isHost;
   const ab = useAbLoop({
@@ -426,16 +427,27 @@ export function PlayerView({ src }: { src: PlayerSrc }) {
     settings.playerConfirmLeave,
     update,
   ]);
+  const requestStillWatchingStop = useCallback(() => {
+    void requestPlayerClose({
+      drawMode: false,
+      setDrawMode,
+      closePlayer,
+      playerEscExitsFullscreen: false,
+      playerConfirmLeave: true,
+      onRememberConfirmLeave: () => update({ playerConfirmLeave: false }),
+    });
+  }, [setDrawMode, closePlayer, update]);
   const {
     prompt: stillWatchingPrompt,
     gateAdvance,
     continueWatching,
     stopWatching,
   } = useStillWatching({
+    storeKey: src.meta.id,
     enabled: settings.stillWatching,
     threshold: settings.stillWatchingAfter,
     onContinue: goToEpisode,
-    onStop: requestLeave,
+    onStop: requestStillWatchingStop,
   });
   const autoAdvanceEpisode = useCallback(
     (nextEpisode: PlayEpisode | null) => {
@@ -927,8 +939,8 @@ export function PlayerView({ src }: { src: PlayerSrc }) {
     pendingSeekSec,
     skipSegments,
     hasNextEpisode: hasNext,
-    hasNextEpDisplay: canChangeEpisode && !autoNextCancelled && !!adjacent.next,
-    nextEp: canChangeEpisode && !autoNextCancelled ? adjacent.next : null,
+    hasNextEpDisplay: showAdjacentUpNext && !!adjacent.next,
+    nextEp: showAdjacentUpNext ? adjacent.next : null,
     nextEpMask,
     pillsVisible: hasStarted || !inRoom,
     allowAutoSkip: !roomGuest,

@@ -1,19 +1,22 @@
 // @ts-expect-error Node test types are intentionally outside the browser-only tsconfig.
 import assert from "node:assert/strict";
 // @ts-expect-error Node test types are intentionally outside the browser-only tsconfig.
+import { readFileSync } from "node:fs";
+// @ts-expect-error Node test types are intentionally outside the browser-only tsconfig.
 import test from "node:test";
 import * as queue from "../src/lib/queue.ts";
-
-const stillWatching = (await import("../src/lib/still-watching.ts").catch(() => ({}))) as Record<
-  string,
-  unknown
->;
+import * as stillWatching from "../src/lib/still-watching.ts";
 
 const firstMeta = { id: "tt-first", type: "series", name: "First" } as const;
 const secondMeta = { id: "tt-second", type: "movie", name: "Second" } as const;
 const thirdMeta = { id: "tt-third", type: "series", name: "Third" } as const;
 const firstEpisode = { season: 1, episode: 1 };
 const thirdEpisode = { season: 2, episode: 4 };
+const playerSource = readFileSync(new URL("../src/views/player.tsx", import.meta.url), "utf8");
+const queueAdvanceSource = readFileSync(
+  new URL("../src/views/player/hooks/use-queue-advance.ts", import.meta.url),
+  "utf8",
+);
 
 test("queue positional helpers use media and episode identity without removing entries", () => {
   assert.equal(typeof (queue as Record<string, unknown>).queueIndexOf, "function");
@@ -44,78 +47,138 @@ test("queue positional helpers use media and episode identity without removing e
 });
 
 test("Still Watching clamps its threshold to the supported range", () => {
-  const clamp = stillWatching.clampStillWatchingThreshold;
-  assert.equal(typeof clamp, "function");
-  const clampThreshold = clamp as (value: unknown) => number;
-  assert.equal(clampThreshold(-3), 1);
-  assert.equal(clampThreshold(4.6), 5);
-  assert.equal(clampThreshold(99), 10);
-  assert.equal(clampThreshold(Number.NaN), 3);
+  assert.equal(stillWatching.clampStillWatchingThreshold(-3), 1);
+  assert.equal(stillWatching.clampStillWatchingThreshold(4.6), 5);
+  assert.equal(stillWatching.clampStillWatchingThreshold(99), 10);
+  assert.equal(stillWatching.clampStillWatchingThreshold(Number.NaN), 3);
 });
 
-test("Still Watching holds the pending episode when an uninterrupted run reaches the threshold", () => {
-  const initial = stillWatching.initialStillWatchingState;
-  const request = stillWatching.requestStillWatchingAdvance;
-  assert.equal(typeof initial, "function");
-  assert.equal(typeof request, "function");
+test("Still Watching allows N automatic advances and asks before N+1", () => {
+  const initialState = stillWatching.initialStillWatchingState<{
+    season: number;
+    episode: number;
+  }>();
+  const first = stillWatching.requestStillWatchingAdvance(
+    initialState,
+    { season: 1, episode: 2 },
+    true,
+    3,
+  );
+  const second = stillWatching.requestStillWatchingAdvance(
+    first.state,
+    { season: 1, episode: 3 },
+    true,
+    3,
+  );
+  const third = stillWatching.requestStillWatchingAdvance(
+    second.state,
+    { season: 1, episode: 4 },
+    true,
+    3,
+  );
+  const fourth = stillWatching.requestStillWatchingAdvance(
+    third.state,
+    { season: 1, episode: 5 },
+    true,
+    3,
+  );
 
-  const initialState = (initial as () => unknown)();
-  const requestAdvance = request as (
-    state: unknown,
-    pending: { season: number; episode: number },
-    enabled: boolean,
-    threshold: number,
-  ) => { state: { runCount: number; pending: unknown }; held: boolean };
+  assert.deepEqual([first.held, second.held, third.held, fourth.held], [false, false, false, true]);
+  assert.equal(fourth.state.runCount, 3);
+  assert.deepEqual(fourth.state.pending, { season: 1, episode: 5 });
+});
 
-  const first = requestAdvance(initialState, { season: 1, episode: 2 }, true, 3);
-  const second = requestAdvance(first.state, { season: 1, episode: 3 }, true, 3);
-  const third = requestAdvance(second.state, { season: 1, episode: 4 }, true, 3);
+test("Still Watching run survives store re-reads across simulated player remounts", () => {
+  const key = "series:tt-persist";
+  stillWatching.clearStillWatchingState(key);
 
-  assert.deepEqual([first.held, second.held, third.held], [false, false, true]);
-  assert.equal(third.state.runCount, 2);
-  assert.deepEqual(third.state.pending, { season: 1, episode: 4 });
+  const held = [2, 3, 4, 5].map((episode) => {
+    const beforeRemount = stillWatching.getStillWatchingState<{
+      season: number;
+      episode: number;
+    }>(key);
+    const result = stillWatching.requestStillWatchingAdvance(
+      beforeRemount,
+      { season: 1, episode },
+      true,
+      stillWatching.DEFAULT_STILL_WATCHING_THRESHOLD,
+    );
+    stillWatching.setStillWatchingState(key, result.state);
+    assert.deepEqual(stillWatching.getStillWatchingState(key), result.state);
+    return result.held;
+  });
+
+  assert.deepEqual(held, [false, false, false, true]);
+  assert.deepEqual(stillWatching.getStillWatchingState(key), {
+    runCount: 3,
+    pending: { season: 1, episode: 5 },
+  });
+  stillWatching.clearStillWatchingState(key);
 });
 
 test("Still Watching interaction and decisions reset the automatic run", () => {
-  const request = stillWatching.requestStillWatchingAdvance;
-  const resetRun = stillWatching.resetStillWatchingRun;
-  const resolve = stillWatching.resolveStillWatchingPrompt;
-  assert.equal(typeof request, "function");
-  assert.equal(typeof resetRun, "function");
-  assert.equal(typeof resolve, "function");
-
-  const requestAdvance = request as (
-    state: unknown,
-    pending: { season: number; episode: number },
-    enabled: boolean,
-    threshold: number,
-  ) => { state: { runCount: number; pending: unknown }; held: boolean };
-  const reset = resetRun as (state: unknown) => { runCount: number; pending: unknown };
-  const resolvePrompt = resolve as (state: unknown) => {
-    state: { runCount: number; pending: unknown };
-    pending: unknown;
-  };
-
-  const started = requestAdvance(
+  const started = stillWatching.requestStillWatchingAdvance(
     { runCount: 0, pending: null },
     { season: 1, episode: 2 },
     true,
     2,
   );
-  const interacted = reset(started.state);
+  const interacted = stillWatching.resetStillWatchingRun(started.state);
   assert.deepEqual(interacted, { runCount: 0, pending: null });
 
-  const held = requestAdvance(interacted, { season: 1, episode: 3 }, true, 1);
-  const resolved = resolvePrompt(held.state);
-  assert.deepEqual(resolved.pending, { season: 1, episode: 3 });
+  const allowed = stillWatching.requestStillWatchingAdvance(
+    interacted,
+    { season: 1, episode: 3 },
+    true,
+    1,
+  );
+  const held = stillWatching.requestStillWatchingAdvance(
+    allowed.state,
+    { season: 1, episode: 4 },
+    true,
+    1,
+  );
+  const resolved = stillWatching.resolveStillWatchingPrompt(held.state);
+  assert.deepEqual(resolved.pending, { season: 1, episode: 4 });
   assert.deepEqual(resolved.state, { runCount: 0, pending: null });
 
-  const disabled = requestAdvance(
+  const disabled = stillWatching.requestStillWatchingAdvance(
     { runCount: 8, pending: null },
-    { season: 1, episode: 4 },
+    { season: 1, episode: 5 },
     false,
     2,
   );
   assert.equal(disabled.held, false);
   assert.deepEqual(disabled.state, { runCount: 0, pending: null });
+});
+
+test("queue ownership suppresses adjacent Up Next while preserving queued natural advance", () => {
+  assert.match(
+    playerSource,
+    /const queueOwnsCurrent = queueIndexOf\(src\.meta, src\.episode\) >= 0;/,
+  );
+  assert.match(
+    playerSource,
+    /const showAdjacentUpNext =\s*!queueOwnsCurrent && canChangeEpisode && !autoNextCancelled;/,
+  );
+  assert.match(
+    playerSource,
+    /hasNextEpDisplay: showAdjacentUpNext && !!adjacent\.next,\s*nextEp: showAdjacentUpNext \? adjacent\.next : null,/,
+  );
+  assert.match(queueAdvanceSource, /const nextItem = queueItemAfter\(src\.meta, src\.episode\);/);
+  assert.match(
+    queueAdvanceSource,
+    /if \(nextItem\) \{[\s\S]*?openPicker\(nextItem\.meta, nextItem\.episode, \{[^}]*autoPlay: true,[^}]*resume: true[^}]*\}\);/,
+  );
+});
+
+test("Still Watching Stop always uses the confirmed close path", () => {
+  assert.match(
+    playerSource,
+    /const requestStillWatchingStop = useCallback\(\(\) => \{[\s\S]*?requestPlayerClose\(\{[\s\S]*?closePlayer,[\s\S]*?playerEscExitsFullscreen: false,[\s\S]*?playerConfirmLeave: true,[\s\S]*?onRememberConfirmLeave: \(\) => update\(\{ playerConfirmLeave: false \}\),/,
+  );
+  assert.match(
+    playerSource,
+    /useStillWatching\(\{[\s\S]*?onContinue: goToEpisode,[\s\S]*?onStop: requestStillWatchingStop,/,
+  );
 });
