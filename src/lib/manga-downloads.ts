@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
 import { chapterPages } from "@/lib/manga/api";
+import { isExpectedChapterDir } from "@/lib/manga/download-path";
+
+export { isExpectedChapterDir } from "@/lib/manga/download-path";
 
 export type MangaDownloadStatus = "idle" | "downloading" | "done" | "error";
 
@@ -297,13 +300,18 @@ export async function downloadAllChapters(
   }
 }
 
-async function removeChapterDir(firstFile: string): Promise<void> {
+async function removeChapterDir(
+  firstFile: string,
+  mangaId: string | undefined,
+  chapterId: string,
+): Promise<void> {
   try {
-    const dir = firstFile.replace(/[\\/][^\\/]*$/, "");
-    const custom = getMangaDownloadDir();
-    const inDefault = /manga-downloads[\\/]/.test(dir);
-    const inCustom = !!custom && dir.startsWith(custom);
-    if (!inDefault && !inCustom) return;
+    if (!mangaId) return;
+    const { dirname, join, normalize } = await import("@tauri-apps/api/path");
+    const base = getMangaDownloadDir() || (await defaultMangaDownloadDir());
+    const dir = await normalize(await dirname(firstFile));
+    const expected = await normalize(await join(base, safeName(mangaId), safeName(chapterId)));
+    if (!isExpectedChapterDir(dir, expected)) return;
     const { remove } = await import("@tauri-apps/plugin-fs");
     await remove(dir, { recursive: true });
   } catch {
@@ -314,6 +322,7 @@ async function removeChapterDir(firstFile: string): Promise<void> {
 export function deleteMangaDownload(chapterId: string): void {
   const manifest = readManifest();
   const files = manifest[chapterId];
+  const chapterMeta = readMeta()[chapterId];
   delete manifest[chapterId];
   writeManifest(manifest);
   const meta = readMeta();
@@ -321,7 +330,7 @@ export function deleteMangaDownload(chapterId: string): void {
   writeMeta(meta);
   runtime.set(chapterId, { status: "idle", done: 0, total: 0, files: [] });
   notify(chapterId);
-  if (files?.length) void removeChapterDir(files[0]);
+  if (files?.length) void removeChapterDir(files[0], chapterMeta?.mangaId, chapterId);
 }
 
 export function useMangaDownload(chapterId: string): MangaDownloadRec {

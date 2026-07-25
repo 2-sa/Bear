@@ -1,10 +1,23 @@
 import { safeFetch } from "@/lib/safe-fetch";
 import { isBlockedUrl } from "@/lib/privacy/blocklist";
 import type { PluginHttpOpts, PluginHttpResult } from "./types";
+import { assertNetworkSafeUrl } from "./http-security";
 
 const MAX_BYTES = 8 * 1024 * 1024;
 const MAX_TIMEOUT = 45_000;
 const DEFAULT_TIMEOUT = 20_000;
+const MAX_REDIRECTS = 5;
+
+export function assertSafeUrl(raw: string): string {
+  const target = assertNetworkSafeUrl(raw);
+  const url = new URL(target);
+  if (isBlockedUrl(url.href)) throw new Error(`blocked tracker host: ${url.hostname}`);
+  return url.href;
+}
+
+export function resolvePluginRedirect(currentUrl: string, location: string): string {
+  return assertSafeUrl(new URL(location, currentUrl).href);
+}
 
 const PLUGIN_UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
@@ -40,54 +53,6 @@ const ALLOW_RESPONSE_HEADERS = new Set([
   "age",
   "server",
 ]);
-
-function isPrivateV4(h: string): boolean {
-  const m = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(h);
-  if (!m) return false;
-  const a = +m[1];
-  const b = +m[2];
-  if (a === 0 || a === 127 || a === 10) return true;
-  if (a === 169 && b === 254) return true;
-  if (a === 172 && b >= 16 && b <= 31) return true;
-  if (a === 192 && b === 168) return true;
-  if (a === 100 && b >= 64 && b <= 127) return true;
-  return false;
-}
-
-function embeddedV4(h: string): string | null {
-  const dotted = /(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/.exec(h);
-  if (dotted && /(::ffff:|64:ff9b:)/i.test(h)) return dotted[1];
-  const hex = /::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/i.exec(h);
-  if (hex) {
-    const hi = parseInt(hex[1], 16);
-    const lo = parseInt(hex[2], 16);
-    return `${(hi >> 8) & 255}.${hi & 255}.${(lo >> 8) & 255}.${lo & 255}`;
-  }
-  return null;
-}
-
-function isPrivateHost(host: string): boolean {
-  const h = host.toLowerCase().replace(/^\[|\]$/g, "");
-  if (h === "localhost" || h.endsWith(".localhost")) return true;
-  if (h === "::1" || h === "0.0.0.0" || h === "::") return true;
-  if (h.endsWith(".local") || h.endsWith(".internal")) return true;
-  if (h.startsWith("fe80:") || h.startsWith("fc") || h.startsWith("fd")) return true;
-  if (h.startsWith("64:ff9b:")) return true;
-  if (isPrivateV4(h)) return true;
-  const v4 = embeddedV4(h);
-  if (v4 && isPrivateV4(v4)) return true;
-  return false;
-}
-
-export function assertSafeUrl(raw: string): string {
-  const u = new URL(raw);
-  if (u.protocol !== "http:" && u.protocol !== "https:") {
-    throw new Error("scheme not allowed: " + u.protocol);
-  }
-  if (isPrivateHost(u.hostname)) throw new Error("blocked private host: " + u.hostname);
-  if (isBlockedUrl(u.href)) throw new Error("blocked tracker host: " + u.hostname);
-  return u.href;
-}
 
 const TWO_LEVEL_TLDS = new Set([
   "co.uk",
@@ -270,7 +235,7 @@ function toBase64(bytes: Uint8Array): string {
 }
 
 export async function runPluginHttp(url: string, opts: PluginHttpOpts): Promise<PluginHttpResult> {
-  const target = assertSafeUrl(url);
+  let target = assertSafeUrl(url);
   const method = (opts.method || "GET").toUpperCase();
   const timeout = Math.min(Math.max(opts.timeoutMs || DEFAULT_TIMEOUT, 1_000), MAX_TIMEOUT);
   const headers = filterHeaders(opts.headers, {
@@ -284,12 +249,25 @@ export async function runPluginHttp(url: string, opts: PluginHttpOpts): Promise<
   const init: RequestInit = {
     method,
     headers,
-    redirect: "follow",
+    redirect: "manual",
     credentials: "omit",
     signal: AbortSignal.timeout(timeout),
   };
   if (typeof opts.body === "string" && method !== "GET" && method !== "HEAD") init.body = opts.body;
-  const res = await safeFetch(target, init);
+  let res: Response | null = null;
+  for (let redirects = 0; redirects <= MAX_REDIRECTS; redirects++) {
+    const request =
+      typeof window !== "undefined" && "__TAURI_INTERNALS__" in window
+        ? (await import("@tauri-apps/plugin-http")).fetch
+        : safeFetch;
+    res = await request(target, init);
+    if (![301, 302, 303, 307, 308].includes(res.status)) break;
+    const location = res.headers.get("location");
+    if (!location) break;
+    if (redirects === MAX_REDIRECTS) throw new Error("too many redirects");
+    target = resolvePluginRedirect(target, location);
+  }
+  if (!res) throw new Error("plugin request failed before receiving a response");
   const bytes = await readCapped(res);
   const body = opts.responseType === "base64" ? toBase64(bytes) : new TextDecoder().decode(bytes);
   return { status: res.status, ok: res.ok, headers: pickHeaders(res.headers), body };
