@@ -8,6 +8,7 @@ import {
 import { languageName } from "@/lib/subtitles/language";
 import { sanitizeSeekStep } from "@/lib/seek-step";
 import { migrateModelId } from "@/lib/ai-models";
+import { clampStillWatchingThreshold } from "@/lib/still-watching";
 import { resolveUiLanguage } from "@/lib/i18n";
 import { DEFAULT, STORAGE_KEY } from "./defaults";
 import type { Settings } from "./types";
@@ -161,6 +162,7 @@ export function loadStoredSettings(rawKey: string = STORAGE_KEY): Settings {
       ...DEFAULT,
       ...parsed,
       posterDockTransitionMs: sanitizePosterDockTransition(parsed.posterDockTransitionMs),
+      stillWatchingAfter: clampStillWatchingThreshold(parsed.stillWatchingAfter),
       uiLanguage: resolveUiLanguage(parsed.uiLanguage),
       streaming: { ...DEFAULT.streaming, ...(parsed.streaming ?? {}) },
       subProvidersEnabled: {

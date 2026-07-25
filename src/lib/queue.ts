@@ -74,6 +74,23 @@ export function queueReorder(orderedIds: string[]): void {
   persist();
 }
 
+export function queueIndexOf(meta: Meta, episode?: PlayEpisode): number {
+  const key = keyOf(meta, episode);
+  return items.findIndex((item) => keyOf(item.meta, item.episode) === key);
+}
+
+export function queueItemAfter(meta: Meta, episode?: PlayEpisode): QueueItem | null {
+  const index = queueIndexOf(meta, episode);
+  if (index < 0) return null;
+  return items[index + 1] ?? null;
+}
+
+export function queueItemBefore(meta: Meta, episode?: PlayEpisode): QueueItem | null {
+  const index = queueIndexOf(meta, episode);
+  if (index <= 0) return null;
+  return items[index - 1] ?? null;
+}
+
 export function queueShift(): QueueItem | null {
   const first = items[0] ?? null;
   if (first) {
