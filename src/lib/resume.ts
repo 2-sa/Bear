@@ -1,6 +1,6 @@
 const KEY = "harbor.resume";
 
-type Entry = { ms: number; t: number };
+type Entry = { ms: number; t: number; s?: number };
 
 function entryKey(id: string, season?: number, episode?: number): string {
   if (typeof season === "number" && typeof episode === "number") {
@@ -31,13 +31,15 @@ export function saveResumeMs(
   ms: number,
   season?: number,
   episode?: number,
+  displaySeason?: number,
 ): void {
   if (!Number.isFinite(ms) || ms < 0) return;
   if (typeof season === "number" && typeof episode === "number") {
     if (season < 0 || episode < 1) return;
   }
   const all = readAll();
-  all[entryKey(id, season, episode)] = { ms, t: Date.now() };
+  const s = typeof displaySeason === "number" && displaySeason >= 1 ? displaySeason : undefined;
+  all[entryKey(id, season, episode)] = { ms, t: Date.now(), ...(s !== undefined ? { s } : {}) };
   writeAll(all);
 }
 
@@ -57,11 +59,7 @@ export function saveResumeBatch(
   writeAll(all);
 }
 
-export function readResumeMs(
-  id: string,
-  season?: number,
-  episode?: number,
-): number {
+export function readResumeMs(id: string, season?: number, episode?: number): number {
   const all = readAll();
   return all[entryKey(id, season, episode)]?.ms ?? 0;
 }
@@ -70,10 +68,10 @@ export function readResumeEntry(
   id: string,
   season?: number,
   episode?: number,
-): { ms: number; t: number } | null {
+): { ms: number; t: number; displaySeason?: number } | null {
   const all = readAll();
   const e = all[entryKey(id, season, episode)];
-  return e ? { ms: e.ms, t: e.t } : null;
+  return e ? { ms: e.ms, t: e.t, ...(e.s !== undefined ? { displaySeason: e.s } : {}) } : null;
 }
 
 export function clearResume(id: string, season?: number, episode?: number): void {
@@ -82,12 +80,22 @@ export function clearResume(id: string, season?: number, episode?: number): void
   writeAll(all);
 }
 
-export function lastPlayedEpisode(
-  seriesId: string,
-): { season: number; episode: number; ms: number; t: number } | null {
+export function lastPlayedEpisode(seriesId: string): {
+  season: number;
+  episode: number;
+  ms: number;
+  t: number;
+  displaySeason?: number;
+} | null {
   const all = readAll();
   const prefix = `${seriesId}|s`;
-  let best: { season: number; episode: number; ms: number; t: number } | null = null;
+  let best: {
+    season: number;
+    episode: number;
+    ms: number;
+    t: number;
+    displaySeason?: number;
+  } | null = null;
   for (const [key, value] of Object.entries(all)) {
     if (!key.startsWith(prefix)) continue;
     const m = key.match(/\|s(\d+)e(\d+)$/);
@@ -96,7 +104,7 @@ export function lastPlayedEpisode(
     const episode = parseInt(m[2], 10);
     if (season < 1 || episode < 1) continue;
     if (!best || value.t > best.t) {
-      best = { season, episode, ms: value.ms, t: value.t };
+      best = { season, episode, ms: value.ms, t: value.t, displaySeason: value.s };
     }
   }
   return best;
