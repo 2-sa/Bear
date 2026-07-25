@@ -234,6 +234,7 @@ export type Settings = {
   subMarginY: number;
   subAlignX: "left" | "center" | "right";
   subAssOverride: "no" | "yes" | "force" | "scale" | "strip";
+  subAssNormalizeSize: boolean;
   subStyle: "shadow" | "outline" | "box";
   subFontFamily: string;
   subBold: boolean;
