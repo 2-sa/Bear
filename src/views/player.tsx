@@ -442,6 +442,7 @@ export function PlayerView({ src }: { src: PlayerSrc }) {
     gateAdvance,
     continueWatching,
     stopWatching,
+    resetStillWatching,
   } = useStillWatching({
     storeKey: src.meta.id,
     enabled: settings.stillWatching,
@@ -652,6 +653,7 @@ export function PlayerView({ src }: { src: PlayerSrc }) {
     hasPrevEpisode: hasPrevious,
     hasNextEpisode: hasNext,
     onVolumeFeedback: showVolumeFeedback,
+    onActivity: resetStillWatching,
   });
 
   const videoFill = useVideoFill(bridgeRef, src.url, playing);
@@ -1096,6 +1098,7 @@ export function PlayerView({ src }: { src: PlayerSrc }) {
       <LeaveConfirmModal />
       <HdrStageBridge
         active={hdrStageRequested}
+        onInput={resetStillWatching}
         payload={{
           snap,
           src,

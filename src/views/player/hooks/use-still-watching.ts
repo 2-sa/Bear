@@ -25,25 +25,26 @@ export function useStillWatching(params: {
   );
   const getSnapshot = useCallback(() => getStillWatchingState<PlayEpisode>(storeKey), [storeKey]);
   const state = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  const resetStillWatching = useCallback(() => {
+    if (!enabled) return;
+    setStillWatchingState(
+      storeKey,
+      resetStillWatchingRun(getStillWatchingState<PlayEpisode>(storeKey)),
+    );
+  }, [enabled, storeKey]);
 
   useEffect(() => {
     if (!enabled) {
       clearStillWatchingState(storeKey);
       return;
     }
-    const resetRun = () => {
-      setStillWatchingState(
-        storeKey,
-        resetStillWatchingRun(getStillWatchingState<PlayEpisode>(storeKey)),
-      );
-    };
-    window.addEventListener("pointerdown", resetRun, true);
-    window.addEventListener("keydown", resetRun, true);
+    window.addEventListener("pointerdown", resetStillWatching, true);
+    window.addEventListener("keydown", resetStillWatching, true);
     return () => {
-      window.removeEventListener("pointerdown", resetRun, true);
-      window.removeEventListener("keydown", resetRun, true);
+      window.removeEventListener("pointerdown", resetStillWatching, true);
+      window.removeEventListener("keydown", resetStillWatching, true);
     };
-  }, [enabled, storeKey]);
+  }, [enabled, resetStillWatching, storeKey]);
 
   const gateAdvance = useCallback(
     (episode: PlayEpisode): boolean => {
@@ -75,5 +76,6 @@ export function useStillWatching(params: {
     gateAdvance,
     continueWatching,
     stopWatching,
+    resetStillWatching,
   };
 }
