@@ -196,11 +196,22 @@ test("remote and HDR-stage input reset the uninterrupted Still Watching run", ()
     new URL("../src/views/player/hdr-stage-bridge.tsx", import.meta.url),
     "utf8",
   );
+  const hdrOverlay = readFileSync(
+    new URL("../src/views/hdr-overlay-app.tsx", import.meta.url),
+    "utf8",
+  );
 
   assert.match(remoteBinding, /onActivity\?: \(\) => void/);
-  assert.match(remoteSession, /b\?\.onActivity\?\.\(\)/);
+  assert.match(
+    remoteSession,
+    /command\.action !== "ping" && command\.action !== "castDiscover"[\s\S]*?b\?\.onActivity\?\.\(\)/,
+  );
   assert.match(hdrBridge, /onInput\?: \(\) => void/);
   assert.match(hdrBridge, /onInputRef\.current\?\.\(\)/);
+  assert.match(hdrBridge, /await bind\("hdr-stage:\/\/menu-open"/);
+  assert.doesNotMatch(hdrBridge, /bindInput\("hdr-stage:\/\/menu-open"/);
+  assert.match(hdrOverlay, /window\.addEventListener\("pointerdown", onInput/);
+  assert.match(hdrOverlay, /window\.addEventListener\("keydown", onInput/);
   assert.match(playerSource, /onActivity: resetStillWatching/);
   assert.match(playerSource, /onInput=\{resetStillWatching\}/);
 });

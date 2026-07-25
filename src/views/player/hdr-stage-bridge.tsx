@@ -85,7 +85,7 @@ export function HdrStageBridge({
       await bindInput("hdr-stage://next-ep", () => h().nextEp());
       await bindInput("hdr-stage://pick-another", () => h().pickAnother());
       await bindInput("hdr-stage://screenshot", () => h().screenshot());
-      await bindInput("hdr-stage://menu-open", (p) => h().menuOpen((p as { open: boolean }).open));
+      await bind("hdr-stage://menu-open", (p) => h().menuOpen((p as { open: boolean }).open));
       await bindInput("hdr-stage://activity", () => h().activity());
       await bind("hdr-stage://request", () => void hdrOverlayEmitProps(payloadRef.current));
     })();
