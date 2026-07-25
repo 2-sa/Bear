@@ -322,6 +322,8 @@ export type Settings = {
   spoilerHideDescriptions: boolean;
   spoilerSkipNext: boolean;
   streamBackdropBlur: boolean;
+  screensaver: boolean;
+  screensaverDelayMin: number;
   songIdEnabled: boolean;
   songCardStyle: "compact" | "cinematic";
   songCardDetails: boolean;
