@@ -7,7 +7,6 @@ import { isLinuxDesktop, isMacDesktop, isWindowsDesktop } from "@/lib/platform";
 import { ModalOverlayApp } from "@/views/modal-overlay-app";
 import { HdrOverlayApp } from "@/views/hdr-overlay-app";
 import { PipApp } from "@/views/pip";
-import { RemoteApp } from "@/views/remote-app";
 import { MangaReaderApp } from "@/views/manga-reader-app";
 import "@/index.css";
 
@@ -169,7 +168,7 @@ createRoot(document.getElementById("root")!).render(
     ) : isMangaReader ? (
       <MangaReaderApp />
     ) : isRemote ? (
-      <RemoteApp />
+      <MainRoot />
     ) : (
       <MainRoot />
     )}

@@ -34,7 +34,7 @@ export function AnimeHero({
   const [inView, setInView] = useState(true);
   const visible = usePageVisible();
   const [savedTick, setSavedTick] = useState(0);
-  const logos = useHeroLogos(slides, settings.tmdbKey);
+  const logos = useHeroLogos(slides, settings);
 
   useEffect(() => {
     if (slides.length === 0) return;

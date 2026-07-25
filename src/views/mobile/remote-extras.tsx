@@ -189,7 +189,7 @@ export function SpeedSleepSheet({ open, onClose }: { open: boolean; onClose: () 
                 active={speed === s}
                 onClick={() => {
                   setSpeed(s);
-                  sendCommand({ action: "setSpeed", speed: s } as never);
+                  sendCommand({ action: "setSpeed", speed: s });
                 }}
               >
                 {s === 1 ? "1×" : `${s}×`}
@@ -209,7 +209,7 @@ export function SpeedSleepSheet({ open, onClose }: { open: boolean; onClose: () 
                 active={sleep === s.minutes}
                 onClick={() => {
                   setSleep(s.minutes);
-                  sendCommand({ action: "setSleep", minutes: s.minutes } as never);
+                  sendCommand({ action: "setSleep", minutes: s.minutes });
                 }}
               >
                 {s.label}

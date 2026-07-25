@@ -16,11 +16,11 @@ import { effectiveTmdbLanguage, setTmdbLanguage } from "@/lib/providers/tmdb/tmd
 import { setPosterBaseUrl } from "@/lib/providers/rpdb";
 import { setMdblistBatchKey } from "@/lib/providers/mdblist-batch";
 import { setUiLanguage } from "@/lib/i18n";
-import { setSnapshotRetentionDays } from "@/lib/snapshots";
 import { makeSafeTauriUnlisten } from "@/lib/tauri-unlisten";
 import { STORAGE_KEY } from "./settings/defaults";
 import { readSettingsFile, writeSettingsFile } from "./settings/file-store";
 import { loadFontData, saveFontData } from "./font-storage";
+import { isRemovedBuiltinAvatar } from "./avatars/catalog";
 import {
   forkToProfile,
   loadEffective,
@@ -104,14 +104,16 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       try {
         localStorage.setItem(STORAGE_KEY, raw);
         seedSharedFromLegacy();
-        const restored = loadEffective(sourceRef.current.profileId, sourceRef.current.linked);
-        setUiLanguage(restored.uiLanguage);
-        setSettings(restored);
+        setSettings(loadEffective(sourceRef.current.profileId, sourceRef.current.linked));
       } catch {}
     });
     return () => {
       cancelled = true;
     };
+  }, []);
+
+  useEffect(() => {
+    setSettings((s) => (isRemovedBuiltinAvatar(s.harborAvatar) ? { ...s, harborAvatar: null } : s));
   }, []);
 
   const lastSavedImageRef = useRef<string | null>(null);
@@ -269,7 +271,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   }, [settings.blockTrackers]);
 
   useEffect(() => {
-    setSnapshotRetentionDays(settings.cwSnapshotRetentionDays);
+    void import("@/lib/snapshots").then(({ setSnapshotRetentionDays }) => {
+      setSnapshotRetentionDays(settings.cwSnapshotRetentionDays);
+    });
   }, [settings.cwSnapshotRetentionDays]);
 
   useEffect(() => {
@@ -378,6 +382,18 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const update = useCallback((patch: Partial<Settings>) => {
     setSettings((s) => ({ ...s, ...patch }));
   }, []);
+
+  useEffect(() => {
+    try {
+      if (localStorage.getItem("harbor.migrate.tvdbpanel.v1")) return;
+      localStorage.setItem("harbor.migrate.tvdbpanel.v1", "1");
+      if (!settingsRef.current.tvdbOrderPanel) {
+        update({ tvdbOrderPanel: true, episodeOrderProvider: "tvdb" });
+      }
+    } catch {
+      /* noop */
+    }
+  }, [update]);
 
   const toggleStreaming = useCallback((svc: StreamingService) => {
     setSettings((s) => ({

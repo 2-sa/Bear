@@ -67,3 +67,22 @@ export function isRemoteRoute(): boolean {
     return false;
   }
 }
+
+let mobileWebCache: boolean | null = null;
+
+export function isMobileWeb(): boolean {
+  if (mobileWebCache !== null) return mobileWebCache;
+  let forcedOn = false;
+  try {
+    const q = new URLSearchParams(window.location.search);
+    if (q.get("desktop") === "1") {
+      mobileWebCache = false;
+      return false;
+    }
+    if (q.get("mobile") === "1") forcedOn = true;
+  } catch {
+    /* ignore */
+  }
+  mobileWebCache = forcedOn || (isWeb() && isMobileDevice());
+  return mobileWebCache;
+}

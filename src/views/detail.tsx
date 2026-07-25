@@ -65,7 +65,7 @@ import {
   subscribeMovieWatched,
 } from "@/lib/movie-watched";
 import {
-  manualWatchedState,
+  manualEpisodeKeys,
   manualWatchedVersion,
   subscribeManualWatched,
 } from "@/lib/manual-watched";
@@ -946,22 +946,16 @@ export function DetailView({
         }
       }
       if (cancelled || !videos || videos.length === 0) return;
-      const prior = await decodeWatchedEpisodes(libraryItem?.state?.watched, videos).catch(
-        () => new Set<string>(),
+      const { watched: localWatched, unwatched: localUnwatched } = manualEpisodeKeys(meta.id);
+      const ok = await setEpisodesWatchedStremio(
+        authKey,
+        playMeta,
+        cid,
+        videos,
+        localWatched,
+        localUnwatched,
       );
-      const merged = new Set<string>(prior);
-      for (const v of videos) {
-        if (v.season == null || v.episode == null) continue;
-        const k = `${v.season}:${v.episode}`;
-        const manual = manualWatchedState(meta.id, v.season, v.episode);
-        if (manual === true) merged.add(k);
-        else if (manual === false) merged.delete(k);
-      }
-      if (cancelled) return;
-      prevSeriesWatchedVerRef.current = seriesWatchedVer;
-      const unchanged = merged.size === prior.size && [...merged].every((k) => prior.has(k));
-      if (unchanged) return;
-      await setEpisodesWatchedStremio(authKey, playMeta, cid, merged, videos);
+      if (ok && !cancelled) prevSeriesWatchedVerRef.current = seriesWatchedVer;
     })();
     return () => {
       cancelled = true;

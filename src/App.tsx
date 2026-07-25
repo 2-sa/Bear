@@ -20,7 +20,7 @@ import { flushCloudSync } from "@/views/player/hooks/use-stremio-sync";
 import { PlayerRouteFallback } from "@/views/player/player-route-fallback";
 import { setNativeMemoryActive } from "@/lib/native-memory";
 import { useOverlayPinned } from "@/lib/overlay-pin";
-import { isMobileDevice, isWeb } from "@/lib/platform";
+import { isMobileWeb, isRemoteRoute } from "@/lib/platform";
 import { makeSafeTauriUnlisten } from "@/lib/tauri-unlisten";
 import { activeLayout } from "@/lib/theme";
 import { useThemePreview } from "@/lib/theme-preview";
@@ -39,7 +39,6 @@ import { UpdateRoot } from "@/components/update/update-root";
 import { CustomCodeMount } from "@/components/custom-code-mount";
 import { MemoryHud } from "@/components/memory-hud";
 import { OfflineBanner } from "@/chrome/offline-banner";
-import { MobileNotice } from "@/components/mobile-notice";
 import { WebhookLoopMount } from "@/components/webhook-loop-mount";
 import { ListToastHost } from "@/components/lists/list-toast";
 import { TogetherChatToast } from "@/components/together-chat-toast";
@@ -68,6 +67,7 @@ import { OnboardingProvider } from "@/lib/onboarding";
 import { RankingsProvider } from "@/lib/rankings";
 import { SettingsProvider } from "@/lib/settings";
 import { RemoteHostMount } from "@/lib/remote/host-mount";
+import { RemoteOpenBridge } from "@/lib/remote/remote-open-bridge";
 import { SearchProvider, useSearch } from "@/lib/search-context";
 import { SearchOverlay } from "@/components/search/search-overlay";
 import { SearchHotkey } from "@/components/search/search-hotkey";
@@ -168,6 +168,9 @@ const MatchDetailView = lazy(() =>
 const PlaylistVodView = lazy(() => importVod().then((m) => ({ default: m.PlaylistVodView })));
 const DownloadsView = lazy(() => importDownloads().then((m) => ({ default: m.DownloadsView })));
 const MangaView = lazy(() => import("@/views/manga").then((m) => ({ default: m.MangaView })));
+const MobileShell = lazy(() =>
+  import("@/views/mobile/mobile-shell").then((m) => ({ default: m.MobileShell })),
+);
 const OnboardingModal = lazy(() =>
   importOnboarding().then((m) => ({ default: m.OnboardingModal })),
 );
@@ -281,8 +284,14 @@ function useIdleEvict(active: boolean, pin = false): boolean {
   return alive || active || pin;
 }
 
+function RevealOnMount({ onReady }: { onReady?: () => void }) {
+  useEffect(() => {
+    onReady?.();
+  }, [onReady]);
+  return null;
+}
+
 export function App({ onReady }: { onReady?: () => void }) {
-  if (isWeb() && isMobileDevice()) return <MobileNotice />;
   return (
     <HarborQueryProvider>
       <HarborRouterProvider>
@@ -311,6 +320,7 @@ export function App({ onReady }: { onReady?: () => void }) {
                                                 <TopRankModalProvider>
                                                   <HarborErrorBoundary>
                                                     <RemoteHostMount />
+                                                    <RemoteOpenBridge />
                                                     <ProfileIdentitySync />
                                                     <SettingsProfileBridge />
                                                     <TrackerProfileBridge />
@@ -320,10 +330,21 @@ export function App({ onReady }: { onReady?: () => void }) {
                                                     <MiddleClickScroll />
                                                     <ThemeBackdrop />
                                                     <WatchlistSync />
-                                                    <Shell onReady={onReady} />
-                                                    <Suspense fallback={null}>
-                                                      <OnboardingModal />
-                                                    </Suspense>
+                                                    {isMobileWeb() || isRemoteRoute() ? (
+                                                      <>
+                                                        <Suspense fallback={null}>
+                                                          <MobileShell />
+                                                        </Suspense>
+                                                        <RevealOnMount onReady={onReady} />
+                                                      </>
+                                                    ) : (
+                                                      <>
+                                                        <Shell onReady={onReady} />
+                                                        <Suspense fallback={null}>
+                                                          <OnboardingModal />
+                                                        </Suspense>
+                                                      </>
+                                                    )}
                                                     <TogetherInviteToast />
                                                     <TogetherFloater />
                                                     <TogetherHostLeavingPrompt />
