@@ -28,8 +28,7 @@ export function MangaLocalReader({ onExit }: { onExit: () => void }) {
   const hasPrev = m?.hasPrev ?? false;
   const hasNext = m?.hasNext ?? false;
 
-  const rawPages = m?.pageUrls;
-  const pages = useMemo(() => rawPages ?? [], [chapterId, rawPages?.length, rawPages?.[0]]);
+  const pages = m?.pageUrls ?? [];
   const total = pages.length || (m?.pageCount ?? 0);
 
   const { page, setPage } = useLocalPager(chapterId, total, m?.pageIndex ?? 0);
@@ -116,6 +115,7 @@ export function MangaLocalReader({ onExit }: { onExit: () => void }) {
           </div>
         ) : mode === "strip" ? (
           <ModeStrip
+            key={chapterId}
             pages={pages}
             initialPage={page}
             onPageChange={setPage}

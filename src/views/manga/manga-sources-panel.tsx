@@ -8,7 +8,7 @@ import {
   Server,
   Trash2,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { LocalFolderTutorial } from "./manga-sources-panel/local-tutorial";
 import {
   addMangaSource,
@@ -23,6 +23,7 @@ import { CARD, INPUT, PRIMARY_BTN } from "./manga-sources-panel/shared";
 import { ExtensionsSection } from "./manga-sources-panel/extensions-section";
 import { PluginGuide } from "./manga-sources-panel/plugin-guide";
 import { SetupGuide } from "./manga-sources-panel/setup-guide";
+import { SuggestSection } from "./manga-sources-panel/suggest-section";
 import { CustomSource } from "./manga-sources-panel/custom-source";
 import { SourceEditor } from "./manga-sources-panel/source-editor";
 import { SuwayomiWorkspace } from "./manga-sources-panel/suwayomi/suwayomi-workspace";
@@ -270,7 +271,7 @@ export function MangaSourcesView({
   onOpenManga?: (id: string) => void;
 }) {
   const t = useT();
-  const [tick, setTick] = useState(0);
+  const [, setTick] = useState(0);
 
   useEffect(() => {
     const un = subscribeMangaSources(() => setTick((n) => n + 1));
@@ -279,7 +280,7 @@ export function MangaSourcesView({
 
   useEffect(() => subscribeServers(() => setTick((n) => n + 1)), []);
 
-  const customs = useMemo(() => {
+  const customs = (() => {
     const servers = listServers();
     return listMangaSources().filter(
       (s) =>
@@ -289,8 +290,8 @@ export function MangaSourcesView({
           s.kind === "suwayomi" && servers.some((sv) => sourceMatchesServer(s.baseUrl, sv.baseUrl))
         ),
     );
-  }, [tick]);
-  const total = useMemo(() => listMangaSources().filter((s) => s.id !== "all").length, [tick]);
+  })();
+  const total = listMangaSources().filter((s) => s.id !== "all").length;
 
   const prevIds = useRef<Set<string>>(new Set(customs.map((s) => s.id)));
   const [flashIds, setFlashIds] = useState<Set<string>>(new Set());
@@ -367,6 +368,7 @@ export function MangaSourcesView({
       <ExtensionsSection />
       <PluginGuide />
       <SetupGuide />
+      <SuggestSection />
     </div>
   );
 }

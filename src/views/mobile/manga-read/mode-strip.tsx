@@ -14,15 +14,7 @@ export function ModeStrip({
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const els = useRef<Array<HTMLDivElement | null>>([]);
-  const change = useRef(onPageChange);
-  change.current = onPageChange;
-
   const didScroll = useRef(false);
-  const firstUrl = useRef(pages[0]);
-  if (firstUrl.current !== pages[0]) {
-    firstUrl.current = pages[0];
-    didScroll.current = false;
-  }
 
   useEffect(() => {
     const root = rootRef.current;
@@ -32,14 +24,14 @@ export function ModeStrip({
         for (const e of entries) {
           if (!e.isIntersecting) continue;
           const i = Number((e.target as HTMLElement).dataset.page);
-          if (Number.isFinite(i)) change.current(i);
+          if (Number.isFinite(i)) onPageChange(i);
         }
       },
       { root, rootMargin: "-45% 0px -45% 0px" },
     );
     els.current.forEach((el) => el && obs.observe(el));
     return () => obs.disconnect();
-  }, [pages]);
+  }, [pages, onPageChange]);
 
   useEffect(() => {
     if (didScroll.current || pages.length === 0) return;
@@ -63,7 +55,7 @@ export function ModeStrip({
       >
         {pages.map((url, i) => (
           <div
-            key={i}
+            key={`${i}:${url}`}
             data-page={i}
             ref={(el) => {
               els.current[i] = el;

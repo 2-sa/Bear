@@ -13,14 +13,6 @@ export function ProxiedImg({
   const [src, setSrc] = useState(url);
   const [loaded, setLoaded] = useState(false);
   const triedProxy = useRef(false);
-  const prev = useRef(url);
-
-  if (prev.current !== url) {
-    prev.current = url;
-    setSrc(url);
-    setLoaded(false);
-    triedProxy.current = false;
-  }
 
   return (
     <img

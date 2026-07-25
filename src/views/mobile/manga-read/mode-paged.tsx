@@ -39,7 +39,7 @@ export function ModePaged({
     >
       {ordered.map((i) => (
         <ProxiedImg
-          key={i}
+          key={`${i}:${pages[i]}`}
           url={pages[i] ?? ""}
           className="block object-contain"
           style={imgStyle}
