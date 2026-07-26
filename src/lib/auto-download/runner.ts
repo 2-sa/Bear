@@ -6,10 +6,10 @@ import {
   updateAutoDownload,
   type AutoDlSeries,
 } from "@/lib/auto-download";
-import { meta as fetchMeta, narrowMediaType, type Meta } from "@/lib/cinemeta";
 import { enqueueDownload } from "@/lib/download/downloads-store";
 import { gatherContext, type AutoDlContext } from "./context";
 import { eligibleEpisodes, grabKey, nextUnairedDate } from "./episodes";
+import { resolveAutoDownloadMeta } from "./meta";
 import { resolveBestDownload } from "./resolve";
 
 const FIRST_DELAY_MS = 30_000;
@@ -89,11 +89,6 @@ function createLimiter(max: number) {
   };
 }
 
-async function seriesMeta(series: AutoDlSeries): Promise<Meta | null> {
-  if (narrowMediaType(series.type) !== "series") return null;
-  return fetchMeta("series", series.id).catch(() => null);
-}
-
 async function processSeries(
   series: AutoDlSeries,
   ctx: AutoDlContext,
@@ -102,7 +97,7 @@ async function processSeries(
   signal: AbortSignal,
   gen: number,
 ): Promise<void> {
-  const m = await seriesMeta(series);
+  const m = await resolveAutoDownloadMeta(series, ctx.addons);
   if (gen !== runGen) return;
   updateAutoDownload(series.id, {
     lastCheckedAt: Date.now(),

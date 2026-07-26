@@ -20,6 +20,8 @@ export type AutoDlSeries = {
   grabbedCount: number;
   grabbedKeys: string[];
   nextAirDate: number | null;
+  addonBase?: string;
+  addonType?: string;
 };
 
 const KEY = "harbor.auto-download.v1";
@@ -48,6 +50,8 @@ function normalize(e: Partial<AutoDlSeries> & { id: string }): AutoDlSeries {
       ? e.grabbedKeys.filter((k) => typeof k === "string")
       : [],
     nextAirDate: typeof e.nextAirDate === "number" ? e.nextAirDate : null,
+    addonBase: typeof e.addonBase === "string" ? e.addonBase : undefined,
+    addonType: typeof e.addonType === "string" ? e.addonType : undefined,
   };
 }
 
@@ -94,6 +98,8 @@ export function addAutoDownload(meta: Meta): AutoDlSeries {
     grabbedCount: 0,
     grabbedKeys: [],
     nextAirDate: null,
+    addonBase: meta.addonOrigin?.base,
+    addonType: meta.type,
   };
   items = [entry, ...items];
   persist();
