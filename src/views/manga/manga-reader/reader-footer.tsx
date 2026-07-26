@@ -95,7 +95,7 @@ export function ReaderFooter({
           <SkipBack className="h-[18px] w-[18px]" strokeWidth={2.1} />
         </Btn>
         <Btn onClick={onPrevPage} disabled={atStart} label={t("Previous page")}>
-          <ChevronLeft className="h-5 w-5" strokeWidth={2.2} />
+          <ChevronLeft className="dir-icon h-5 w-5" strokeWidth={2.2} />
         </Btn>
       </div>
 
@@ -120,7 +120,7 @@ export function ReaderFooter({
 
       <div className="flex shrink-0 items-center gap-1">
         <Btn onClick={onNextPage} disabled={atEnd} label={t("Next page")}>
-          <ChevronRight className="h-5 w-5" strokeWidth={2.2} />
+          <ChevronRight className="dir-icon h-5 w-5" strokeWidth={2.2} />
         </Btn>
         <Btn onClick={onNextChapter} disabled={atLastChapter} label={t("Next chapter")}>
           <SkipForward className="h-[18px] w-[18px]" strokeWidth={2.1} />

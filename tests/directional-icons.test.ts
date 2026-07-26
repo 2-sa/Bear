@@ -67,10 +67,18 @@ test("semantic navigation arrows use the shared direction utility", () => {
   }
 });
 
-test("shared hero navigation chevrons mirror in RTL", () => {
+test("shared hero navigation chevrons mirror only horizontal directions in RTL", () => {
   const source = read("../src/components/nav-arrow.tsx");
 
-  assert.match(source, /className={`dir-icon \${className}`}/);
+  assert.match(source, /const directional = dir === "left" \|\| dir === "right"/);
+  assert.match(source, /className={`\${directional \? "dir-icon" : ""} \${className}`}/);
+});
+
+test("reader footer arrows mirror with the document direction", () => {
+  const source = read("../src/views/manga/manga-reader/reader-footer.tsx");
+
+  assert.match(source, /<ChevronLeft className="dir-icon h-5 w-5"/);
+  assert.match(source, /<ChevronRight className="dir-icon h-5 w-5"/);
 });
 
 test("semantic arrows do not use one-off RTL scale transforms", () => {

@@ -15,13 +15,14 @@ export function NavChevron({
   size?: number;
   className?: string;
 }) {
+  const directional = dir === "left" || dir === "right";
   return (
     <svg
       viewBox="0 0 320 512"
       width={size}
       height={size}
       style={{ transform: `rotate(${ROT[dir]}deg)` }}
-      className={`dir-icon ${className}`}
+      className={`${directional ? "dir-icon" : ""} ${className}`}
       aria-hidden
     >
       <path d={CHEVRON} fill="currentColor" />
