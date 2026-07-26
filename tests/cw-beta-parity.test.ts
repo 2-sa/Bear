@@ -45,13 +45,19 @@ test("builds fallback episode IDs for every supported anime provider", () => {
   }
 });
 
-test("resume entries retain a separate display season", () => {
+test("resume entries retain separate display season and episode numbers", () => {
   storage.clear();
 
-  saveResumeMs("kitsu:10", 90_000, 1, 7, 3);
+  saveResumeMs("kitsu:10", 90_000, 1, 31, 3, 4);
 
-  assert.equal(readResumeEntry("kitsu:10", 1, 7)?.displaySeason, 3);
+  assert.deepEqual(readResumeEntry("kitsu:10", 1, 31), {
+    ms: 90_000,
+    t: lastPlayedEpisode("kitsu:10")?.t,
+    displaySeason: 3,
+    displayEpisode: 4,
+  });
   assert.equal(lastPlayedEpisode("kitsu:10")?.displaySeason, 3);
+  assert.equal(lastPlayedEpisode("kitsu:10")?.displayEpisode, 4);
 });
 
 test("cloud resume batches do not erase a known display season", () => {

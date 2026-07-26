@@ -957,6 +957,7 @@ export function DetailView({
     season: number;
     episode: number;
     displaySeason?: number;
+    displayEpisode?: number;
   } | null>(() => {
     if (episodeHint) return episodeHint;
     if (isAnime) return lastPlayedEpisode(meta.id);
@@ -965,6 +966,7 @@ export function DetailView({
       episode: number;
       t: number;
       displaySeason?: number;
+      displayEpisode?: number;
     }> = [];
     const ids = Array.from(
       new Set(
@@ -993,6 +995,7 @@ export function DetailView({
           episode: lp.episode,
           t: lp.t,
           displaySeason: lp.displaySeason,
+          displayEpisode: lp.displayEpisode,
         });
       }
     }
@@ -1176,7 +1179,7 @@ export function DetailView({
       : isSeries && lastPlay
         ? t("Resume S{s}:E{e}", {
             s: lastPlay.displaySeason ?? lastPlay.season,
-            e: lastPlay.episode,
+            e: lastPlay.displayEpisode ?? lastPlay.episode,
           })
         : t("Play");
 
