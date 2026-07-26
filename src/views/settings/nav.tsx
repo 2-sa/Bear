@@ -375,6 +375,21 @@ const NAV_GROUPS: Array<{ heading: string | null; items: NavItem[] }> = [
     heading: "Streaming",
     items: [
       {
+        id: "remotes",
+        label: "Remotes",
+        Icon: IconRelay,
+        keywords: [
+          "remote",
+          "phone",
+          "web ui",
+          "manga remote",
+          "reader remote",
+          "11471",
+          "network",
+          "lan",
+        ],
+      },
+      {
         id: "relay",
         label: "Harbor Relay",
         Icon: IconRelay,
@@ -599,21 +614,6 @@ const NAV_GROUPS: Array<{ heading: string | null; items: NavItem[] }> = [
   {
     heading: "System",
     items: [
-      {
-        id: "remotes",
-        label: "Remotes",
-        Icon: IconRelay,
-        keywords: [
-          "remote",
-          "phone",
-          "web ui",
-          "manga remote",
-          "reader remote",
-          "11471",
-          "network",
-          "lan",
-        ],
-      },
       {
         id: "storage",
         label: "Storage",
