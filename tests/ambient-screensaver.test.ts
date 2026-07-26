@@ -5,7 +5,20 @@ import { readFileSync } from "node:fs";
 // @ts-expect-error Node test types are intentionally outside the browser-only tsconfig.
 import test from "node:test";
 
-type Listener = () => void;
+class FakeEvent {
+  defaultPrevented = false;
+  propagationStopped = false;
+
+  preventDefault() {
+    this.defaultPrevented = true;
+  }
+
+  stopImmediatePropagation() {
+    this.propagationStopped = true;
+  }
+}
+
+type Listener = (event?: FakeEvent) => void;
 
 interface IdleModule {
   startIdleScreensaver?: (options: {
@@ -36,7 +49,9 @@ class FakeEventTarget {
   }
 
   emit(type: string) {
-    for (const listener of this.listeners.get(type) ?? []) listener();
+    const event = new FakeEvent();
+    for (const listener of this.listeners.get(type) ?? []) listener(event);
+    return event;
   }
 
   listenerCount(type: string) {
@@ -134,6 +149,40 @@ test("activates after the idle delay and dismisses on every activity source", ()
     assert.equal(states.at(-1), true, `${eventType}: reactivates after a fresh delay`);
     stop();
   }
+});
+
+test("the first keyboard event wakes the screensaver without reaching the focused UI", () => {
+  const start = idleModule.startIdleScreensaver;
+  assert.equal(typeof start, "function");
+  if (!start) return;
+
+  const clock = new FakeClock();
+  const windowTarget = new FakeEventTarget();
+  const documentTarget = new FakeEventTarget();
+  const states: boolean[] = [];
+  const stop = start({
+    enabled: true,
+    suppressed: false,
+    delayMs: 1_000,
+    windowTarget,
+    documentTarget,
+    now: () => clock.nowMs,
+    isVisible: () => true,
+    setInterval: clock.setInterval,
+    clearInterval: clock.clearInterval,
+    onActiveChange: (active) => states.push(active),
+  });
+
+  clock.advance(1_000);
+  const wakeEvent = windowTarget.emit("keydown");
+  assert.equal(states.at(-1), false);
+  assert.equal(wakeEvent.defaultPrevented, true);
+  assert.equal(wakeEvent.propagationStopped, true);
+
+  const nextEvent = windowTarget.emit("keydown");
+  assert.equal(nextEvent.defaultPrevented, false);
+  assert.equal(nextEvent.propagationStopped, false);
+  stop();
 });
 
 test("hidden documents never activate and becoming visible restarts the delay", () => {
@@ -266,6 +315,13 @@ test("ambient overlay honors reduced motion and never renders without a backdrop
   assert.match(rootSource, /prefers-reduced-motion: reduce/);
   assert.match(rootSource, /if \(!mounted \|\| suppressed\) return null/);
   assert.match(overlaySource, /reduce \? undefined/);
+});
+
+test("screensaver transitions avoid synchronous state updates inside effects", () => {
+  const rootSource = readSource("../src/components/screensaver/screensaver-root.tsx");
+  const overlaySource = readSource("../src/components/screensaver/ambient-overlay.tsx");
+  assert.doesNotMatch(rootSource, /if \(wantShow\) \{\s*setMounted\(true\)/);
+  assert.doesNotMatch(overlaySource, /if \(deepIdle\) setLayers\(\[\]\)/);
 });
 
 test("screensaver settings have defaults, controls, and appearance search terms", () => {

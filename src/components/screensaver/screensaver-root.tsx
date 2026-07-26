@@ -73,15 +73,24 @@ export function ScreensaverRoot() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
+    let visibilityFrame: number | null = null;
     if (wantShow) {
-      setMounted(true);
-      const frame = requestAnimationFrame(() => setVisible(true));
-      return () => cancelAnimationFrame(frame);
+      const mountFrame = requestAnimationFrame(() => {
+        setMounted(true);
+        visibilityFrame = requestAnimationFrame(() => setVisible(true));
+      });
+      return () => {
+        cancelAnimationFrame(mountFrame);
+        if (visibilityFrame != null) cancelAnimationFrame(visibilityFrame);
+      };
     }
 
-    setVisible(false);
+    const hideFrame = requestAnimationFrame(() => setVisible(false));
     const timeout = window.setTimeout(() => setMounted(false), suppressed ? 0 : EXIT_MS);
-    return () => window.clearTimeout(timeout);
+    return () => {
+      cancelAnimationFrame(hideFrame);
+      window.clearTimeout(timeout);
+    };
   }, [suppressed, wantShow]);
 
   if (!mounted || suppressed) return null;

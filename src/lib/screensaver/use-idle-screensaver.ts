@@ -1,11 +1,24 @@
 import { useCallback, useEffect, useState } from "react";
 
-const ACTIVITY_EVENTS = ["pointermove", "pointerdown", "keydown", "wheel", "touchstart"] as const;
+const PASSIVE_ACTIVITY_EVENTS = ["pointermove", "pointerdown", "wheel", "touchstart"] as const;
 const POLL_INTERVAL_MS = 1_000;
 
+interface ActivityEventLike {
+  preventDefault(): void;
+  stopImmediatePropagation(): void;
+}
+
 interface EventTargetLike {
-  addEventListener(type: string, listener: () => void, options?: AddEventListenerOptions): void;
-  removeEventListener(type: string, listener: () => void): void;
+  addEventListener(
+    type: string,
+    listener: (event: ActivityEventLike) => void,
+    options?: AddEventListenerOptions,
+  ): void;
+  removeEventListener(
+    type: string,
+    listener: (event: ActivityEventLike) => void,
+    options?: EventListenerOptions,
+  ): void;
 }
 
 interface StartIdleScreensaverOptions {
@@ -50,6 +63,13 @@ export function startIdleScreensaver({
     lastActivityAt = now();
     publish(false);
   };
+  const onKeyDown = (event: ActivityEventLike) => {
+    const shouldConsume = active;
+    reset();
+    if (!shouldConsume) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+  };
   const onFocus = () => {
     if (isVisible()) reset();
   };
@@ -61,18 +81,20 @@ export function startIdleScreensaver({
     if (isVisible() && now() - lastActivityAt >= Math.max(0, delayMs)) publish(true);
   };
 
-  for (const eventType of ACTIVITY_EVENTS) {
+  for (const eventType of PASSIVE_ACTIVITY_EVENTS) {
     windowTarget.addEventListener(eventType, reset, { passive: true });
   }
+  windowTarget.addEventListener("keydown", onKeyDown, { capture: true });
   windowTarget.addEventListener("focus", onFocus);
   documentTarget.addEventListener("visibilitychange", onVisibilityChange);
   const timerId = setInterval(poll, Math.min(POLL_INTERVAL_MS, Math.max(1, delayMs)));
 
   return () => {
     clearInterval(timerId);
-    for (const eventType of ACTIVITY_EVENTS) {
+    for (const eventType of PASSIVE_ACTIVITY_EVENTS) {
       windowTarget.removeEventListener(eventType, reset);
     }
+    windowTarget.removeEventListener("keydown", onKeyDown, { capture: true });
     windowTarget.removeEventListener("focus", onFocus);
     documentTarget.removeEventListener("visibilitychange", onVisibilityChange);
   };

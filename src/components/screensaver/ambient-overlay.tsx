@@ -102,11 +102,8 @@ export function AmbientOverlay({
     return () => window.clearTimeout(timer);
   }, [layers]);
 
-  useEffect(() => {
-    if (deepIdle) setLayers([]);
-  }, [deepIdle]);
-
-  const current = layers.at(-1)?.item ?? items[0];
+  const renderedLayers = deepIdle ? [] : layers;
+  const current = renderedLayers.at(-1)?.item ?? items[0];
 
   return (
     <div
@@ -123,11 +120,11 @@ export function AmbientOverlay({
         willChange: "opacity",
       }}
     >
-      {layers.map((layer, layerIndex) => (
+      {renderedLayers.map((layer, layerIndex) => (
         <AmbientSlide
           key={layer.key}
           src={layer.item.bg}
-          leaving={layerIndex !== layers.length - 1}
+          leaving={layerIndex !== renderedLayers.length - 1}
           reduce={reduce}
         />
       ))}
