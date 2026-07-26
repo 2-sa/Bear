@@ -2,6 +2,7 @@
 import { readFileSync } from "node:fs";
 // @ts-expect-error -- Node built-ins are provided by the test runtime.
 import test from "node:test";
+// @ts-expect-error -- Node built-ins are provided by the test runtime.
 import assert from "node:assert/strict";
 
 const read = (path: string) => {
