@@ -91,6 +91,15 @@ export function queueItemBefore(meta: Meta, episode?: PlayEpisode): QueueItem | 
   return items[index - 1] ?? null;
 }
 
+export function queueCompleteCurrent(meta: Meta, episode?: PlayEpisode): QueueItem | null {
+  const index = queueIndexOf(meta, episode);
+  if (index < 0) return null;
+  const next = items[index + 1] ?? null;
+  items = items.filter((_, itemIndex) => itemIndex !== index);
+  persist();
+  return next;
+}
+
 export function queueShift(): QueueItem | null {
   const first = items[0] ?? null;
   if (first) {

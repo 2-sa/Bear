@@ -17,6 +17,10 @@ const queueAdvanceSource = readFileSync(
   new URL("../src/views/player/hooks/use-queue-advance.ts", import.meta.url),
   "utf8",
 );
+const queuePanelSource = readFileSync(
+  new URL("../src/components/player/cast-modal/queue-panel.tsx", import.meta.url),
+  "utf8",
+);
 
 test("queue positional helpers use media and episode identity without removing entries", () => {
   assert.equal(typeof (queue as Record<string, unknown>).queueIndexOf, "function");
@@ -44,6 +48,38 @@ test("queue positional helpers use media and episode identity without removing e
   assert.equal(queue.queueIndexOf(secondMeta), 1);
   assert.equal(queue.queueIndexOf(thirdMeta, thirdEpisode), 2);
   queue.queueClear();
+});
+
+test("completing a queued item removes it and returns its successor", () => {
+  queue.queueClear();
+  queue.queueAdd(firstMeta, firstEpisode);
+  queue.queueAdd(secondMeta);
+  queue.queueAdd(thirdMeta, thirdEpisode);
+
+  const next = queue.queueCompleteCurrent(firstMeta, firstEpisode);
+
+  assert.equal(next?.meta.id, secondMeta.id);
+  assert.equal(queue.queueIndexOf(firstMeta, firstEpisode), -1);
+  assert.equal(queue.queueIndexOf(secondMeta), 0);
+  assert.equal(queue.queueCompleteCurrent({ id: "missing", type: "movie", name: "Missing" }), null);
+  assert.equal(queue.queueIndexOf(secondMeta), 0);
+  queue.queueClear();
+});
+
+test("starting a queued item keeps it available until playback completes", () => {
+  assert.doesNotMatch(
+    queuePanelSource,
+    /onClick=\{\(\) => \{\s*queueRemove\(item\.id\);\s*onPlay\(item\.meta, item\.episode\);/,
+  );
+  assert.match(queuePanelSource, /onClick=\{\(\) => onPlay\(item\.meta, item\.episode\)\}/);
+  assert.match(
+    queueAdvanceSource,
+    /const nextItem = queueCompleteCurrent\(src\.meta, src\.episode\);/,
+  );
+});
+
+test("queue suggestions do not synchronously clear state inside an effect", () => {
+  assert.doesNotMatch(queuePanelSource, /useEffect\(\(\) => \{[\s\S]*?setUpcoming\(\[\]\);/);
 });
 
 test("Still Watching clamps its threshold to the supported range", () => {
@@ -165,7 +201,10 @@ test("queue ownership suppresses adjacent Up Next while preserving queued natura
     playerSource,
     /hasNextEpDisplay: showAdjacentUpNext && !!adjacent\.next,\s*nextEp: showAdjacentUpNext \? adjacent\.next : null,/,
   );
-  assert.match(queueAdvanceSource, /const nextItem = queueItemAfter\(src\.meta, src\.episode\);/);
+  assert.match(
+    queueAdvanceSource,
+    /const nextItem = queueCompleteCurrent\(src\.meta, src\.episode\);/,
+  );
   assert.match(
     queueAdvanceSource,
     /if \(nextItem\) \{[\s\S]*?openPicker\(nextItem\.meta, nextItem\.episode, \{[^}]*autoPlay: true,[^}]*resume: true[^}]*\}\);/,
