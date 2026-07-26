@@ -9,6 +9,7 @@ import { useSettings } from "@/lib/settings";
 import { useView } from "@/lib/view";
 import { observe, usePageVisible } from "@/lib/visibility";
 import { HeroMangaAdaptation } from "./anime-hero/hero-manga-adaptation";
+import { HeroSlideBadges } from "./anime-hero/hero-slide-badges";
 import { useHeroLogos } from "./anime-hero/use-hero-logos";
 import { MalLogo } from "./icons/mal-logo";
 import { PickCard } from "./pick-card";
@@ -185,7 +186,10 @@ export function AnimeHero({
             {t("Top Picks for You")}
           </h2>
           <div className="flex flex-col items-end gap-2.5">
-            {current && <HeroMangaAdaptation meta={current} />}
+            <div className="flex min-h-[48px] items-center gap-3">
+              <HeroMangaAdaptation meta={current} />
+              <HeroSlideBadges meta={current} />
+            </div>
             {slides.length > 1 && (
               <div className="flex gap-1.5">
                 {slides.map((_, i) => (

@@ -6,7 +6,6 @@ import { ElegantHoverActions } from "./elegant-hover";
 export type CardHoverStyle =
   | "none"
   | "default"
-  | "marquee"
   | "elegant"
   | "frosted"
   | "cinema"

@@ -178,6 +178,14 @@ export function LibraryPanel({
           preview={<HomeRowPreview kind="cw-advance" />}
         />
         <ToggleRow
+          label={t("Keep Continue Watching private to each profile")}
+          sub={t(
+            "Only show Continue Watching for the profile that's active. Each profile sees just its own progress, so what you watch stays hidden from the other profiles that share this Stremio account.",
+          )}
+          value={settings.cwPerProfile}
+          onChange={(v) => update({ cwPerProfile: v })}
+        />
+        <ToggleRow
           label={t("Hide watched titles in catalogs")}
           sub={t(
             "Movies you've watched and shows you've made progress on stop appearing in the built-in catalog rows, using your local watch history (and Trakt if connected). Continue Watching is never touched.",

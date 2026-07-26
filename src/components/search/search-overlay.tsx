@@ -21,6 +21,7 @@ import { MagnetCard } from "./magnet-card";
 import { UrlCard } from "./url-card";
 import { AiSearchSection } from "./ai-search-section";
 import { AiModeButton } from "./ai-mode-button";
+import { providerTabFor } from "@/lib/ai-models";
 import { AiExampleHint, SEARCH_EXAMPLES } from "@/components/ai-example-hint";
 import { useSettings } from "@/lib/settings";
 import { isMagnetInput, isDirectVideoUrl } from "@/lib/torrent/magnet";
@@ -199,7 +200,7 @@ export function SearchOverlay() {
               currentModel={settings.aiSearchModel}
               onToggle={() => setAiMode((v) => !v)}
               onSelectModel={(id) => {
-                update({ aiSearchModel: id });
+                update({ aiSearchModel: id, aiSearchProvider: providerTabFor(id) });
                 setAiMode(true);
               }}
             />

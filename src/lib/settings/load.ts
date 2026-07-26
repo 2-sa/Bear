@@ -8,6 +8,7 @@ import {
 import { languageName } from "@/lib/subtitles/language";
 import { sanitizeSeekStep } from "@/lib/seek-step";
 import { migrateModelId, providerTabFor } from "@/lib/ai-models";
+import { resolveUiLanguage } from "@/lib/i18n";
 import { DEFAULT, STORAGE_KEY } from "./defaults";
 import type { Settings } from "./types";
 
@@ -17,6 +18,7 @@ function sanitizePosterDockTransition(value: unknown): number {
   if (typeof value !== "number" || !Number.isFinite(value)) {
     return DEFAULT.posterDockTransitionMs;
   }
+
   return Math.min(1500, Math.max(250, Math.round(value)));
 }
 
@@ -88,6 +90,7 @@ export function loadStoredSettings(rawKey: string = STORAGE_KEY): Settings {
   if (!raw) {
     return {
       ...DEFAULT,
+      uiLanguage: resolveUiLanguage(undefined),
       seekBackStepSec: sanitizeSeekStep(legacySeekStep("back"), DEFAULT.seekBackStepSec),
       seekForwardStepSec: sanitizeSeekStep(legacySeekStep("forward"), DEFAULT.seekForwardStepSec),
     };
@@ -110,26 +113,7 @@ export function loadStoredSettings(rawKey: string = STORAGE_KEY): Settings {
       scrapers?: unknown;
       scrapersAcknowledged?: boolean;
       _scrapersV2?: boolean;
-      _animeRowsV1?: boolean;
     };
-    if (!parsed._animeRowsV1) {
-      const prev = (parsed.animeRows ?? {}) as Partial<Settings["animeRows"]>;
-      const hiddenSet = new Set<string>(Array.isArray(prev.hidden) ? prev.hidden : []);
-      const anilist = Array.isArray(parsed.animeAnilistRowsHidden)
-        ? parsed.animeAnilistRowsHidden
-        : [];
-      const mal = Array.isArray(parsed.animeMalRowsHidden) ? parsed.animeMalRowsHidden : [];
-      if (anilist.includes("yourLists")) hiddenSet.add("yourAnilistLists");
-      if (anilist.includes("trending")) hiddenSet.add("anilistTrending");
-      if (anilist.includes("top100")) hiddenSet.add("anilistTop100");
-      if (mal.includes("yourMalLists")) hiddenSet.add("yourMalLists");
-      parsed.animeRows = {
-        order: Array.isArray(prev.order) ? prev.order : [],
-        hidden: [...hiddenSet],
-        renamed: prev.renamed && typeof prev.renamed === "object" ? prev.renamed : {},
-      };
-      parsed._animeRowsV1 = true;
-    }
     if (!parsed._pickerLayoutStremioV2) {
       if (parsed.pickerLayout === "condensed") parsed.pickerLayout = "stremio";
       parsed._pickerLayoutStremio = true;
@@ -182,6 +166,7 @@ export function loadStoredSettings(rawKey: string = STORAGE_KEY): Settings {
       ...DEFAULT,
       ...parsed,
       posterDockTransitionMs: sanitizePosterDockTransition(parsed.posterDockTransitionMs),
+      uiLanguage: resolveUiLanguage(parsed.uiLanguage),
       streaming: { ...DEFAULT.streaming, ...(parsed.streaming ?? {}) },
       subProvidersEnabled: {
         ...DEFAULT.subProvidersEnabled,
@@ -200,10 +185,6 @@ export function loadStoredSettings(rawKey: string = STORAGE_KEY): Settings {
       navCustomization: {
         ...DEFAULT.navCustomization,
         ...(parsed.navCustomization ?? {}),
-      },
-      animeRows: {
-        ...DEFAULT.animeRows,
-        ...(parsed.animeRows ?? {}),
       },
       letterboxd: {
         ...DEFAULT.letterboxd,
@@ -236,14 +217,6 @@ export function loadStoredSettings(rawKey: string = STORAGE_KEY): Settings {
       seekForwardStepSec: sanitizeSeekStep(
         parsed.seekForwardStepSec ?? legacySeekStep("forward"),
         DEFAULT.seekForwardStepSec,
-      ),
-      seekBackStepShortSec: sanitizeSeekStep(
-        parsed.seekBackStepShortSec,
-        DEFAULT.seekBackStepShortSec,
-      ),
-      seekForwardStepShortSec: sanitizeSeekStep(
-        parsed.seekForwardStepShortSec,
-        DEFAULT.seekForwardStepShortSec,
       ),
       theme: sanitizeTheme(parsed.theme),
       webhooks: {
@@ -292,6 +265,6 @@ export function loadStoredSettings(rawKey: string = STORAGE_KEY): Settings {
         : DEFAULT.tmdbImageLangs,
     };
   } catch {
-    return DEFAULT;
+    return { ...DEFAULT, uiLanguage: resolveUiLanguage(undefined) };
   }
 }
