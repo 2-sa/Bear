@@ -22,20 +22,29 @@ function dedupeMetas(metas: Meta[]): Meta[] {
   return out;
 }
 
+type HomeResult = {
+  settings: ReturnType<typeof useSettings>["settings"];
+  reloadKey: number;
+  hero: Meta[];
+  rows: HomeRow[];
+  loading: boolean;
+  failed: boolean;
+};
+
 export function MobileHome() {
   const { settings } = useSettings();
-  const [hero, setHero] = useState<Meta[]>([]);
-  const [rows, setRows] = useState<HomeRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [failed, setFailed] = useState(false);
+  const [result, setResult] = useState<HomeResult | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [detailMeta, setDetailMeta] = useState<Meta | null>(null);
   const cw = useMobileCw(14);
+  const matchesRequest = result?.settings === settings && result.reloadKey === reloadKey;
+  const hero = result?.hero ?? [];
+  const rows = result?.rows ?? [];
+  const loading = !matchesRequest || result.loading;
+  const failed = matchesRequest && result.failed;
 
   useEffect(() => {
     let alive = true;
-    setLoading(true);
-    setFailed(false);
     (async () => {
       try {
         const built = settings.tmdbKey ? await buildTmdbRows(settings) : await buildCinemetaRows();
@@ -48,19 +57,31 @@ export function MobileHome() {
           heroPool = fb.hero;
           rowList = fb.rows;
         }
-        setHero(dedupeMetas(heroPool.filter((m) => m.background)).slice(0, 8));
-        setRows(rowList);
-        setFailed(rowList.length === 0);
+        setResult({
+          settings,
+          reloadKey,
+          hero: dedupeMetas(heroPool.filter((m) => m.background)).slice(0, 8),
+          rows: rowList,
+          failed: rowList.length === 0,
+          loading: false,
+        });
       } catch {
-        if (alive) setFailed(true);
-      } finally {
-        if (alive) setLoading(false);
+        if (alive) {
+          setResult((current) => ({
+            settings,
+            reloadKey,
+            hero: current?.hero ?? [],
+            rows: current?.rows ?? [],
+            failed: true,
+            loading: false,
+          }));
+        }
       }
     })();
     return () => {
       alive = false;
     };
-  }, [settings.tmdbKey, settings.homeMode, reloadKey]);
+  }, [settings, reloadKey]);
 
   const shownHero = useHideAnimeMetas(hero);
   const shownRows = useHideAnimeRows(rows);

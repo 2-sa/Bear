@@ -31,27 +31,44 @@ export function SourcePicker({
   onPick: (source: SuwayomiSource) => void;
 }) {
   const t = useT();
-  const [state, setState] = useState<"loading" | "ready" | "error">("loading");
-  const [sources, setSources] = useState<SuwayomiSource[]>([]);
   const [query, setQuery] = useState("");
   const [reload, setReload] = useState(0);
+  const baseUrl = config.baseUrl;
+  const username = config.auth?.username;
+  const password = config.auth?.password;
+  const requestKey = JSON.stringify([baseUrl, username, password, reload]);
+  const [load, setLoad] = useState<{
+    key: string;
+    state: "loading" | "ready" | "error";
+    sources: SuwayomiSource[];
+  }>({ key: "", state: "loading", sources: [] });
+  const state = load.key === requestKey ? load.state : "loading";
+  const sources = load.sources;
 
   useEffect(() => {
     let cancelled = false;
-    setState("loading");
-    listSources(config)
+    const requestConfig: ServerConfig = {
+      baseUrl,
+      auth: username !== undefined && password !== undefined ? { username, password } : undefined,
+    };
+    listSources(requestConfig)
       .then((list) => {
         if (cancelled) return;
-        setSources(list);
-        setState("ready");
+        setLoad({ key: requestKey, state: "ready", sources: list });
       })
       .catch(() => {
-        if (!cancelled) setState("error");
+        if (!cancelled) {
+          setLoad((previous) => ({
+            key: requestKey,
+            state: "error",
+            sources: previous.sources,
+          }));
+        }
       });
     return () => {
       cancelled = true;
     };
-  }, [config.baseUrl, config.auth?.username, config.auth?.password, reload]);
+  }, [baseUrl, username, password, requestKey]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();

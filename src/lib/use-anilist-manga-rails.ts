@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAnilist } from "@/lib/anilist/provider";
 import { fetchMangaListCollection, readCachedMangaCollection } from "@/lib/anilist/manga-lists";
 import type { AnilistListGroup, AnilistMediaEntry, MediaListStatus } from "@/lib/anilist/types";
@@ -40,31 +40,39 @@ function buildRails(groups: AnilistListGroup[]): MangaListRail[] {
 
 export function useAnilistMangaRails(): { rails: MangaListRail[]; loading: boolean } {
   const { isConnected, session } = useAnilist();
-  const [rails, setRails] = useState<MangaListRail[]>([]);
-  const [loading, setLoading] = useState(false);
+  const userId = isConnected ? (session?.userId ?? null) : null;
+  const seed = useMemo(
+    () => (userId === null ? null : readCachedMangaCollection(userId)),
+    [userId],
+  );
+  const seededRails = useMemo(() => (seed ? buildRails(seed) : []), [seed]);
+  const [result, setResult] = useState<{
+    userId: number | null;
+    rails: MangaListRail[];
+    loading: boolean;
+  }>({ userId: null, rails: [], loading: false });
+  const current =
+    result.userId === userId
+      ? result
+      : {
+          userId,
+          rails: seededRails,
+          loading: userId !== null && seed === null,
+        };
 
   useEffect(() => {
-    if (!isConnected || !session) {
-      setRails([]);
-      setLoading(false);
-      return;
-    }
+    if (userId === null) return;
     let cancelled = false;
-    const userId = session.userId;
-    const seed = readCachedMangaCollection(userId);
-    if (seed) setRails(buildRails(seed));
-    setLoading(!seed);
     (async () => {
       const groups = await fetchMangaListCollection(userId);
       if (!cancelled) {
-        setRails(buildRails(groups));
-        setLoading(false);
+        setResult({ userId, rails: buildRails(groups), loading: false });
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [isConnected, session?.userId]);
+  }, [userId]);
 
-  return { rails, loading };
+  return { rails: current.rails, loading: current.loading };
 }

@@ -68,16 +68,49 @@ export function ZoomJoystick({
   onEngageChange?: (engaged: boolean) => void;
   bottomOffset?: string;
 }) {
+  if (!canZoom) return null;
+
+  return (
+    <ActiveZoomJoystick
+      zoom={zoom}
+      min={min}
+      max={max}
+      rtl={rtl}
+      onZoom={onZoom}
+      onPan={onPan}
+      onEngageChange={onEngageChange}
+      bottomOffset={bottomOffset}
+    />
+  );
+}
+
+function ActiveZoomJoystick({
+  zoom,
+  min,
+  max,
+  rtl,
+  onZoom,
+  onPan,
+  onEngageChange,
+  bottomOffset,
+}: {
+  zoom: number;
+  min: number;
+  max: number;
+  rtl: boolean;
+  onZoom: (zoom: number) => void;
+  onPan: (dx: number, dy: number) => void;
+  onEngageChange?: (engaged: boolean) => void;
+  bottomOffset: string;
+}) {
   const reduce = useReducedMotion();
   const [engaged, setEngaged] = useState(false);
-  const [show, setShow] = useState(false);
   const [active, setActive] = useState(false);
   const [offset, setOffset] = useState(ZERO);
   const [pct, setPct] = useState(() => Math.round(zoom * 100));
 
   const padRef = useRef<HTMLDivElement>(null);
   const propsRef = useRef({ zoom, min, max, rtl, onZoom, onPan });
-  propsRef.current = { zoom, min, max, rtl, onZoom, onPan };
 
   const rafRef = useRef(0);
   const tickRef = useRef((_now: number) => {});
@@ -157,7 +190,10 @@ export function ZoomJoystick({
       }
     }
   };
-  tickRef.current = tick;
+  useEffect(() => {
+    propsRef.current = { zoom, min, max, rtl, onZoom, onPan };
+    tickRef.current = tick;
+  });
 
   const stopAll = () => {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
@@ -251,26 +287,9 @@ export function ZoomJoystick({
   };
 
   useEffect(() => {
-    if (!engaged) {
-      setShow(false);
-      return;
-    }
-    if (reduce) {
-      setShow(true);
-      return;
-    }
-    const r = requestAnimationFrame(() => setShow(true));
-    return () => cancelAnimationFrame(r);
-  }, [engaged, reduce]);
-
-  useEffect(() => {
     if (activeRef.current) return;
     pushPct(clampZoomTo(zoom, min, max));
   }, [zoom, min, max]);
-
-  useEffect(() => {
-    if (!canZoom && engaged) disengage();
-  }, [canZoom, engaged]);
 
   useEffect(() => {
     const clear = () => {
@@ -287,10 +306,9 @@ export function ZoomJoystick({
       window.removeEventListener("blur", clear);
       document.removeEventListener("visibilitychange", onVis);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      onEngageChange?.(false);
     };
-  }, []);
-
-  if (!canZoom) return null;
+  }, [onEngageChange]);
 
   return (
     <div className="absolute end-4 z-40 flex flex-col items-end" style={{ bottom: bottomOffset }}>
@@ -310,8 +328,8 @@ export function ZoomJoystick({
 
       {engaged && (
         <div
-          className={`relative origin-bottom-right transition-[transform,opacity] duration-200 ease-out motion-reduce:transition-none ${
-            show ? "scale-100 opacity-100" : "scale-90 opacity-0"
+          className={`relative origin-bottom-right ${
+            reduce ? "" : "animate-in fade-in zoom-in-90 duration-200"
           }`}
         >
           <button

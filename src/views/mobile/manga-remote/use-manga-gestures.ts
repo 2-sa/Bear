@@ -315,21 +315,22 @@ export function useMangaGestures(input: MangaGestureInput) {
   };
 
   useEffect(() => {
+    const activePointers = pointers.current;
+    const gestureState = st.current;
     const clear = () => {
-      pointers.current.clear();
-      const s = st.current;
-      s.mode = "idle";
-      s.pinchD0 = 0;
-      s.vel = 0;
-      s.tx = 0;
-      s.lastSentZoom = -1;
-      s.lastTapAt = 0;
-      if (s.raf) cancelAnimationFrame(s.raf);
-      s.raf = 0;
-      if (s.streamRaf) cancelAnimationFrame(s.streamRaf);
-      s.streamRaf = 0;
-      if (s.tapTimer) window.clearTimeout(s.tapTimer);
-      s.tapTimer = 0;
+      activePointers.clear();
+      gestureState.mode = "idle";
+      gestureState.pinchD0 = 0;
+      gestureState.vel = 0;
+      gestureState.tx = 0;
+      gestureState.lastSentZoom = -1;
+      gestureState.lastTapAt = 0;
+      if (gestureState.raf) cancelAnimationFrame(gestureState.raf);
+      gestureState.raf = 0;
+      if (gestureState.streamRaf) cancelAnimationFrame(gestureState.streamRaf);
+      gestureState.streamRaf = 0;
+      if (gestureState.tapTimer) window.clearTimeout(gestureState.tapTimer);
+      gestureState.tapTimer = 0;
       setVisual({ tx: 0, scale: 1, hintDir: null });
     };
     const onVisibility = () => {
@@ -340,10 +341,9 @@ export function useMangaGestures(input: MangaGestureInput) {
     return () => {
       window.removeEventListener("blur", clear);
       document.removeEventListener("visibilitychange", onVisibility);
-      const s = st.current;
-      if (s.raf) cancelAnimationFrame(s.raf);
-      if (s.streamRaf) cancelAnimationFrame(s.streamRaf);
-      if (s.tapTimer) window.clearTimeout(s.tapTimer);
+      if (gestureState.raf) cancelAnimationFrame(gestureState.raf);
+      if (gestureState.streamRaf) cancelAnimationFrame(gestureState.streamRaf);
+      if (gestureState.tapTimer) window.clearTimeout(gestureState.tapTimer);
     };
   }, []);
 

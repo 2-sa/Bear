@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useEffectEvent, useRef } from "react";
 import {
   fitLevel,
   hasNativeZoom,
@@ -143,12 +143,11 @@ export function BookFlip({
   onReady?: (api: BookApi) => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const report = useRef(onProgress);
-  report.current = onProgress;
-  const ready = useRef(onReady);
-  ready.current = onReady;
-  const soundOn = useRef(soundEnabled);
-  soundOn.current = soundEnabled;
+  const reportProgress = useEffectEvent(onProgress);
+  const publishReady = useEffectEvent((api: BookApi) => onReady?.(api));
+  const applyCurrentSound = useEffectEvent((instance: FlipInstance) => {
+    instance.toggleSound?.(soundEnabled);
+  });
   const instRef = useRef<FlipInstance | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const panRef = useRef({ x: 0, y: 0 });
@@ -210,6 +209,7 @@ export function BookFlip({
 
   useEffect(() => {
     ensureStyle();
+    const container = ref.current;
     let cancelled = false;
     let inst: FlipInstance | null = null;
 
@@ -243,13 +243,13 @@ export function BookFlip({
       const spread = String(d.page);
       const first = Number(spread.split("-")[0]);
       if (!Number.isFinite(first) || first <= 0) return;
-      report.current(first - 1, spread);
+      reportProgress(first - 1, spread);
     };
     window.addEventListener("r3d-pagechange", onPage);
     void (async () => {
       const aspect = await sampledAspect(pages);
       await loadFlipbook();
-      if (cancelled || !ref.current) return;
+      if (cancelled || !container) return;
       const Ctor = (window as unknown as { FlipBook?: FlipCtor }).FlipBook;
       if (!Ctor) return;
       const FB = (window as unknown as { FLIPBOOK?: Record<string, unknown> }).FLIPBOOK;
@@ -258,7 +258,7 @@ export function BookFlip({
         FB.flipbookWebGlSrc = `${BASE}/js/flipbook.webgl.min.js`;
       }
       const singlePageMode = aspect < 1.2 || aspect > 1.9;
-      inst = new Ctor(ref.current, {
+      inst = new Ctor(container, {
         name: NAME,
         pages: pages.map((src) => ({ src })),
         viewMode: "webgl",
@@ -282,7 +282,7 @@ export function BookFlip({
       });
       const local = inst;
       instRef.current = local;
-      local.toggleSound?.(soundOn.current);
+      applyCurrentSound(local);
       if (zoomRef.current > 1.001) applyZoom(false);
       const snapBack = (view: FlipBookView, dir: "next" | "prev") => {
         const page = dir === "next" ? view.getRightPage?.() : view.getLeftPage?.();
@@ -316,7 +316,7 @@ export function BookFlip({
         };
         requestAnimationFrame(stepBack);
       };
-      ready.current?.({
+      publishReady({
         goToPage: (n) => local?.goToPage?.(n),
         next: () => local?.nextPage?.(),
         prev: () => local?.prevPage?.(),
@@ -380,7 +380,7 @@ export function BookFlip({
       } catch {
         /* noop */
       }
-      ref.current?.replaceChildren();
+      container?.replaceChildren();
     };
   }, [pages, rtl, bg, resumePage]);
 

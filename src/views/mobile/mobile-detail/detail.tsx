@@ -42,16 +42,16 @@ import { useAnimeCharacters } from "@/views/detail/use-anime-characters";
 import { useMalRating } from "@/lib/mal-rating";
 
 export function MobileDetail({ meta, onClose }: { meta: Meta; onClose: () => void }) {
+  return <MobileDetailDialog key={meta.id} meta={meta} onClose={onClose} />;
+}
+
+function MobileDetailDialog({ meta, onClose }: { meta: Meta; onClose: () => void }) {
   const [reduced] = useState(prefersReducedMotion);
   const [closing, setClosing] = useState(false);
   const [stack, setStack] = useState<Meta[]>([meta]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    setStack([meta]);
-  }, [meta.id]);
-
-  const current = stack[stack.length - 1] ?? meta;
+  const current = stack.length === 1 ? meta : (stack[stack.length - 1] ?? meta);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: 0 });

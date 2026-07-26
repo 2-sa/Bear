@@ -8,6 +8,10 @@ export function useHideAnime(): boolean {
   return settings.hideContent.anime === true;
 }
 
+function metaLooksAnimeAtVersion(meta: Meta, _version: number): boolean {
+  return metaLooksAnime(meta);
+}
+
 export function useHideAnimeMetas(metas: Meta[]): Meta[] {
   const on = useHideAnime();
   const version = useDetectedAnimeVersion();
@@ -15,7 +19,7 @@ export function useHideAnimeMetas(metas: Meta[]): Meta[] {
     if (on) detectAnimeForMetas(metas);
   }, [on, metas]);
   return useMemo(
-    () => (on ? metas.filter((m) => !metaLooksAnime(m)) : metas),
+    () => (on ? metas.filter((m) => !metaLooksAnimeAtVersion(m, version)) : metas),
     [on, metas, version],
   );
 }
@@ -27,7 +31,7 @@ export function useHideAnimeSlides<T extends { meta: Meta }>(slides: T[]): T[] {
     if (on) detectAnimeForMetas(slides.map((s) => s.meta));
   }, [on, slides]);
   return useMemo(
-    () => (on ? slides.filter((s) => !metaLooksAnime(s.meta)) : slides),
+    () => (on ? slides.filter((s) => !metaLooksAnimeAtVersion(s.meta, version)) : slides),
     [on, slides, version],
   );
 }
@@ -42,7 +46,10 @@ export function useHideAnimeRows<T extends { metas: Meta[] }>(rows: T[]): T[] {
   return useMemo(() => {
     if (!on) return rows;
     return rows
-      .map((r) => ({ ...r, metas: r.metas.filter((m) => !metaLooksAnime(m)) }))
+      .map((r) => ({
+        ...r,
+        metas: r.metas.filter((m) => !metaLooksAnimeAtVersion(m, version)),
+      }))
       .filter((r) => r.metas.length > 0);
   }, [on, rows, version]);
 }

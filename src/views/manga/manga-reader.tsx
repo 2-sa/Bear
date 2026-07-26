@@ -42,6 +42,25 @@ import {
 } from "./manga-reader/reader-states";
 import type { ReaderPrefs, MangaPage } from "./manga-reader/reader-types";
 
+function recordBookmarkJump(
+  pid: string,
+  manga: { id: string; title: string; cover?: string },
+  bookmark: MangaBookmark,
+) {
+  recordMangaProgress(pid, {
+    id: manga.id,
+    title: manga.title,
+    cover: manga.cover,
+    sourceId: activeMangaSourceId(),
+    chapterId: bookmark.chapterId,
+    chapterNumber: bookmark.chapterNumber,
+    chapterLabel: bookmark.chapterLabel,
+    page: bookmark.page,
+    totalPages: bookmark.totalPages,
+    updatedAt: Date.now(),
+  });
+}
+
 export function MangaReader({
   chapters,
   index,
@@ -71,8 +90,8 @@ export function MangaReader({
   const [chromeOpen, setChromeOpen] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [bookmarksOpen, setBookmarksOpen] = useState(false);
-  const [hintDismissed, setHintDismissed] = useState(false);
-  useEffect(() => setHintDismissed(false), [index]);
+  const [hintDismissedChapter, setHintDismissedChapter] = useState<string | null>(null);
+  const hintDismissed = hintDismissedChapter === chapter.id;
   const [pickBookmark, setPickBookmark] = useState(false);
   const [autoLong, setAutoLong] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
@@ -100,7 +119,9 @@ export function MangaReader({
   const atLastChapter = orderPos === -1 || orderPos === readingOrder.length - 1;
   const effMode = autoLong ? "long" : prefs.mode;
   const effModeRef = useRef(effMode);
-  effModeRef.current = effMode;
+  useEffect(() => {
+    effModeRef.current = effMode;
+  }, [effMode]);
   const double = effMode === "double";
   const book = effMode === "book";
   const horizontal = effMode === "long-h";
@@ -148,15 +169,18 @@ export function MangaReader({
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
-    setFailed(false);
-    setPages([]);
-    setCurrentPage(0);
-    setBookSpread("");
-    setAutoLong(false);
-    settled.current = false;
-    pageEls.current = [];
-    scrollRef.current?.scrollTo({ top: 0, left: 0 });
+    queueMicrotask(() => {
+      if (cancelled) return;
+      setLoading(true);
+      setFailed(false);
+      setPages([]);
+      setCurrentPage(0);
+      setBookSpread("");
+      setAutoLong(false);
+      settled.current = false;
+      pageEls.current = [];
+      scrollRef.current?.scrollTo({ top: 0, left: 0 });
+    });
     downloadedPages(chapter.id)
       .then((local) => local ?? chapterPages(chapter.id))
       .then((urls) => {
@@ -214,7 +238,7 @@ export function MangaReader({
     return () => {
       cancelled = true;
     };
-  }, [chapter.id, reloadTick]);
+  }, [chapter.id, chapter.chapter, reloadTick, startPage, startScroll, pid, manga.id, manga.title]);
 
   useEffect(() => {
     const bump = () => {
@@ -231,10 +255,8 @@ export function MangaReader({
   }, []);
 
   useEffect(() => {
-    if (!prefs.focusMode) {
-      setEdge({ top: false, bottom: false });
-      return;
-    }
+    if (!prefs.focusMode) return;
+
     const onMove = (e: MouseEvent) => {
       const h = window.innerHeight;
       setEdge({ top: e.clientY <= 56, bottom: e.clientY >= h - 64 });
@@ -369,10 +391,12 @@ export function MangaReader({
       startPage ??
       resumePageForChapter(pid, manga.id, manga.title, chapter.id, chapter.chapter) ??
       0,
-    [chapter.id, startPage, pid, manga.id, manga.title],
+    [chapter.id, chapter.chapter, startPage, pid, manga.id, manga.title],
   );
   const pageRef = useRef(currentPage);
-  pageRef.current = currentPage;
+  useEffect(() => {
+    pageRef.current = currentPage;
+  }, [currentPage]);
   const [bookStart, setBookStart] = useState(bookResume);
   const wasBookRef = useRef(book);
   useEffect(() => {
@@ -448,18 +472,7 @@ export function MangaReader({
       }
       return;
     }
-    recordMangaProgress(pid, {
-      id: manga.id,
-      title: manga.title,
-      cover: manga.cover,
-      sourceId: activeMangaSourceId(),
-      chapterId: bm.chapterId,
-      chapterNumber: bm.chapterNumber,
-      chapterLabel: bm.chapterLabel,
-      page: bm.page,
-      totalPages: bm.totalPages,
-      updatedAt: Date.now(),
-    });
+    recordBookmarkJump(pid, manga, bm);
     didSeek.current = false;
     onChangeIndex(targetIdx);
   };
@@ -706,7 +719,7 @@ export function MangaReader({
           atLastChapter={atLastChapter}
           nextLabel={nextIndex != null ? chapterLabel(chapters[nextIndex]) : undefined}
           onNext={() => nextIndex != null && onChangeIndex(nextIndex)}
-          onDismiss={() => setHintDismissed(true)}
+          onDismiss={() => setHintDismissedChapter(chapter.id)}
         />
       )}
 

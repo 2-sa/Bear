@@ -37,40 +37,32 @@ export const SHEET_EXIT_CSS = `
 
 export function useSheetPresence(open: boolean) {
   const [reduced] = useState(prefersReducedMotion);
-  const [render, setRender] = useState(open);
-  const [leaving, setLeaving] = useState(false);
-  const renderedRef = useRef(open);
-  renderedRef.current = render;
+  const [presence, setPresence] = useState({ open, retained: open });
+  if (presence.open !== open) {
+    setPresence({ open, retained: open || presence.retained });
+  }
+  const render = open || (!reduced && presence.retained);
+  const leaving = !open && render;
 
   useEffect(() => {
-    if (open) {
-      setRender(true);
-      setLeaving(false);
-      return;
-    }
-    if (!renderedRef.current) return;
-    if (reduced) {
-      setRender(false);
-      setLeaving(false);
-      return;
-    }
-    setLeaving(true);
+    if (open || reduced || !presence.retained) return;
     const t = window.setTimeout(() => {
-      setRender(false);
-      setLeaving(false);
+      setPresence((current) => ({ ...current, retained: false }));
     }, SHEET_EXIT_MS);
     return () => window.clearTimeout(t);
-  }, [open, reduced]);
+  }, [open, presence.retained, reduced]);
 
   return { render, leaving };
 }
 
 export function useSheetDrag(onClose: () => void) {
   const [dy, setDy] = useState(0);
+  const [active, setActive] = useState(false);
   const drag = useRef({ active: false, startY: 0, id: -1 });
 
   const onPointerDown = (e: ReactPointerEvent<HTMLElement>) => {
     drag.current = { active: true, startY: e.clientY, id: e.pointerId };
+    setActive(true);
     try {
       e.currentTarget.setPointerCapture(e.pointerId);
     } catch {}
@@ -85,6 +77,7 @@ export function useSheetDrag(onClose: () => void) {
     const d = drag.current;
     if (!d.active || e.pointerId !== d.id) return;
     d.active = false;
+    setActive(false);
     const delta = e.clientY - d.startY;
     if (delta > 110) onClose();
     else setDy(0);
@@ -92,7 +85,7 @@ export function useSheetDrag(onClose: () => void) {
 
   const panelStyle: CSSProperties = {
     transform: dy ? `translateY(${dy}px)` : undefined,
-    transition: drag.current.active ? "none" : "transform 260ms var(--ease-out)",
+    transition: active ? "none" : "transform 260ms var(--ease-out)",
   };
   return {
     handleProps: { onPointerDown, onPointerMove, onPointerUp: end, onPointerCancel: end },
@@ -102,24 +95,9 @@ export function useSheetDrag(onClose: () => void) {
 
 export function KeyboardOverlay({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { sendCommand, snapshot } = useMobileRemote();
-  const [val, setVal] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
   const { render, leaving } = useSheetPresence(open);
 
-  useEffect(() => {
-    if (!open) return;
-    setVal(snapshot.textEntry?.value ?? "");
-    inputRef.current?.focus();
-    const t = window.setTimeout(() => inputRef.current?.focus(), 40);
-    return () => window.clearTimeout(t);
-  }, [open]);
-
   if (!render) return null;
-
-  const submit = () => {
-    sendCommand({ action: "submitText", value: val });
-    onClose();
-  };
 
   return (
     <div
@@ -140,22 +118,60 @@ export function KeyboardOverlay({ open, onClose }: { open: boolean; onClose: () 
           Done
         </button>
       </div>
-      <input
-        ref={inputRef}
-        autoFocus
-        value={val}
-        onChange={(e) => {
-          setVal(e.target.value);
-          sendCommand({ action: "setText", value: e.target.value });
-        }}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") submit();
-        }}
-        enterKeyHint="search"
+      <KeyboardInput
+        key={open ? "open" : "closed"}
+        open={open}
+        initialValue={snapshot.textEntry?.value ?? ""}
         placeholder={snapshot.textEntry?.placeholder ?? "Type to search…"}
-        className="w-full flex-1 bg-transparent px-5 font-display text-[clamp(1.6rem,7vw,2.4rem)] leading-tight tracking-tight text-ink placeholder:text-ink-subtle focus:outline-none"
+        onChange={(value) => sendCommand({ action: "setText", value })}
+        onSubmit={(value) => {
+          sendCommand({ action: "submitText", value });
+          onClose();
+        }}
       />
     </div>
+  );
+}
+
+function KeyboardInput({
+  open,
+  initialValue,
+  placeholder,
+  onChange,
+  onSubmit,
+}: {
+  open: boolean;
+  initialValue: string;
+  placeholder: string;
+  onChange: (value: string) => void;
+  onSubmit: (value: string) => void;
+}) {
+  const [value, setValue] = useState(initialValue);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    inputRef.current?.focus();
+    const t = window.setTimeout(() => inputRef.current?.focus(), 40);
+    return () => window.clearTimeout(t);
+  }, [open]);
+
+  return (
+    <input
+      ref={inputRef}
+      autoFocus
+      value={value}
+      onChange={(e) => {
+        setValue(e.target.value);
+        onChange(e.target.value);
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") onSubmit(value);
+      }}
+      enterKeyHint="search"
+      placeholder={placeholder}
+      className="w-full flex-1 bg-transparent px-5 font-display text-[clamp(1.6rem,7vw,2.4rem)] leading-tight tracking-tight text-ink placeholder:text-ink-subtle focus:outline-none"
+    />
   );
 }
 

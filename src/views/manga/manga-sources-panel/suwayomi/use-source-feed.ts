@@ -20,6 +20,26 @@ export type SourceFeed = {
   retry: () => void;
 };
 
+type FeedSnapshot = {
+  key: string;
+  items: MangaSummary[];
+  state: "loading" | "ready" | "error";
+  loadingMore: boolean;
+  loadMoreFailed: boolean;
+  hasNext: boolean;
+};
+
+function initialSnapshot(key: string): FeedSnapshot {
+  return {
+    key,
+    items: [],
+    state: "loading",
+    loadingMore: false,
+    loadMoreFailed: false,
+    hasNext: false,
+  };
+}
+
 function fetchPage(
   config: ServerConfig,
   sourceId: string,
@@ -39,56 +59,104 @@ export function useSourceFeed(
   mode: FeedMode,
   query: string,
 ): SourceFeed {
-  const [items, setItems] = useState<MangaSummary[]>([]);
-  const [state, setState] = useState<"loading" | "ready" | "error">("loading");
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [loadMoreFailed, setLoadMoreFailed] = useState(false);
-  const [hasNext, setHasNext] = useState(false);
+  const [result, setResult] = useState<FeedSnapshot>(() => initialSnapshot(""));
   const [reload, setReload] = useState(0);
   const pageRef = useRef(1);
   const reqRef = useRef(0);
+  const baseUrl = config.baseUrl;
+  const username = config.auth?.username;
+  const password = config.auth?.password;
+  const requestKey = JSON.stringify([baseUrl, username, password, sourceId, mode, query, reload]);
+  const snapshot = result.key === requestKey ? result : initialSnapshot(requestKey);
 
   useEffect(() => {
     const token = ++reqRef.current;
     pageRef.current = 1;
-    setState("loading");
-    setItems([]);
-    setHasNext(false);
-    setLoadMoreFailed(false);
-    fetchPage(config, sourceId, mode, query, 1)
+    const requestConfig: ServerConfig = {
+      baseUrl,
+      auth: username !== undefined && password !== undefined ? { username, password } : undefined,
+    };
+    fetchPage(requestConfig, sourceId, mode, query, 1)
       .then((res) => {
         if (token !== reqRef.current) return;
-        setItems(res.manga);
-        setHasNext(res.hasNextPage);
-        setState("ready");
+        setResult({
+          key: requestKey,
+          items: res.manga,
+          state: "ready",
+          loadingMore: false,
+          loadMoreFailed: false,
+          hasNext: res.hasNextPage,
+        });
       })
       .catch(() => {
-        if (token === reqRef.current) setState("error");
+        if (token === reqRef.current) {
+          setResult({ ...initialSnapshot(requestKey), state: "error" });
+        }
       });
-  }, [config.baseUrl, config.auth?.username, config.auth?.password, sourceId, mode, query, reload]);
+  }, [baseUrl, username, password, sourceId, mode, query, requestKey]);
 
   const loadMore = useCallback(() => {
-    if (loadingMore || !hasNext) return;
+    if (snapshot.loadingMore || !snapshot.hasNext) return;
     const token = reqRef.current;
     const next = pageRef.current + 1;
-    setLoadingMore(true);
-    setLoadMoreFailed(false);
-    fetchPage(config, sourceId, mode, query, next)
+    setResult((previous) =>
+      previous.key === requestKey
+        ? { ...previous, loadingMore: true, loadMoreFailed: false }
+        : previous,
+    );
+    const requestConfig: ServerConfig = {
+      baseUrl,
+      auth: username !== undefined && password !== undefined ? { username, password } : undefined,
+    };
+    fetchPage(requestConfig, sourceId, mode, query, next)
       .then((res) => {
         if (token !== reqRef.current) return;
         pageRef.current = next;
-        setItems((prev) => [...prev, ...res.manga]);
-        setHasNext(res.hasNextPage);
+        setResult((previous) =>
+          previous.key === requestKey
+            ? {
+                ...previous,
+                items: [...previous.items, ...res.manga],
+                hasNext: res.hasNextPage,
+              }
+            : previous,
+        );
       })
       .catch(() => {
-        if (token === reqRef.current) setLoadMoreFailed(true);
+        if (token === reqRef.current) {
+          setResult((previous) =>
+            previous.key === requestKey ? { ...previous, loadMoreFailed: true } : previous,
+          );
+        }
       })
       .finally(() => {
-        if (token === reqRef.current) setLoadingMore(false);
+        if (token === reqRef.current) {
+          setResult((previous) =>
+            previous.key === requestKey ? { ...previous, loadingMore: false } : previous,
+          );
+        }
       });
-  }, [config, sourceId, mode, query, hasNext, loadingMore]);
+  }, [
+    snapshot.loadingMore,
+    snapshot.hasNext,
+    requestKey,
+    baseUrl,
+    username,
+    password,
+    sourceId,
+    mode,
+    query,
+  ]);
 
   const retry = useCallback(() => setReload((n) => n + 1), []);
 
-  return { items, state, loadingMore, loadMoreFailed, hasNext, loadMore, retry };
+  return {
+    items: snapshot.items,
+    state: snapshot.state,
+    loadingMore: snapshot.loadingMore,
+    loadMoreFailed: snapshot.loadMoreFailed,
+    hasNext: snapshot.hasNext,
+    loadMore,
+    retry,
+  };
 }

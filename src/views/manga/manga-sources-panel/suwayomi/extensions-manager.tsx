@@ -11,7 +11,11 @@ import { CARD, INPUT } from "../shared";
 import { ExtensionRow } from "./extension-row";
 import { ExtensionRepos } from "./extension-repos";
 
-type Load = { state: "loading" | "ready" | "error"; items: SuwayomiExtension[] };
+type Load = {
+  key: string;
+  state: "loading" | "ready" | "error";
+  items: SuwayomiExtension[];
+};
 
 function matches(ext: SuwayomiExtension, q: string): boolean {
   if (!q) return true;
@@ -51,24 +55,39 @@ function Group({
 
 export function ExtensionsManager({ config }: { config: ServerConfig }) {
   const t = useT();
-  const [load, setLoad] = useState<Load>({ state: "loading", items: [] });
+  const [result, setResult] = useState<Load>({ key: "", state: "loading", items: [] });
   const [query, setQuery] = useState("");
   const [reload, setReload] = useState(0);
+  const baseUrl = config.baseUrl;
+  const username = config.auth?.username;
+  const password = config.auth?.password;
+  const requestKey = JSON.stringify([baseUrl, username, password, reload]);
+  const load =
+    result.key === requestKey ? result : { ...result, key: requestKey, state: "loading" as const };
 
   useEffect(() => {
     let cancelled = false;
-    setLoad((prev) => ({ state: "loading", items: prev.items }));
-    listExtensions(config)
+    const requestConfig: ServerConfig = {
+      baseUrl,
+      auth: username !== undefined && password !== undefined ? { username, password } : undefined,
+    };
+    listExtensions(requestConfig)
       .then((items) => {
-        if (!cancelled) setLoad({ state: "ready", items });
+        if (!cancelled) setResult({ key: requestKey, state: "ready", items });
       })
       .catch(() => {
-        if (!cancelled) setLoad((prev) => ({ state: "error", items: prev.items }));
+        if (!cancelled) {
+          setResult((previous) => ({
+            key: requestKey,
+            state: "error",
+            items: previous.items,
+          }));
+        }
       });
     return () => {
       cancelled = true;
     };
-  }, [config.baseUrl, config.auth?.username, config.auth?.password, reload]);
+  }, [baseUrl, username, password, requestKey]);
 
   const filtered = useMemo(
     () => load.items.filter((e) => matches(e, query.trim())),

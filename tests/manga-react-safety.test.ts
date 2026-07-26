@@ -44,4 +44,47 @@ describe("manga React state safety", () => {
     assert.match(sourcePanel, /import \{ SuggestSection \}/);
     assert.match(sourcePanel, /<SuggestSection \/>/);
   });
+
+  it("reloads reader pages when resume identity inputs change", () => {
+    const source = read("../src/views/manga/manga-reader.tsx");
+
+    assert.match(
+      source,
+      /\[\s*chapter\.id,\s*chapter\.chapter,\s*reloadTick,\s*startPage,\s*startScroll,\s*pid,\s*manga\.id,\s*manga\.title,?\s*\]/,
+    );
+    assert.match(
+      source,
+      /\[chapter\.id, chapter\.chapter, startPage, pid, manga\.id, manga\.title\]/,
+    );
+  });
+
+  it("derives mobile detail loading state from request identity", () => {
+    const source = read("../src/views/mobile/mobile-detail/data.ts");
+
+    assert.doesNotMatch(source, /setFull\(meta\.videos/);
+    assert.doesNotMatch(source, /setDetail\(null\)/);
+    assert.match(source, /result\?\.key === requestKey/);
+  });
+
+  it("keys chapter hint dismissal to the chapter instead of resetting it in an effect", () => {
+    const source = read("../src/views/manga/manga-reader.tsx");
+
+    assert.match(source, /hintDismissedChapter === chapter\.id/);
+    assert.doesNotMatch(source, /setHintDismissed\(false\)/);
+  });
+
+  it("updates reader callback refs after render", () => {
+    const source = read("../src/views/manga/manga-reader.tsx");
+
+    assert.doesNotMatch(source, /effModeRef\.current = effMode;\s*const double/);
+    assert.doesNotMatch(source, /pageRef\.current = currentPage;\s*const \[bookStart/);
+  });
+
+  it("defers reader request resets and isolates bookmark persistence", () => {
+    const source = read("../src/views/manga/manga-reader.tsx");
+
+    assert.match(source, /queueMicrotask\(\(\) =>/);
+    assert.match(source, /function recordBookmarkJump/);
+    assert.match(source, /recordBookmarkJump\(pid, manga, bm\)/);
+  });
 });

@@ -22,40 +22,55 @@ export function useAnimeDetail(
   isAnime: boolean,
 ): { detail: TmdbDetail | null; canonicalId: string | null; loading: boolean } {
   const { settings } = useSettings();
-  const [detail, setDetail] = useState<TmdbDetail | null>(null);
-  const [resolvedKitsu, setResolvedKitsu] = useState<string | null>(null);
-  const [loading, setLoading] = useState(isAnime);
+  const [result, setResult] = useState<{
+    settings: typeof settings;
+    meta: Meta;
+    detail: TmdbDetail | null;
+    resolvedKitsu: string | null;
+    loading: boolean;
+  } | null>(null);
 
   useEffect(() => {
-    setDetail(null);
-    setResolvedKitsu(null);
-    if (!isAnime) {
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
+    if (!isAnime) return;
+
     let alive = true;
     animeDetails(settings, meta)
       .then(async (res) => {
         if (!alive || !res) {
-          if (alive) setLoading(false);
+          if (alive) {
+            setResult({ settings, meta, detail: null, resolvedKitsu: null, loading: false });
+          }
           return;
         }
-        setResolvedKitsu(`kitsu:${res.kitsuId}`);
-        setDetail(res.detail);
-        setLoading(false);
+        setResult({
+          settings,
+          meta,
+          detail: res.detail,
+          resolvedKitsu: `kitsu:${res.kitsuId}`,
+          loading: false,
+        });
         const extras = await res.extrasPromise.catch(() => null);
         if (!alive || !extras) return;
-        setDetail((prev) => (prev ? mergeExtras(prev, extras) : prev));
+        setResult((current) =>
+          current?.settings === settings && current.meta === meta && current.detail
+            ? { ...current, detail: mergeExtras(current.detail, extras) }
+            : current,
+        );
       })
       .catch(() => {
-        if (alive) setLoading(false);
+        if (alive) {
+          setResult({ settings, meta, detail: null, resolvedKitsu: null, loading: false });
+        }
       });
     return () => {
       alive = false;
     };
-  }, [isAnime, meta.id]);
+  }, [isAnime, meta, settings]);
 
+  const matchesRequest = result?.settings === settings && result.meta === meta;
+  const detail = matchesRequest ? result.detail : null;
+  const resolvedKitsu = matchesRequest ? result.resolvedKitsu : null;
+  const loading = isAnime && (!matchesRequest || result.loading);
   const canonicalId = useMemo(
     () => syncCanonical(meta.id) ?? resolvedKitsu,
     [meta.id, resolvedKitsu],

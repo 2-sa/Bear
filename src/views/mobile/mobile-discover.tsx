@@ -11,8 +11,18 @@ import { MobileDetail } from "./mobile-detail";
 import { MobileFeatured } from "./mobile-featured";
 
 type Row = { id: string; title: string; metas: Meta[] };
+type DiscoverResult = {
+  settings: ReturnType<typeof useSettings>["settings"];
+  reloadKey: number;
+  featured: Meta[];
+  rawRows: Row[];
+  loading: boolean;
+  failed: boolean;
+};
 
 const ROW_CAP = 18;
+const NO_METAS: Meta[] = [];
+const NO_ROWS: Row[] = [];
 
 function nameKey(m: Meta): string {
   return m.name ? m.name.toLowerCase().replace(/[^a-z0-9]+/g, "") : "";
@@ -43,30 +53,53 @@ function dedupeRows(rows: Row[], featured: Meta[]): Row[] {
 
 export function MobileDiscover() {
   const { settings } = useSettings();
-  const [featured, setFeatured] = useState<Meta[]>([]);
-  const [rawRows, setRawRows] = useState<Row[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [failed, setFailed] = useState(false);
+  const [result, setResult] = useState<DiscoverResult | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [detailMeta, setDetailMeta] = useState<Meta | null>(null);
   const key = settings.tmdbKey;
+  const matchesRequest = result?.settings === settings && result.reloadKey === reloadKey;
+  const featured = matchesRequest ? result.featured : NO_METAS;
+  const rawRows = matchesRequest ? result.rawRows : NO_ROWS;
+  const loading = !matchesRequest || result.loading;
+  const failed = matchesRequest && result.failed;
 
   useEffect(() => {
     let alive = true;
-    setLoading(true);
-    setFailed(false);
-    setFeatured([]);
-    setRawRows([]);
+    const update = (fn: (current: DiscoverResult) => DiscoverResult) => {
+      if (!alive) return;
+      setResult((current) =>
+        fn(
+          current?.settings === settings && current.reloadKey === reloadKey
+            ? current
+            : {
+                settings,
+                reloadKey,
+                featured: [],
+                rawRows: [],
+                loading: true,
+                failed: false,
+              },
+        ),
+      );
+    };
+
     if (key) {
       buildFeaturedFast(key, settings)
         .then((r) => {
-          if (alive && r.featured.length) setFeatured((prev) => (prev.length ? prev : r.featured));
+          if (r.featured.length) {
+            update((current) => ({
+              ...current,
+              featured: current.featured.length ? current.featured : r.featured,
+            }));
+          }
         })
         .catch(() => {});
     }
     buildFeatured(key, settings)
       .then((r) => {
-        if (alive && r.featured.length) setFeatured(r.featured);
+        if (r.featured.length) {
+          update((current) => ({ ...current, featured: r.featured }));
+        }
       })
       .catch(() => {});
 
@@ -93,19 +126,21 @@ export function MobileDiscover() {
             metas: critics,
           });
         }
-        setRawRows(rows);
-        setFailed(rows.length === 0);
+        update((current) => ({
+          ...current,
+          rawRows: rows,
+          failed: rows.length === 0,
+          loading: false,
+        }));
       } catch {
-        if (alive) setFailed(true);
-      } finally {
-        if (alive) setLoading(false);
+        update((current) => ({ ...current, failed: true, loading: false }));
       }
     })();
 
     return () => {
       alive = false;
     };
-  }, [key, settings.region, settings.tmdbLanguage, reloadKey]);
+  }, [key, settings, reloadKey]);
 
   const rows = useMemo(() => dedupeRows(rawRows, featured), [rawRows, featured]);
   const shownRows = useHideAnimeRows(rows);

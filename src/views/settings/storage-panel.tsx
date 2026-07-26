@@ -1,5 +1,5 @@
 import { Check, Database, HardDrive, Trash2 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useT } from "@/lib/i18n";
 import { clearPickerCache } from "@/lib/picker-cache";
 import { clearMangaCache } from "@/lib/manga/api";
@@ -92,8 +92,12 @@ export function StoragePanel() {
   const t = useT();
   const [tick, setTick] = useState(0);
   const [estimate, setEstimate] = useState<{ usage: number; quota: number } | null>(null);
+  const [ls, setLs] = useState(localStorageBreakdown);
 
-  const refresh = () => setTick((v) => v + 1);
+  const refresh = () => {
+    setTick((v) => v + 1);
+    setLs(localStorageBreakdown());
+  };
 
   useEffect(() => {
     let alive = true;
@@ -110,7 +114,6 @@ export function StoragePanel() {
     };
   }, [tick]);
 
-  const ls = useMemo(() => localStorageBreakdown(), [tick]);
   const pct =
     estimate && estimate.quota > 0 ? Math.min(100, (estimate.usage / estimate.quota) * 100) : 0;
 

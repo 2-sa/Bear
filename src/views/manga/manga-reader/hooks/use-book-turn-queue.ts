@@ -3,40 +3,45 @@ import type { BookApi } from "../book-view";
 
 const FLIP_MS = 320;
 
+type QueueState = {
+  busyUntil: number;
+  pending: "next" | "prev" | null;
+  timer: number | undefined;
+};
+
+function fire(bookApi: RefObject<BookApi | null>, state: QueueState, dir: "next" | "prev") {
+  const api = bookApi.current;
+  if (!api) return;
+  if (dir === "next") api.next();
+  else api.prev();
+  state.busyUntil = performance.now() + FLIP_MS;
+  window.clearTimeout(state.timer);
+  state.timer = window.setTimeout(() => {
+    const pending = state.pending;
+    if (pending) {
+      state.pending = null;
+      fire(bookApi, state, pending);
+    }
+  }, FLIP_MS + 10);
+}
+
 export function useBookTurnQueue(bookApi: RefObject<BookApi | null>) {
-  const busyUntil = useRef(0);
-  const pending = useRef<"next" | "prev" | null>(null);
-  const timer = useRef<number | undefined>(undefined);
+  const queue = useRef<QueueState>({ busyUntil: 0, pending: null, timer: undefined });
 
-  const fire = useCallback(
-    (dir: "next" | "prev") => {
-      const api = bookApi.current;
-      if (!api) return;
-      if (dir === "next") api.next();
-      else api.prev();
-      busyUntil.current = performance.now() + FLIP_MS;
-      window.clearTimeout(timer.current);
-      timer.current = window.setTimeout(() => {
-        const p = pending.current;
-        if (p) {
-          pending.current = null;
-          fire(p);
-        }
-      }, FLIP_MS + 10);
-    },
-    [bookApi],
-  );
-
-  useEffect(() => () => window.clearTimeout(timer.current), []);
+  useEffect(() => {
+    const state = queue.current;
+    return () => window.clearTimeout(state.timer);
+  }, []);
 
   return useCallback(
     (dir: "next" | "prev") => {
-      if (performance.now() < busyUntil.current) {
-        pending.current = dir;
+      const state = queue.current;
+      if (performance.now() < state.busyUntil) {
+        state.pending = dir;
         return;
       }
-      fire(dir);
+      fire(bookApi, state, dir);
     },
-    [fire],
+    [bookApi],
   );
 }

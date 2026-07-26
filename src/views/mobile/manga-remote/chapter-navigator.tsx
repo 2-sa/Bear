@@ -18,6 +18,7 @@ import type { RemoteMangaChapter } from "@/lib/remote/protocol";
 
 const SORT_KEY = "harbor.manga.chaptersort.v1";
 const ROW_H = 68;
+const NO_CHAPTERS: RemoteMangaChapter[] = [];
 
 const loadDesc = () => {
   try {
@@ -64,7 +65,7 @@ export function ChapterNavigator({
   const [desc, setDesc] = useState(loadDesc);
   const [src, setSrc] = useState("all");
 
-  const chapters = manga?.chapters ?? [];
+  const chapters = manga?.chapters ?? NO_CHAPTERS;
   const sources = useMemo(() => collectSources(chapters), [chapters]);
   const multiSource = sources.length > 1;
   const effSrc = sources.some((s) => s.id === src) ? src : "all";
@@ -81,19 +82,24 @@ export function ChapterNavigator({
   }, [chapters, query, desc, effSrc]);
 
   const activeRow = manga ? rows.findIndex((c) => c.id === manga.chapterId) : -1;
-  const vw = useVirtualWindow(rows.length, ROW_H);
-  const { scrollToRow } = vw;
+  const {
+    ref: scrollRef,
+    onScroll,
+    scrollToRow,
+    scrollTop,
+    start,
+    end,
+    padTop,
+    totalHeight,
+  } = useVirtualWindow(rows.length, ROW_H);
 
   useEffect(() => {
-    if (!open) {
-      setQuery("");
-      return;
-    }
+    if (!open) return;
     const raf = requestAnimationFrame(() => {
       if (activeRow >= 0) scrollToRow(activeRow);
     });
     return () => cancelAnimationFrame(raf);
-  }, [open]);
+  }, [open, activeRow, scrollToRow]);
 
   useEffect(() => {
     if (!open) return;
@@ -199,17 +205,17 @@ export function ChapterNavigator({
         </p>
       ) : (
         <div
-          ref={vw.ref}
-          onScroll={vw.onScroll}
+          ref={scrollRef}
+          onScroll={onScroll}
           className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain px-3"
           style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 16px)" }}
         >
-          <div className="relative" style={{ height: vw.totalHeight }}>
+          <div className="relative" style={{ height: totalHeight }}>
             <div
               className="absolute inset-x-0 top-0"
-              style={{ transform: `translateY(${vw.padTop}px)` }}
+              style={{ transform: `translateY(${padTop}px)` }}
             >
-              {rows.slice(vw.start, vw.end).map((c) => (
+              {rows.slice(start, end).map((c) => (
                 <ChapterRow
                   key={c.id}
                   chapter={c}
@@ -223,10 +229,12 @@ export function ChapterNavigator({
         </div>
       )}
 
-      {vw.scrollTop > 240 && (
+      {scrollTop > 240 && (
         <button
           type="button"
-          onClick={() => vw.ref.current?.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" })}
+          onClick={() =>
+            scrollRef.current?.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" })
+          }
           aria-label="Scroll to top"
           className="absolute end-5 grid h-12 w-12 place-items-center rounded-full border border-edge-soft bg-elevated/90 text-ink shadow-[0_10px_24px_-8px_rgba(0,0,0,0.6)] backdrop-blur-md transition-transform active:scale-90"
           style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 24px)" }}
