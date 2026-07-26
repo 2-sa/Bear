@@ -67,6 +67,12 @@ test("semantic navigation arrows use the shared direction utility", () => {
   }
 });
 
+test("shared hero navigation chevrons mirror in RTL", () => {
+  const source = read("../src/components/nav-arrow.tsx");
+
+  assert.match(source, /className={`dir-icon \${className}`}/);
+});
+
 test("semantic arrows do not use one-off RTL scale transforms", () => {
   const files = [
     "../src/views/addons/hero-card.tsx",

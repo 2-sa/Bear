@@ -21,7 +21,7 @@ export function NavChevron({
       width={size}
       height={size}
       style={{ transform: `rotate(${ROT[dir]}deg)` }}
-      className={className}
+      className={`dir-icon ${className}`}
       aria-hidden
     >
       <path d={CHEVRON} fill="currentColor" />
