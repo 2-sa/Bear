@@ -8,6 +8,7 @@ import {
   type ServerConfig,
   type SuwayomiExtension,
 } from "@/lib/manga/sources/suwayomi/provider";
+import { notifyMangaDataChanged } from "@/lib/manga/refresh";
 import { languageName } from "@/lib/manga/types";
 import { useT } from "@/lib/i18n";
 import { initials } from "./types";
@@ -43,6 +44,7 @@ export function ExtensionRow({
     setError(null);
     try {
       await action();
+      notifyMangaDataChanged();
       onChanged();
     } catch {
       setError(t("Action failed"));

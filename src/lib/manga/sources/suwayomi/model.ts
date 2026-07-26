@@ -1,6 +1,7 @@
 import { safeFetch } from "@/lib/safe-fetch";
 import { mangaThrottle, type MangaSummary } from "@/lib/manga/types";
 import { normalizeSuwayomiBase } from "./base-url";
+export { decodeMangaGroup, encodeMangaGroup } from "./group-id";
 
 export type SuwayomiServer = {
   base: string;
@@ -179,6 +180,10 @@ export function mapManga(server: SuwayomiServer, sourceId: string, raw: any): Ma
 
 type Cursor = { count: number; page: number; hasNext: boolean };
 const cursors = new Map<string, Cursor>();
+
+export function clearSuwayomiCursors(): void {
+  cursors.clear();
+}
 
 export function cursorKey(base: string, sourceId: string, kind: BrowseKind, query: string): string {
   return `${base}|${sourceId}|${kind}|${query}`;

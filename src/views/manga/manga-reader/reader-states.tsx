@@ -5,7 +5,9 @@ export function ReaderLoading() {
   const t = useT();
   return (
     <div className="flex h-full flex-col items-center justify-center gap-3">
-      <Loader2 className="h-8 w-8 animate-spin text-ink-subtle" />
+      <span className="grid h-8 w-8 shrink-0 place-items-center">
+        <Loader2 className="block h-8 w-8 origin-center animate-spin text-ink-subtle [transform-box:view-box] motion-reduce:animate-none" />
+      </span>
       <span className="text-[13px] text-ink-subtle">{t("Loading chapter...")}</span>
     </div>
   );

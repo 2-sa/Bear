@@ -54,10 +54,13 @@ export function PageImage({
   const [bust, setBust] = useState(0);
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const [headerFailed, setHeaderFailed] = useState(false);
+  const [nearbyUrl, setNearbyUrl] = useState<string | null>(null);
   const autoRetried = useRef(false);
   const prevUrl = useRef(url);
+  const rootRef = useRef<HTMLDivElement>(null);
 
   const wantHeaderFetch = isTauri && !!headers && Object.keys(headers).length > 0 && !headerFailed;
+  const activeHeaderFetch = wantHeaderFetch && nearbyUrl === url;
 
   if (prevUrl.current !== url) {
     prevUrl.current = url;
@@ -67,6 +70,22 @@ export function PageImage({
     setHeaderFailed(false);
     autoRetried.current = false;
   }
+
+  useEffect(() => {
+    if (!wantHeaderFetch) return;
+    const element = rootRef.current;
+    if (!element) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries[0]?.isIntersecting) return;
+        setNearbyUrl(url);
+        observer.disconnect();
+      },
+      { rootMargin: "120% 0px" },
+    );
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [url, wantHeaderFetch]);
 
   useEffect(() => {
     if (status !== "error" || autoRetried.current) return;
@@ -79,7 +98,7 @@ export function PageImage({
   }, [status]);
 
   useEffect(() => {
-    if (!wantHeaderFetch || !headers) return;
+    if (!activeHeaderFetch || !headers) return;
     let alive = true;
     let created: string | null = null;
     setStatus("loading");
@@ -99,10 +118,10 @@ export function PageImage({
       alive = false;
       if (created) URL.revokeObjectURL(created);
     };
-  }, [url, headers, wantHeaderFetch, bust]);
+  }, [url, headers, activeHeaderFetch, bust]);
 
   const rawSrc = bust ? `${url}${url.includes("?") ? "&" : "?"}h=${bust}` : url;
-  const src = wantHeaderFetch ? blobUrl : rawSrc;
+  const src = wantHeaderFetch ? (activeHeaderFetch ? blobUrl : null) : rawSrc;
 
   const retry = () => {
     setStatus("loading");
@@ -113,6 +132,7 @@ export function PageImage({
 
   return (
     <div
+      ref={rootRef}
       className={
         inline
           ? "relative flex justify-center"

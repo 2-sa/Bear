@@ -1,133 +1,116 @@
-import { Loader2, Search, Star } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
+import { Loader2, RefreshCw, Search, Star } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
+import { VirtualGrid } from "@/components/virtual-grid";
 import { useT } from "@/lib/i18n";
 import { Poster } from "@/components/poster";
 import {
+  clearMangaCache,
   MANGA_PAGE,
   popularManga,
-  popularMangaStream,
   searchManga,
-  searchMangaStream,
   type MangaSummary,
 } from "@/lib/manga/api";
+import { collapseMangaDuplicates } from "@/lib/manga/dedupe";
+import {
+  consumeMangaDataChange,
+  refreshMangaData,
+  subscribeMangaDataChanges,
+} from "@/lib/manga/refresh";
 import { useIsMangaFavorite, useMangaFavorites } from "@/lib/manga-favorites";
 import { activeMangaSourceId, subscribeMangaSources } from "@/lib/manga/sources";
+import { queryKeys } from "@/lib/query";
 import { FAVORITES, SourceDropdown, TagDropdown } from "./manga-browse/filters";
 import { BrowseEmpty, BrowseError, SkeletonGrid } from "./manga-browse/states";
 import { CollectionBadges } from "./collection-badge";
 
-type Status = "loading" | "ready" | "error";
-
-const GRID = "repeat(auto-fill, minmax(150px, 1fr))";
-
 export function MangaBrowse({
   onOpen,
   onManageSources,
+  scrollRef,
 }: {
   onOpen: (mangaId: string) => void;
   onManageSources: () => void;
+  scrollRef: RefObject<HTMLElement | null>;
 }) {
   const t = useT();
+  const queryClient = useQueryClient();
+  const queryClientRef = useRef(queryClient);
   const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [tagId, setTagId] = useState("");
+  const [sourceId, setSourceId] = useState(() => activeMangaSourceId());
+  const [refreshing, setRefreshing] = useState(false);
+  const sourceRef = useRef(sourceId);
+  const refreshJobRef = useRef<Promise<void> | null>(null);
   const { items: favItems } = useMangaFavorites();
-  const [items, setItems] = useState<MangaSummary[]>([]);
-  const [status, setStatus] = useState<Status>("loading");
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
-  const [reloadTick, setReloadTick] = useState(0);
 
-  const offsetRef = useRef(0);
-  const seenRef = useRef(new Set<string>());
-  const reqRef = useRef(0);
-  const queryRef = useRef("");
-  const tagRef = useRef("");
-  queryRef.current = query;
-  tagRef.current = tagId;
-
-  const fetchPage = useCallback((offset: number) => {
-    const q = queryRef.current.trim();
-    const tag = tagRef.current || undefined;
-    return q || tagRef.current ? searchManga(q, offset, tag) : popularManga(offset, tag);
+  const refresh = useCallback(() => {
+    if (refreshJobRef.current) return refreshJobRef.current;
+    setRefreshing(true);
+    const job = (async () => {
+      try {
+        await refreshMangaData(queryClientRef.current, clearMangaCache);
+      } finally {
+        refreshJobRef.current = null;
+        setRefreshing(false);
+      }
+    })();
+    refreshJobRef.current = job;
+    return job;
   }, []);
 
-  const fetchPageStream = useCallback(
-    (offset: number, onChunk: (items: MangaSummary[]) => void) => {
-      const q = queryRef.current.trim();
-      const tag = tagRef.current || undefined;
-      return q || tagRef.current
-        ? searchMangaStream(q, offset, tag, onChunk)
-        : popularMangaStream(offset, tag, onChunk);
-    },
-    [],
-  );
+  useEffect(() => {
+    const next = query.trim();
+    const timer = window.setTimeout(() => setDebouncedQuery(next), next ? 350 : 0);
+    return () => window.clearTimeout(timer);
+  }, [query]);
 
-  const reload = useCallback(() => setReloadTick((n) => n + 1), []);
-
-  const sourceRef = useRef(activeMangaSourceId());
   useEffect(
     () =>
       subscribeMangaSources(() => {
-        const id = activeMangaSourceId();
-        if (id === sourceRef.current) return;
-        sourceRef.current = id;
-        reload();
+        const next = activeMangaSourceId();
+        if (sourceRef.current === next) return;
+        sourceRef.current = next;
+        setSourceId(next);
+        setTagId("");
       }),
-    [reload],
+    [],
   );
 
   useEffect(() => {
-    const id = ++reqRef.current;
-    if (tagId === FAVORITES) {
-      setItems([]);
-      offsetRef.current = 0;
-      setHasMore(false);
-      setStatus("ready");
-      return;
-    }
-    setStatus("loading");
-    setItems([]);
-    offsetRef.current = 0;
-    seenRef.current = new Set();
-    setHasMore(true);
-    const timer = window.setTimeout(
-      () => {
-        let any = false;
-        fetchPageStream(0, (chunk) => {
-          if (id !== reqRef.current || chunk.length === 0) return;
-          any = true;
-          setStatus("ready");
-          const fresh = chunk.filter((m) => !seenRef.current.has(m.id));
-          fresh.forEach((m) => seenRef.current.add(m.id));
-          if (fresh.length) setItems((prev) => [...prev, ...fresh]);
-        })
-          .then((all) => {
-            if (id !== reqRef.current) return;
-            offsetRef.current = MANGA_PAGE;
-            setHasMore(all.length > 0);
-            setStatus("ready");
-          })
-          .catch(() => {
-            if (id !== reqRef.current || any) return;
-            setItems([]);
-            setHasMore(false);
-            setStatus("error");
-          });
-      },
-      query.trim() ? 350 : 0,
-    );
-    return () => window.clearTimeout(timer);
-  }, [query, tagId, reloadTick, fetchPageStream]);
+    const refreshIfChanged = () => {
+      if (refreshJobRef.current || !consumeMangaDataChange()) return;
+      void refresh()
+        .catch(() => {})
+        .finally(refreshIfChanged);
+    };
+    const unsubscribe = subscribeMangaDataChanges(refreshIfChanged);
+    refreshIfChanged();
+    return unsubscribe;
+  }, [refresh]);
 
-  useEffect(() => {
-    if (status !== "ready" || !hasMore || items.length === 0) return;
-    const id = reqRef.current;
-    const next = offsetRef.current;
-    const timer = window.setTimeout(() => {
-      if (id === reqRef.current) void fetchPage(next).catch(() => {});
-    }, 600);
-    return () => window.clearTimeout(timer);
-  }, [status, hasMore, items.length, fetchPage]);
+  const favoritesSelected = tagId === FAVORITES;
+  const { data, fetchNextPage, hasNextPage, isError, isFetchingNextPage, isPending, refetch } =
+    useInfiniteQuery({
+      queryKey: queryKeys.manga.browse(sourceId, debouncedQuery, tagId),
+      queryFn: ({ pageParam }) => {
+        const tag = tagId || undefined;
+        return debouncedQuery || tagId
+          ? searchManga(debouncedQuery, pageParam, tag)
+          : popularManga(pageParam, tag);
+      },
+      initialPageParam: 0,
+      getNextPageParam: (lastPage, _pages, lastPageParam) =>
+        lastPage.length > 0 ? lastPageParam + MANGA_PAGE : undefined,
+      enabled: !favoritesSelected && !!sourceId,
+      staleTime: 30_000,
+      refetchOnMount: "always",
+    });
+
+  const items = useMemo(() => {
+    return collapseMangaDuplicates((data?.pages ?? []).flat());
+  }, [data]);
 
   const displayItems = useMemo(() => {
     if (tagId === FAVORITES) {
@@ -145,25 +128,9 @@ export function MangaBrowse({
   }, [items, favItems, tagId, query]);
 
   const loadMore = useCallback(() => {
-    if (loadingMore || status !== "ready" || !hasMore) return;
-    const id = reqRef.current;
-    setLoadingMore(true);
-    fetchPage(offsetRef.current)
-      .then((list) => {
-        if (id !== reqRef.current) return;
-        const fresh = list.filter((m) => !seenRef.current.has(m.id));
-        fresh.forEach((m) => seenRef.current.add(m.id));
-        if (fresh.length) setItems((prev) => [...prev, ...fresh]);
-        offsetRef.current += MANGA_PAGE;
-        setHasMore(fresh.length > 0);
-        setLoadingMore(false);
-      })
-      .catch(() => {
-        if (id !== reqRef.current) return;
-        setHasMore(false);
-        setLoadingMore(false);
-      });
-  }, [loadingMore, status, hasMore, fetchPage]);
+    if (!hasNextPage || isFetchingNextPage) return;
+    void fetchNextPage();
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
   const sentinelRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -173,13 +140,16 @@ export function MangaBrowse({
       (entries) => {
         if (entries[0]?.isIntersecting) loadMore();
       },
-      { root: null, rootMargin: "800px 0px" },
+      { root: scrollRef.current, rootMargin: "800px 0px" },
     );
     obs.observe(el);
     return () => obs.disconnect();
-  }, [loadMore]);
+  }, [loadMore, scrollRef]);
 
   const emptyKind = tagId === FAVORITES ? "favorites" : query.trim() || tagId ? "search" : "source";
+  const reload = useCallback(() => {
+    void refetch();
+  }, [refetch]);
 
   return (
     <div className="flex flex-col gap-7">
@@ -199,28 +169,46 @@ export function MangaBrowse({
         </div>
         <SourceDropdown onManageSources={onManageSources} />
         <TagDropdown tagId={tagId} onSelect={setTagId} />
+        <button
+          type="button"
+          onClick={() => void refresh()}
+          disabled={refreshing}
+          title={t("Refresh")}
+          aria-label={t("Refresh")}
+          className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-edge-soft bg-elevated/40 text-ink-muted shadow-[0_1px_0_rgba(255,255,255,0.03)] transition-colors hover:bg-raised hover:text-ink disabled:cursor-wait disabled:opacity-60"
+        >
+          <RefreshCw
+            size={16}
+            className={refreshing ? "animate-spin motion-reduce:animate-none" : undefined}
+          />
+        </button>
       </div>
 
-      {status === "loading" ? (
+      {!favoritesSelected && isPending ? (
         <SkeletonGrid />
-      ) : status === "error" ? (
+      ) : !favoritesSelected && isError ? (
         <BrowseError onRetry={reload} onManageSources={onManageSources} />
       ) : displayItems.length === 0 ? (
         <BrowseEmpty kind={emptyKind} onRetry={reload} />
       ) : (
         <>
-          <div className="grid gap-x-4 gap-y-7" style={{ gridTemplateColumns: GRID }}>
-            {displayItems.map((m) => (
-              <MangaCard key={m.id} manga={m} onOpen={onOpen} />
-            ))}
-          </div>
+          <VirtualGrid
+            items={displayItems}
+            scrollRef={scrollRef}
+            minColumnWidth={150}
+            gapX={16}
+            gapY={28}
+            estimateRowHeight={270}
+            getKey={(m) => m.id}
+            renderItem={(m) => <MangaCard manga={m} onOpen={onOpen} />}
+          />
           <div ref={sentinelRef} className="h-4" />
-          {loadingMore && (
+          {isFetchingNextPage && (
             <div className="flex justify-center py-6">
               <Loader2 className="h-6 w-6 animate-spin text-ink-subtle motion-reduce:animate-none" />
             </div>
           )}
-          {!hasMore && (
+          {!hasNextPage && (
             <p className="py-6 text-center text-[12.5px] text-ink-subtle">
               {t("That is everything from this source.")}
             </p>

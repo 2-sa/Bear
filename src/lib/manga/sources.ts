@@ -1,4 +1,5 @@
 import { setItemWithRecovery } from "@/lib/storage-recovery";
+import { notifyMangaDataChanged } from "./refresh";
 import type { MangaProvider } from "./types";
 import { aggregateProvider } from "./sources/aggregate";
 import { makeSuwayomiProvider } from "./sources/suwayomi/provider";
@@ -64,6 +65,7 @@ let sourcesMemo: MangaSource[] | null = null;
 function notify(): void {
   sourcesMemo = null;
   for (const l of listeners) l();
+  notifyMangaDataChanged();
 }
 
 function configuredIds(): string[] {

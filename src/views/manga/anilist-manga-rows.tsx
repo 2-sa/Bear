@@ -7,10 +7,10 @@ import { CollapsibleSection } from "./collapsible-section";
 import { MangaPosterRow } from "./manga-poster-row";
 
 export function AnilistMangaRows({ onOpen }: { onOpen: (item: MangaSummary) => void }) {
-  const { rails, loading } = useAnilistMangaRails();
+  const { rails } = useAnilistMangaRails();
   const [active, setActive] = useState(0);
   const t = useT();
-  if (rails.length === 0 && !loading) return null;
+  if (rails.length === 0) return null;
 
   const idx = Math.min(active, Math.max(0, rails.length - 1));
   const current = rails[idx];
@@ -52,13 +52,9 @@ export function AnilistMangaRows({ onOpen }: { onOpen: (item: MangaSummary) => v
           ))}
         </div>
       )}
-      {current ? (
-        <div key={current.key} className="harbor-rise">
-          <MangaPosterRow items={current.items} onOpen={onOpen} />
-        </div>
-      ) : (
-        <MangaPosterRow items={null} onOpen={onOpen} />
-      )}
+      <div key={current.key} className="harbor-rise">
+        <MangaPosterRow items={current.items} onOpen={onOpen} />
+      </div>
     </CollapsibleSection>
   );
 }

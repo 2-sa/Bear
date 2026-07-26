@@ -161,7 +161,7 @@ function Row({
       <span className={`flex-1 text-[15px] font-medium ${danger ? "text-danger" : "text-ink"}`}>
         {label}
       </span>
-      {!danger && <ChevronRight size={18} strokeWidth={2.2} className="text-ink-subtle" />}
+      {!danger && <ChevronRight size={18} strokeWidth={2.2} className="dir-icon text-ink-subtle" />}
     </button>
   );
 }

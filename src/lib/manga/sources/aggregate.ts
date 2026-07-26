@@ -1,5 +1,6 @@
 import type { MangaChapter, MangaProvider, MangaSummary } from "@/lib/manga/types";
 import { aggregateSubProviders } from "@/lib/manga/sources";
+import { collapseMangaDuplicates } from "@/lib/manga/dedupe";
 
 const SEP = "::";
 const SOURCE_TIMEOUT = 10000;
@@ -72,14 +73,14 @@ async function mergeLists(
       if (list[i]) out.push(list[i]);
     }
   }
-  return out;
+  return collapseMangaDuplicates(out);
 }
 
 export async function streamAll(
   fn: (p: MangaProvider) => Promise<MangaSummary[]>,
   onChunk: (items: MangaSummary[]) => void,
 ): Promise<MangaSummary[]> {
-  const all: MangaSummary[] = [];
+  let all: MangaSummary[] = [];
   await Promise.all(
     aggregateSubProviders().map((p) =>
       withTimeout(
@@ -89,8 +90,10 @@ export async function streamAll(
         .catch(() => [] as MangaSummary[])
         .then((list) => {
           if (list.length) {
-            all.push(...list);
-            onChunk(list);
+            const previousIds = new Set(all.map((item) => item.id));
+            all = collapseMangaDuplicates([...all, ...list]);
+            const chunk = all.filter((item) => !previousIds.has(item.id));
+            if (chunk.length) onChunk(chunk);
           }
         }),
     ),
@@ -147,7 +150,10 @@ function labelChapters(chs: MangaChapter[], p: MangaProvider): MangaChapter[] {
 }
 
 function normTitle(s: string): string {
-  return s.toLowerCase().replace(/[^a-z0-9]+/g, "");
+  return s
+    .normalize("NFKC")
+    .toLocaleLowerCase()
+    .replace(/[\p{P}\p{S}\p{Z}\s]+/gu, "");
 }
 
 function pickSameTitle(hits: MangaSummary[], title: string): MangaSummary | null {

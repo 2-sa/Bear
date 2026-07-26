@@ -5,6 +5,7 @@ import {
   type ServerConfig,
   type SuwayomiSource,
 } from "@/lib/manga/sources/suwayomi/provider";
+import { notifyMangaDataChanged } from "@/lib/manga/refresh";
 import { languageName } from "@/lib/manga/types";
 import { useT } from "@/lib/i18n";
 import { CARD, INPUT } from "../shared";
@@ -78,6 +79,11 @@ export function SourcePicker({
     );
   }, [sources, query]);
 
+  const refresh = () => {
+    notifyMangaDataChanged();
+    setReload((n) => n + 1);
+  };
+
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-3 px-1">
@@ -86,7 +92,7 @@ export function SourcePicker({
         </p>
         <button
           type="button"
-          onClick={() => setReload((n) => n + 1)}
+          onClick={refresh}
           aria-label={t("Refresh sources")}
           className="grid h-8 w-8 place-items-center rounded-lg bg-raised text-ink-subtle ring-1 ring-edge-soft transition-all hover:text-ink active:scale-95 motion-reduce:active:scale-100"
         >
@@ -153,7 +159,7 @@ export function SourcePicker({
                   {languageName(s.lang)}
                 </span>
               </div>
-              <ChevronRight size={18} className="shrink-0 text-ink-subtle" />
+              <ChevronRight size={18} className="dir-icon shrink-0 text-ink-subtle" />
             </button>
           ))}
         </div>

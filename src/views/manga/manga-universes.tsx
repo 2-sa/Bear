@@ -136,7 +136,7 @@ export function UniversesCta({ onClick }: { onClick: () => void }) {
       </div>
       <ChevronRight
         size={22}
-        className="relative shrink-0 text-ink-subtle drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)] transition-transform group-hover:translate-x-1"
+        className="dir-icon relative shrink-0 text-ink-subtle drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)] transition-transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1"
       />
     </button>
   );
@@ -226,7 +226,7 @@ export function MangaUniverses({
         onClick={onBack}
         className="inline-flex w-fit items-center gap-1.5 rounded-xl bg-elevated px-4 py-2.5 text-[15px] font-medium text-ink shadow-[0_2px_8px_-2px_rgba(0,0,0,0.4)] ring-1 ring-edge-soft transition-all hover:bg-raised active:scale-[0.97]"
       >
-        <ChevronLeft size={19} strokeWidth={2.4} />
+        <ChevronLeft size={19} strokeWidth={2.4} className="dir-icon" />
         {t("Back")}
       </button>
       <div className="flex flex-col gap-1.5">

@@ -303,7 +303,7 @@ export function MangaView() {
           onClick={() => setMode({ screen: "browse" })}
           className="mb-7 inline-flex items-center gap-1.5 rounded-full border border-edge-soft bg-canvas/40 px-4 py-2 text-[14px] text-ink-muted transition-colors hover:bg-elevated hover:text-ink"
         >
-          <ChevronLeft size={18} />
+          <ChevronLeft size={18} className="dir-icon" />
           Back
         </button>
         <h1 className="mb-8 font-display text-[32px] font-medium tracking-tight text-ink">
@@ -335,8 +335,6 @@ export function MangaView() {
         <MangaContinue onResume={resume} />
       </div>
       <MangaHiddenRows />
-      <AnilistMangaRows onOpen={openMangaByTitle} />
-      <BecauseYouWatched onOpen={openMangaItem} />
       <div className="mt-8">
         <MangaRail
           title="Popular Manga"
@@ -347,6 +345,8 @@ export function MangaView() {
           onOpen={openMangaItem}
         />
       </div>
+      <AnilistMangaRows onOpen={openMangaByTitle} />
+      <BecauseYouWatched onOpen={openMangaItem} />
       <div className="mb-9 mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
         <button
           type="button"
@@ -378,7 +378,7 @@ export function MangaView() {
           </div>
           <ChevronRight
             size={22}
-            className="shrink-0 text-ink-subtle transition-transform group-hover:translate-x-1"
+            className="dir-icon shrink-0 text-ink-subtle transition-transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1"
           />
         </button>
         <UniversesCta onClick={() => setMode({ screen: "universes" })} />
@@ -400,6 +400,7 @@ export function MangaView() {
         </button>
       </div>
       <MangaBrowse
+        scrollRef={browseScrollRef}
         onOpen={(id) => setMode({ screen: "detail", mangaId: id })}
         onManageSources={() => setMode({ screen: "sources" })}
       />

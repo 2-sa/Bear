@@ -316,7 +316,7 @@ export function MangaSourcesView({
           onClick={onBack}
           className="inline-flex items-center gap-1.5 rounded-xl bg-elevated px-4 py-2.5 text-[15px] font-medium text-ink shadow-[0_2px_8px_-2px_rgba(0,0,0,0.4)] ring-1 ring-edge-soft transition-all hover:bg-raised active:scale-[0.97]"
         >
-          <ChevronLeft size={19} strokeWidth={2.4} />
+          <ChevronLeft size={19} strokeWidth={2.4} className="dir-icon" />
           {t("Back")}
         </button>
         {total > 0 && (
@@ -326,7 +326,7 @@ export function MangaSourcesView({
             className="inline-flex items-center gap-2 rounded-xl bg-accent px-5 py-2.5 text-[15px] font-semibold text-canvas shadow-[0_6px_18px_-8px_rgba(0,0,0,0.5)] transition-all hover:opacity-90 active:scale-[0.97]"
           >
             {t("Done")} <span className="text-canvas/80">· {total}</span>
-            <ArrowRight size={18} strokeWidth={2.4} />
+            <ArrowRight size={18} strokeWidth={2.4} className="dir-icon" />
           </button>
         )}
       </div>

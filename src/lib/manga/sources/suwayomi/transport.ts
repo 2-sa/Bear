@@ -30,6 +30,11 @@ export function configClient(config: ServerConfig): SuwayomiClient {
 const transportCache = new Map<string, Promise<Transport>>();
 const sourceCache = new Map<string, Map<string, SuwayomiSource>>();
 
+export function clearSuwayomiTransportCache(): void {
+  transportCache.clear();
+  sourceCache.clear();
+}
+
 export function pickTransport(client: SuwayomiClient): Promise<Transport> {
   const base = client.server.base;
   const cached = transportCache.get(base);

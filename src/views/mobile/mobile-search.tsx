@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronRight, Layers, Search as SearchIcon, Trophy, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Layers, Search as SearchIcon, Trophy, X } from "lucide-react";
 import type { Meta, MetaType } from "@/lib/cinemeta";
 import { Poster, usePosterChain } from "@/components/poster";
 import { Laurel } from "@/components/icons/laurel";
@@ -383,7 +383,11 @@ function Landing({
                 <span className="text-[15.5px] font-semibold text-ink">{e.label}</span>
                 <span className="text-[12.5px] text-ink-subtle">{e.caption}</span>
               </span>
-              <ChevronRight size={19} strokeWidth={2.2} className="shrink-0 text-ink-subtle" />
+              <ChevronRight
+                size={19}
+                strokeWidth={2.2}
+                className="dir-icon shrink-0 text-ink-subtle"
+              />
             </button>
           ))}
         </div>
@@ -711,7 +715,7 @@ function GenreTile({
         <ChevronRight
           size={16}
           strokeWidth={2.4}
-          className="shrink-0"
+          className="dir-icon shrink-0"
           style={{ color: palette.ink }}
         />
       </span>
@@ -952,7 +956,7 @@ function BackBar({ title, onBack }: { title: string; onBack: () => void }) {
       onClick={onBack}
       className="flex items-center gap-1 self-start rounded-full bg-surface py-2 pe-4 ps-2.5 text-[14px] font-semibold text-ink ring-1 ring-edge-soft transition-transform duration-150 active:scale-[0.97] motion-reduce:transition-none"
     >
-      <ChevronRight size={17} strokeWidth={2.6} className="rotate-180 text-ink-subtle" />
+      <ChevronLeft size={17} strokeWidth={2.6} className="dir-icon text-ink-subtle" />
       <span className="line-clamp-1 max-w-[70vw]">{title}</span>
     </button>
   );

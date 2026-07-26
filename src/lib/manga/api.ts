@@ -1,4 +1,5 @@
 import { setItemWithRecovery } from "@/lib/storage-recovery";
+import { disposeAllPlugins } from "./plugins/runtime";
 import {
   activeMangaProvider,
   activeMangaSourceId,
@@ -11,6 +12,8 @@ import {
   streamAll,
   streamAggregateChapters,
 } from "./sources/aggregate";
+import { clearSuwayomiCursors } from "./sources/suwayomi/model";
+import { clearSuwayomiTransportCache } from "./sources/suwayomi/transport";
 import type { MangaChapter, MangaProvider, MangaSummary } from "./types";
 
 export {
@@ -38,7 +41,8 @@ const CALL_TIMEOUT = 12_000;
 const PAGES_TIMEOUT = 25_000;
 const TRIES = 2;
 
-const DISK_PREFIX = "harbor.manga.cache.v2.";
+const DISK_ROOT = "harbor.manga.cache.";
+const DISK_PREFIX = "harbor.manga.cache.v3.";
 const DISK_MAX_AGE = 7 * DAY;
 const POPULAR_DISK = { fresh: 30 * MIN, stale: 6 * HOUR };
 const TAGS_DISK = { fresh: 12 * HOUR, stale: 7 * DAY };
@@ -175,11 +179,14 @@ async function cached<T>(
 
 export function clearMangaCache(): void {
   cache.clear();
+  disposeAllPlugins();
+  clearSuwayomiTransportCache();
+  clearSuwayomiCursors();
   try {
     const stale: string[] = [];
     for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i);
-      if (k && k.startsWith(DISK_PREFIX)) stale.push(k);
+      if (k && k.startsWith(DISK_ROOT)) stale.push(k);
     }
     for (const k of stale) localStorage.removeItem(k);
   } catch {

@@ -32,7 +32,9 @@ export function MobileRail({
         className="flex items-center gap-1 px-4 text-start disabled:cursor-default"
       >
         <h2 className="text-[18px] font-semibold tracking-tight text-ink">{title}</h2>
-        {onSeeAll && <ChevronRight size={19} strokeWidth={2.4} className="text-ink-subtle" />}
+        {onSeeAll && (
+          <ChevronRight size={19} strokeWidth={2.4} className="dir-icon text-ink-subtle" />
+        )}
       </button>
       <div className="flex gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {metas.map((m) =>
@@ -68,7 +70,9 @@ export function MobileRankRail({
         className="flex items-center gap-1 px-4 text-start disabled:cursor-default"
       >
         <h2 className="text-[18px] font-semibold tracking-tight text-ink">{title}</h2>
-        {onSeeAll && <ChevronRight size={19} strokeWidth={2.4} className="text-ink-subtle" />}
+        {onSeeAll && (
+          <ChevronRight size={19} strokeWidth={2.4} className="dir-icon text-ink-subtle" />
+        )}
       </button>
       <div className="flex gap-1 overflow-x-auto ps-4 pe-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {metas.slice(0, 10).map((m, i) => (

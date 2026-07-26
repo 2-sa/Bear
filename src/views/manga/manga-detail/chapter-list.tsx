@@ -147,10 +147,17 @@ function LangDropdown({
 
 function ChapterMeta({ chapter }: { chapter: MangaChapter }) {
   const rel = relativeDate(chapter.publishAt);
+  const pageCount = chapter.pages > 0 ? t("{n} pages", { n: chapter.pages }) : null;
   return (
     <span className="flex min-w-0 items-center gap-1.5 text-[12.5px] text-ink-subtle">
       {chapter.group && <span className="truncate">{chapter.group}</span>}
-      {chapter.group && rel && (
+      {chapter.group && pageCount && (
+        <span aria-hidden className="text-ink-subtle/50">
+          ·
+        </span>
+      )}
+      {pageCount && <span className="shrink-0 tabular-nums">{pageCount}</span>}
+      {(chapter.group || pageCount) && rel && (
         <span aria-hidden className="text-ink-subtle/50">
           ·
         </span>

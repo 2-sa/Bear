@@ -62,7 +62,7 @@ export function BrowseResults({
           onClick={onBack}
           className="inline-flex items-center gap-1.5 rounded-xl bg-elevated px-3.5 py-2.5 text-[14px] font-medium text-ink ring-1 ring-edge-soft transition-all hover:bg-raised active:scale-[0.97] motion-reduce:active:scale-100"
         >
-          <ChevronLeft size={18} strokeWidth={2.4} />
+          <ChevronLeft size={18} strokeWidth={2.4} className="dir-icon" />
           {t("Sources")}
         </button>
         <span className="truncate text-[17px] font-semibold text-ink">{source.name}</span>

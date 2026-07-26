@@ -119,7 +119,7 @@ export function MangaDownloadsView({
           onClick={onBack}
           className="mb-7 inline-flex items-center gap-1.5 rounded-full border border-edge-soft bg-canvas/40 px-4 py-2 text-[14px] text-ink-muted transition-colors hover:bg-elevated hover:text-ink"
         >
-          <ChevronLeft size={18} />
+          <ChevronLeft size={18} className="dir-icon" />
           {t("Back")}
         </button>
         <div className="flex items-baseline gap-3">

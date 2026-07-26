@@ -52,6 +52,7 @@ const PRUNABLE_PREFIXES = [
   "harbor.anilist.collection.v1.",
   "harbor.manga.cache.v1.",
   "harbor.manga.cache.v2.",
+  "harbor.manga.cache.v3.",
   "harbor.manga.art.",
 ];
 

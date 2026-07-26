@@ -2,30 +2,50 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { invoke } from "@tauri-apps/api/core";
 import { Check, Copy, Smartphone, X } from "lucide-react";
+import { useSettings } from "@/lib/settings";
 import { mangaRemoteUiUrl } from "@/lib/remote/protocol";
 import { useT } from "@/lib/i18n";
 import { ReaderIconButton, READER_ICON_CLASS, READER_ICON_STROKE } from "./reader-icon-button";
 
 export function PhoneRemoteButton() {
   const t = useT();
+  const { settings, update } = useSettings();
   const [open, setOpen] = useState(false);
+  const enabled = settings.serveWebUi || settings.remoteControlEnabled;
   return (
     <>
       <ReaderIconButton label={t("Control from your phone")} onClick={() => setOpen(true)}>
         <Smartphone className={READER_ICON_CLASS} strokeWidth={READER_ICON_STROKE} />
       </ReaderIconButton>
-      {open && <PhoneRemoteModal onClose={() => setOpen(false)} />}
+      {open && (
+        <PhoneRemoteModal
+          enabled={enabled}
+          onEnable={() => update({ remoteControlEnabled: true })}
+          onClose={() => setOpen(false)}
+        />
+      )}
     </>
   );
 }
 
-function PhoneRemoteModal({ onClose }: { onClose: () => void }) {
+function PhoneRemoteModal({
+  enabled,
+  onEnable,
+  onClose,
+}: {
+  enabled: boolean;
+  onEnable: () => void;
+  onClose: () => void;
+}) {
   const t = useT();
   const [lanIp, setLanIp] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
+    if (!enabled) {
+      return;
+    }
     let alive = true;
     invoke<string | null>("lan_ip")
       .then((ip) => {
@@ -40,7 +60,7 @@ function PhoneRemoteModal({ onClose }: { onClose: () => void }) {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [enabled]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -96,7 +116,18 @@ function PhoneRemoteModal({ onClose }: { onClose: () => void }) {
           )}
         </p>
 
-        {loading ? (
+        {!enabled ? (
+          <div className="mt-5 rounded-xl border border-edge-soft bg-canvas px-3.5 py-3 text-[13px] leading-relaxed text-ink-muted">
+            <p>{t("Turn on Remote Control to use your phone as a manga reader remote.")}</p>
+            <button
+              type="button"
+              onClick={onEnable}
+              className="mt-3 flex h-9 items-center rounded-lg bg-ink px-3 text-[12.5px] font-semibold text-canvas transition-all hover:opacity-90 active:scale-[0.97]"
+            >
+              {t("Enable Remote Control")}
+            </button>
+          </div>
+        ) : loading ? (
           <div className="mt-5 h-[52px] animate-pulse rounded-xl bg-elevated motion-reduce:animate-none" />
         ) : url ? (
           <div className="mt-5 flex items-center gap-2 rounded-xl border border-edge-soft bg-canvas px-3.5 py-3">

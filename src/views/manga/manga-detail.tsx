@@ -57,7 +57,7 @@ function BackButton({ onBack }: { onBack: () => void }) {
       onClick={onBack}
       className="inline-flex items-center gap-1.5 rounded-full border border-edge-soft bg-canvas/40 px-4 py-2 text-[14px] text-ink-muted backdrop-blur-sm transition-colors hover:bg-elevated hover:text-ink"
     >
-      <ChevronLeft size={18} />
+      <ChevronLeft size={18} className="dir-icon" />
       {t("Back")}
     </button>
   );
@@ -149,7 +149,7 @@ function MangaDetailError({ onBack, onRetry }: { onBack: () => void; onRetry: ()
             onClick={onBack}
             className="flex h-11 items-center gap-2 rounded-xl border border-edge-soft bg-elevated/40 px-5 text-[14px] font-medium text-ink-muted transition-colors hover:bg-elevated/70 hover:text-ink"
           >
-            <ChevronLeft size={18} />
+            <ChevronLeft size={18} className="dir-icon" />
             {t("Back to browse")}
           </button>
         </div>

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Bookmark } from "lucide-react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { chapterPages, type MangaChapter } from "@/lib/manga/api";
 import { pageHeadersFor } from "@/lib/manga/plugins/adapter";
 import { t, useT } from "@/lib/i18n";
@@ -61,6 +62,7 @@ function recordBookmarkJump(
   });
 }
 
+// oxlint-disable-next-line react/react-compiler -- TanStack Virtual exposes mutable callbacks.
 export function MangaReader({
   chapters,
   index,
@@ -78,6 +80,8 @@ export function MangaReader({
   onExit: () => void;
   onChangeIndex: (i: number) => void;
 }) {
+  "use no memo";
+
   const chapter = chapters[index];
   const t = useT();
   const [pages, setPages] = useState<MangaPage[]>([]);
@@ -126,6 +130,18 @@ export function MangaReader({
   const book = effMode === "book";
   const horizontal = effMode === "long-h";
   const paged = effMode === "paged" || double || book;
+  const verticalStrip = !paged && !horizontal;
+  const verticalVirtualizer = useVirtualizer({
+    count: verticalStrip ? pages.length + 1 : 0,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: (item) =>
+      item === pages.length
+        ? 220
+        : Math.max(480, (typeof window === "undefined" ? 800 : window.innerHeight) * 0.75),
+    overscan: 2,
+    getItemKey: (item) =>
+      item === pages.length ? `${chapter.id}:complete` : `${item}:${pages[item]?.url ?? ""}`,
+  });
   const rtl = prefs.rtl;
   const autoNext = prefs.autoNextChapter;
   const step = double ? 2 : 1;
@@ -212,6 +228,11 @@ export function MangaReader({
             if (m === "paged" || m === "double") {
               setCurrentPage(m === "double" ? sp - (sp % 2) : sp);
             } else {
+              if (m === "long") {
+                setCurrentPage(sp);
+                settled.current = true;
+                return;
+              }
               const el = pageEls.current[sp];
               if (el) {
                 el.scrollIntoView(
@@ -276,7 +297,7 @@ export function MangaReader({
   };
 
   useEffect(() => {
-    if (paged || loading || failed) return;
+    if (paged || !horizontal || loading || failed) return;
     const root = scrollRef.current;
     if (!root) return;
     const obs = new IntersectionObserver(
@@ -293,6 +314,22 @@ export function MangaReader({
     pageEls.current.forEach((el) => el && obs.observe(el));
     return () => obs.disconnect();
   }, [paged, horizontal, loading, failed, pages]);
+
+  useEffect(() => {
+    if (!verticalStrip || loading || failed) return;
+    const root = scrollRef.current;
+    if (!root) return;
+    const update = () => {
+      const threshold = root.scrollTop + root.clientHeight * 0.35;
+      const visible = verticalVirtualizer
+        .getVirtualItems()
+        .find((item) => item.index < pages.length && item.end > threshold);
+      if (visible) setCurrentPage(visible.index);
+    };
+    update();
+    root.addEventListener("scroll", update, { passive: true });
+    return () => root.removeEventListener("scroll", update);
+  }, [verticalStrip, loading, failed, pages.length, verticalVirtualizer]);
 
   useEffect(() => clearMangaReading, []);
 
@@ -329,6 +366,9 @@ export function MangaReader({
     onChangeIndex,
     pageEls,
     scrollRef,
+    scrollToIndex: verticalStrip
+      ? (page) => verticalVirtualizer.scrollToIndex(page, { align: "start" })
+      : undefined,
   });
 
   const atChapterEnd = !loading && !failed && !complete && bookAtEnd;
@@ -411,13 +451,16 @@ export function MangaReader({
     const target = pageRef.current;
     if (target <= 0) return;
     const t = window.setTimeout(() => {
-      pageEls.current[target]?.scrollIntoView(
-        effMode === "long-h" ? { inline: "center", block: "nearest" } : { block: "start" },
-      );
+      if (effMode === "long") verticalVirtualizer.scrollToIndex(target, { align: "start" });
+      else
+        pageEls.current[target]?.scrollIntoView({
+          inline: "center",
+          block: "nearest",
+        });
       setCurrentPage(target);
     }, 120);
     return () => window.clearTimeout(t);
-  }, [effMode, loading, failed]);
+  }, [effMode, loading, failed, verticalVirtualizer]);
 
   const rtlRef = useRef(rtl);
   useEffect(() => {
@@ -680,25 +723,34 @@ export function MangaReader({
             </div>
           </div>
         ) : (
-          <div className="flex flex-col items-center gap-0 pb-28">
-            {pages.map((page, i) => (
-              <div
-                key={i}
-                data-page={i}
-                ref={(el) => {
-                  pageEls.current[i] = el;
-                }}
-                className="flex w-full justify-center"
-              >
-                <PageImage
-                  url={page.url}
-                  headers={page.headers}
-                  className="mx-auto block"
-                  style={longStyle}
-                />
-              </div>
-            ))}
-            <div className="flex w-full justify-center py-16">{completeCard}</div>
+          <div className="relative w-full" style={{ height: verticalVirtualizer.getTotalSize() }}>
+            {verticalVirtualizer.getVirtualItems().map((virtualPage) => {
+              const i = virtualPage.index;
+              return (
+                <div
+                  key={virtualPage.key}
+                  data-index={i}
+                  data-page={i < pages.length ? i : undefined}
+                  ref={(el) => {
+                    if (i < pages.length) pageEls.current[i] = el;
+                    if (el) verticalVirtualizer.measureElement(el);
+                  }}
+                  className="absolute start-0 top-0 flex w-full justify-center"
+                  style={{ transform: `translateY(${virtualPage.start}px)` }}
+                >
+                  {i === pages.length ? (
+                    <div className="flex w-full justify-center py-16">{completeCard}</div>
+                  ) : (
+                    <PageImage
+                      url={pages[i]?.url ?? ""}
+                      headers={pages[i]?.headers}
+                      className="mx-auto block"
+                      style={longStyle}
+                    />
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

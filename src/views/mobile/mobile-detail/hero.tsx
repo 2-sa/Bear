@@ -59,7 +59,7 @@ export function Hero({
         className="absolute start-4 grid h-10 w-10 place-items-center rounded-full bg-black/40 text-white backdrop-blur-sm transition-transform active:scale-95 motion-reduce:transition-none"
         style={{ top: "calc(env(safe-area-inset-top, 0px) + 12px)" }}
       >
-        <ChevronLeft size={22} strokeWidth={2.4} />
+        <ChevronLeft size={22} strokeWidth={2.4} className="dir-icon" />
       </button>
 
       {awardSummary.length > 0 && (

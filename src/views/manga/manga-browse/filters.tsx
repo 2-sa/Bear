@@ -1,7 +1,9 @@
+import { useQuery } from "@tanstack/react-query";
 import { Check, ChevronDown, Globe, SlidersHorizontal, Star, Tag } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useT } from "@/lib/i18n";
 import { mangaTags, type MangaTag } from "@/lib/manga/api";
+import { queryKeys } from "@/lib/query";
 import {
   activeMangaSource,
   activeMangaSourceId,
@@ -121,22 +123,27 @@ export function TagDropdown({
   onSelect: (id: string) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const [tags, setTags] = useState<MangaTag[]>([]);
   const [filter, setFilter] = useState("");
+  const [sourceId, setSourceId] = useState(() => activeMangaSourceId());
   const ref = useOutsideClose(open, () => setOpen(false));
   const t = useT();
 
-  useEffect(() => {
-    let alive = true;
-    mangaTags()
-      .then((list) => {
-        if (alive) setTags(list);
-      })
-      .catch(() => {});
-    return () => {
-      alive = false;
-    };
-  }, []);
+  useEffect(
+    () =>
+      subscribeMangaSources(() => {
+        setSourceId(activeMangaSourceId());
+        setFilter("");
+      }),
+    [],
+  );
+
+  const { data: tags = [] } = useQuery<MangaTag[]>({
+    queryKey: queryKeys.manga.tags(sourceId),
+    queryFn: mangaTags,
+    enabled: !!sourceId,
+    staleTime: 30_000,
+    refetchOnMount: "always",
+  });
 
   const active = tags.find((t) => t.id === tagId);
   const shown = useMemo(() => {

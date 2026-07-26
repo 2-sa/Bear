@@ -5,6 +5,7 @@ import {
   type ServerConfig,
   type SuwayomiExtension,
 } from "@/lib/manga/sources/suwayomi/provider";
+import { notifyMangaDataChanged } from "@/lib/manga/refresh";
 import { languageName } from "@/lib/manga/types";
 import { useT } from "@/lib/i18n";
 import { CARD, INPUT } from "../shared";
@@ -96,6 +97,10 @@ export function ExtensionsManager({ config }: { config: ServerConfig }) {
   const installed = filtered.filter((e) => e.installed);
   const updatable = installed.filter((e) => e.hasUpdate);
   const available = filtered.filter((e) => !e.installed);
+  const refresh = () => {
+    notifyMangaDataChanged();
+    setReload((n) => n + 1);
+  };
 
   return (
     <div className="flex flex-col gap-3">
@@ -107,7 +112,7 @@ export function ExtensionsManager({ config }: { config: ServerConfig }) {
         </p>
         <button
           type="button"
-          onClick={() => setReload((n) => n + 1)}
+          onClick={refresh}
           aria-label={t("Refresh extensions")}
           className="grid h-8 w-8 place-items-center rounded-lg bg-raised text-ink-subtle ring-1 ring-edge-soft transition-all hover:text-ink active:scale-95 motion-reduce:active:scale-100"
         >

@@ -16,6 +16,7 @@ type Args = {
   onChangeIndex: (i: number) => void;
   pageEls: RefObject<Array<HTMLDivElement | null>>;
   scrollRef: RefObject<HTMLDivElement | null>;
+  scrollToIndex?: (index: number) => void;
 };
 
 export function useReaderPaging(a: Args) {
@@ -35,6 +36,7 @@ export function useReaderPaging(a: Args) {
     onChangeIndex,
     pageEls,
     scrollRef,
+    scrollToIndex,
   } = a;
 
   const goToPage = (p: number) => {
@@ -44,6 +46,11 @@ export function useReaderPaging(a: Args) {
       return;
     }
     const i = Math.max(0, Math.min(total - 1, p));
+    if (scrollToIndex) {
+      scrollToIndex(i);
+      setCurrentPage(i);
+      return;
+    }
     pageEls.current[i]?.scrollIntoView(
       horizontal
         ? { behavior: "smooth", inline: "center", block: "nearest" }

@@ -1,5 +1,6 @@
 import { Award } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { collapseMangaDuplicates } from "@/lib/manga/dedupe";
 import type { MangaSummary } from "@/lib/manga/types";
 import { CollapsibleSection } from "./collapsible-section";
 import { MangaPosterRow } from "./manga-poster-row";
@@ -28,7 +29,11 @@ export function MangaRail({
   onOpen: (item: MangaSummary) => void;
 }) {
   const [loaded, setLoaded] = useState<MangaSummary[] | null>(null);
-  const items = preloaded ?? loaded;
+  const sourceItems = preloaded ?? loaded;
+  const items = useMemo(
+    () => (sourceItems ? collapseMangaDuplicates(sourceItems) : null),
+    [sourceItems],
+  );
   const [seen, setSeen] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
 

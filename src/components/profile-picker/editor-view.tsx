@@ -2,6 +2,7 @@ import {
   BookOpen,
   Check,
   ChevronLeft,
+  ChevronRight,
   Loader2,
   Lock,
   Link2,
@@ -633,11 +634,7 @@ function SecurityRow({
           </span>
         </div>
       </div>
-      <ChevronLeft
-        size={14}
-        strokeWidth={2.2}
-        className="rotate-180 rtl:rotate-0 text-ink-subtle"
-      />
+      <ChevronRight size={14} strokeWidth={2.2} className="dir-icon text-ink-subtle" />
     </button>
   );
 }
@@ -766,11 +763,7 @@ function SecurityView({
               </span>
             </div>
           </div>
-          <ChevronLeft
-            size={14}
-            strokeWidth={2.2}
-            className="rotate-180 rtl:rotate-0 text-ink-subtle"
-          />
+          <ChevronRight size={14} strokeWidth={2.2} className="dir-icon text-ink-subtle" />
         </button>
       </div>
     </div>
