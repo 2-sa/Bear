@@ -1,6 +1,6 @@
 type MangaQueryClient = {
   cancelQueries(filters: { queryKey: readonly unknown[] }): Promise<unknown>;
-  resetQueries(filters: { queryKey: readonly unknown[] }): Promise<unknown>;
+  invalidateQueries(filters: { queryKey: readonly unknown[] }): Promise<unknown>;
 };
 
 const listeners = new Set<() => void>();
@@ -13,7 +13,7 @@ export async function refreshMangaData(
 ): Promise<void> {
   await queryClient.cancelQueries({ queryKey: MANGA_QUERY_KEY });
   clearCaches();
-  await queryClient.resetQueries({ queryKey: MANGA_QUERY_KEY });
+  await queryClient.invalidateQueries({ queryKey: MANGA_QUERY_KEY });
 }
 
 export function notifyMangaDataChanged(): void {

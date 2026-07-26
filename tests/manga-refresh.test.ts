@@ -7,7 +7,7 @@ import test from "node:test";
 
 const refreshModule = await import("../src/lib/manga/refresh.ts").catch(() => ({}));
 
-test("manga refresh clears every cache layer before resetting TanStack queries", async () => {
+test("manga refresh clears every cache layer without discarding the visible TanStack pages", async () => {
   const refreshMangaData = Reflect.get(refreshModule, "refreshMangaData");
   assert.equal(typeof refreshMangaData, "function");
 
@@ -17,15 +17,15 @@ test("manga refresh clears every cache layer before resetting TanStack queries",
       assert.deepEqual(queryKey, ["harbor", "manga"]);
       calls.push("cancel");
     },
-    resetQueries: async ({ queryKey }: { queryKey: readonly unknown[] }) => {
+    invalidateQueries: async ({ queryKey }: { queryKey: readonly unknown[] }) => {
       assert.deepEqual(queryKey, ["harbor", "manga"]);
-      calls.push("reset");
+      calls.push("invalidate");
     },
   };
 
   await refreshMangaData(queryClient, () => calls.push("clear"));
 
-  assert.deepEqual(calls, ["cancel", "clear", "reset"]);
+  assert.deepEqual(calls, ["cancel", "clear", "invalidate"]);
 });
 
 test("manga data changes stay pending until the browse view consumes them", () => {
