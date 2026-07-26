@@ -212,6 +212,7 @@ export type Settings = {
   directTorrentStream: boolean;
   torrentsDisabled: boolean;
   torrentFullDownload: boolean;
+  keepStreamDownloadsInBackground: boolean;
   p2pAutoConsent: boolean;
   streamCacheRetentionHours: number;
   streamCacheMaxGb: number;
