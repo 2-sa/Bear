@@ -74,7 +74,7 @@ jobs:
     environment: release-signing
     strategy:
       fail-fast: false
-      max-parallel: ${{ fromJSON(inputs.publish_update && '1' || '4') }}
+      max-parallel: 4
       matrix:
         platform: ${{ fromJSON(needs.prepare.outputs.matrix) }}
 
@@ -174,9 +174,22 @@ jobs:
           releaseDraft: true
           prerelease: true
           generateReleaseNotes: true
-          includeUpdaterJson: true
+          includeUpdaterJson: ${{ inputs.publish_update != true }}
           updaterJsonPreferNsis: true
           retryAttempts: 2
+
+      - name: Create isolated platform updater manifest
+        if: inputs.publish_update == true
+        run: node scripts/create-platform-update-manifest.mjs ${{ matrix.platform.target }}
+
+      - name: Preserve platform updater manifest
+        if: inputs.publish_update == true
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: updater-manifest-${{ matrix.platform.target }}
+          path: update-manifest-${{ matrix.platform.target }}.json
+          if-no-files-found: error
+          retention-days: 1
 
   publish-update:
     name: Publish complete beta update channel
@@ -187,15 +200,21 @@ jobs:
       - name: Checkout beta branch
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
 
-      - name: Download and verify the complete signed manifest
+      - name: Download isolated platform manifests
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: updater-manifest-*
+          path: updater-manifests
+          merge-multiple: true
+
+      - name: Merge and verify the complete signed manifest
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
           version="$(node -p "require('./package.json').version")"
           tag="beta-v${version}"
-          mkdir update-channel
-          gh release download "$tag" --pattern latest.json --dir update-channel
+          node scripts/merge-update-manifests.mjs updater-manifests update-channel/latest.json "$tag" "$version"
           node scripts/verify-update-manifest.mjs update-channel/latest.json "$tag" "$version"
           echo "VERSION_TAG=$tag" >> "$GITHUB_ENV"
 
@@ -204,6 +223,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
+          gh release upload "$VERSION_TAG" update-channel/latest.json --clobber
           gh release edit "$VERSION_TAG" --draft=false --prerelease
           if gh release view beta-channel >/dev/null 2>&1; then
             gh release edit beta-channel --prerelease --title "Bear Beta update channel"
