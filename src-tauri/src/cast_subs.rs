@@ -135,7 +135,7 @@ pub fn escape_subtitles_path(path: &Path) -> String {
 }
 
 fn castsubs_dir() -> PathBuf {
-    let dir = std::env::temp_dir().join("harbor-castsubs");
+    let dir = std::env::temp_dir().join("bear-beta-castsubs");
     let _ = std::fs::create_dir_all(&dir);
     dir
 }

@@ -5,8 +5,8 @@ import { SIGNED_UPDATES_ENABLED } from "@/lib/security-policy";
 const RELEASES_URL = "https://github.com/2-sa/Bear/releases";
 
 const IS_TAURI = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
-const DISMISS_KEY = "harbor.update.dismissed";
-const PENDING_KEY = "harbor.update.pending";
+const DISMISS_KEY = "bear-beta.update.dismissed";
+const PENDING_KEY = "bear-beta.update.pending";
 const CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000;
 
 export type UpdateStatus =

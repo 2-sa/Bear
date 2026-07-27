@@ -76,7 +76,7 @@ impl HlsState {
     ) -> Result<String, String> {
         let probe = probe_source(&media_url, &headers).await?;
         let id = Uuid::new_v4().to_string();
-        let temp_dir = std::env::temp_dir().join(format!("harbor-hls-{}", id));
+        let temp_dir = std::env::temp_dir().join(format!("bear-beta-hls-{}", id));
         std::fs::create_dir_all(&temp_dir).map_err(|e| format!("mkdir: {}", e))?;
         let child = match spawn_continuous_ffmpeg(
             &media_url,
@@ -649,7 +649,7 @@ duration=120.5\n";
     async fn stop_session_removes_the_session_and_its_temp_dir() {
         let state = HlsState::new();
         let id = Uuid::new_v4().to_string();
-        let temp_dir = std::env::temp_dir().join(format!("harbor-hls-test-{id}"));
+        let temp_dir = std::env::temp_dir().join(format!("bear-beta-hls-test-{id}"));
         std::fs::create_dir_all(&temp_dir).expect("create test HLS directory");
         std::fs::write(temp_dir.join("segment.ts"), b"segment").expect("write test segment");
         let session = Arc::new(HlsSession {
@@ -679,7 +679,7 @@ duration=120.5\n";
         let mut temp_dirs = Vec::new();
         for _ in 0..2 {
             let id = Uuid::new_v4().to_string();
-            let temp_dir = std::env::temp_dir().join(format!("harbor-hls-test-{id}"));
+            let temp_dir = std::env::temp_dir().join(format!("bear-beta-hls-test-{id}"));
             std::fs::create_dir_all(&temp_dir).expect("create test HLS directory");
             let session = Arc::new(HlsSession {
                 probe: Probe {

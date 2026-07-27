@@ -154,7 +154,7 @@ export function engineBaseFor(url: string): string {
 export function getStremioServerUrl(): string {
   const remote = remoteStreamServerUrl();
   if (remote) return remote;
-  if (!isTauri && typeof window !== "undefined" && window.location.port === "11471") {
+  if (!isTauri && typeof window !== "undefined" && window.location.port === "11472") {
     return `http://${window.location.hostname}:11470`;
   }
   return BUNDLED_SERVER_URL;

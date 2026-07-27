@@ -125,11 +125,11 @@ fn slot_title(slot: u32) -> String {
 fn pipe_path(slot: u32) -> String {
     #[cfg(windows)]
     {
-        format!("\\\\.\\pipe\\harbor-mv-{}-{}", slot, std::process::id())
+        format!("\\\\.\\pipe\\bear-beta-mv-{}-{}", slot, std::process::id())
     }
     #[cfg(not(windows))]
     {
-        format!("/tmp/harbor-mv-{}-{}.sock", slot, std::process::id())
+        format!("/tmp/bear-beta-mv-{}-{}.sock", slot, std::process::id())
     }
 }
 

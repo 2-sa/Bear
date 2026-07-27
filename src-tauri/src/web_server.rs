@@ -13,7 +13,7 @@ use tauri::{AppHandle, Emitter};
 use tokio::net::TcpListener;
 use tokio::sync::{broadcast, oneshot, Mutex as AsyncMutex};
 
-pub const WEB_PORT: u16 = 11471;
+pub const WEB_PORT: u16 = 11472;
 const DEV_FRONTEND: &str = "http://127.0.0.1:1420";
 
 /// True when built/run via `tauri dev` (CLI sets `--cfg dev`).
@@ -84,7 +84,7 @@ fn serve_bundled_asset(app: &AppHandle, raw_path: &str) -> Response<Body> {
     }
 }
 
-/// In `tauri dev`, the desktop window loads Vite live assets, but `:11471`
+/// In `tauri dev`, the desktop window loads Vite live assets, but `:11472`
 /// previously only served Tauri's asset resolver (often stale). Proxy those
 /// requests to the Vite dev server so phone `/remote` tracks HMR.
 async fn proxy_dev_frontend(path_and_query: &str) -> Option<Response<Body>> {

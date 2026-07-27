@@ -1,7 +1,10 @@
 import { readFile } from "node:fs/promises";
 
-const EXPECTED_ENDPOINT = "https://github.com/2-sa/Bear/releases/latest/download/latest.json";
+const EXPECTED_ENDPOINT = "https://github.com/2-sa/Bear/releases/download/beta-channel/latest.json";
 const EXPECTED_RELEASES_URL = "https://github.com/2-sa/Bear/releases";
+const EXPECTED_PRODUCT_NAME = "Bear Beta";
+const EXPECTED_IDENTIFIER = "dev.twosa.bear.beta";
+const EXPECTED_SCHEMES = ["bear-beta", "stremio"];
 
 function fail(message) {
   throw new Error(`Update configuration error: ${message}`);
@@ -43,9 +46,20 @@ if (!decodedPublicKey.includes("minisign public key")) {
 if (!updaterSource.includes(EXPECTED_RELEASES_URL) || updaterSource.includes("harbor.site/updates")) {
   fail("manual update downloads must point only to our GitHub Releases page");
 }
+if (tauriConfig.productName !== EXPECTED_PRODUCT_NAME || tauriConfig.identifier !== EXPECTED_IDENTIFIER) {
+  fail("the beta build must use its isolated product name and application identifier");
+}
+const schemes = tauriConfig.plugins?.["deep-link"]?.desktop?.schemes;
+if (
+  !Array.isArray(schemes) ||
+  schemes.length !== EXPECTED_SCHEMES.length ||
+  EXPECTED_SCHEMES.some((scheme) => !schemes.includes(scheme))
+) {
+  fail(`the beta build must register exactly: ${EXPECTED_SCHEMES.join(", ")}`);
+}
 
 if (process.argv.includes("--require-signing-key") && !process.env.TAURI_SIGNING_PRIVATE_KEY) {
   fail("TAURI_SIGNING_PRIVATE_KEY is missing from the release-signing environment");
 }
 
-console.log(`Signed updater configuration verified for Harbor ${packageJson.version}.`);
+console.log(`Signed updater configuration verified for ${EXPECTED_PRODUCT_NAME} ${packageJson.version}.`);

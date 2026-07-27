@@ -306,7 +306,7 @@ fn read_config(app: &AppHandle) -> EngineConfig {
 
 fn engine_dir(app: &AppHandle, cfg: &EngineConfig) -> Result<std::path::PathBuf, String> {
     let dir = if let Some(custom) = cfg.dir.as_deref().map(str::trim).filter(|s| !s.is_empty()) {
-        std::path::PathBuf::from(custom).join("harbor-stream-cache")
+        std::path::PathBuf::from(custom).join("bear-beta-stream-cache")
     } else {
         app.path()
             .app_cache_dir()

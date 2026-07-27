@@ -186,7 +186,7 @@ async function installSyncedTrack(
   }
   const text = format === "vtt" ? toVtt(cues) : toSrt(cues);
   if (isTauriRuntime()) {
-    const file = await writeTempTextFile("harbor-subs", `autosync-${Date.now()}.${format}`, text);
+    const file = await writeTempTextFile("bear-beta-subs", `autosync-${Date.now()}.${format}`, text);
     await bridge.addSubtitle(file, undefined, `${title} (${format.toUpperCase()})`, true);
     return { via: "temp-file", cleanup: noop };
   }

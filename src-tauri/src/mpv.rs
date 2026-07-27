@@ -1473,7 +1473,7 @@ pub async fn mpv_gif_start(state: State<'_, MpvState>) -> Result<(), String> {
             return Err("already recording".into());
         }
     }
-    let dir = std::env::temp_dir().join(format!("harbor-gif-{}", Uuid::new_v4()));
+    let dir = std::env::temp_dir().join(format!("bear-beta-gif-{}", Uuid::new_v4()));
     std::fs::create_dir_all(&dir).map_err(|e| format!("create temp dir: {}", e))?;
     let stop = Arc::new(std::sync::atomic::AtomicBool::new(false));
     let stop_task = stop.clone();
@@ -1783,7 +1783,7 @@ pub async fn mpv_screenshot_data_url(state: State<'_, MpvState>) -> Result<Strin
             .map(|s| s.mpv.clone())
             .ok_or_else(|| "mpv not started".to_string())?
     };
-    let temp = std::env::temp_dir().join(format!("harbor-cw-{}.jpg", Uuid::new_v4()));
+    let temp = std::env::temp_dir().join(format!("bear-beta-cw-{}.jpg", Uuid::new_v4()));
     let path_str = temp.to_string_lossy().to_string();
     let _ = mpv.set_property("screenshot-format", "jpg");
     let _ = mpv.set_property("screenshot-jpeg-quality", "72");
@@ -1891,7 +1891,7 @@ pub async fn mpv_sub_add(
 }
 
 fn sub_cache_dir() -> PathBuf {
-    let dir = std::env::temp_dir().join("harbor-subs");
+    let dir = std::env::temp_dir().join("bear-beta-subs");
     let _ = std::fs::create_dir_all(&dir);
     dir
 }

@@ -344,7 +344,7 @@ export function useAutoSync(params: {
 }
 
 async function writeSyncedTrack(b: PlayerBridge, text: string, fmt: SubFmt): Promise<void> {
-  const filePath = await writeTempTextFile("harbor-subs", `autosync-${Date.now()}.${fmt}`, text);
+  const filePath = await writeTempTextFile("bear-beta-subs", `autosync-${Date.now()}.${fmt}`, text);
   await b.addSubtitle(filePath, undefined, `Synced (${fmt.toUpperCase()})`, true);
   b.setSubDelay(0);
 }

@@ -6,7 +6,7 @@ import { ToggleRow, settingsAnchor } from "./shared";
 import { AddressRow } from "./player-panel/server-address-section";
 import { isTauri } from "./player-panel/internals";
 
-const WEB_PORT = 11471;
+const WEB_PORT = 11472;
 
 function Section({
   anchor,
