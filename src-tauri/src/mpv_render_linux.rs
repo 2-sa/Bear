@@ -90,7 +90,12 @@ fn proc_loader() -> Option<unsafe extern "C" fn(*const c_char) -> *mut c_void> {
     if !sym.is_null() {
         return Some(unsafe { std::mem::transmute(sym) });
     }
-    let egl = unsafe { dlsym(RTLD_DEFAULT, b"eglGetProcAddress\0".as_ptr() as *const c_char) };
+    let egl = unsafe {
+        dlsym(
+            RTLD_DEFAULT,
+            b"eglGetProcAddress\0".as_ptr() as *const c_char,
+        )
+    };
     if egl.is_null() {
         return None;
     }
@@ -341,7 +346,10 @@ pub fn install(gtk_window: &gtk::ApplicationWindow, vbox: &gtk::Box) -> Result<(
     });
 
     area.queue_render();
-    eprintln!("[harbor::mpv_linux] installed backend={}", backend_label(backend));
+    eprintln!(
+        "[harbor::mpv_linux] installed backend={}",
+        backend_label(backend)
+    );
     Ok(())
 }
 
@@ -392,10 +400,7 @@ fn do_render(rc: &RenderContext, area: &gtk::GLArea) {
 
     let packed = ((w as u64) << 32) | (h as u32 as u64);
     if LAST_SURFACE.swap(packed, Ordering::Relaxed) != packed {
-        eprintln!(
-            "[harbor::mpv_linux] render surface {}x{} px",
-            w, h,
-        );
+        eprintln!("[harbor::mpv_linux] render surface {}x{} px", w, h,);
     }
     if fbo == 0 && !FBO_ZERO_WARNED.swap(true, Ordering::Relaxed) {
         eprintln!("[harbor::mpv_linux] WARNING: GtkGLArea FBO query returned 0; mpv will render to the default framebuffer and the video region will stay BLACK. glGetIntegerv or the GL proc loader likely failed to resolve.");

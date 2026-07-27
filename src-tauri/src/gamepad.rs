@@ -28,10 +28,23 @@ pub struct GamepadInfo {
 #[derive(Clone, Serialize)]
 #[serde(tag = "kind", rename_all = "camelCase")]
 enum GamepadEventPayload {
-    Connected { id: u32, name: String },
-    Disconnected { id: u32 },
-    Button { id: u32, button: &'static str, pressed: bool },
-    Axis { id: u32, axis: &'static str, value: f32 },
+    Connected {
+        id: u32,
+        name: String,
+    },
+    Disconnected {
+        id: u32,
+    },
+    Button {
+        id: u32,
+        button: &'static str,
+        pressed: bool,
+    },
+    Axis {
+        id: u32,
+        axis: &'static str,
+        value: f32,
+    },
 }
 
 #[derive(Default, Clone, Copy)]
@@ -185,7 +198,10 @@ fn upsert(id: u32, name: &str) {
     if let Some(entry) = list.iter_mut().find(|g| g.id == id) {
         entry.name = name.to_string();
     } else {
-        list.push(GamepadInfo { id, name: name.to_string() });
+        list.push(GamepadInfo {
+            id,
+            name: name.to_string(),
+        });
     }
 }
 
@@ -210,13 +226,41 @@ fn dpad_x(app: &AppHandle, id: u32, value: f32, dpad: &mut HashMap<u32, DpadLatc
         return;
     }
     match latch.x {
-        1 => emit_input(app, GamepadEventPayload::Button { id, button: "dright", pressed: false }),
-        -1 => emit_input(app, GamepadEventPayload::Button { id, button: "dleft", pressed: false }),
+        1 => emit_input(
+            app,
+            GamepadEventPayload::Button {
+                id,
+                button: "dright",
+                pressed: false,
+            },
+        ),
+        -1 => emit_input(
+            app,
+            GamepadEventPayload::Button {
+                id,
+                button: "dleft",
+                pressed: false,
+            },
+        ),
         _ => {}
     }
     match want {
-        1 => emit_input(app, GamepadEventPayload::Button { id, button: "dright", pressed: true }),
-        -1 => emit_input(app, GamepadEventPayload::Button { id, button: "dleft", pressed: true }),
+        1 => emit_input(
+            app,
+            GamepadEventPayload::Button {
+                id,
+                button: "dright",
+                pressed: true,
+            },
+        ),
+        -1 => emit_input(
+            app,
+            GamepadEventPayload::Button {
+                id,
+                button: "dleft",
+                pressed: true,
+            },
+        ),
         _ => {}
     }
     latch.x = want;
@@ -229,13 +273,41 @@ fn dpad_y(app: &AppHandle, id: u32, value: f32, dpad: &mut HashMap<u32, DpadLatc
         return;
     }
     match latch.y {
-        1 => emit_input(app, GamepadEventPayload::Button { id, button: "dup", pressed: false }),
-        -1 => emit_input(app, GamepadEventPayload::Button { id, button: "ddown", pressed: false }),
+        1 => emit_input(
+            app,
+            GamepadEventPayload::Button {
+                id,
+                button: "dup",
+                pressed: false,
+            },
+        ),
+        -1 => emit_input(
+            app,
+            GamepadEventPayload::Button {
+                id,
+                button: "ddown",
+                pressed: false,
+            },
+        ),
         _ => {}
     }
     match want {
-        1 => emit_input(app, GamepadEventPayload::Button { id, button: "dup", pressed: true }),
-        -1 => emit_input(app, GamepadEventPayload::Button { id, button: "ddown", pressed: true }),
+        1 => emit_input(
+            app,
+            GamepadEventPayload::Button {
+                id,
+                button: "dup",
+                pressed: true,
+            },
+        ),
+        -1 => emit_input(
+            app,
+            GamepadEventPayload::Button {
+                id,
+                button: "ddown",
+                pressed: true,
+            },
+        ),
         _ => {}
     }
     latch.y = want;
@@ -260,14 +332,28 @@ fn handle_event(
             dpad.remove(&gid);
             emit(app, GamepadEventPayload::Disconnected { id: gid });
         }
-        EventType::ButtonPressed(btn, code) => {
-            if let Some(button) = map_button(btn).or_else(|| evdev_button(code.into_u32())) {
-                emit_input(app, GamepadEventPayload::Button { id: gid, button, pressed: true });
+        EventType::ButtonPressed(btn, _) => {
+            if let Some(button) = map_button(btn) {
+                emit_input(
+                    app,
+                    GamepadEventPayload::Button {
+                        id: gid,
+                        button,
+                        pressed: true,
+                    },
+                );
             }
         }
-        EventType::ButtonReleased(btn, code) => {
-            if let Some(button) = map_button(btn).or_else(|| evdev_button(code.into_u32())) {
-                emit_input(app, GamepadEventPayload::Button { id: gid, button, pressed: false });
+        EventType::ButtonReleased(btn, _) => {
+            if let Some(button) = map_button(btn) {
+                emit_input(
+                    app,
+                    GamepadEventPayload::Button {
+                        id: gid,
+                        button,
+                        pressed: false,
+                    },
+                );
             }
         }
         EventType::AxisChanged(axis, value, code) => match axis {
@@ -275,19 +361,14 @@ fn handle_event(
             Axis::DPadY => dpad_y(app, gid, value, dpad),
             other => {
                 if let Some(axis) = map_axis(other) {
-                    let value = frontend_axis_value(axis, value);
-                    emit_input(app, GamepadEventPayload::Axis { id: gid, axis, value });
-                    return;
-                }
-                let raw = code.into_u32();
-                match evdev_hat(raw) {
-                    Some(0) => dpad_x(app, gid, value, dpad),
-                    Some(_) => dpad_y(app, gid, value, dpad),
-                    None => {
-                        if let Some(axis) = evdev_axis(raw) {
-                            emit_input(app, GamepadEventPayload::Axis { id: gid, axis, value });
-                        }
-                    }
+                    emit_input(
+                        app,
+                        GamepadEventPayload::Axis {
+                            id: gid,
+                            axis,
+                            value,
+                        },
+                    );
                 }
             }
         },
@@ -299,7 +380,10 @@ fn seed(gilrs: &Gilrs) {
     let mut list = gamepads().lock().unwrap();
     list.clear();
     for (id, pad) in gilrs.gamepads() {
-        list.push(GamepadInfo { id: numeric_id(id), name: pad.name().to_string() });
+        list.push(GamepadInfo {
+            id: numeric_id(id),
+            name: pad.name().to_string(),
+        });
     }
 }
 

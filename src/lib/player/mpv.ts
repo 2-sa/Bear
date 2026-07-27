@@ -702,7 +702,6 @@ export function createMpvBridge(mpvOptions?: MpvOptions): PlayerBridge {
             fullDownload: opts.fullDownload === true,
             startupProfile: nextStartupProfile,
             headers: src.headers ?? null,
-            extraOptions: opts.extraOptions || undefined,
           },
         });
         markPlaybackTrace(activeTraceId, "loadfile-accepted");

@@ -5,6 +5,7 @@ import { isTauri } from "./player-panel/internals";
 import { QualityProfile } from "./mpv-panel/profile";
 import { PictureDialsSection, ColorHdrSection } from "./mpv-panel/dials";
 import { AdvancedMpvSection } from "./mpv-panel/advanced";
+import { ADVANCED_MPV_OPTIONS_ENABLED } from "@/lib/security-policy";
 
 export function MpvPanel() {
   const { settings, update } = useSettings();
@@ -68,7 +69,7 @@ export function MpvPanel() {
         />
       </Section>
 
-      <AdvancedMpvSection />
+      {ADVANCED_MPV_OPTIONS_ENABLED && <AdvancedMpvSection />}
     </>
   );
 }

@@ -1,3 +1,4 @@
+mod airplay;
 mod anime4k;
 mod asr_model;
 mod binary_lookup;
@@ -7,11 +8,10 @@ mod cast;
 mod cast_hls;
 mod cast_server;
 mod cast_subs;
-mod crash_report;
-mod diagnostics;
 mod cf_relay;
 mod cf_solver;
-mod discord_auth;
+mod crash_report;
+mod diagnostics;
 mod discord_rp;
 mod dlna;
 mod download;
@@ -25,19 +25,19 @@ mod local_lib;
 mod media_controls;
 mod modal_overlay;
 mod mpv;
-mod multiview;
-mod proc_guard;
-mod proc_mem;
-mod roku;
-#[cfg(target_os = "macos")]
-mod mpv_render_mac;
 #[cfg(target_os = "linux")]
 mod mpv_render_linux;
+#[cfg(target_os = "macos")]
+mod mpv_render_mac;
+mod multiview;
 mod pip;
 #[cfg(target_os = "macos")]
 mod pip_mac;
 mod power;
-mod airplay;
+mod proc_guard;
+mod proc_mem;
+mod roku;
+mod security_policy;
 mod settings_store;
 mod shaders;
 mod song_id;
@@ -48,9 +48,9 @@ mod stremio_auth;
 mod sub_extract;
 mod subsync;
 mod svp;
+mod temp_prune;
 mod thumbs;
 mod torrent_engine;
-mod temp_prune;
 mod trailer;
 mod transcode;
 mod tray;
@@ -77,7 +77,8 @@ pub(crate) fn shutdown_services(app: &tauri::AppHandle) {
     crash_report::mark_clean_exit();
 }
 
-pub static CLOSE_FLUSH_DONE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+pub static CLOSE_FLUSH_DONE: std::sync::atomic::AtomicBool =
+    std::sync::atomic::AtomicBool::new(false);
 static CLOSE_IN_PROGRESS: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
 #[tauri::command]
@@ -123,17 +124,6 @@ async fn deeplink_is_stremio_registered(app: tauri::AppHandle) -> Result<bool, S
         .map_err(|e| e.to_string())
 }
 
-#[tauri::command]
-async fn save_text_file(path: String, contents: String) -> Result<(), String> {
-    let target = std::path::PathBuf::from(&path);
-    if let Some(parent) = target.parent() {
-        if !parent.as_os_str().is_empty() {
-            std::fs::create_dir_all(parent).map_err(|e| format!("create folder: {}", e))?;
-        }
-    }
-    std::fs::write(&target, contents.as_bytes()).map_err(|e| format!("write file: {}", e))
-}
-
 #[cfg(windows)]
 fn make_main_transparent(app: &tauri::AppHandle) {
     use tauri::Manager;
@@ -149,10 +139,20 @@ fn make_main_transparent(app: &tauri::AppHandle) {
         let controller = webview.controller();
         match controller.cast::<ICoreWebView2Controller2>() {
             Ok(controller2) => {
-                let color = COREWEBVIEW2_COLOR { A: 0, R: 0, G: 0, B: 0 };
+                let color = COREWEBVIEW2_COLOR {
+                    A: 0,
+                    R: 0,
+                    G: 0,
+                    B: 0,
+                };
                 match controller2.SetDefaultBackgroundColor(color) {
-                    Ok(()) => eprintln!("[harbor::transparent] SetDefaultBackgroundColor OK (alpha=0)"),
-                    Err(e) => eprintln!("[harbor::transparent] SetDefaultBackgroundColor FAILED: {:?}", e),
+                    Ok(()) => {
+                        eprintln!("[harbor::transparent] SetDefaultBackgroundColor OK (alpha=0)")
+                    }
+                    Err(e) => eprintln!(
+                        "[harbor::transparent] SetDefaultBackgroundColor FAILED: {:?}",
+                        e
+                    ),
                 }
             }
             Err(e) => eprintln!("[harbor::transparent] cast to Controller2 FAILED: {:?}", e),
@@ -229,7 +229,12 @@ fn install_maximize_guard(app: &tauri::AppHandle) {
         return;
     };
     unsafe {
-        let _ = SetWindowSubclass(hwnd, Some(maxguard_subclass_proc), HARBOR_MAXGUARD_SUBCLASS_ID, 0);
+        let _ = SetWindowSubclass(
+            hwnd,
+            Some(maxguard_subclass_proc),
+            HARBOR_MAXGUARD_SUBCLASS_ID,
+            0,
+        );
     }
     eprintln!("[harbor::maxguard] WM_GETMINMAXINFO work-area guard installed");
 }
@@ -423,11 +428,15 @@ fn ensure_window_on_screen(app: &tauri::AppHandle) {
     let cx = mp.x + (ms.width as i32 - ww).max(0) / 2;
     let cy = mp.y + (ms.height as i32 - wh).max(0) / 2;
     let _ = window.set_position(tauri::PhysicalPosition::new(cx, cy));
-    eprintln!("[harbor::window] launched off-screen; recentered to {},{}", cx, cy);
+    eprintln!(
+        "[harbor::window] launched off-screen; recentered to {},{}",
+        cx, cy
+    );
 }
 
 const MEDIA_EXTS: &[&str] = &[
-    "mkv", "mp4", "avi", "mov", "webm", "m4v", "ts", "m2ts", "mpg", "mpeg", "wmv", "flv", "ogv", "3gp",
+    "mkv", "mp4", "avi", "mov", "webm", "m4v", "ts", "m2ts", "mpg", "mpeg", "wmv", "flv", "ogv",
+    "3gp",
 ];
 
 fn media_file_from_args(args: &[String]) -> Option<String> {
@@ -512,8 +521,13 @@ pub fn run() {
         .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
-        .plugin(tauri_plugin_deep_link::init())
-        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_deep_link::init());
+    let app_builder = if security_policy::signed_updates_enabled() {
+        app_builder.plugin(tauri_plugin_updater::Builder::new().build())
+    } else {
+        app_builder
+    };
+    let app_builder = app_builder
         .plugin(tauri_plugin_process::init())
         .plugin(
             tauri_plugin_window_state::Builder::default()
@@ -690,7 +704,6 @@ pub fn run() {
             harbor_set_context_menu,
             harbor_try_suspend_webview,
             harbor_resume_webview,
-            save_text_file,
             subsync::moviehash::compute_moviehash,
             subsync::sync_subtitle,
             subsync::scorer::subsync_score_transform,

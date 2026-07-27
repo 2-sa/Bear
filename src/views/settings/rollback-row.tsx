@@ -7,7 +7,7 @@ import { openUrl } from "@/lib/window";
 import { useVersionHistory } from "./rollback-row/use-version-history";
 import { VersionItem } from "./rollback-row/version-item";
 
-const RELEASES_URL = "https://github.com/harborstremio/harbor/releases";
+const RELEASES_URL = "https://github.com/2-sa/Bear/releases";
 
 export function RollbackRow() {
   const t = useT();
@@ -97,7 +97,7 @@ function HistoryError({ onRetry }: { onRetry: () => void }) {
   return (
     <div className="flex flex-col items-start gap-2.5 px-3.5 py-4">
       <p className="text-[12px] leading-relaxed text-ink-subtle">
-        {t("Couldn't reach harbor.site to load earlier builds. Check your connection and try again.")}
+        {t("Earlier builds are not available through the signed updater channel.")}
       </p>
       <div className="flex items-center gap-3">
         <button

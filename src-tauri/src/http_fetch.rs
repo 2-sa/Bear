@@ -56,7 +56,11 @@ fn is_blocked_ip(ip: IpAddr) -> bool {
 
 fn host_is_blocked_literal(url: &reqwest::Url) -> bool {
     match url.host_str() {
-        Some(h) => match h.trim_start_matches('[').trim_end_matches(']').parse::<IpAddr>() {
+        Some(h) => match h
+            .trim_start_matches('[')
+            .trim_end_matches(']')
+            .parse::<IpAddr>()
+        {
             Ok(ip) => is_blocked_ip(ip),
             Err(_) => false,
         },
@@ -79,7 +83,9 @@ async fn validate_target(url: &reqwest::Url) -> Result<(), String> {
     let lookup = (host.clone(), port);
     let resolved = tokio::task::spawn_blocking(move || {
         use std::net::ToSocketAddrs;
-        lookup.to_socket_addrs().map(|it| it.map(|a| a.ip()).collect::<Vec<_>>())
+        lookup
+            .to_socket_addrs()
+            .map(|it| it.map(|a| a.ip()).collect::<Vec<_>>())
     })
     .await;
     if let Ok(Ok(ips)) = resolved {
@@ -203,13 +209,9 @@ async fn harbor_fetch_inner(
     let client = http_client()?;
     let timeout = Duration::from_millis(args.timeout_ms.unwrap_or(DEFAULT_TIMEOUT_MS));
 
-    let method = args
-        .method
-        .as_deref()
-        .unwrap_or("GET")
-        .to_uppercase();
-    let mut current_method = reqwest::Method::from_bytes(method.as_bytes())
-        .map_err(|e| format!("method: {}", e))?;
+    let method = args.method.as_deref().unwrap_or("GET").to_uppercase();
+    let mut current_method =
+        reqwest::Method::from_bytes(method.as_bytes()).map_err(|e| format!("method: {}", e))?;
 
     let mut current_url = reqwest::Url::parse(&args.url).map_err(|e| format!("url: {}", e))?;
     validate_target(&current_url).await?;

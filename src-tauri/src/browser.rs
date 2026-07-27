@@ -1,6 +1,6 @@
-use tauri::{AppHandle, Manager, Url, WebviewUrl, WebviewWindowBuilder};
 #[cfg(target_os = "linux")]
 use tauri::Emitter;
+use tauri::{AppHandle, Manager, Url, WebviewUrl, WebviewWindowBuilder};
 
 const BROWSER_LABEL: &str = "harbor-browser";
 
@@ -58,6 +58,9 @@ const STREMIO_CAPTURE_SCRIPT: &str = r#"
 
 #[tauri::command]
 pub async fn browser_open(app: AppHandle, url: String) -> Result<(), String> {
+    if !crate::security_policy::in_app_external_webviews_enabled() {
+        return Err("in-app external pages are disabled by security policy".to_string());
+    }
     let parsed = Url::parse(&url).map_err(|e| format!("parse url: {}", e))?;
 
     if let Some(existing) = app.get_webview_window(BROWSER_LABEL) {

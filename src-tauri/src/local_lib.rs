@@ -15,11 +15,17 @@ const VIDEO_EXTS: &[&str] = &[
 
 #[tauri::command]
 pub async fn harbor_scan_folder(
+    app: tauri::AppHandle,
     folder: String,
     min_size_mb: Option<u64>,
 ) -> Result<Vec<ScannedFile>, String> {
+    use tauri_plugin_fs::FsExt;
+
+    let root = PathBuf::from(&folder);
+    if !app.fs_scope().is_allowed(&root) {
+        return Err("folder access requires an explicit system folder selection".to_string());
+    }
     tauri::async_runtime::spawn_blocking(move || {
-        let root = PathBuf::from(&folder);
         if !root.exists() {
             return Err(format!("folder does not exist: {}", folder));
         }
@@ -39,7 +45,11 @@ pub async fn harbor_scan_folder(
                 .extension()
                 .and_then(|s| s.to_str())
                 .map(|s| s.to_ascii_lowercase());
-            if !ext.as_deref().map(|e| VIDEO_EXTS.contains(&e)).unwrap_or(false) {
+            if !ext
+                .as_deref()
+                .map(|e| VIDEO_EXTS.contains(&e))
+                .unwrap_or(false)
+            {
                 continue;
             }
             let meta = match entry.metadata() {

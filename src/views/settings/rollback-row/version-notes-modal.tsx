@@ -8,7 +8,7 @@ import { hasRichNote, releaseNote, type ReleaseNote } from "@/lib/updater/releas
 import { installerUrl, type VersionEntry } from "@/lib/updater/versions";
 import { openUrl } from "@/lib/window";
 
-const RELEASES_URL = "https://github.com/harborstremio/harbor/releases";
+const RELEASES_URL = "https://github.com/2-sa/Bear/releases";
 
 export function VersionNotesModal({
   entry,

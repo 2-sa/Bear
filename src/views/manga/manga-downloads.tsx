@@ -35,7 +35,7 @@ function LocationCard() {
   const change = async () => {
     try {
       const { open } = await import("@tauri-apps/plugin-dialog");
-      const picked = await open({ directory: true, title: t("Choose manga download folder") });
+      const picked = await open({ directory: true, recursive: true, title: t("Choose manga download folder") });
       if (typeof picked === "string" && picked) setMangaDownloadDir(picked);
     } catch {
       return;

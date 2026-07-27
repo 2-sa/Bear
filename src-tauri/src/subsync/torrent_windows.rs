@@ -115,7 +115,10 @@ fn safe_intervals(spans: &[(u64, u64)], file_len: u64, duration: f32) -> Vec<(f3
 fn clamp_window(lo: f32, hi: f32, prefer_end: bool) -> Window {
     let len = (hi - lo).min(MAX_WINDOW_SEC);
     let start = if prefer_end { hi - len } else { lo };
-    Window { start_sec: start, len_sec: len }
+    Window {
+        start_sec: start,
+        len_sec: len,
+    }
 }
 
 pub fn center(w: &Window) -> f32 {
@@ -175,7 +178,10 @@ pub fn downloaded_frac(bytes: &[u8], geo: &Geometry) -> f32 {
     if geo.file_len == 0 {
         return 0.0;
     }
-    let got: u64 = available_byte_spans(bytes, geo).iter().map(|&(s, e)| e - s).sum();
+    let got: u64 = available_byte_spans(bytes, geo)
+        .iter()
+        .map(|&(s, e)| e - s)
+        .sum();
     got as f32 / geo.file_len as f32
 }
 
@@ -183,7 +189,9 @@ pub fn endpoints_ready(bytes: &[u8], geo: &Geometry) -> (bool, bool) {
     let head_hi = (geo.file_offset + HEAD_TAIL_CHUNK).min(geo.file_offset + geo.file_len);
     let head = range_available(bytes, geo, geo.file_offset, head_hi);
     let file_end = geo.file_offset + geo.file_len;
-    let tail_start = file_end.saturating_sub(HEAD_TAIL_CHUNK).max(geo.file_offset);
+    let tail_start = file_end
+        .saturating_sub(HEAD_TAIL_CHUNK)
+        .max(geo.file_offset);
     let tail = range_available(bytes, geo, tail_start, file_end);
     (head, tail)
 }
@@ -223,7 +231,10 @@ mod tests {
     fn spans_coalesce_contiguous_and_break_on_gap() {
         let g = geo(8, 1000, 0, 8000);
         let have = [0b1110_0111u8];
-        assert_eq!(available_byte_spans(&have, &g), vec![(0, 3000), (5000, 8000)]);
+        assert_eq!(
+            available_byte_spans(&have, &g),
+            vec![(0, 3000), (5000, 8000)]
+        );
     }
 
     #[test]

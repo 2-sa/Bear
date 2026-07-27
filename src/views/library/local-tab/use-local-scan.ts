@@ -59,7 +59,7 @@ export function useLocalScan({
 
   const onAddFolder = useCallback(async () => {
     const { open } = await import("@tauri-apps/plugin-dialog");
-    const folder = await open({ directory: true, multiple: false });
+    const folder = await open({ directory: true, multiple: false, recursive: true });
     if (typeof folder !== "string") return;
     await scanFolder(folder);
   }, [scanFolder]);

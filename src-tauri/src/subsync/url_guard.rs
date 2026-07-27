@@ -2,6 +2,9 @@
 
 use std::collections::HashMap;
 use std::net::{Ipv4Addr, Ipv6Addr};
+use std::path::PathBuf;
+
+use tauri_plugin_fs::FsExt;
 
 const HOP_BY_HOP: &[&str] = &[
     "connection",
@@ -21,6 +24,31 @@ fn is_abs_path(url: &str) -> bool {
     (b.len() > 2 && b[1] == b':' && (b[2] == b'/' || b[2] == b'\\')) || url.starts_with('/')
 }
 
+pub fn local_media_path(url: &str) -> Option<PathBuf> {
+    let trimmed = url.trim();
+    if is_abs_path(trimmed) {
+        return Some(PathBuf::from(trimmed));
+    }
+    if trimmed.to_ascii_lowercase().starts_with("file://") {
+        return url::Url::parse(trimmed).ok()?.to_file_path().ok();
+    }
+    None
+}
+
+pub fn validate_media_source(
+    app: &tauri::AppHandle,
+    url: &str,
+    allow_local: bool,
+) -> Result<(), String> {
+    validate_media_url(url, allow_local)?;
+    if let Some(path) = local_media_path(url) {
+        if !app.fs_scope().is_allowed(&path) {
+            return Err("local media access requires an explicit system file selection".into());
+        }
+    }
+    Ok(())
+}
+
 fn host_of(after_scheme: &str) -> String {
     let authority = after_scheme.split(['/', '?', '#']).next().unwrap_or("");
     let host_port = authority.rsplit('@').next().unwrap_or(authority);
@@ -32,7 +60,11 @@ fn host_of(after_scheme: &str) -> String {
 
 fn check_v4(ip: Ipv4Addr, is_stream: bool) -> Result<(), String> {
     if ip.is_loopback() {
-        return if is_stream { Ok(()) } else { Err("loopback-blocked".into()) };
+        return if is_stream {
+            Ok(())
+        } else {
+            Err("loopback-blocked".into())
+        };
     }
     let o = ip.octets();
     let shared = o[0] == 100 && (o[1] & 0xc0) == 0x40;
@@ -66,7 +98,11 @@ pub fn validate_media_url(url: &str, allow_local: bool) -> Result<(), String> {
     }
     if let Ok(v6) = host.parse::<Ipv6Addr>() {
         if v6.is_loopback() {
-            return if is_stream { Ok(()) } else { Err("loopback-blocked".into()) };
+            return if is_stream {
+                Ok(())
+            } else {
+                Err("loopback-blocked".into())
+            };
         }
         if v6.is_unspecified() {
             return Err("internal-ip-blocked".into());
@@ -75,7 +111,12 @@ pub fn validate_media_url(url: &str, allow_local: bool) -> Result<(), String> {
         if (seg[0] & 0xffc0) == 0xfe80 || (seg[0] & 0xfe00) == 0xfc00 {
             return Err("internal-ip-blocked".into());
         }
-        let mapped = seg[0] == 0 && seg[1] == 0 && seg[2] == 0 && seg[3] == 0 && seg[4] == 0 && seg[5] == 0xffff;
+        let mapped = seg[0] == 0
+            && seg[1] == 0
+            && seg[2] == 0
+            && seg[3] == 0
+            && seg[4] == 0
+            && seg[5] == 0xffff;
         if mapped {
             let v4 = Ipv4Addr::new(
                 (seg[6] >> 8) as u8,

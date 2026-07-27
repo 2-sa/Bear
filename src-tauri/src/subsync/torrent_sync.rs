@@ -7,12 +7,14 @@ use librqbit::{ManagedTorrent, Session};
 use super::correlate;
 use super::extract;
 
-#[path = "torrent_windows.rs"]
-mod windows;
 #[path = "url_guard.rs"]
 mod url_guard;
+#[path = "torrent_windows.rs"]
+mod windows;
 
-use windows::{center, downloaded_frac, endpoints_ready, select_windows, Geometry, Window, MIN_LEVER_SEC};
+use windows::{
+    center, downloaded_frac, endpoints_ready, select_windows, Geometry, Window, MIN_LEVER_SEC,
+};
 
 const RATIO_UNIT_EPS: f32 = 0.0009;
 
@@ -124,7 +126,11 @@ fn mask_cache() -> &'static MaskCache {
 fn window_sig(wins: &[Window]) -> String {
     let mut s = String::new();
     for w in wins {
-        s.push_str(&format!("{}:{};", w.start_sec.round() as i64, w.len_sec.round() as i64));
+        s.push_str(&format!(
+            "{}:{};",
+            w.start_sec.round() as i64,
+            w.len_sec.round() as i64
+        ));
     }
     s
 }
@@ -166,6 +172,7 @@ pub async fn torrent_sync_availability(
 #[tauri::command]
 #[allow(clippy::too_many_arguments)]
 pub async fn torrent_sync_subtitle(
+    app: tauri::AppHandle,
     info_hash: String,
     file_idx: usize,
     url: String,
@@ -179,7 +186,7 @@ pub async fn torrent_sync_subtitle(
     if !crate::transcode::ffmpeg_present() {
         return Err("ffmpeg-unavailable".into());
     }
-    url_guard::validate_media_url(&url, true)?;
+    url_guard::validate_media_source(&app, &url, true)?;
     if cues.len() < 4 || duration_sec < 60.0 {
         return Ok(None);
     }
@@ -207,7 +214,8 @@ pub async fn torrent_sync_subtitle(
     }
 
     let cue_pairs: Vec<(f32, f32)> = cues.iter().map(|c| (c[0], c[1])).collect();
-    let Some(res) = correlate::solve(&audio, &cue_pairs, duration_sec, conf_min.unwrap_or(0.55)) else {
+    let Some(res) = correlate::solve(&audio, &cue_pairs, duration_sec, conf_min.unwrap_or(0.55))
+    else {
         return Ok(None);
     };
 
@@ -234,6 +242,7 @@ pub async fn torrent_sync_subtitle(
 #[tauri::command]
 #[allow(clippy::too_many_arguments)]
 pub async fn torrent_score_transform(
+    app: tauri::AppHandle,
     info_hash: String,
     file_idx: usize,
     url: String,
@@ -247,12 +256,18 @@ pub async fn torrent_score_transform(
     if !crate::transcode::ffmpeg_present() {
         return Err("ffmpeg-unavailable".into());
     }
-    url_guard::validate_media_url(&url, true)?;
+    url_guard::validate_media_source(&app, &url, true)?;
     if cues.len() < 4 || duration_sec < 60.0 {
         return Ok(None);
     }
     let (geo, haves) = lookup(&info_hash, file_idx)?;
-    let wins = select_windows(&haves, &geo, duration_sec, true, position_sec.unwrap_or(-1.0));
+    let wins = select_windows(
+        &haves,
+        &geo,
+        duration_sec,
+        true,
+        position_sec.unwrap_or(-1.0),
+    );
     if wins.is_empty() {
         return Ok(None);
     }
@@ -264,7 +279,8 @@ pub async fn torrent_score_transform(
             let hdrs = headers.unwrap_or_default();
             let mut fresh: Vec<(f32, f32)> = Vec::new();
             for w in &wins {
-                if let Ok(iv) = extract::speech_intervals(&url, &hdrs, w.start_sec, w.len_sec).await {
+                if let Ok(iv) = extract::speech_intervals(&url, &hdrs, w.start_sec, w.len_sec).await
+                {
                     fresh.extend(iv);
                 }
             }
@@ -295,7 +311,10 @@ mod tests {
             classify("https://real-debrid.download/d/XYZ/file.mkv", Some("abc")),
             SourceMode::RandomAccess
         ));
-        assert!(matches!(classify("file:///m/x.mkv", None), SourceMode::RandomAccess));
+        assert!(matches!(
+            classify("file:///m/x.mkv", None),
+            SourceMode::RandomAccess
+        ));
         assert!(matches!(
             classify("https://cdn.example.com/master.m3u8", None),
             SourceMode::RestrictedStream
@@ -304,10 +323,19 @@ mod tests {
 
     #[test]
     fn window_sig_changes_with_window_set() {
-        let a = vec![Window { start_sec: 30.0, len_sec: 600.0 }];
+        let a = vec![Window {
+            start_sec: 30.0,
+            len_sec: 600.0,
+        }];
         let b = vec![
-            Window { start_sec: 30.0, len_sec: 600.0 },
-            Window { start_sec: 5000.0, len_sec: 600.0 },
+            Window {
+                start_sec: 30.0,
+                len_sec: 600.0,
+            },
+            Window {
+                start_sec: 5000.0,
+                len_sec: 600.0,
+            },
         ];
         assert_ne!(window_sig(&a), window_sig(&b));
         assert_eq!(window_sig(&a), window_sig(&a.clone()));

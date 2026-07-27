@@ -2,7 +2,7 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Main window capabilities",
-  "windows": ["main", "harbor-pip", "harbor-browser", "harbor-modal-overlay", "harbor-cf-solver"],
+  "windows": ["main", "harbor-pip", "harbor-modal-overlay"],
   "permissions": [
     "core:default",
     "os:default",
@@ -42,49 +42,35 @@
     "dialog:allow-confirm",
     "dialog:allow-ask",
     "dialog:allow-message",
-    "fs:default",
     "deep-link:default",
     "updater:default",
-    "process:default",
+    "process:allow-restart",
+    "fs:allow-write-file",
+    "fs:allow-write-text-file",
+    "fs:allow-create",
+    "fs:allow-remove",
+    "fs:allow-exists",
+    "fs:allow-mkdir",
+    "fs:allow-read-dir",
+    "fs:allow-read-file",
+    "fs:allow-read-text-file",
+    "fs:allow-stat",
     {
-      "identifier": "fs:allow-write-file",
-      "allow": [{ "path": "**" }]
-    },
-    {
-      "identifier": "fs:allow-write-text-file",
-      "allow": [{ "path": "**" }]
-    },
-    {
-      "identifier": "fs:allow-create",
-      "allow": [{ "path": "**" }]
-    },
-    {
-      "identifier": "fs:allow-remove",
-      "allow": [{ "path": "**" }]
-    },
-    {
-      "identifier": "fs:allow-exists",
-      "allow": [{ "path": "**" }]
-    },
-    {
-      "identifier": "fs:allow-mkdir",
-      "allow": [{ "path": "**" }]
-    },
-    {
-      "identifier": "fs:allow-read-dir",
-      "allow": [{ "path": "**" }]
-    },
-    {
-      "identifier": "fs:allow-read-file",
-      "allow": [{ "path": "**" }]
-    },
-    {
-      "identifier": "fs:allow-read-text-file",
-      "allow": [{ "path": "**" }]
-    },
-    {
-      "identifier": "fs:allow-stat",
-      "allow": [{ "path": "**" }]
+      "identifier": "fs:scope",
+      "allow": [
+        { "path": "$APPDATA/**" },
+        { "path": "$APPCACHE/**" },
+        { "path": "$APPLOCALDATA/**" },
+        { "path": "$TEMP/**" },
+        { "path": "$PICTURE/Harbor" },
+        { "path": "$PICTURE/Harbor/**" }
+      ],
+      "deny": [
+        { "path": "$APPDATA/secrets.json" },
+        { "path": "$APPDATA/secrets.json.tmp" },
+        { "path": "$APPDATA/settings.json" },
+        { "path": "$APPDATA/settings.json.tmp" }
+      ]
     },
     {
       "identifier": "opener:allow-reveal-item-in-dir",

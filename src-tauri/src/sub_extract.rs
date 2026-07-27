@@ -6,10 +6,12 @@ const MAX_SRT_BYTES: usize = 4 * 1024 * 1024;
 
 #[tauri::command]
 pub async fn subtitle_extract(
+    app: tauri::AppHandle,
     source: String,
     stream_index: Option<u32>,
     headers: Option<HashMap<String, String>>,
 ) -> Result<String, String> {
+    crate::subsync::url_guard::validate_media_source(&app, &source, true)?;
     let ffmpeg = crate::transcode::locate_ffmpeg().ok_or_else(|| "ffmpeg not found".to_string())?;
     let map = format!("0:s:{}", stream_index.unwrap_or(0));
     let mut cmd = tokio::process::Command::new(&ffmpeg);
@@ -61,10 +63,12 @@ const MAX_ASS_BYTES: usize = 2 * 1024 * 1024;
 
 #[tauri::command]
 pub async fn subtitle_extract_ass(
+    app: tauri::AppHandle,
     source: String,
     stream_index: Option<u32>,
     headers: Option<HashMap<String, String>>,
 ) -> Result<String, String> {
+    crate::subsync::url_guard::validate_media_source(&app, &source, true)?;
     let ffmpeg = crate::transcode::locate_ffmpeg().ok_or_else(|| "ffmpeg not found".to_string())?;
     let map = format!("0:s:{}", stream_index.unwrap_or(0));
     let mut cmd = tokio::process::Command::new(&ffmpeg);

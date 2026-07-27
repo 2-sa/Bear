@@ -5,6 +5,7 @@ use std::time::{Duration, Instant};
 
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, State};
+use tauri_plugin_fs::FsExt;
 use tokio::process::{Child, Command};
 use tokio::sync::Mutex;
 use uuid::Uuid;
@@ -124,11 +125,14 @@ pub async fn dvr_start(
 ) -> Result<String, String> {
     let mpv_bin = locate_mpv().ok_or_else(|| "mpv binary not found on system".to_string())?;
     let out_dir = PathBuf::from(&args.output_dir);
+    let base = sanitize_filename(&args.filename);
+    let output_path = out_dir.join(format!("{}.ts", base));
+    if !app.fs_scope().is_allowed(&output_path) {
+        return Err("DVR destination requires an explicit system folder selection".to_string());
+    }
     if !out_dir.exists() {
         std::fs::create_dir_all(&out_dir).map_err(|e| format!("create dir: {}", e))?;
     }
-    let base = sanitize_filename(&args.filename);
-    let output_path = out_dir.join(format!("{}.ts", base));
 
     let mut cmd = Command::new(&mpv_bin);
     cmd.arg("--no-terminal")

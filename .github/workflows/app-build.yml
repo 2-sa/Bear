@@ -12,6 +12,10 @@ on:
 permissions:
   contents: read
 
+env:
+  HARBOR_BINARY_MIRROR_URL: https://harbor-binary-mirror.xyz7.workers.dev
+  HARBOR_BINARY_MIRROR_REQUIRED: "1"
+
 concurrency:
   group: app-build-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -34,7 +38,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
 
       - name: Install Linux build dependencies
         if: matrix.platform.name == 'Linux'
@@ -56,20 +60,20 @@ jobs:
         run: brew install mpv pkg-config
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@4cda84d5c5c54efe2404f9d843567869ab1699d4 # stable
 
       - name: Cache Rust build
-        uses: Swatinem/rust-cache@v2
+        uses: Swatinem/rust-cache@42dc69e1aa15d09112580998cf2ef0119e2e91ae # v2
         with:
           workspaces: |
             harbor-core
             src-tauri
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v5
+        uses: pnpm/action-setup@a8198c4bff370c8506180b035930dea56dbd5288 # v5
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: 24
           cache: pnpm
@@ -77,8 +81,13 @@ jobs:
       - name: Install JavaScript dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Prepare build assets
-        run: pnpm run setup
+      - name: Prepare verified build assets
+        run: pnpm run setup:all
+
+      - name: Disable bundled sidecars on Linux
+        if: matrix.platform.name == 'Linux'
+        shell: bash
+        run: echo 'TAURI_CONFIG={"bundle":{"externalBin":[]}}' >> "$GITHUB_ENV"
 
       - name: Build app without installers
         run: pnpm tauri build --no-bundle
