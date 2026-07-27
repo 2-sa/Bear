@@ -16,6 +16,10 @@ const LIVE_FIELDS = [
   "mutualCount",
   "ratings",
   "showcase",
+  "shownBadges",
+  "verified",
+  "hideVerified",
+  "badges",
 ] as const;
 
 function mergeLive(prev: ProfileSummary, next: ProfileSummary): ProfileSummary {
