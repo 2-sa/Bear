@@ -42,8 +42,7 @@ pnpm-debug.log*
 local_docs/
 .diag/
 
-# Stripped IP assets (legal) - do not re-commit
-public/avatars/
+# Assets intentionally excluded from desktop builds
 public/kids/avatars/
 public/awards/
 src/assets/awards/
