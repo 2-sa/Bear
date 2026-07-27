@@ -217,17 +217,17 @@ pub(crate) fn locate_mpv() -> Option<PathBuf> {
 
 fn shadow_pipe(session: &str) -> String {
     if cfg!(windows) {
-        format!("\\\\.\\pipe\\harbor-thumbs-{}", session)
+        format!("\\\\.\\pipe\\bear-beta-thumbs-{}", session)
     } else {
         std::env::temp_dir()
-            .join(format!("harbor-thumbs-{}.sock", session))
+            .join(format!("bear-beta-thumbs-{}.sock", session))
             .to_string_lossy()
             .into_owned()
     }
 }
 
 fn cache_dir(session: &str) -> PathBuf {
-    std::env::temp_dir().join("harbor-thumbs").join(session)
+    std::env::temp_dir().join("bear-beta-thumbs").join(session)
 }
 
 async fn drop_shadow(shadow: &mut Shadow) {

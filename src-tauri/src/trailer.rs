@@ -17,7 +17,7 @@ const FORMAT_1080: &str =
 const FORMAT_BEST: &str = "bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best";
 
 fn cache_dir() -> PathBuf {
-    std::env::temp_dir().join("harbor-trailers")
+    std::env::temp_dir().join("bear-beta-trailers")
 }
 
 fn sanitize_id(id: &str) -> Result<String, String> {

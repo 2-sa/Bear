@@ -1,6 +1,6 @@
 export const REMOTE_PROTO = 1;
 export const REMOTE_WS_PATH = "/api/remote";
-export const WEB_PORT = 11471;
+export const WEB_PORT = 11472;
 
 export type RemoteEpisodeRef = {
   season: number;

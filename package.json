@@ -1,7 +1,8 @@
 {
-  "name": "harbor",
-  "version": "0.9.120",
+  "name": "bear-beta",
   "private": true,
+  "version": "0.9.115",
+  "type": "module",
   "license": "MIT",
   "type": "module",
   "scripts": {

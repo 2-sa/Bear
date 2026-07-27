@@ -58,7 +58,7 @@ function findFile(dir, name) {
 }
 
 const url = `https://github.com/shinchiro/mpv-winbuild-cmake/releases/download/${RELEASE}/${spec.asset}`;
-const temp = mkdtempSync(join(tmpdir(), "harbor-mpv-"));
+const temp = mkdtempSync(join(tmpdir(), "bear-beta-mpv-"));
 
 try {
   console.log(`[mpv] fetching ${url}`);
@@ -76,7 +76,11 @@ try {
   try {
     execFileSync("7z", ["x", "-y", archive, `-o${extracted}`], { stdio: "inherit" });
   } catch {
-    throw new Error("[mpv] extraction failed; install 7-Zip and ensure `7z` is on PATH");
+    try {
+      execFileSync("tar", ["-xf", archive, "-C", extracted], { stdio: "inherit" });
+    } catch {
+      throw new Error("[mpv] extraction failed; neither 7-Zip nor system tar could extract the archive");
+    }
   }
 
   const mpv = findFile(extracted, "mpv.exe");

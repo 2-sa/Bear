@@ -1,7 +1,24 @@
-name: Signed Tauri Release
+name: Signed Bear Beta Release
 
 on:
   workflow_dispatch:
+    inputs:
+      target:
+        description: Build target
+        required: true
+        default: windows-x64
+        type: choice
+        options:
+          - windows-x64
+          - windows-arm64
+          - macos-arm64
+          - macos-x64
+          - desktop-all
+      publish_update:
+        description: Publish a signed update after all Windows and macOS builds pass
+        required: true
+        default: false
+        type: boolean
 
 permissions:
   contents: write
@@ -11,42 +28,65 @@ env:
   HARBOR_BINARY_MIRROR_REQUIRED: "1"
 
 concurrency:
-  group: signed-release-${{ github.ref }}
+  group: signed-beta-release-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
+  prepare:
+    name: Select beta build targets
+    if: github.ref_name == 'beta-branch'
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.targets.outputs.matrix }}
+    steps:
+      - id: targets
+        name: Validate request
+        shell: bash
+        run: |
+          if [[ "${{ inputs.publish_update }}" == "true" && "${{ inputs.target }}" != "desktop-all" ]]; then
+            echo "Publishing an update requires target=desktop-all." >&2
+            exit 1
+          fi
+          case "${{ inputs.target }}" in
+            windows-x64)
+              matrix='[{"name":"Windows","runner":"windows-latest","target":"x86_64-pc-windows-msvc"}]'
+              ;;
+            windows-arm64)
+              matrix='[{"name":"Windows-ARM64","runner":"windows-11-arm","target":"aarch64-pc-windows-msvc"}]'
+              ;;
+            macos-arm64)
+              matrix='[{"name":"macOS-AppleSilicon","runner":"macos-latest","target":"aarch64-apple-darwin"}]'
+              ;;
+            macos-x64)
+              matrix='[{"name":"macOS-Intel","runner":"macos-15-intel","target":"x86_64-apple-darwin"}]'
+              ;;
+            desktop-all)
+              matrix='[{"name":"Windows","runner":"windows-latest","target":"x86_64-pc-windows-msvc"},{"name":"Windows-ARM64","runner":"windows-11-arm","target":"aarch64-pc-windows-msvc"},{"name":"macOS-AppleSilicon","runner":"macos-latest","target":"aarch64-apple-darwin"},{"name":"macOS-Intel","runner":"macos-15-intel","target":"x86_64-apple-darwin"}]'
+              ;;
+          esac
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+
   build:
     name: ${{ matrix.platform.name }} (${{ matrix.platform.target }})
+    needs: prepare
     runs-on: ${{ matrix.platform.runner }}
     timeout-minutes: 120
     environment: release-signing
     strategy:
       fail-fast: false
+      max-parallel: ${{ fromJSON(inputs.publish_update && '1' || '4') }}
       matrix:
-        platform:
-          - name: Windows
-            runner: windows-latest
-            target: x86_64-pc-windows-msvc
-          - name: Windows-ARM64
-            runner: windows-11-arm
-            target: aarch64-pc-windows-msvc
-          - name: macOS-AppleSilicon
-            runner: macos-latest
-            target: aarch64-apple-darwin
-          - name: macOS-Intel
-            runner: macos-15-intel
-            target: x86_64-apple-darwin
+        platform: ${{ fromJSON(needs.prepare.outputs.matrix) }}
 
     steps:
-      - name: Checkout
+      - name: Checkout beta branch
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
 
       - name: Install Mac deps
         if: contains(matrix.platform.runner, 'macos')
         run: |
           brew install mpv pkg-config
-          # Make pkg-config find libmpv from homebrew
-          echo "PKG_CONFIG_PATH=$(brew --prefix mpv)/lib/pkgconfig:${PKG_CONFIG_PATH:-}" >> $GITHUB_ENV
+          echo "PKG_CONFIG_PATH=$(brew --prefix mpv)/lib/pkgconfig:${PKG_CONFIG_PATH:-}" >> "$GITHUB_ENV"
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@4cda84d5c5c54efe2404f9d843567869ab1699d4 # stable
@@ -78,10 +118,6 @@ jobs:
       - name: Fetch checksum-locked sidecars
         run: node scripts/fetch-binaries.mjs --target ${{ matrix.platform.target }}
 
-      # ARM64 links against libmpv too, but there is no bare ARM64 libmpv-2.dll
-      # hosted by Harbor and the committed src-tauri/libmpv/mpv.lib is x64-only.
-      # Set up the ARM64 MSVC dev environment so lib.exe is available to rebuild
-      # the import library for the ARM64 target from the committed libmpv.def.
       - name: Set up MSVC (Windows ARM64)
         if: matrix.platform.target == 'aarch64-pc-windows-msvc'
         uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1
@@ -90,7 +126,24 @@ jobs:
 
       - name: Fetch libmpv (Windows)
         if: contains(matrix.platform.runner, 'windows')
-        run: pnpm run setup:libmpv
+        shell: pwsh
+        run: |
+          if ('${{ matrix.platform.target }}' -like '*aarch64*') {
+            $tag = '20260610'
+            $asset = "mpv-dev-aarch64-$tag-git-304426c.7z"
+            $sha = 'd9dd60db1c7b24db2e19d041f70abf0a4995f3e9eadf80a34e54f72300df6ed4'
+            curl.exe --fail --location --retry 3 --retry-all-errors "https://github.com/shinchiro/mpv-winbuild-cmake/releases/download/$tag/$asset" -o mpv-dev.7z
+            $got = (Get-FileHash mpv-dev.7z -Algorithm SHA256).Hash
+            if ($got -ne $sha.ToUpper()) { throw "libmpv checksum mismatch: got $got" }
+            7z x -y mpv-dev.7z -ompv-dev | Out-Null
+            New-Item -ItemType Directory -Force src-tauri/libmpv | Out-Null
+            $dll = (Get-ChildItem -Recurse mpv-dev -Filter libmpv-2.dll | Select-Object -First 1).FullName
+            Copy-Item $dll src-tauri/libmpv/libmpv-2.dll -Force
+            lib /def:src-tauri/libmpv/libmpv.def /machine:arm64 /out:src-tauri/libmpv/mpv.lib
+            Remove-Item -Recurse -Force mpv-dev, mpv-dev.7z
+          } else {
+            pnpm run setup:libmpv
+          }
 
       - name: Fetch verified mpv (Windows)
         if: contains(matrix.platform.runner, 'windows')
@@ -102,27 +155,59 @@ jobs:
           cargo check
           cargo test --all-targets
 
-      - name: Verify signed updater configuration
+      - name: Verify signed beta updater configuration
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
         run: node scripts/verify-update-config.mjs --require-signing-key
 
-      - name: Build and upload signed release
+      - name: Build and upload signed beta release
         uses: tauri-apps/tauri-action@84b9d35b5fc46c1e45415bdb6144030364f7ebc5 # v0.6.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-          TAURI_CONFIG: '{"bundle":{"createUpdaterArtifacts":true}}'
         with:
           tauriScript: pnpm tauri
-          args: --target ${{ matrix.platform.target }}
-          tagName: v__VERSION__
-          releaseName: Harbor v__VERSION__
+          args: --target ${{ matrix.platform.target }} --config src-tauri/tauri.release.conf.json
+          tagName: beta-v__VERSION__
+          releaseName: Bear Beta v__VERSION__
           releaseDraft: true
-          prerelease: false
+          prerelease: true
           generateReleaseNotes: true
-          uploadUpdaterJson: true
-          uploadUpdaterSignatures: true
+          includeUpdaterJson: true
           updaterJsonPreferNsis: true
           retryAttempts: 2
+
+  publish-update:
+    name: Publish complete beta update channel
+    if: inputs.publish_update == true && inputs.target == 'desktop-all'
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout beta branch
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - name: Download and verify the complete signed manifest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          tag="beta-v${version}"
+          mkdir update-channel
+          gh release download "$tag" --pattern latest.json --dir update-channel
+          node scripts/verify-update-manifest.mjs update-channel/latest.json "$tag" "$version"
+          echo "VERSION_TAG=$tag" >> "$GITHUB_ENV"
+
+      - name: Publish version release and advance beta channel
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          gh release edit "$VERSION_TAG" --draft=false --prerelease
+          if gh release view beta-channel >/dev/null 2>&1; then
+            gh release edit beta-channel --prerelease --title "Bear Beta update channel"
+          else
+            gh release create beta-channel --target beta-branch --prerelease --title "Bear Beta update channel" --notes "Signed updater manifest for Bear Beta."
+          fi
+          gh release upload beta-channel update-channel/latest.json --clobber

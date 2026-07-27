@@ -33,7 +33,7 @@ pub fn reap_orphans() {
 #[cfg(windows)]
 fn reap_platform() {
     use std::os::windows::process::CommandExt;
-    let script = "Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object { $_.ProcessId -ne $PID -and $_.Name -like 'mpv*' -and ($_.CommandLine -like '*harbor-thumbs-*' -or $_.CommandLine -like '*harbor-mv-*') } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }";
+    let script = "Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object { $_.ProcessId -ne $PID -and $_.Name -like 'mpv*' -and ($_.CommandLine -like '*bear-beta-thumbs-*' -or $_.CommandLine -like '*bear-beta-mv-*') } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }";
     let _ = std::process::Command::new("powershell")
         .args(["-NoProfile", "-NonInteractive", "-Command", script])
         .creation_flags(0x0800_0000)
@@ -45,7 +45,7 @@ fn reap_platform() {
 
 #[cfg(not(windows))]
 fn reap_platform() {
-    for signature in ["harbor-thumbs-", "harbor-mv-"] {
+    for signature in ["bear-beta-thumbs-", "bear-beta-mv-"] {
         let _ = std::process::Command::new("pkill")
             .args(["-9", "-f", signature])
             .output();

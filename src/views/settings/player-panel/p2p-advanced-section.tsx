@@ -54,7 +54,7 @@ export function P2PAdvancedSection() {
   const retention = settings.streamCacheRetentionHours;
   const maxGb = settings.streamCacheMaxGb;
   const customDir = settings.streamCacheDir;
-  const cachePath = customDir ? `${customDir}/harbor-stream-cache` : defaultPath;
+  const cachePath = customDir ? `${customDir}/bear-beta-stream-cache` : defaultPath;
 
   const setRetention = (h: number) => {
     update({ streamCacheRetentionHours: h });

@@ -151,9 +151,9 @@ export async function unfeatureListByName(name: string): Promise<void> {
 }
 
 export function listShareUrl(handle: string, listId: string): string {
-  return `${HARBOR_API_BASE}/list/${encodeURIComponent(handle)}/${encodeURIComponent(listId)}`;
+  return listDeepLink(handle, listId);
 }
 
 export function listDeepLink(handle: string, listId: string): string {
-  return `harbor://list/${encodeURIComponent(handle)}/${encodeURIComponent(listId)}`;
+  return `bear-beta://list/${encodeURIComponent(handle)}/${encodeURIComponent(listId)}`;
 }

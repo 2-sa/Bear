@@ -293,7 +293,7 @@ async function writeSubtitleFile(
   if (typeof window === "undefined" || !("__TAURI_INTERNALS__" in window)) return null;
   try {
     const fileName = `${name ?? "preview"}.${ext}`;
-    return await writeTempTextFile("harbor-subs", fileName, text);
+    return await writeTempTextFile("bear-beta-subs", fileName, text);
   } catch {
     return null;
   }

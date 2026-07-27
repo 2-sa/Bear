@@ -507,7 +507,10 @@ pub fn run() {
                 app.exit(0);
                 return;
             }
-            if let Some(url) = args.iter().find(|a| a.starts_with("harbor://")) {
+            if let Some(url) = args
+                .iter()
+                .find(|a| a.starts_with("bear-beta://") || a.starts_with("stremio://"))
+            {
                 let _ = app.emit("harbor:stremio-deeplink", url.clone());
             }
             if let Some(path) = media_file_from_args(&args) {
