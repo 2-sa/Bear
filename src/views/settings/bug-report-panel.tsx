@@ -1,6 +1,7 @@
-import { AtSign, Github, User } from "lucide-react";
+import { AtSign, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { GitHubIcon } from "@/components/github-icon";
 import { useAuth } from "@/lib/auth";
 import {
   collectDiagnostics,
@@ -192,7 +193,7 @@ export function BugReportPanel() {
             maxLength={120}
           />
           <CreditField
-            icon={<Github size={14} strokeWidth={1.9} />}
+            icon={<GitHubIcon size={14} />}
             value={reporterGithub}
             onChange={setReporterGithub}
             placeholder={t("GitHub username")}

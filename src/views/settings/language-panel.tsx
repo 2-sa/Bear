@@ -1,6 +1,6 @@
-import { Github } from "lucide-react";
 import { useState } from "react";
 import { Dropdown, type DropdownOption } from "@/components/dropdown";
+import { GitHubIcon } from "@/components/github-icon";
 import { useSettings } from "@/lib/settings";
 import { useT } from "@/lib/i18n";
 import { openUrl } from "@/lib/window";
@@ -177,7 +177,7 @@ export function LanguagePanel() {
           onClick={() => openUrl("https://github.com/harborstremio/harbor")}
           className="flex shrink-0 items-center gap-2 self-start rounded-full border border-edge-soft px-4 py-2 text-[12.5px] font-semibold text-ink transition-colors hover:border-edge sm:self-auto"
         >
-          <Github size={13} strokeWidth={2.2} />
+          <GitHubIcon size={13} />
           {t("Contribute on GitHub")}
         </button>
       </div>

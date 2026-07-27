@@ -1,6 +1,7 @@
-import { Angry, Frown, Github, Laugh, Meh, Smile, ThumbsUp } from "lucide-react";
+import { Angry, Frown, Laugh, Meh, Smile, ThumbsUp } from "lucide-react";
 import { useRef, useState, type ComponentType } from "react";
 import { BetaTag } from "@/components/beta-tag";
+import { GitHubIcon } from "@/components/github-icon";
 import { APP_VERSION, IS_BETA_BUILD } from "@/lib/build-info";
 import { submitBuildFeedback } from "@/lib/build-feedback-submit";
 import { openUrl } from "@/lib/window";
@@ -96,7 +97,7 @@ export function BuildFeedback() {
               onClick={() => openIssue(committed)}
               className="flex h-10 items-center gap-2 rounded-lg bg-ink px-4 text-[13px] font-semibold text-canvas transition-transform hover:scale-[1.02] active:scale-[0.98]"
             >
-              <Github size={15} strokeWidth={2.2} />
+              <GitHubIcon size={15} />
               {t("Open a quick issue")}
             </button>
           </div>

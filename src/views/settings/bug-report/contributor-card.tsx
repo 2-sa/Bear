@@ -1,4 +1,5 @@
-import { GitPullRequest, Github } from "lucide-react";
+import { GitPullRequest } from "lucide-react";
+import { GitHubIcon } from "@/components/github-icon";
 import { openUrl } from "@/lib/window";
 
 const REPO = "https://github.com/harborstremio/harbor";
@@ -24,7 +25,7 @@ export function ContributorCard() {
           onClick={() => openUrl(REPO)}
           className="flex h-9 items-center gap-2 rounded-lg border border-edge-soft bg-elevated px-3 text-[12.5px] font-medium text-ink-muted transition-colors hover:bg-raised hover:text-ink"
         >
-          <Github size={13} strokeWidth={1.9} />
+          <GitHubIcon size={13} />
           Open repo on GitHub
         </button>
         <button
