@@ -6,7 +6,7 @@ const RECENT_GRACE: Duration = Duration::from_secs(60 * 60);
 const ORPHAN_MAX_AGE: Duration = Duration::from_secs(24 * 60 * 60);
 
 fn is_updater_dir(name: &str) -> bool {
-    name.starts_with("Bear Beta-") && name.contains("-updater-")
+    name.starts_with("Bear-") && name.contains("-updater-")
 }
 
 fn is_orphan_dir(name: &str) -> bool {
@@ -112,10 +112,10 @@ mod tests {
     use super::*;
 
     #[test]
-    fn matches_only_bear_beta_updater_dirs() {
-        assert!(is_updater_dir("Bear Beta-0.9.115-updater-mbbEi1"));
-        assert!(is_updater_dir("Bear Beta-0.9.116-updater-wTLMpQ"));
-        assert!(!is_updater_dir("Bear Beta-0.9.115"));
+    fn matches_only_bear_updater_dirs() {
+        assert!(is_updater_dir("Bear-0.9.116-updater-mbbEi1"));
+        assert!(is_updater_dir("Bear-0.9.117-updater-wTLMpQ"));
+        assert!(!is_updater_dir("Bear-0.9.116"));
         assert!(!is_updater_dir("updater-cache"));
         assert!(!is_updater_dir("SomeOtherApp-updater-xyz"));
         assert!(!is_updater_dir("bear-beta-trailers"));

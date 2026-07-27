@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 
 const EXPECTED_ENDPOINT = "https://github.com/2-sa/Bear/releases/download/beta-channel/latest.json";
 const EXPECTED_RELEASES_URL = "https://github.com/2-sa/Bear/releases";
-const EXPECTED_PRODUCT_NAME = "Bear Beta";
+const EXPECTED_PRODUCT_NAME = "Bear";
 const EXPECTED_IDENTIFIER = "dev.twosa.bear.beta";
 const EXPECTED_SCHEMES = ["bear-beta", "stremio"];
 

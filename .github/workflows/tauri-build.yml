@@ -1,4 +1,4 @@
-name: Signed Bear Beta Release
+name: Signed Bear Release
 
 on:
   workflow_dispatch:
@@ -170,7 +170,7 @@ jobs:
           tauriScript: pnpm tauri
           args: --target ${{ matrix.platform.target }} --config src-tauri/tauri.release.conf.json
           tagName: beta-v__VERSION__
-          releaseName: Bear Beta v__VERSION__
+          releaseName: Bear v__VERSION__
           releaseDraft: true
           prerelease: true
           generateReleaseNotes: true
@@ -226,8 +226,8 @@ jobs:
           gh release upload "$VERSION_TAG" update-channel/latest.json --clobber
           gh release edit "$VERSION_TAG" --draft=false --prerelease
           if gh release view beta-channel >/dev/null 2>&1; then
-            gh release edit beta-channel --prerelease --title "Bear Beta update channel"
+            gh release edit beta-channel --prerelease --title "Bear update channel"
           else
-            gh release create beta-channel --target beta-branch --prerelease --title "Bear Beta update channel" --notes "Signed updater manifest for Bear Beta."
+            gh release create beta-channel --target beta-branch --prerelease --title "Bear update channel" --notes "Signed updater manifest for Bear."
           fi
           gh release upload beta-channel update-channel/latest.json --clobber
