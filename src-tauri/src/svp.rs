@@ -23,7 +23,9 @@ fn svp_root() -> Option<PathBuf> {
             cands.push(PathBuf::from(&p).join("Programs").join("SVP 4"));
         }
     }
-    cands.into_iter().find(|d| d.join("SVPManager.exe").exists())
+    cands
+        .into_iter()
+        .find(|d| d.join("SVPManager.exe").exists())
 }
 
 fn find_file_dir(root: &Path, names: &[&str], depth: u32) -> Option<PathBuf> {
@@ -98,7 +100,10 @@ fn preload_vsscript_chain(dir: &Path) -> Result<(), String> {
     use windows::Win32::System::LibraryLoader::{LoadLibraryExW, LOAD_WITH_ALTERED_SEARCH_PATH};
 
     fn wide(p: &Path) -> Vec<u16> {
-        p.as_os_str().encode_wide().chain(std::iter::once(0)).collect()
+        p.as_os_str()
+            .encode_wide()
+            .chain(std::iter::once(0))
+            .collect()
     }
     fn load(p: &Path) -> Result<(), u32> {
         let w = wide(p);
@@ -180,9 +185,9 @@ pub fn prime_svp_env() {
 #[tauri::command]
 pub fn svp_status() -> SvpStatus {
     let root = svp_root();
-    let ready = root
-        .as_ref()
-        .map_or(false, |r| svpflow_dir(r).is_some() && vsscript_dir(r).is_some());
+    let ready = root.as_ref().map_or(false, |r| {
+        svpflow_dir(r).is_some() && vsscript_dir(r).is_some()
+    });
     let (loadable, load_error) = match LAST_LOAD.lock().ok().and_then(|g| g.clone()) {
         Some(Ok(())) => (Some(true), None),
         Some(Err(msg)) => (Some(false), Some(msg)),
@@ -213,7 +218,11 @@ fn svp_manager_running() -> bool {
         entry.dwSize = std::mem::size_of::<PROCESSENTRY32W>() as u32;
         if Process32FirstW(snapshot, &mut entry).is_ok() {
             loop {
-                let len = entry.szExeFile.iter().position(|&c| c == 0).unwrap_or(entry.szExeFile.len());
+                let len = entry
+                    .szExeFile
+                    .iter()
+                    .position(|&c| c == 0)
+                    .unwrap_or(entry.szExeFile.len());
                 let name = String::from_utf16_lossy(&entry.szExeFile[..len]);
                 if name.eq_ignore_ascii_case("SVPManager.exe") {
                     found = true;
@@ -303,7 +312,8 @@ smooth.set_output()
 #[tauri::command]
 pub fn svp_apply(app: tauri::AppHandle, target_fps: String) -> Result<String, String> {
     let root = svp_root().ok_or_else(|| "SVP is not installed".to_string())?;
-    let flow = svpflow_dir(&root).ok_or_else(|| "svpflow plugins not found in the SVP install".to_string())?;
+    let flow = svpflow_dir(&root)
+        .ok_or_else(|| "svpflow plugins not found in the SVP install".to_string())?;
     vsscript_dir(&root)
         .ok_or_else(|| "VapourSynth (VSScript.dll) not found in the SVP install".to_string())?;
     prime_svp_env();

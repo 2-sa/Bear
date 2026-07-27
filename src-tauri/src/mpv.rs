@@ -25,6 +25,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use tauri::Manager;
 use tauri::{AppHandle, Emitter, State};
+use tauri_plugin_fs::FsExt;
 use tokio::sync::Mutex;
 use uuid::Uuid;
 
@@ -53,7 +54,6 @@ pub struct MpvStartArgs {
     pub is_live: Option<bool>,
     pub full_download: Option<bool>,
     pub headers: Option<HashMap<String, String>>,
-    pub extra_options: Option<String>,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
@@ -444,33 +444,6 @@ fn apply_pre_init(
     Ok(())
 }
 
-fn apply_extra_mpv_options(mpv: &Mpv, raw: &str) {
-    for line in raw.lines() {
-        let line = line.trim();
-        if line.is_empty() || line.starts_with('#') || line.starts_with("//") {
-            continue;
-        }
-        let (key, value) = if let Some((k, v)) = line.split_once('=') {
-            (k.trim(), v.trim())
-        } else if let Some((k, v)) = line.split_once(char::is_whitespace) {
-            (k.trim(), v.trim())
-        } else {
-            (line, "yes")
-        };
-        let key = key.trim_start_matches("--").trim();
-        if key.is_empty() {
-            continue;
-        }
-        match mpv.set_property(key, value) {
-            Ok(()) => eprintln!("[harbor::mpv] extra option set {}={}", key, value),
-            Err(e) => eprintln!(
-                "[harbor::mpv] extra option {}={} rejected: {:?}",
-                key, value, e
-            ),
-        }
-    }
-}
-
 fn is_local_network_url(url: &str) -> bool {
     let rest = match url.split_once("://") {
         Some((_, r)) => r,
@@ -502,12 +475,40 @@ fn network_timeout_for(url: &str) -> &'static str {
     }
 }
 
+fn validate_mpv_media_target(app: &AppHandle, target: &str) -> Result<(), String> {
+    let lower = target.trim().to_ascii_lowercase();
+    const NETWORK_SCHEMES: &[&str] = &[
+        "http://", "https://", "rtmp://", "rtmps://", "rtsp://", "rtp://", "udp://", "tcp://",
+        "srt://",
+    ];
+    if NETWORK_SCHEMES
+        .iter()
+        .any(|scheme| lower.starts_with(scheme))
+    {
+        return Ok(());
+    }
+    if lower.contains("://") || lower.starts_with("file:") {
+        return Err("media protocol is not allowed".into());
+    }
+    if app.fs_scope().is_allowed(std::path::Path::new(target)) {
+        Ok(())
+    } else {
+        Err("local media path is outside the authorized filesystem scope".into())
+    }
+}
+
 #[tauri::command]
 pub async fn mpv_start(
     app: AppHandle,
     state: State<'_, MpvState>,
     args: MpvStartArgs,
 ) -> Result<(), String> {
+    validate_mpv_media_target(&app, &args.url)?;
+    if let Some(subtitles) = &args.subtitles {
+        for subtitle in subtitles {
+            validate_mpv_media_target(&app, &subtitle.url)?;
+        }
+    }
     let mut g = state.inner.lock().await;
     if let Some(prev) = g.take() {
         #[cfg(target_os = "macos")]
@@ -685,9 +686,18 @@ pub async fn mpv_start(
         let _ = mpv.set_property("cache", "yes");
         let _ = mpv.set_property("cache-secs", if full_dl { "100000" } else { "300" });
         let _ = mpv.set_property("cache-pause", "yes");
-        let _ = mpv.set_property("demuxer-max-bytes", if full_dl { "48GiB" } else { "512MiB" });
-        let _ = mpv.set_property("demuxer-max-back-bytes", if full_dl { "48GiB" } else { "64MiB" });
-        let _ = mpv.set_property("demuxer-readahead-secs", if full_dl { "100000" } else { "300" });
+        let _ = mpv.set_property(
+            "demuxer-max-bytes",
+            if full_dl { "48GiB" } else { "512MiB" },
+        );
+        let _ = mpv.set_property(
+            "demuxer-max-back-bytes",
+            if full_dl { "48GiB" } else { "64MiB" },
+        );
+        let _ = mpv.set_property(
+            "demuxer-readahead-secs",
+            if full_dl { "100000" } else { "300" },
+        );
         if let Ok(base) = app.path().app_cache_dir() {
             let dvr = base.join("mpv-cache");
             let _ = std::fs::create_dir_all(&dvr);
@@ -722,10 +732,6 @@ pub async fn mpv_start(
         for s in subs {
             let _ = mpv_argv_command(&mpv, &["sub-add", &s.url, "auto"]);
         }
-    }
-
-    if let Some(extra) = args.extra_options.as_deref() {
-        apply_extra_mpv_options(&mpv, extra);
     }
 
     if is_live {
@@ -1022,7 +1028,11 @@ fn mpv_node_to_json(node: MpvNode) -> Value {
 }
 
 #[tauri::command]
-pub async fn mpv_command(state: State<'_, MpvState>, cmd: Vec<Value>) -> Result<(), String> {
+pub async fn mpv_command(
+    app: AppHandle,
+    state: State<'_, MpvState>,
+    cmd: Vec<Value>,
+) -> Result<(), String> {
     let (mpv, is_live) = {
         let g = state.inner.lock().await;
         let s = g.as_ref().ok_or_else(|| "mpv not started".to_string())?;
@@ -1038,6 +1048,12 @@ pub async fn mpv_command(state: State<'_, MpvState>, cmd: Vec<Value>) -> Result<
         return Err(format!("mpv command not allowed: {}", head));
     }
     let tail: Vec<String> = cmd[1..].iter().map(value_to_arg).collect();
+    if head == "loadfile" {
+        let target = tail
+            .first()
+            .ok_or_else(|| "loadfile requires a media target".to_string())?;
+        validate_mpv_media_target(&app, target)?;
+    }
     if head == "loadfile" && !is_live {
         if let Some(url) = tail.first() {
             let _ = mpv.set_property("network-timeout", network_timeout_for(url));
@@ -1051,19 +1067,12 @@ pub async fn mpv_command(state: State<'_, MpvState>, cmd: Vec<Value>) -> Result<
     mpv_argv_command(&mpv, &argv)
 }
 
-const MPV_ALLOWED_COMMANDS: &[&str] = &[
-    "af",
-    "vf",
-    "seek",
-    "stop",
-    "frame-step",
-    "frame-back-step",
-    "loadfile",
-];
+const MPV_ALLOWED_COMMANDS: &[&str] =
+    &["seek", "stop", "frame-step", "frame-back-step", "loadfile"];
 
 fn mpv_property_blocked(name: &str) -> bool {
     let n = name.to_ascii_lowercase();
-    const BLOCKED: &[&str] = &[
+    const BLOCKED_PREFIXES: &[&str] = &[
         "script",
         "input-",
         "load-scripts",
@@ -1072,7 +1081,23 @@ fn mpv_property_blocked(name: &str) -> bool {
         "screenshot-template",
         "sub-add",
     ];
-    BLOCKED.iter().any(|b| n.starts_with(b))
+    const BLOCKED_EXACT: &[&str] = &[
+        "vf",
+        "af",
+        "glsl-shaders",
+        "audio-file",
+        "audio-files",
+        "sub-file",
+        "sub-files",
+        "external-file",
+        "external-files",
+        "playlist",
+        "config-dir",
+        "watch-later-directory",
+        "profile",
+        "include",
+    ];
+    BLOCKED_PREFIXES.iter().any(|b| n.starts_with(b)) || BLOCKED_EXACT.contains(&n.as_str())
 }
 
 fn value_to_arg(v: &Value) -> String {
@@ -1373,9 +1398,13 @@ fn monitor_hdr_active(hwnd_raw: isize) -> bool {
 
 #[tauri::command]
 pub async fn mpv_save_screenshot(
+    app: AppHandle,
     state: State<'_, MpvState>,
     path: String,
 ) -> Result<String, String> {
+    if !app.fs_scope().is_allowed(std::path::Path::new(&path)) {
+        return Err("screenshot path is outside the authorized filesystem scope".into());
+    }
     let mpv = {
         let g = state.inner.lock().await;
         g.as_ref()
@@ -1498,7 +1527,10 @@ pub async fn mpv_gif_abort() -> Result<(), String> {
 }
 
 #[tauri::command]
-pub async fn mpv_gif_stop(out_path: String) -> Result<GifResult, String> {
+pub async fn mpv_gif_stop(app: AppHandle, out_path: String) -> Result<GifResult, String> {
+    if !app.fs_scope().is_allowed(std::path::Path::new(&out_path)) {
+        return Err("GIF path is outside the authorized filesystem scope".into());
+    }
     let session = {
         gif_slot()
             .lock()
@@ -1642,11 +1674,15 @@ pub struct ClipResult {
 
 #[tauri::command]
 pub async fn mpv_clip_save(
+    app: AppHandle,
     state: State<'_, MpvState>,
     with_subs: bool,
     before_sec: f64,
     out_path: String,
 ) -> Result<ClipResult, String> {
+    if !app.fs_scope().is_allowed(std::path::Path::new(&out_path)) {
+        return Err("clip path is outside the authorized filesystem scope".into());
+    }
     let mpv = {
         let g = state.inner.lock().await;
         g.as_ref()
@@ -1796,12 +1832,14 @@ pub async fn mpv_on_pip_changed(
 
 #[tauri::command]
 pub async fn mpv_sub_add(
+    app: AppHandle,
     state: State<'_, MpvState>,
     url: String,
     lang: Option<String>,
     title: Option<String>,
     select: Option<bool>,
 ) -> Result<(), String> {
+    validate_mpv_media_target(&app, &url)?;
     let mpv = {
         let g = state.inner.lock().await;
         g.as_ref()

@@ -383,7 +383,6 @@ export function createMpvBridge(mpvOptions?: MpvOptions): PlayerBridge {
             isLive: src.isLive === true,
             fullDownload: opts.fullDownload === true,
             headers: src.headers ?? null,
-            extraOptions: opts.extraOptions || undefined,
           },
         });
         mpvStarted = true;

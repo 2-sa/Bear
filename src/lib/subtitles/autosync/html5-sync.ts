@@ -7,6 +7,7 @@ import { toSrt, toVtt } from "@/lib/subtitles/serialize";
 import type { Outcome, SyncTransform } from "./fp-gate";
 import type { SourceKind } from "./pipeline";
 import { classifyTorrentSource, sourceKindFor } from "./torrent-sync";
+import { writeTempTextFile } from "@/lib/temp-text-file";
 
 export type SubFmt = "srt" | "vtt";
 
@@ -185,10 +186,7 @@ async function installSyncedTrack(
   }
   const text = format === "vtt" ? toVtt(cues) : toSrt(cues);
   if (isTauriRuntime()) {
-    const pathMod = await import("@tauri-apps/api/path");
-    const dir = await pathMod.join(await pathMod.tempDir(), "harbor-subs");
-    const file = await pathMod.join(dir, `autosync-${Date.now()}.${format}`);
-    await invoke("save_text_file", { path: file, contents: text });
+    const file = await writeTempTextFile("harbor-subs", `autosync-${Date.now()}.${format}`, text);
     await bridge.addSubtitle(file, undefined, `${title} (${format.toUpperCase()})`, true);
     return { via: "temp-file", cleanup: noop };
   }

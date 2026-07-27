@@ -1,4 +1,4 @@
-import { Check, Download, FlaskConical, Github, Link2, Loader2, Lock, RotateCw, Wrench } from "lucide-react";
+import { Check, Download, Github, Link2, Loader2, Lock, RotateCw, Wrench } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import cornerSvg from "@/assets/corner.svg";
 import harborDiscord from "@/assets/harbor-discord.svg";
@@ -18,7 +18,6 @@ import type { LibraryItem } from "@/lib/stremio";
 import { openUrl } from "@/lib/window";
 import {
   checkForUpdate,
-  clearStagedUpdate,
   openUpdatePanel,
   updateAvailable,
   useUpdate,
@@ -29,7 +28,6 @@ import { isLinuxDesktop } from "@/lib/platform";
 import { BackupRow } from "./backup-row";
 import { SettingsRecoverRow } from "./settings-recover-row";
 import { BuildFeedback } from "./build-feedback";
-import { RollbackRow } from "./rollback-row";
 import { PrivacyRow } from "./privacy-row";
 import { TrayRow } from "./tray-row";
 import { Section } from "./shared";
@@ -37,10 +35,11 @@ import { Signature } from "./signature";
 import { CustomCodeCard, DownloadsSection } from "./player-panel";
 import { DesktopOnlyBlock } from "./player-panel/internals";
 import { useT } from "@/lib/i18n";
+import { CUSTOM_THEME_TOOLS_ENABLED } from "@/lib/security-policy";
 
 const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
-const DOWNLOAD_URL = "https://harbor.site/download";
-const SOURCE_URL = "https://github.com/harborstremio/harbor";
+const DOWNLOAD_URL = "https://github.com/2-sa/Bear/releases";
+const SOURCE_URL = "https://github.com/2-sa/Bear";
 
 export function AdvancedPanel() {
   const t = useT();
@@ -52,12 +51,10 @@ export function AdvancedPanel() {
       {supportsInAppUpdates && (
         <Section
           title={t("Updates")}
-          subtitle={t("Harbor checks harbor.site for new versions and installs them in place. Nothing installs until you choose to, and a dismissed update never nags you again.")}
+          subtitle={t("Harbor checks our signed GitHub releases for new versions. Nothing installs until you choose to, and every installer must pass signature verification.")}
         >
           <div className="flex flex-col gap-2.5">
             <UpdatesRow />
-            <BetaChannelRow />
-            <RollbackRow />
             <BuildFeedback />
           </div>
         </Section>
@@ -136,7 +133,7 @@ export function AdvancedPanel() {
         </DesktopOnlyBlock>
       </Section>
 
-      <CustomCodeCard />
+      {CUSTOM_THEME_TOOLS_ENABLED && <CustomCodeCard />}
 
       <Section
         title={t("About")}
@@ -233,47 +230,6 @@ function WebBuildBanner() {
   );
 }
 
-function BetaChannelRow() {
-  const t = useT();
-  const { settings, update } = useSettings();
-  const on = settings.betaUpdates;
-  return (
-    <div className="flex items-start gap-3 rounded-xl border border-edge-soft bg-canvas/40 px-4 py-3.5">
-      <span
-        className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
-          on ? "bg-accent/15 text-accent" : "bg-raised text-ink-subtle"
-        }`}
-      >
-        <FlaskConical size={15} strokeWidth={2.2} />
-      </span>
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <span className="text-[14px] font-medium text-ink">{t("Get beta updates")}</span>
-        <p className="text-[12.5px] leading-relaxed text-ink-subtle">
-          {t("Receive early builds with the newest fixes before they reach the stable release. Betas can be rough around the edges; switch this off to return to stable at the next update.")}
-        </p>
-      </div>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={on}
-        onClick={() => {
-          if (on) clearStagedUpdate();
-          update({ betaUpdates: !on });
-        }}
-        className={`mt-1 flex h-6 w-11 shrink-0 items-center rounded-full px-0.5 transition-colors ${
-          on ? "bg-accent" : "bg-raised"
-        }`}
-      >
-        <span
-          className={`h-5 w-5 rounded-full bg-canvas shadow-sm transition-transform ${
-            on ? "translate-x-5 rtl:-translate-x-5" : "translate-x-0"
-          }`}
-        />
-      </button>
-    </div>
-  );
-}
-
 function StremioDeeplinkRow() {
   const t = useT();
   const { settings, update } = useSettings();
@@ -332,7 +288,7 @@ function UpdatesRow() {
   const busy = u.status === "checking";
   const status =
     u.status === "checking"
-      ? t("Checking harbor.site for a newer build.")
+      ? t("Checking our signed GitHub releases for a newer build.")
       : u.status === "downloading"
         ? t("Downloading {pct}%", { pct: Math.round(u.progress * 100) })
         : u.status === "downloaded"

@@ -79,7 +79,7 @@ export async function pickImagesNative(): Promise<ImportEntry[]> {
 
 export async function pickFolderNative(): Promise<ImportEntry[]> {
   const { open } = await import("@tauri-apps/plugin-dialog");
-  const dir = await open({ directory: true, multiple: false });
+  const dir = await open({ directory: true, multiple: false, recursive: true });
   if (typeof dir !== "string") return [];
   const { readDir, readFile } = await import("@tauri-apps/plugin-fs");
   const { join } = await import("@tauri-apps/api/path");

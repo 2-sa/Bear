@@ -77,7 +77,7 @@ export function NewRecordingView({
   const canStart = !!dir && durationSec >= 60 && !busy;
 
   const handleBrowse = async () => {
-    const picked = await openDialog({ directory: true, multiple: false, defaultPath: dir });
+    const picked = await openDialog({ directory: true, multiple: false, recursive: true, defaultPath: dir });
     if (typeof picked === "string" && picked) {
       setDir(picked);
       writeLastDir(picked);

@@ -1,0 +1,123 @@
+{
+  "schemaVersion": 1,
+  "artifacts": {
+    "x86_64-pc-windows-msvc": {
+      "yt-dlp": {
+        "sourceUrl": "https://github.com/yt-dlp/yt-dlp/releases/download/2026.06.09/yt-dlp.exe",
+        "mirrorKey": "v1/yt-dlp/2026.06.09/yt-dlp.exe",
+        "format": "raw",
+        "downloadSha256": "3a48cb955d55c8821b60ccbdbbc6f61bc958f2f3d3b7ad5eaf3d83a543293a27",
+        "downloadSize": 18202192,
+        "outputSha256": "3a48cb955d55c8821b60ccbdbbc6f61bc958f2f3d3b7ad5eaf3d83a543293a27",
+        "outputSize": 18202192
+      },
+      "ffmpeg": {
+        "sourceUrl": "https://github.com/eugeneware/ffmpeg-static/releases/download/b6.1.1/ffmpeg-win32-x64.gz",
+        "mirrorKey": "v1/ffmpeg-static/b6.1.1/ffmpeg-win32-x64.gz",
+        "format": "gzip",
+        "downloadSha256": "8883a3dffbd0a16cf4ef95206ea05283f78908dbfb118f73c83f4951dcc06d77",
+        "downloadSize": 29581307,
+        "outputSha256": "04e1307997530f9cf2fe35cba2ca7e8875ca91da02f89d6c7243df819c94ad00",
+        "outputSize": 82797568
+      },
+      "ffprobe": {
+        "sourceUrl": "https://github.com/eugeneware/ffmpeg-static/releases/download/b6.1.1/ffprobe-win32-x64.gz",
+        "mirrorKey": "v1/ffmpeg-static/b6.1.1/ffprobe-win32-x64.gz",
+        "format": "gzip",
+        "downloadSha256": "f309e6223ad89d2fe54bccd420a7709b66fd27540674e92309578ed491a43c8d",
+        "downloadSize": 29521644,
+        "outputSha256": "3a7e2dc003dc2cd1472827e4c7c4f056ae1ae0ae7c5bbc580c99b49827351ba4",
+        "outputSize": 82668032
+      }
+    },
+    "aarch64-pc-windows-msvc": {
+      "yt-dlp": {
+        "sourceUrl": "https://github.com/yt-dlp/yt-dlp/releases/download/2026.06.09/yt-dlp_arm64.exe",
+        "mirrorKey": "v1/yt-dlp/2026.06.09/yt-dlp_arm64.exe",
+        "format": "raw",
+        "downloadSha256": "847583f91bb6d26479c1dc9643c2f4b8857a90b40d619da97b0cfabccb9138d0",
+        "downloadSize": 22204855,
+        "outputSha256": "847583f91bb6d26479c1dc9643c2f4b8857a90b40d619da97b0cfabccb9138d0",
+        "outputSize": 22204855
+      },
+      "ffmpeg": {
+        "sourceUrl": "https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2026-06-30-13-34/ffmpeg-N-125365-g9a01c1cb6a-winarm64-gpl.zip",
+        "mirrorKey": "v1/ffmpeg-builds/autobuild-2026-06-30-13-34/ffmpeg-N-125365-g9a01c1cb6a-winarm64-gpl.zip",
+        "format": "zip",
+        "member": "ffmpeg.exe",
+        "downloadSha256": "f1e59d579755fbb5ecfe9cde2ec2c4a59a71ae701fa8d770c95b4db9dabcedf2",
+        "downloadSize": 111773854,
+        "outputSha256": "cd9b029187885aeb82e18723547790187b5823656aa805cc9dd6cf461b3af1f7",
+        "outputSize": 76440576
+      },
+      "ffprobe": {
+        "sourceUrl": "https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2026-06-30-13-34/ffmpeg-N-125365-g9a01c1cb6a-winarm64-gpl.zip",
+        "mirrorKey": "v1/ffmpeg-builds/autobuild-2026-06-30-13-34/ffmpeg-N-125365-g9a01c1cb6a-winarm64-gpl.zip",
+        "format": "zip",
+        "member": "ffprobe.exe",
+        "downloadSha256": "f1e59d579755fbb5ecfe9cde2ec2c4a59a71ae701fa8d770c95b4db9dabcedf2",
+        "downloadSize": 111773854,
+        "outputSha256": "30573bd25fd54e77c934487764f205bba517fc8f33d4b96a52a5f5bb5dad1344",
+        "outputSize": 76279808
+      }
+    },
+    "x86_64-apple-darwin": {
+      "yt-dlp": {
+        "sourceUrl": "https://github.com/yt-dlp/yt-dlp/releases/download/2026.06.09/yt-dlp_macos",
+        "mirrorKey": "v1/yt-dlp/2026.06.09/yt-dlp_macos",
+        "format": "raw",
+        "downloadSha256": "b82c3626952e6c14eaf654cc565866775ffd0b9ffb7021628ac59b42c2f4f244",
+        "downloadSize": 36478448,
+        "outputSha256": "b82c3626952e6c14eaf654cc565866775ffd0b9ffb7021628ac59b42c2f4f244",
+        "outputSize": 36478448
+      },
+      "ffmpeg": {
+        "sourceUrl": "https://github.com/eugeneware/ffmpeg-static/releases/download/b6.1.1/ffmpeg-darwin-x64.gz",
+        "mirrorKey": "v1/ffmpeg-static/b6.1.1/ffmpeg-darwin-x64.gz",
+        "format": "gzip",
+        "downloadSha256": "929b375c1182d956c51f7ac25e0b2b0411fb01f6f407aa15c9758efeb4242106",
+        "downloadSize": 25296431,
+        "outputSha256": "ebdddc936f61e14049a2d4b549a412b8a40deeff6540e58a9f2a2da9e6b18894",
+        "outputSize": 78862176
+      },
+      "ffprobe": {
+        "sourceUrl": "https://github.com/eugeneware/ffmpeg-static/releases/download/b6.1.1/ffprobe-darwin-x64.gz",
+        "mirrorKey": "v1/ffmpeg-static/b6.1.1/ffprobe-darwin-x64.gz",
+        "format": "gzip",
+        "downloadSha256": "d4da574d6e2e197bd259b47d69cf262df9e312af24ad960444f6d806d3d4c186",
+        "downloadSize": 25239438,
+        "outputSha256": "fa3add0ce901f7241abe0dfc0155d958fc834aca3f8ce61f87cc712ae669c1e0",
+        "outputSize": 78780408
+      }
+    },
+    "aarch64-apple-darwin": {
+      "yt-dlp": {
+        "sourceUrl": "https://github.com/yt-dlp/yt-dlp/releases/download/2026.06.09/yt-dlp_macos",
+        "mirrorKey": "v1/yt-dlp/2026.06.09/yt-dlp_macos",
+        "format": "raw",
+        "downloadSha256": "b82c3626952e6c14eaf654cc565866775ffd0b9ffb7021628ac59b42c2f4f244",
+        "downloadSize": 36478448,
+        "outputSha256": "b82c3626952e6c14eaf654cc565866775ffd0b9ffb7021628ac59b42c2f4f244",
+        "outputSize": 36478448
+      },
+      "ffmpeg": {
+        "sourceUrl": "https://github.com/eugeneware/ffmpeg-static/releases/download/b6.1.1/ffmpeg-darwin-arm64.gz",
+        "mirrorKey": "v1/ffmpeg-static/b6.1.1/ffmpeg-darwin-arm64.gz",
+        "format": "gzip",
+        "downloadSha256": "8923876afa8db5585022d7860ec7e589af192f441c56793971276d450ed3bbfa",
+        "downloadSize": 19246198,
+        "outputSha256": "a90e3db6a3fd35f6074b013f948b1aa45b31c6375489d39e572bea3f18336584",
+        "outputSize": 45568216
+      },
+      "ffprobe": {
+        "sourceUrl": "https://github.com/eugeneware/ffmpeg-static/releases/download/b6.1.1/ffprobe-darwin-arm64.gz",
+        "mirrorKey": "v1/ffmpeg-static/b6.1.1/ffprobe-darwin-arm64.gz",
+        "format": "gzip",
+        "downloadSha256": "d986a8ec7b030899fe66a8a288ed809a3543338705a3ce178cfb85869c5d80be",
+        "downloadSize": 19207077,
+        "outputSha256": "bb2db6f5d8cef919da12fbf592119a987202a8c060a886f3cab091f9cab90b64",
+        "outputSize": 45528808
+      }
+    }
+  }
+}

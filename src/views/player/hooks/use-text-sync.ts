@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { invoke } from "@tauri-apps/api/core";
 import type { PlayerBridge } from "@/lib/player/bridge";
 import { getPlaybackPosition } from "@/lib/player/playback-clock";
 import type { SubCue } from "@/lib/subtitles/parser";
 import { getCuesAnySource } from "@/lib/subtitles/extract";
 import { toSrt, toVtt } from "@/lib/subtitles/serialize";
 import { applyLinear, deltaFn, type SyncPoint, type SyncSegment } from "@/lib/subtitles/text-sync";
+import { writeTempTextFile } from "@/lib/temp-text-file";
 
 const round3 = (v: number) => Math.round(v * 1000) / 1000;
 
@@ -210,13 +210,8 @@ export function useTextSync(bridge: PlayerBridge | null, metaId: string) {
 async function writeTemp(text: string, ext: "srt" | "vtt", name?: string): Promise<string | null> {
   if (typeof window === "undefined" || !("__TAURI_INTERNALS__" in window)) return null;
   try {
-    const pathMod = await import("@tauri-apps/api/path");
-    const tmpDir = await pathMod.tempDir();
-    const dir = await pathMod.join(tmpDir, "harbor-subs");
     const fileName = `${name ?? "preview"}.${ext}`;
-    const filePath = await pathMod.join(dir, fileName);
-    await invoke("save_text_file", { path: filePath, contents: text });
-    return filePath;
+    return await writeTempTextFile("harbor-subs", fileName, text);
   } catch {
     return null;
   }

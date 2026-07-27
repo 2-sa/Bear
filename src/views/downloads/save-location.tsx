@@ -48,7 +48,7 @@ export function SaveLocationChip() {
 
   const pick = async () => {
     try {
-      const picked = await open({ directory: true, defaultPath: current || undefined });
+      const picked = await open({ directory: true, recursive: true, defaultPath: current || undefined });
       if (typeof picked === "string") update({ downloadDir: picked });
     } catch {
       return;

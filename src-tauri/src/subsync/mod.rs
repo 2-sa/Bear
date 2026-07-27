@@ -2,14 +2,14 @@ pub(crate) mod correlate;
 mod extract;
 pub mod moviehash;
 
-mod url_guard;
-mod vad;
+pub mod asr;
 mod asr_match;
+pub mod audio_tracks;
+pub mod fingerprint;
 pub mod scorer;
 pub mod torrent_sync;
-pub mod audio_tracks;
-pub mod asr;
-pub mod fingerprint;
+pub(crate) mod url_guard;
+mod vad;
 
 #[cfg(feature = "asr-whisper")]
 mod asr_whisper;
@@ -48,6 +48,7 @@ fn windows(dur: f32) -> Vec<(f32, f32)> {
 
 #[tauri::command]
 pub async fn sync_subtitle(
+    app: tauri::AppHandle,
     url: String,
     headers: Option<HashMap<String, String>>,
     cues: Vec<[f32; 2]>,
@@ -55,6 +56,7 @@ pub async fn sync_subtitle(
     info_hash: Option<String>,
     conf_min: Option<f32>,
 ) -> Result<Option<SyncOut>, String> {
+    url_guard::validate_media_source(&app, &url, true)?;
     if info_hash.as_deref().map(|h| !h.is_empty()).unwrap_or(false) {
         return Ok(None);
     }

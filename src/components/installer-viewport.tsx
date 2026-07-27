@@ -6,6 +6,7 @@ import { isAdultText } from "@/lib/addons-store/adult-filter";
 import { pushActivityHint } from "@/lib/discord/activity-hint";
 import { clearPendingDeepLink } from "@/lib/deep-link";
 import { isLinuxDesktop, isWeb } from "@/lib/platform";
+import { IN_APP_EXTERNAL_PAGES_ENABLED } from "@/lib/security-policy";
 import { openUrl } from "@/lib/window";
 import { HarborLoader } from "@/components/harbor-loader";
 import { InstallOverlay } from "./installer-viewport/install-overlay";
@@ -16,6 +17,10 @@ type InstallerDetail = { url: string; title?: string; logo?: string | null };
 
 export function openInstallerViewport(url: string, title?: string, logo?: string | null): void {
   if (typeof window === "undefined") return;
+  if (!IN_APP_EXTERNAL_PAGES_ENABLED) {
+    openUrl(url);
+    return;
+  }
   // Linux: the in-page iframe can't capture the addon's stremio:// install link
   // (WebKitGTK refuses the scheme). Route through the Harbor Browser window, where
   // browser.rs intercepts the link and feeds it into the deep-link install bridge.

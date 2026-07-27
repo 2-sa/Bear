@@ -128,7 +128,7 @@ function ByosOption({ kind, icon: Icon, iconUrl, title, subtitle, placeholder }:
   const pickFolder = async () => {
     try {
       const { open: openDialog } = await import("@tauri-apps/plugin-dialog");
-      const dir = await openDialog({ directory: true, multiple: false, title: t("Choose manga folder") });
+      const dir = await openDialog({ directory: true, multiple: false, recursive: true, title: t("Choose manga folder") });
       if (typeof dir === "string" && !addMangaSource("", dir, "local")) setError(t("Could not add that folder"));
     } catch {
       setError(t("Folder picker is only available in the desktop app"));

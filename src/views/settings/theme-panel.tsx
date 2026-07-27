@@ -13,6 +13,7 @@ import type { IconThumb } from "./theme-panel/custom-themes-section/community-st
 import { DisplaySection } from "./theme-panel/display-section";
 import { FontGrid } from "./theme-panel/font-grid";
 import { LogoPicker } from "./theme-panel/logo-picker";
+import { CUSTOM_THEME_TOOLS_ENABLED } from "@/lib/security-policy";
 
 const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
@@ -25,13 +26,14 @@ export function ThemePanel() {
     update({ theme: { ...theme, ...patch } });
   };
 
-  const libraryOpen = useThemeLibraryOpen();
+  const requestedLibraryOpen = useThemeLibraryOpen();
+  const libraryOpen = CUSTOM_THEME_TOOLS_ENABLED && requestedLibraryOpen;
 
   return (
     <>
       {!libraryOpen && (
         <>
-      <ThemeCommunityCta />
+      {CUSTOM_THEME_TOOLS_ENABLED && <ThemeCommunityCta />}
 
       <Section
         title={t("Theme")}
@@ -54,13 +56,15 @@ export function ThemePanel() {
         </>
       )}
 
-      <Section
-        title={t("Your themes")}
-        subtitle={t("Make your own in the Theme Studio, or import one a friend shared.")}
-        bare={libraryOpen}
-      >
-        <CustomThemesSection />
-      </Section>
+      {CUSTOM_THEME_TOOLS_ENABLED && (
+        <Section
+          title={t("Your themes")}
+          subtitle={t("Make your own in the Theme Studio, or import one a friend shared.")}
+          bare={libraryOpen}
+        >
+          <CustomThemesSection />
+        </Section>
+      )}
 
       {!libraryOpen && (
         <>

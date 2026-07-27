@@ -65,7 +65,7 @@ export function P2PAdvancedSection() {
     void torrentEngineSetOptions(customDir || null, retention, g, false);
   };
   const pickDir = async () => {
-    const picked = await open({ directory: true, defaultPath: customDir || undefined });
+    const picked = await open({ directory: true, recursive: true, defaultPath: customDir || undefined });
     if (typeof picked === "string") {
       update({ streamCacheDir: picked });
       void torrentEngineSetOptions(picked, retention, maxGb, true);

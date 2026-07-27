@@ -4,6 +4,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { useEffect, useState } from "react";
 import { getWindowFullscreen } from "@/lib/fullscreen-state";
 import { isMacDesktop } from "@/lib/platform";
+import { IN_APP_EXTERNAL_PAGES_ENABLED } from "@/lib/security-policy";
 
 const win: Window | null = isTauri() ? getCurrentWindow() : null;
 
@@ -127,6 +128,10 @@ function isIframeHostile(url: string): boolean {
 
 export function openInAppBrowser(url: string, title?: string) {
   if (!url) return;
+  if (!IN_APP_EXTERNAL_PAGES_ENABLED) {
+    openUrl(url);
+    return;
+  }
   if (isIframeHostile(url)) {
     openUrl(url);
     return;

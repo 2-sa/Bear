@@ -1,5 +1,8 @@
 import { useSyncExternalStore } from "react";
 import { check } from "@tauri-apps/plugin-updater";
+import { SIGNED_UPDATES_ENABLED } from "@/lib/security-policy";
+
+const RELEASES_URL = "https://github.com/2-sa/Bear/releases";
 
 const IS_TAURI = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 const DISMISS_KEY = "harbor.update.dismissed";
@@ -92,24 +95,24 @@ export function updateAvailable(s: UpdateState): boolean {
   return s.status === "available" || s.status === "downloading" || s.status === "downloaded";
 }
 
-function betaChannel(): boolean {
-  try {
-    const raw = localStorage.getItem("harbor.settings");
-    if (!raw) return false;
-    return (JSON.parse(raw) as { betaUpdates?: boolean }).betaUpdates === true;
-  } catch {
-    return false;
-  }
-}
-
 export async function checkForUpdate(manual = false): Promise<void> {
+  if (!SIGNED_UPDATES_ENABLED) {
+    if (manual) {
+      set({
+        status: "error",
+        manualCheck: true,
+        error: "Signed updates are disabled by security policy.",
+      });
+    }
+    return;
+  }
   if (!IS_TAURI) return;
   if (state.status === "checking" || state.status === "downloading" || state.status === "installing") {
     return;
   }
   set({ status: "checking", manualCheck: manual, error: null });
   try {
-    const update = await check(betaChannel() ? { headers: { "x-harbor-channel": "beta" } } : undefined);
+    const update = await check();
     if (!update) {
       set({ status: "uptodate", version: null, notes: null });
       return;
@@ -129,6 +132,7 @@ export async function checkForUpdate(manual = false): Promise<void> {
 }
 
 export async function downloadUpdate(): Promise<void> {
+  if (!SIGNED_UPDATES_ENABLED) return;
   if (!handle || state.status === "downloading" || state.status === "installing") return;
   set({ status: "downloading", progress: 0, downloadedBytes: 0, totalBytes: 0, error: null });
   try {
@@ -152,6 +156,7 @@ export async function downloadUpdate(): Promise<void> {
 }
 
 export async function installUpdate(): Promise<void> {
+  if (!SIGNED_UPDATES_ENABLED) return;
   if (!handle) return;
   set({ status: "installing", error: null, installFailed: false });
   try {
@@ -187,26 +192,9 @@ function cmpVersion(a: string, b: string): number {
 }
 
 export async function openManualDownload(): Promise<void> {
+  if (!SIGNED_UPDATES_ENABLED) return;
   const { openUrl } = await import("@/lib/window");
-  let target = "https://harbor.site";
-  try {
-    const { safeFetch } = await import("@/lib/safe-fetch");
-    const res = await safeFetch(
-      "https://harbor.site/updates/latest.json",
-      betaChannel() ? { headers: { "x-harbor-channel": "beta" } } : undefined,
-    );
-    const manifest = (await res.json()) as { platforms?: Record<string, { url?: string }> };
-    const platforms = manifest.platforms ?? {};
-    const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
-    const want = ua.includes("Windows") ? "windows" : ua.includes("Mac") ? "darwin" : "linux";
-    const key =
-      Object.keys(platforms).find((k) => k.toLowerCase().startsWith(want)) ?? Object.keys(platforms)[0];
-    const url = key ? platforms[key]?.url : undefined;
-    if (typeof url === "string" && url) target = url;
-  } catch {
-    /* fall back to the site download */
-  }
-  openUrl(target);
+  openUrl(RELEASES_URL);
 }
 
 async function detectFailedUpdate(): Promise<boolean> {
@@ -281,6 +269,7 @@ export function clearStagedUpdate(): void {
 
 let started = false;
 export function startUpdateWatcher(): void {
+  if (!SIGNED_UPDATES_ENABLED) return;
   if (started || !IS_TAURI) return;
   started = true;
   void (async () => {

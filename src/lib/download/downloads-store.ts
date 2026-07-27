@@ -40,6 +40,7 @@ const items = new Map<string, DownloadItem>();
 const handles = new Map<string, DownloadHandle>();
 const speed = new Map<string, { bytes: number; at: number }>();
 const listeners = new Set<() => void>();
+let sessionDownloadDir = "";
 
 let snapshot: DownloadItem[] = [];
 
@@ -91,14 +92,28 @@ function sep(): string {
 }
 
 async function resolveDir(): Promise<string> {
+  if (sessionDownloadDir) return sessionDownloadDir;
+  let preferred = "";
   try {
     const raw = localStorage.getItem("harbor.settings");
     const fromSettings = raw ? (JSON.parse(raw) as { downloadDir?: string }).downloadDir?.trim() : "";
-    if (fromSettings) return fromSettings;
+    if (fromSettings) preferred = fromSettings;
   } catch {
     /* fall through to system default */
   }
-  return (await systemDownloadDir().catch(() => "")) || "";
+  if (!preferred) preferred = (await systemDownloadDir().catch(() => "")) || "";
+  const { open } = await import("@tauri-apps/plugin-dialog");
+  const picked = await open({
+    directory: true,
+    recursive: true,
+    defaultPath: preferred || undefined,
+    title: "Choose a download folder",
+  });
+  if (typeof picked !== "string" || !picked) {
+    throw new Error("Download folder access was not granted");
+  }
+  sessionDownloadDir = picked;
+  return picked;
 }
 
 async function pathTaken(path: string): Promise<boolean> {

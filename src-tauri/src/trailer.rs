@@ -14,8 +14,7 @@ const FORMAT_HIGH: &str =
     "22/18/best[ext=mp4][vcodec!=none][acodec!=none][height<=720]/best[vcodec!=none][acodec!=none]";
 const FORMAT_1080: &str =
     "bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[height<=1080][ext=mp4]/best[height<=1080]/best";
-const FORMAT_BEST: &str =
-    "bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best";
+const FORMAT_BEST: &str = "bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best";
 
 fn cache_dir() -> PathBuf {
     std::env::temp_dir().join("harbor-trailers")

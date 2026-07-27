@@ -29,6 +29,7 @@ export function DownloadsSection() {
     try {
       const picked = await open({
         directory: true,
+        recursive: true,
         defaultPath: current || undefined,
       });
       if (typeof picked === "string") {

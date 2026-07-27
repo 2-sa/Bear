@@ -4,6 +4,7 @@ import { getThemeById } from "@/lib/theme";
 import { useView } from "@/lib/view";
 import { scanTheme } from "@/lib/theme-scan";
 import { subscribeCustomThemes, type CustomTheme } from "@/lib/custom-themes";
+import { ACTIVE_THEME_CONTENT_ENABLED, activeThemeContent } from "@/lib/security-policy";
 
 const STYLE_ID = "harbor-custom-css";
 const THEME_STYLE_ID = "harbor-theme-css";
@@ -30,6 +31,7 @@ export function CustomCodeMount() {
   useEffect(() => subscribeCustomThemes(() => setThemesTick((t) => t + 1)), []);
 
   const themeExt = useMemo(() => {
+    if (!ACTIVE_THEME_CONTENT_ENABLED) return null;
     if (settings.theme.preset === "custom") return null;
     const t = getThemeById(settings.theme.preset) as CustomTheme | null;
     if (!t) return null;
@@ -53,9 +55,9 @@ export function CustomCodeMount() {
       el.id = STYLE_ID;
       document.head.appendChild(el);
     }
-    el.textContent = settings.customCss ?? "";
+    el.textContent = activeThemeContent(settings.customCss);
     return () => {
-      if (el && !settings.customCss) el.textContent = "";
+      if (el) el.textContent = "";
     };
   }, [settings.customCss]);
 
@@ -67,12 +69,12 @@ export function CustomCodeMount() {
       el.id = THEME_STYLE_ID;
       document.head.appendChild(el);
     }
-    el.textContent = themeExt?.css ?? "";
+    el.textContent = activeThemeContent(themeExt?.css);
   }, [themeExt?.css]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const code = (settings.customJs ?? "").trim();
+    const code = activeThemeContent(settings.customJs).trim();
     if (!code) return;
     try {
       new Function(code)();
@@ -84,7 +86,7 @@ export function CustomCodeMount() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const code = (themeExt?.js ?? "").trim();
+    const code = activeThemeContent(themeExt?.js).trim();
     if (!code) return;
     try {
       new Function(code)();
@@ -94,7 +96,7 @@ export function CustomCodeMount() {
     return () => runThemeCleanup("__harborThemeCleanup");
   }, [themeExt?.js]);
 
-  const html = `${settings.customHtml ?? ""}${themeExt?.html ?? ""}`;
+  const html = activeThemeContent(`${settings.customHtml ?? ""}${themeExt?.html ?? ""}`);
   return (
     <div
       id={OVERLAY_ID}

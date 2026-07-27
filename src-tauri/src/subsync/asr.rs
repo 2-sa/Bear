@@ -64,8 +64,12 @@ pub struct VerifyReport {
 }
 
 pub trait AsrEngine: Send + Sync {
-    fn transcribe(&self, pcm: &[f32], lang: Option<&str>, translate: bool)
-        -> Result<Vec<AsrSegment>, String>;
+    fn transcribe(
+        &self,
+        pcm: &[f32],
+        lang: Option<&str>,
+        translate: bool,
+    ) -> Result<Vec<AsrSegment>, String>;
 }
 
 pub struct NullEngine;
@@ -84,7 +88,10 @@ pub async fn pcm_window(
 ) -> Result<Vec<f32>, String> {
     let ff = crate::transcode::locate_ffmpeg().ok_or("ffmpeg not found")?;
     let mut cmd = Command::new(&ff);
-    cmd.arg("-hide_banner").arg("-nostats").arg("-loglevel").arg("error");
+    cmd.arg("-hide_banner")
+        .arg("-nostats")
+        .arg("-loglevel")
+        .arg("error");
     cmd.arg("-user_agent")
         .arg(url_guard::user_agent(headers).unwrap_or_else(|| "Harbor".into()));
     let blob = url_guard::safe_header_blob(headers);
@@ -124,7 +131,12 @@ pub async fn pcm_window(
     let mut pcm = Vec::with_capacity(buf.len() / 4);
     let mut i = 0;
     while i + 4 <= buf.len() {
-        pcm.push(f32::from_le_bytes([buf[i], buf[i + 1], buf[i + 2], buf[i + 3]]));
+        pcm.push(f32::from_le_bytes([
+            buf[i],
+            buf[i + 1],
+            buf[i + 2],
+            buf[i + 3],
+        ]));
         i += 4;
     }
     Ok(pcm)
@@ -196,8 +208,20 @@ pub async fn verify(
     }
     let mut windows = Vec::new();
     for w in asr {
-        let subs = cue_tokens(cues, w.start_sec, w.start_sec + w.len_sec, offset_sec, ratio);
-        windows.push(score_window(&w.tokens, &subs, w.lang, w.start_sec, w.len_sec));
+        let subs = cue_tokens(
+            cues,
+            w.start_sec,
+            w.start_sec + w.len_sec,
+            offset_sec,
+            ratio,
+        );
+        windows.push(score_window(
+            &w.tokens,
+            &subs,
+            w.lang,
+            w.start_sec,
+            w.len_sec,
+        ));
     }
     Ok(VerifyReport {
         windows,
@@ -249,12 +273,15 @@ pub async fn generate(
 
 #[cfg(feature = "asr-whisper")]
 fn load_engine(model_path: &str) -> Result<Box<dyn AsrEngine>, String> {
-    Ok(Box::new(super::asr_whisper::WhisperEngine::load(model_path)?))
+    Ok(Box::new(super::asr_whisper::WhisperEngine::load(
+        model_path,
+    )?))
 }
 
 #[tauri::command]
 #[allow(clippy::too_many_arguments)]
 pub async fn asr_transcribe_windows(
+    app: tauri::AppHandle,
     url: String,
     headers: Option<HashMap<String, String>>,
     duration_sec: f32,
@@ -267,15 +294,25 @@ pub async fn asr_transcribe_windows(
     #[cfg(not(feature = "asr-whisper"))]
     return {
         let _ = (
-            &url, &headers, duration_sec, &sub_lang, probe_count, window_sec, &model_path, &map_spec,
+            &app,
+            &url,
+            &headers,
+            duration_sec,
+            &sub_lang,
+            probe_count,
+            window_sec,
+            &model_path,
+            &map_spec,
         );
         Ok(Vec::new())
     };
 
     #[cfg(feature = "asr-whisper")]
     {
-        url_guard::validate_media_url(&url, true)?;
-        let Some(model) = model_path else { return Ok(Vec::new()) };
+        url_guard::validate_media_source(&app, &url, true)?;
+        let Some(model) = model_path else {
+            return Ok(Vec::new());
+        };
         let engine = match load_engine(&model) {
             Ok(e) => e,
             Err(_) => return Ok(Vec::new()),
@@ -292,6 +329,7 @@ pub async fn asr_transcribe_windows(
 #[tauri::command]
 #[allow(clippy::too_many_arguments)]
 pub async fn asr_verify(
+    app: tauri::AppHandle,
     url: String,
     headers: Option<HashMap<String, String>>,
     cues: Vec<(f32, f32, String)>,
@@ -307,16 +345,28 @@ pub async fn asr_verify(
     #[cfg(not(feature = "asr-whisper"))]
     return {
         let _ = (
-            &url, &headers, &cues, offset_sec, ratio, &sub_lang, duration_sec, probe_count,
-            window_sec, &model_path, &map_spec,
+            &app,
+            &url,
+            &headers,
+            &cues,
+            offset_sec,
+            ratio,
+            &sub_lang,
+            duration_sec,
+            probe_count,
+            window_sec,
+            &model_path,
+            &map_spec,
         );
         Ok(None)
     };
 
     #[cfg(feature = "asr-whisper")]
     {
-        url_guard::validate_media_url(&url, true)?;
-        let Some(model) = model_path else { return Ok(None) };
+        url_guard::validate_media_source(&app, &url, true)?;
+        let Some(model) = model_path else {
+            return Ok(None);
+        };
         let engine = match load_engine(&model) {
             Ok(e) => e,
             Err(_) => return Ok(None),
@@ -325,9 +375,22 @@ pub async fn asr_verify(
         let ms = url_guard::safe_map_spec(map_spec.as_deref());
         let win = window_sec.unwrap_or(30.0).max(5.0);
         let probes = probe_windows(duration_sec, probe_count.unwrap_or(3), win);
-        let lang = if sub_lang.is_empty() { "auto" } else { sub_lang.as_str() };
+        let lang = if sub_lang.is_empty() {
+            "auto"
+        } else {
+            sub_lang.as_str()
+        };
         match verify(
-            engine.as_ref(), &url, &hdrs, &cues, offset_sec, ratio, lang, &probes, &model, &ms,
+            engine.as_ref(),
+            &url,
+            &hdrs,
+            &cues,
+            offset_sec,
+            ratio,
+            lang,
+            &probes,
+            &model,
+            &ms,
         )
         .await
         {

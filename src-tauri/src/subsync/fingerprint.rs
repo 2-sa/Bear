@@ -41,7 +41,11 @@ pub fn locate_fpcalc() -> Option<PathBuf> {
             return Some(pb);
         }
     }
-    let names: &[&str] = if cfg!(windows) { &["fpcalc.exe"] } else { &["fpcalc"] };
+    let names: &[&str] = if cfg!(windows) {
+        &["fpcalc.exe"]
+    } else {
+        &["fpcalc"]
+    };
     let sep = if cfg!(windows) { ';' } else { ':' };
     if let Ok(path) = std::env::var("PATH") {
         for dir in path.split(sep) {
@@ -101,7 +105,11 @@ async fn decode_window_wav(
 ) -> Result<PathBuf, String> {
     let ff = locate_ffmpeg().ok_or("ffmpeg not found")?;
     let mut out = std::env::temp_dir();
-    out.push(format!("harbor-fp-{}-{}.wav", std::process::id(), start_sec as u64));
+    out.push(format!(
+        "harbor-fp-{}-{}.wav",
+        std::process::id(),
+        start_sec as u64
+    ));
 
     let mut cmd = Command::new(&ff);
     cmd.arg("-hide_banner").arg("-nostats").arg("-y");
@@ -143,12 +151,18 @@ async fn decode_window_wav(
 
 fn parse_fpcalc_json(bytes: &[u8]) -> Result<Fingerprint, String> {
     let v: serde_json::Value = serde_json::from_slice(bytes).map_err(|e| format!("json: {}", e))?;
-    let duration = v.get("duration").and_then(|d| d.as_f64()).ok_or("no duration")?;
+    let duration = v
+        .get("duration")
+        .and_then(|d| d.as_f64())
+        .ok_or("no duration")?;
     let arr = v
         .get("fingerprint")
         .and_then(|f| f.as_array())
         .ok_or("no raw fingerprint")?;
-    let raw: Vec<u32> = arr.iter().filter_map(|n| n.as_i64().map(|x| x as u32)).collect();
+    let raw: Vec<u32> = arr
+        .iter()
+        .filter_map(|n| n.as_i64().map(|x| x as u32))
+        .collect();
     if raw.is_empty() {
         return Err("empty fingerprint".into());
     }
@@ -263,7 +277,10 @@ pub async fn compressed_fingerprint(path: &str, len_sec: f64) -> Result<(f64, St
     }
     let v: serde_json::Value =
         serde_json::from_slice(&out.stdout).map_err(|e| format!("json: {}", e))?;
-    let dur = v.get("duration").and_then(|d| d.as_f64()).ok_or("no duration")?;
+    let dur = v
+        .get("duration")
+        .and_then(|d| d.as_f64())
+        .ok_or("no duration")?;
     let s = v
         .get("fingerprint")
         .and_then(|f| f.as_str())
@@ -282,6 +299,7 @@ pub fn acoustid_lookup_url(client_key: &str, duration: f64, compressed: &str) ->
 
 #[tauri::command]
 pub async fn compute_chromaprint(
+    app: tauri::AppHandle,
     url: String,
     headers: Option<HashMap<String, String>>,
     start_sec: Option<f64>,
@@ -290,7 +308,7 @@ pub async fn compute_chromaprint(
 ) -> Result<Option<Fingerprint>, String> {
     #[cfg(not(feature = "chromaprint"))]
     return {
-        let _ = (&url, &headers, start_sec, len_sec, &map_spec);
+        let _ = (&app, &url, &headers, start_sec, len_sec, &map_spec);
         Ok(None)
     };
 
@@ -299,7 +317,7 @@ pub async fn compute_chromaprint(
         if !fpcalc_present() {
             return Ok(None);
         }
-        url_guard::validate_media_url(&url, true)?;
+        url_guard::validate_media_source(&app, &url, true)?;
         let hdrs = headers.unwrap_or_default();
         let start = start_sec.unwrap_or(60.0);
         let len = len_sec.unwrap_or(120.0);
@@ -308,7 +326,9 @@ pub async fn compute_chromaprint(
             let p = path.to_string_lossy().to_string();
             return fingerprint_file(&p, len).await.map(Some);
         }
-        fingerprint_window(&url, &hdrs, start, len, &ms).await.map(Some)
+        fingerprint_window(&url, &hdrs, start, len, &ms)
+            .await
+            .map(Some)
     }
 }
 
@@ -323,7 +343,9 @@ mod tests {
 
     #[test]
     fn identical_fingerprint_zero_ber() {
-        let a: Vec<u32> = (0..300u32).map(|i| i.wrapping_mul(2654435761) ^ 0x9e37_79b9).collect();
+        let a: Vec<u32> = (0..300u32)
+            .map(|i| i.wrapping_mul(2654435761) ^ 0x9e37_79b9)
+            .collect();
         let al = identity_match(&a, &a, 50).expect("identical must match");
         assert_eq!(al.ber, 0.0);
         assert!(al.offset_sec.abs() < 1e-9);
@@ -331,7 +353,9 @@ mod tests {
 
     #[test]
     fn recovers_known_lag() {
-        let base: Vec<u32> = (0..400u32).map(|i| i.wrapping_mul(40503).wrapping_mul(2246822519)).collect();
+        let base: Vec<u32> = (0..400u32)
+            .map(|i| i.wrapping_mul(40503).wrapping_mul(2246822519))
+            .collect();
         let a = base[10..].to_vec();
         let al = best_alignment(&a, &base, 30).expect("must align");
         assert_eq!((al.offset_sec / ITEM_SECONDS).round() as i64, 10);
@@ -341,7 +365,9 @@ mod tests {
     #[test]
     fn unrelated_fingerprints_declined() {
         let a: Vec<u32> = (0..300u32).map(|i| i.wrapping_mul(2654435761)).collect();
-        let b: Vec<u32> = (0..300u32).map(|i| !i.wrapping_mul(40503) ^ 0x5555_5555).collect();
+        let b: Vec<u32> = (0..300u32)
+            .map(|i| !i.wrapping_mul(40503) ^ 0x5555_5555)
+            .collect();
         assert!(identity_match(&a, &b, 20).is_none());
     }
 
@@ -356,9 +382,18 @@ mod tests {
 
     #[test]
     fn file_url_keeps_unix_absolute_and_strips_win_drive() {
-        assert_eq!(local_file("file:///etc/movie.mkv").unwrap(), PathBuf::from("/etc/movie.mkv"));
-        assert_eq!(local_file("file://localhost/etc/movie.mkv").unwrap(), PathBuf::from("/etc/movie.mkv"));
-        assert_eq!(local_file("file:///C:/media/x.mkv").unwrap(), PathBuf::from("C:/media/x.mkv"));
+        assert_eq!(
+            local_file("file:///etc/movie.mkv").unwrap(),
+            PathBuf::from("/etc/movie.mkv")
+        );
+        assert_eq!(
+            local_file("file://localhost/etc/movie.mkv").unwrap(),
+            PathBuf::from("/etc/movie.mkv")
+        );
+        assert_eq!(
+            local_file("file:///C:/media/x.mkv").unwrap(),
+            PathBuf::from("C:/media/x.mkv")
+        );
         assert!(local_file("https://cdn/x.mkv").is_none());
     }
 }

@@ -22,6 +22,7 @@ import {
   type ThemePreset,
 } from "@/lib/theme";
 import { useSettings } from "@/lib/settings";
+import { activeThemeContent } from "@/lib/security-policy";
 import { pushOverlayPin } from "@/lib/overlay-pin";
 import { pushActivityHint } from "@/lib/discord/activity-hint";
 
@@ -173,7 +174,7 @@ export function ThemeStudio({ seed, onClose }: { seed?: ThemePreset; onClose: ()
       style.id = STUDIO_STYLE_ID;
       document.head.appendChild(style);
     }
-    style.textContent = draft.css;
+    style.textContent = activeThemeContent(draft.css);
   }, [draft.css]);
 
   useEffect(() => {
@@ -197,7 +198,7 @@ export function ThemeStudio({ seed, onClose }: { seed?: ThemePreset; onClose: ()
       overlay.style.cssText = "position:fixed;inset:0;z-index:59;pointer-events:none;";
       document.body.appendChild(overlay);
     }
-    overlay.innerHTML = draft.layout === "custom" ? draft.html : "";
+    overlay.innerHTML = draft.layout === "custom" ? activeThemeContent(draft.html) : "";
   }, [draft.html, draft.layout]);
 
   useEffect(() => {
@@ -231,7 +232,7 @@ export function ThemeStudio({ seed, onClose }: { seed?: ThemePreset; onClose: ()
   }, [onClose, inspectorHidden, setInspectorHidden, popoutTab, confirmClose, dirty, undo, redo]);
 
   const runJs = () => {
-    const code = draft.js.trim();
+    const code = activeThemeContent(draft.js).trim();
     if (!code) return;
     try {
       new Function(code)();
