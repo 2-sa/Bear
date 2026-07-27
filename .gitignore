@@ -43,20 +43,8 @@ pnpm-debug.log*
 local_docs/
 .diag/
 
-# This repo is pnpm (see packageManager + CI). npm lockfiles must not be committed.
-package-lock.json
-
-# public/avatars and public/kids/avatars are TRACKED. The ~627 licensed-IP
-# avatars were deleted; what remains is Harbor's own artwork and ships with the
-# app, so a fresh clone or worktree gets a working avatar picker.
-# Do not re-add third-party character art here.
-
-# Hollywood statuette photos. Unused: award-logo.tsx renders these as trophy.png
-# and users supply their own via award packs. Stripped 2026-07-22, keep them out.
-public/awards/oscar.png
-public/awards/emmy.png
-public/awards/bafta.png
-public/awards/golden-globe.png
-public/awards/cannestrophy.png
-public/awards/sag.png
-public/awards/critics-choice.png
+# Assets intentionally excluded from desktop builds
+public/kids/avatars/
+public/awards/
+src/assets/awards/
+src/assets/manga-badges/
