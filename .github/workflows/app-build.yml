@@ -33,27 +33,10 @@ jobs:
             runner: windows-latest
           - name: macOS
             runner: macos-latest
-          - name: Linux
-            runner: ubuntu-22.04
 
     steps:
       - name: Checkout
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-
-      - name: Install Linux build dependencies
-        if: matrix.platform.name == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libasound2-dev \
-            libayatana-appindicator3-dev \
-            libgtk-3-dev \
-            libmpv-dev \
-            librsvg2-dev \
-            libssl-dev \
-            libwebkit2gtk-4.1-dev \
-            pkg-config \
-            xz-utils
 
       - name: Install macOS build dependencies
         if: matrix.platform.name == 'macOS'
@@ -83,11 +66,6 @@ jobs:
 
       - name: Prepare verified build assets
         run: pnpm run setup:all
-
-      - name: Disable bundled sidecars on Linux
-        if: matrix.platform.name == 'Linux'
-        shell: bash
-        run: echo 'TAURI_CONFIG={"bundle":{"externalBin":[]}}' >> "$GITHUB_ENV"
 
       - name: Build app without installers
         run: pnpm tauri build --no-bundle
