@@ -17,11 +17,14 @@ function transitionFor(duration: number): string {
   return `transform ${milliseconds}ms cubic-bezier(0.22, 0.61, 0.36, 1)`;
 }
 
+const applied = new WeakMap<HTMLElement, HTMLElement>();
+
 function getVisual(element: HTMLElement): HTMLElement {
   const cached = visuals.get(element);
-  if (cached) return cached;
+  if (cached && element.contains(cached)) return cached;
   const visual = element.querySelector<HTMLElement>("[data-preview-anchor]");
   if (visual) visuals.set(element, visual);
+  else visuals.delete(element);
   return visual ?? element;
 }
 
@@ -29,11 +32,26 @@ function move(element: HTMLElement, x: number, y: number, scale: number): void {
   element.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${scale})`;
 }
 
-function resetItem(element: HTMLElement): void {
+function clearNode(node: HTMLElement): void {
+  move(node, 0, 0, 1);
+  node.style.willChange = "";
+}
+
+function resolveVisual(element: HTMLElement): HTMLElement {
   const visual = getVisual(element);
-  move(visual, 0, 0, 1);
+  const previous = applied.get(element);
+  if (previous && previous !== visual) clearNode(previous);
+  applied.set(element, visual);
+  return visual;
+}
+
+function resetItem(element: HTMLElement): void {
+  const previous = applied.get(element);
+  if (previous) clearNode(previous);
+  const visual = getVisual(element);
+  if (visual !== previous) clearNode(visual);
+  applied.delete(element);
   element.style.zIndex = "";
-  visual.style.willChange = "";
 }
 
 export function resetPosterDock(track: HTMLElement): void {
@@ -95,8 +113,8 @@ export function updatePosterDock({
 
     nextItems.add(element);
 
-    const visual = getVisual(element);
-    if (!previousItems?.has(element)) {
+    const visual = resolveVisual(element);
+    if (!previousItems?.has(element) || visual.style.willChange !== "transform") {
       visual.style.transformOrigin = "center bottom";
       visual.style.willChange = "transform";
     }

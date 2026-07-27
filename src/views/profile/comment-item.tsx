@@ -5,6 +5,7 @@ import { segmentProfanity } from "./text-safety";
 import { UserHoverCard } from "./user-hover-card";
 import { useSelfAvatar } from "./use-self-avatar";
 import type { Comment } from "./profile-types";
+import { VerifiedBadge } from "@/views/account/verified-badge";
 
 function SafeBody({ body }: { body: string }) {
   const t = useT();
@@ -69,6 +70,7 @@ export function CommentItem({
               {c.authorAlias}
             </button>
           </UserHoverCard>
+          {c.authorVerified && <VerifiedBadge size="sm" />}
           <span className="shrink-0 text-[12px] text-ink-subtle">@{c.authorHandle}</span>
           <span className="shrink-0 text-[12px] text-ink-subtle">·</span>
           <span className="shrink-0 text-[12px] text-ink-subtle">{timeAgo(c.at)}</span>

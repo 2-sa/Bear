@@ -4,6 +4,7 @@ import type { DebridStore } from "@/lib/debrid/types";
 import { readPlayback } from "@/lib/playback-history";
 import type { Settings } from "@/lib/settings";
 import type { PlayEpisode } from "@/lib/view";
+import { resolveAddonRanks } from "./addon-priority";
 import type { PipelineInput } from "./pipeline";
 import type { Stream } from "./types";
 
@@ -89,6 +90,7 @@ export function buildEpisodePipelineInput(params: {
     isAnime: animeReq,
     presetStreams: embedded.length > 0 ? embedded : undefined,
     addonTimeoutMs: Math.max(8, Math.min(120, settings.addonTimeoutSec ?? 30)) * 1000,
+    addonRanks: resolveAddonRanks(addons, settings.streamPriority),
     trust: {
       kind: episode ? "series" : meta.type === "series" ? "series" : "movie",
       expectedTitle: meta.name,

@@ -11,10 +11,11 @@ export type OrganizeEntry = {
   host: string;
   addonId: string;
   logo: string | null;
+  muted?: boolean;
 };
 
 const BTN =
-  "flex h-10 w-10 items-center justify-center rounded-xl text-ink-muted transition-colors hover:bg-raised hover:text-ink disabled:opacity-25 disabled:hover:bg-transparent disabled:hover:text-ink-muted";
+  "flex h-11 w-11 items-center justify-center rounded-xl text-ink-muted transition-colors hover:bg-raised hover:text-ink disabled:opacity-25 disabled:hover:bg-transparent disabled:hover:text-ink-muted";
 
 export function SectionCard({
   title,
@@ -55,12 +56,14 @@ export function OrganizeList({
   busy,
   onMove,
   onMoveTop,
+  trailing,
 }: {
   entries: OrganizeEntry[];
   drag: DragList;
   busy: boolean;
   onMove: (index: number, delta: -1 | 1) => void;
   onMoveTop: (index: number) => void;
+  trailing?: (entry: OrganizeEntry, index: number) => ReactNode;
 }) {
   return (
     <div className={`flex flex-col gap-2.5 ${drag.dragIndex != null ? "select-none" : ""}`}>
@@ -84,6 +87,7 @@ export function OrganizeList({
           onUp={() => onMove(i, -1)}
           onDown={() => onMove(i, 1)}
           onTop={() => onMoveTop(i)}
+          trailing={trailing?.(entry, i)}
         />
       ))}
     </div>
@@ -102,6 +106,7 @@ function OrganizeRow({
   onUp,
   onDown,
   onTop,
+  trailing,
 }: {
   entry: OrganizeEntry;
   position: number;
@@ -114,6 +119,7 @@ function OrganizeRow({
   onUp: () => void;
   onDown: () => void;
   onTop: () => void;
+  trailing?: ReactNode;
 }) {
   const t = useT();
   return (
@@ -121,7 +127,7 @@ function OrganizeRow({
       ref={rowRef}
       className={`relative flex items-center gap-3 rounded-2xl border border-edge-soft bg-elevated px-3 py-3 sm:gap-4 sm:px-4 ${
         dragging ? "opacity-50 ring-1 ring-accent/40" : ""
-      }`}
+      } ${entry.muted ? "opacity-60" : ""}`}
     >
       {indicator && (
         <span
@@ -137,14 +143,20 @@ function OrganizeRow({
       <span
         {...handleProps}
         title={t("Drag to reorder")}
-        className="flex h-10 w-8 shrink-0 cursor-grab touch-none items-center justify-center text-ink-subtle transition-colors hover:text-ink active:cursor-grabbing"
+        className="flex h-11 w-10 shrink-0 cursor-grab touch-none items-center justify-center text-ink-subtle transition-colors hover:text-ink active:cursor-grabbing"
       >
         <GripVertical size={18} strokeWidth={2.2} />
       </span>
       <AddonLogo addonId={entry.addonId} addonName={entry.name} manifestLogo={entry.logo} size="lg" />
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span className="truncate text-[15px] font-medium text-ink">{entry.name}</span>
-        <span className="truncate text-[12px] text-ink-subtle">{entry.host}</span>
+      <div className="flex min-w-0 flex-1 flex-col items-start gap-0.5">
+        <span className="max-w-full truncate text-[15px] font-medium text-ink">{entry.name}</span>
+        {entry.muted ? (
+          <span className="rounded-full bg-raised px-2 py-0.5 text-[11px] font-semibold text-ink-subtle">
+            {entry.host}
+          </span>
+        ) : (
+          <span className="max-w-full truncate text-[12px] text-ink-subtle">{entry.host}</span>
+        )}
       </div>
       <div className="flex shrink-0 items-center gap-0.5">
         <HoverTooltip label={t("Move to top")} side="top" align="center" delayMs={200}>
@@ -162,6 +174,7 @@ function OrganizeRow({
             <ArrowDown size={17} strokeWidth={2.2} />
           </button>
         </HoverTooltip>
+        {trailing}
       </div>
     </div>
   );
@@ -173,7 +186,7 @@ export function SkeletonRows() {
       {Array.from({ length: 6 }).map((_, i) => (
         <div
           key={i}
-          className="h-[66px] animate-pulse rounded-2xl border border-edge-soft bg-elevated/50"
+          className="h-[70px] animate-pulse rounded-2xl border border-edge-soft bg-elevated/50 motion-reduce:animate-none"
           style={{ animationDelay: `${i * 70}ms` }}
         />
       ))}

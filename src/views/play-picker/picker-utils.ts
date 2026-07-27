@@ -546,9 +546,11 @@ export function orderByAddonNative(
   const BIG = Number.MAX_SAFE_INTEGER;
   const arrivalOf = (s: ScoredStream): number =>
     s.nativeIdx ?? arrival.get(streamIdentity(s)) ?? BIG;
+  const rankOf = (s: ScoredStream): number =>
+    s.addonPriority ?? rank.get(s.addonUrl ?? "") ?? BIG;
   return streams.slice().sort((a, b) => {
-    const ar = rank.get(a.addonUrl ?? "") ?? BIG;
-    const br = rank.get(b.addonUrl ?? "") ?? BIG;
+    const ar = rankOf(a);
+    const br = rankOf(b);
     if (ar !== br) return ar - br;
     const ai = arrivalOf(a);
     const bi = arrivalOf(b);

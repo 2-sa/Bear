@@ -1,4 +1,5 @@
 import { t as translate } from "@/lib/i18n";
+import { StremioVolume } from "./stremio-volume";
 import { Camera, ChevronLeft, Info, Maximize, Minimize, PauseCircle, PictureInPicture2, PlayCircle, Replace, Tv } from "lucide-react";
 import type { ReactNode } from "react";
 import type { PlayerCapabilities, PlayerSnapshot } from "@/lib/player/bridge";
@@ -242,6 +243,18 @@ export function renderControl(id: PlayerControlId, ctx: ControlContext): ReactNo
     }
     case "volume": {
       if (ctx.tight) return null;
+      if ((ctx.volumeStyle ?? "slider") === "vertical") {
+        return (
+          <StremioVolume
+            snap={ctx.snap}
+            onMute={ctx.onMute}
+            onVolume={ctx.onVolume}
+            capabilities={ctx.capabilities}
+            style="slider"
+            compact
+          />
+        );
+      }
       return (
         <VolumeControl
           snap={ctx.snap}

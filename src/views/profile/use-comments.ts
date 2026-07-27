@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useAuth } from "@/lib/auth";
+import { currentAuthor, subscribeAuthor } from "@/lib/theme-auth";
 import { deleteComment, fetchComments, postComment, ProfileApiError, setCommentLike } from "./profile-api";
 import type { Comment, LoadState } from "./profile-types";
 import { stripUrls, validateComment, type ComposeIssue } from "./text-safety";
@@ -18,7 +18,7 @@ export type CommentsController = {
 };
 
 export function useComments(handle: string): CommentsController {
-  const { authKey } = useAuth();
+  const authKey = useAuthorKey();
   const [state, setState] = useState<LoadState>("loading");
   const [comments, setComments] = useState<Comment[]>([]);
   const [total, setTotal] = useState(0);
@@ -105,4 +105,10 @@ export function useComments(handle: string): CommentsController {
   );
 
   return { state, comments, total, cursor, hasMore, loadMore, submit, remove, toggleLike, sending };
+}
+
+function useAuthorKey(): string | null {
+  const [key, setKey] = useState<string | null>(() => currentAuthor()?.handle ?? null);
+  useEffect(() => subscribeAuthor(() => setKey(currentAuthor()?.handle ?? null)), []);
+  return key;
 }

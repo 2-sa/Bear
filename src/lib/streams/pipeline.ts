@@ -2,6 +2,8 @@ import type { Addon } from "@/lib/addons";
 import { dlog } from "@/lib/debug";
 import type { DebridStore } from "@/lib/debrid/types";
 import { fetchAddonStreams, type StreamRequest } from "./addons";
+import type { AddonRankFn } from "./addon-priority";
+import { applyStreamPriority } from "./priority-partition";
 import { enhanceAnimeStreams } from "./anitomy";
 import { fetchLibraryStreams, type LibraryQuery } from "./library";
 import { parseStream } from "./parser";
@@ -71,6 +73,7 @@ export type PipelineInput = {
   isAnime?: boolean;
   presetStreams?: Stream[];
   addonTimeoutMs?: number;
+  addonRanks?: AddonRankFn | null;
 };
 
 export type DebridError = { slug: string; name: string; code: string };
@@ -91,6 +94,7 @@ export async function runPipeline(
   let library: Stream[] = [];
   let lastPartialAt = 0;
   const debridErrors: DebridError[] = [];
+  const priorityActive = input.addonRanks != null;
 
   const buildPartial = (addonStreams: Stream[]): PipelineResult => {
     const merged = mergeAndDedupe(library, addonStreams);
@@ -100,7 +104,12 @@ export async function runPipeline(
     const scored = keep.map((s) => scoreStream(s, input.score, corpus));
     const picker = rankAndPick(scored, input.score.activeDebrids, PREFER_AAC, input.score.respectAddonOrder === true);
     const fin = finalizeWithRescue(picker, rejected, input.trust ?? {}, input.score);
-    return { picker: fin.picker, rejected: fin.rejected, raw: { addon: addonStreams, library }, debridErrors: debridErrors.length > 0 ? debridErrors : undefined };
+    return {
+      picker: applyStreamPriority(fin.picker, priorityActive, input.score.activeDebrids),
+      rejected: fin.rejected,
+      raw: { addon: addonStreams, library },
+      debridErrors: debridErrors.length > 0 ? debridErrors : undefined,
+    };
   };
 
   const emitPartial = (addonStreams: Stream[]) => {
@@ -123,7 +132,7 @@ export async function runPipeline(
     }),
     presets.length > 0
       ? Promise.resolve(presets)
-      : fetchAddonStreams(input.addons, input.request, signal, emitPartial, onAddonProgress, input.addonTimeoutMs),
+      : fetchAddonStreams(input.addons, input.request, signal, emitPartial, onAddonProgress, input.addonTimeoutMs, input.addonRanks),
   ]);
   if (librarySettled.status === "fulfilled") library = librarySettled.value;
   const addonStreams = addonSettled.status === "fulfilled" ? addonSettled.value : [];
@@ -204,7 +213,12 @@ export async function runPipeline(
       dlog(`[pipeline] (core) trust kept ${core.picker.all.length}/${parsed.length} · rejected: ${summary}`);
     }
     const fin = finalizeWithRescue(core.picker, core.rejected, input.trust ?? {}, input.score);
-    return { picker: fin.picker, rejected: fin.rejected, raw: { addon: addonStreams, library }, debridErrors: debridErrors.length > 0 ? debridErrors : undefined };
+    return {
+      picker: applyStreamPriority(fin.picker, priorityActive, input.score.activeDebrids),
+      rejected: fin.rejected,
+      raw: { addon: addonStreams, library },
+      debridErrors: debridErrors.length > 0 ? debridErrors : undefined,
+    };
   }
   const { keep, rejected } = applyTrust(parsed, input.trust ?? {});
   if (rejected.length > 0) {
@@ -223,7 +237,11 @@ export async function runPipeline(
   const scored = keep.map((s) => scoreStream(s, input.score, corpus));
   const picker = rankAndPick(scored, input.score.activeDebrids, PREFER_AAC, input.score.respectAddonOrder === true);
   const fin = finalizeWithRescue(picker, rejected, input.trust ?? {}, input.score);
-  return { picker: fin.picker, rejected: fin.rejected, raw: { addon: addonStreams, library } };
+  return {
+    picker: applyStreamPriority(fin.picker, priorityActive, input.score.activeDebrids),
+    rejected: fin.rejected,
+    raw: { addon: addonStreams, library },
+  };
 }
 
 async function runCorePipeline(

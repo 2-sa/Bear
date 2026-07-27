@@ -28,6 +28,7 @@ export function CustomizationPanel({
     canvasHeight: summary.canvasHeight ?? CANVAS_DEFAULT,
     customEnabled: summary.customEnabled ?? false,
     hideTopBanner: summary.hideTopBanner ?? false,
+    hideCardTitles: summary.hideCardTitles ?? false,
   });
   const [mode, setMode] = useState<"edit" | "preview">("edit");
   const [previewMounted, setPreviewMounted] = useState(false);
@@ -58,6 +59,7 @@ export function CustomizationPanel({
         canvasHeight: form.canvasHeight,
         customEnabled: form.customEnabled,
         hideTopBanner: form.hideTopBanner,
+        hideCardTitles: form.hideCardTitles,
       });
       onSaved(next);
       onClose();

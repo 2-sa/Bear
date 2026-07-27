@@ -20,20 +20,24 @@ export function CanvasCard({
   css,
   height,
   hiddenFromVisitors,
+  hideTitle,
 }: {
   html: string;
   css: string;
   height?: number;
   hiddenFromVisitors?: boolean;
+  hideTitle?: boolean;
 }) {
   return (
     <section className="rounded-[16px] bg-surface p-2 ring-1 ring-edge-soft">
-      <div className="mb-2 flex items-center justify-between px-1">
-        <span className="text-[13px] font-medium text-ink-muted">Custom</span>
-        {hiddenFromVisitors && (
-          <span className="text-[12px] text-ink-subtle">Hidden from visitors</span>
-        )}
-      </div>
+      {(!hideTitle || hiddenFromVisitors) && (
+        <div className="mb-2 flex items-center justify-between px-1">
+          {hideTitle ? <span /> : <span className="text-[13px] font-medium text-ink-muted">Custom</span>}
+          {hiddenFromVisitors && (
+            <span className="text-[12px] text-ink-subtle">Hidden from visitors</span>
+          )}
+        </div>
+      )}
       <CanvasFrame html={html} css={css} height={height} />
     </section>
   );

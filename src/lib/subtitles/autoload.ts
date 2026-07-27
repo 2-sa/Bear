@@ -1,4 +1,4 @@
-export const SUBTITLE_PROVIDER_TIMEOUT_MS = 6_000;
+export const SUBTITLE_PROVIDER_TIMEOUT_MS = 16_000;
 
 export function subtitleSearchImdbId(
   imdbId: string | null | undefined,

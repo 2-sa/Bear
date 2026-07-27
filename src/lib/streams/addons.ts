@@ -2,6 +2,7 @@ import { safeFetch as fetch } from "@/lib/safe-fetch";
 import type { Addon } from "@/lib/addons";
 import { dlog, dwarn } from "@/lib/debug";
 import { isAddonRanked, isStatusOnlyAddon } from "./addon-detect";
+import type { AddonRankFn } from "./addon-priority";
 import { hasUncachedMarker } from "./cached";
 import { infoHashFromSources, infoHashFromUrl } from "@/lib/torrent/magnet";
 import type { Stream } from "./types";
@@ -39,12 +40,13 @@ export async function fetchAddonStreams(
   onPartial?: (current: Stream[]) => void,
   onProgress?: (settled: number, total: number) => void,
   timeoutMs = TIMEOUT_MS_SLOW,
+  ranks?: AddonRankFn | null,
 ): Promise<Stream[]> {
   const namedTasks: Array<{ name: string; p: Promise<Stream[]> }> = [];
   const skipped: string[] = [];
   for (let i = 0; i < addons.length; i++) {
     const addon = addons[i];
-    const priority = i;
+    const priority = ranks ? ranks(i, addon) : i;
     if (isStatusOnlyAddon(addon)) {
       skipped.push(`${addon.manifest.name}(status-addon)`);
       continue;

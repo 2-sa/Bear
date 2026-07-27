@@ -391,6 +391,7 @@ export const DEFAULT: Settings = {
   syncIndicatorPosition: "top-right",
   pickerLayout: "stremio",
   streamSort: "addon",
+  streamPriority: [],
   fullStreamDescription: true,
   pickerShowFilename: false,
   pickerRefreshNextToBack: false,

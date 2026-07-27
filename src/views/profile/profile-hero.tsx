@@ -1,5 +1,6 @@
 import { Activity, Check, ImagePlus, Loader2, MapPin, Settings2, Share2, UserMinus, UserPlus } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { ShareModal } from "./share-modal";
 import { countryFlagSrc } from "@/components/flag";
 import { acceptFriend, removeFriend, sendFriendRequest } from "@/lib/social/friends";
@@ -109,6 +110,7 @@ export function ProfileHero({
             </div>
             <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-ink-subtle">
               <span className="text-ink-muted">@{p.handle}</span>
+              {p.pronouns && <span>{p.pronouns}</span>}
               <span className={presenceText}>{presenceLabel}</span>
               {p.location && (
                 <span className="inline-flex items-center gap-1.5">
@@ -218,6 +220,7 @@ function FriendButton({
   const [busy, setBusy] = useState(false);
   const [hover, setHover] = useState(false);
   const [error, setError] = useState(false);
+  const [confirming, setConfirming] = useState(false);
 
   const act = async (fn: () => Promise<unknown>, next: FriendRel) => {
     if (busy) return;
@@ -238,10 +241,11 @@ function FriendButton({
 
   if (rel === "friends") {
     return (
+      <>
       <button
         onMouseEnter={() => setHover(true)}
         onMouseLeave={() => setHover(false)}
-        onClick={() => act(() => removeFriend(handle), "none")}
+        onClick={() => setConfirming(true)}
         disabled={busy}
         className={`${FRIEND_BTN} ${hover ? "bg-danger/12 text-danger ring-1 ring-danger/30" : "bg-surface text-ink ring-1 ring-edge"}`}
       >
@@ -254,6 +258,18 @@ function FriendButton({
         )}
         {busy ? t("Removing...") : hover ? t("Remove friend") : t("Friends")}
       </button>
+        {confirming && (
+          <ConfirmRemoveFriend
+            handle={handle}
+            busy={busy}
+            onCancel={() => setConfirming(false)}
+            onConfirm={() => {
+              setConfirming(false);
+              void act(() => removeFriend(handle), "none");
+            }}
+          />
+        )}
+      </>
     );
   }
 
@@ -300,5 +316,62 @@ function FriendButton({
       {busy ? <Loader2 size={18} className="animate-spin" /> : <UserPlus size={18} />}
       {busy ? t("Sending...") : error ? t("Try again") : t("Add friend")}
     </button>
+  );
+}
+
+function ConfirmRemoveFriend({
+  handle,
+  busy,
+  onCancel,
+  onConfirm,
+}: {
+  handle: string;
+  busy: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  const t = useT();
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onCancel();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onCancel]);
+  return createPortal(
+    <div
+      role="dialog"
+      aria-modal="true"
+      onClick={onCancel}
+      className="fixed inset-0 z-[200] grid place-items-center bg-canvas/70 p-6 backdrop-blur-sm"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-[380px] rounded-[16px] bg-elevated p-5 shadow-[0_28px_70px_-20px_rgba(0,0,0,0.85)] ring-1 ring-edge-soft"
+      >
+        <h2 className="text-[15px] font-semibold text-ink">{t("Remove friend?")}</h2>
+        <p className="mt-1.5 text-[13px] leading-relaxed text-ink-subtle">
+          {t("@{handle} will be removed from your friends. You can add them again later.", { handle })}
+        </p>
+        <div className="mt-4 flex items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="flex h-10 items-center rounded-full px-4 text-[13px] font-semibold text-ink-muted transition-colors hover:text-ink"
+          >
+            {t("Cancel")}
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={busy}
+            className="flex h-10 items-center gap-2 rounded-full bg-danger px-4 text-[13px] font-semibold text-canvas transition-opacity hover:opacity-90 disabled:opacity-50"
+          >
+            {busy && <Loader2 size={14} className="animate-spin" />} {t("Remove")}
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body,
   );
 }

@@ -171,6 +171,16 @@ const settingsFill: Record<string, string> = {
   "On by default. The top-bar icons sit clean over the artwork with no pill behind them, and Watch Together opens as a top-right panel. Turn it off to bring back the filled pill buttons.": "مفعّل افتراضيًا. تظهر أيقونات الشريط العلوي نظيفةً فوق الصورة الفنية دون كبسولة خلفها، وتُفتح المشاهدة معًا كلوحة في أعلى اليمين. عطّله لاستعادة أزرار الكبسولة الممتلئة.",
   "Drag the window from anywhere": "سحب النافذة من أي مكان",
   "Move Harbor by dragging any empty space on a page, not just the top bar. Leave this off to keep clicks inside pages from nudging the window.": "حرّك Harbor بسحب أي مساحة فارغة في الصفحة، وليس الشريط العلوي فقط. اترك هذا معطّلاً لمنع النقرات داخل الصفحات من تحريك النافذة عن غير قصد.",
+  "Stream priority": "أولوية البث",
+  "Results from addons higher in this list come first. If one finds nothing, the next fills in.": "تظهر نتائج الإضافات الأعلى في هذه القائمة أولًا. وإذا لم تجد إحداها شيئًا، تتولّى التالية.",
+  "Following addon order": "يتبع ترتيب الإضافات",
+  "Use addon order": "استخدام ترتيب الإضافات",
+  "Not installed": "غير مثبّتة",
+  "Remove from list": "إزالة من القائمة",
+  "Priority applies once you have two or more stream addons.": "تُطبَّق الأولوية عندما تمتلك إضافتَي بث أو أكثر.",
+  "{n} addons don't provide streams and aren't listed.": "{n} من الإضافات لا توفّر بثًا ولا تظهر هنا.",
+  "Moved {name} to position {n} of {total}": "تم نقل {name} إلى الموضع {n} من {total}",
+  "Harbor ranking puts the best-scoring sources first. Addon order keeps each addon's results in the order it returned them, like the Stremio and Vidi apps. Stream priority below decides which addon leads, in both modes.": "يضع ترتيب Harbor المصادر الأعلى تقييمًا أولًا. ويحافظ ترتيب الإضافات على نتائج كل إضافة بالترتيب الذي أعادتها به، مثل تطبيقَي Stremio وVidi. وتحدّد أولوية البث أدناه أي إضافة تتصدّر، في كلا الوضعين.",
 };
 
 export default settingsFill;

@@ -14,6 +14,7 @@ import { gatherCatalogAddons, type Addon } from "@/lib/addons";
 import { useAuth } from "@/lib/auth";
 import { useSettings } from "@/lib/settings";
 import { isMagnetInput, isDirectVideoUrl } from "@/lib/torrent/magnet";
+import { useView } from "@/lib/view";
 
 type SearchState = {
   open: boolean;
@@ -27,6 +28,7 @@ type SearchValue = SearchState & {
   setOpen: (open: boolean) => void;
   setQuery: (q: string) => void;
   clear: () => void;
+  closeForNavigation: () => void;
   recordRecent: (q: string) => void;
   removeRecent: (q: string) => void;
   clearRecent: () => void;
@@ -440,9 +442,39 @@ export function SearchProvider({ children }: { children: ReactNode }) {
     saveRecent([]);
   }, []);
 
+  const { navDepth } = useView();
+  const restoreDepth = useRef<number | null>(null);
+  const armed = useRef(false);
+
+  const closeForNavigation = useCallback(() => {
+    restoreDepth.current = navDepth;
+    armed.current = false;
+    setOpen(false);
+  }, [navDepth]);
+
+  useEffect(() => {
+    const mark = restoreDepth.current;
+    if (mark == null) return;
+    if (navDepth > mark) {
+      armed.current = true;
+      return;
+    }
+    if (armed.current && navDepth <= mark) {
+      restoreDepth.current = null;
+      armed.current = false;
+      setOpen(true);
+    }
+  }, [navDepth]);
+
+  useEffect(() => {
+    if (!open) return;
+    restoreDepth.current = null;
+    armed.current = false;
+  }, [open]);
+
   const value = useMemo(
-    () => ({ open, setOpen, query, setQuery, results, status, recent, clear, recordRecent, removeRecent, clearRecent, setAiHold }),
-    [open, query, results, status, recent, setQuery, clear, recordRecent, removeRecent, clearRecent],
+    () => ({ open, setOpen, query, setQuery, results, status, recent, clear, closeForNavigation, recordRecent, removeRecent, clearRecent, setAiHold }),
+    [open, query, results, status, recent, setQuery, clear, closeForNavigation, recordRecent, removeRecent, clearRecent],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

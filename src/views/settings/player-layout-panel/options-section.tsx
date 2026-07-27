@@ -10,6 +10,7 @@ export function getOptions(t: (k: string) => string) {
 
   const VOLUME_OPTIONS: Array<{ id: VolumeStyle; label: string; sub: string }> = [
     { id: "slider", label: t("Slider"), sub: t("Hover the speaker to reveal a horizontal slider.") },
+    { id: "vertical", label: t("Vertical"), sub: t("A compact upright slider that boosts past 100 percent.") },
     { id: "stepper", label: t("Stepper"), sub: t("Click to cycle 100 / 75 / 50 / 25 / 0.") },
     { id: "icon-only", label: t("Icon only"), sub: t("Click toggles mute. Wheel scrolls volume.") },
   ];

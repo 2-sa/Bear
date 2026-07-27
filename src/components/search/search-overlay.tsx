@@ -33,7 +33,7 @@ import { useExitPresence } from "@/lib/use-exit-presence";
 import { isMagnetInput, isDirectVideoUrl } from "@/lib/torrent/magnet";
 
 export function SearchOverlay() {
-  const { open, setOpen, query, setQuery, results, status, clear, recordRecent, setAiHold } = useSearch();
+  const { open, setOpen, query, setQuery, results, status, clear, closeForNavigation, recordRecent, setAiHold } = useSearch();
   const inputRef = useRef<HTMLInputElement>(null);
   const { openFilter, openMeta, openPerson } = useView();
   const [explore, setExplore] = useState<ExploreFrame[]>([]);
@@ -89,8 +89,7 @@ export function SearchOverlay() {
 
   const commit = () => {
     if (query.trim() && results) recordRecent(query);
-    setOpen(false);
-    window.setTimeout(clear, 220);
+    closeForNavigation();
   };
 
   const beginDragOrClose = (e: React.MouseEvent) => {
@@ -144,17 +143,15 @@ export function SearchOverlay() {
       const id = (intent.mediaType === "movie" ? MOVIE_GENRES : TV_GENRES)[intent.genre];
       if (typeof id === "number") {
         recordRecent(query);
+        closeForNavigation();
         openFilter({ kind: "genre", mediaType: intent.mediaType, name: intent.genre, id });
-        setOpen(false);
-        window.setTimeout(clear, 220);
       }
       return;
     }
     if (intent.kind === "year") {
       recordRecent(query);
+      closeForNavigation();
       openFilter({ kind: "year", mediaType: "movie", value: intent.year });
-      setOpen(false);
-      window.setTimeout(clear, 220);
     }
   };
 

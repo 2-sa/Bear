@@ -1,4 +1,4 @@
-import { ArrowLeft, Check, LayoutGrid, Loader2, Palette } from "lucide-react";
+import { Check, LayoutGrid, Loader2, Palette } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { useTogether } from "@/lib/together/provider";
@@ -71,9 +71,12 @@ export function ProfileSettings({
     alias: summary.alias,
     description: summary.description ?? "",
     location: summary.location ?? "",
+    pronouns: summary.pronouns ?? "",
     customUrl: summary.customUrl ?? "",
     slogan: summary.slogan ?? "",
     audioUrl: summary.audioUrl ?? "",
+    minecraftName: summary.minecraftName ?? "",
+    minecraftBg: summary.minecraftBg ?? "",
     shareActivity: summary.shareActivity ?? false,
     private: summary.private ?? false,
   });
@@ -138,13 +141,6 @@ export function ProfileSettings({
       <div className="flex h-full flex-col pt-20">
         <div className="flex shrink-0 items-center justify-between gap-3 border-b border-edge-soft bg-canvas px-6 py-3 lg:px-10">
           <div className="flex min-w-0 items-center gap-3">
-            <button
-              onClick={onClose}
-              aria-label="Back"
-              className="flex h-11 w-11 items-center justify-center rounded-[10px] text-ink-muted transition-colors hover:bg-elevated"
-            >
-              <ArrowLeft size={20} />
-            </button>
             <h2 className="font-display text-[20px] text-ink">Edit profile</h2>
           </div>
           <div className="flex shrink-0 items-center gap-2">
@@ -187,8 +183,41 @@ export function ProfileSettings({
               />
             </Field>
 
+            <Field label="Minecraft" hint="Your username. Leave blank to hide the card.">
+              <div className="flex flex-col gap-2.5">
+                <input
+                  value={form.minecraftName}
+                  maxLength={16}
+                  onChange={(e) => set("minecraftName", e.target.value.trim())}
+                  className={inputCls}
+                  placeholder="Notch"
+                  spellCheck={false}
+                />
+                <input
+                  value={form.minecraftBg}
+                  maxLength={600}
+                  onChange={(e) => set("minecraftBg", e.target.value.trim())}
+                  className={inputCls}
+                  placeholder="https://... background image (optional)"
+                  spellCheck={false}
+                />
+              </div>
+            </Field>
+
             <Field label="About">
               <AboutEditor value={form.description} onChange={(v) => set("description", v)} />
+            </Field>
+
+            <Field label="Pronouns" hint="optional">
+              <input
+                value={form.pronouns}
+                maxLength={32}
+                onChange={(e) => set("pronouns", e.target.value)}
+                className={inputCls}
+                placeholder="they/them"
+                autoCapitalize="off"
+                spellCheck={false}
+              />
             </Field>
 
             <Field label="Location">

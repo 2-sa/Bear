@@ -62,6 +62,7 @@ export type ProfileSummary = {
   slogan?: string;
   description?: string;
   location?: string;
+  pronouns?: string;
   customUrl?: string;
   online: boolean;
   watching?: ProfileWatching;
@@ -73,6 +74,8 @@ export type ProfileSummary = {
   featuredLists?: FeaturedList[];
   socials?: ResolvedSocial[];
   audioUrl?: string;
+  minecraftName?: string;
+  minecraftBg?: string;
   shownBadges?: string[];
   hideVerified?: boolean;
   isOwner: boolean;
@@ -90,6 +93,7 @@ export type ProfileSummary = {
   customCss?: string;
   canvasHeight?: number;
   hideTopBanner?: boolean;
+  hideCardTitles?: boolean;
 };
 
 export type Friend = {
@@ -129,6 +133,7 @@ export type Comment = {
   id: string;
   authorHandle: string;
   authorAlias: string;
+  authorVerified?: boolean;
   authorAvatarUrl?: string;
   body: string;
   at: string;
@@ -147,8 +152,11 @@ export type CommentPage = {
 export type ProfileSettingsInput = {
   alias: string;
   audioUrl: string;
+  minecraftName: string;
+  minecraftBg: string;
   description: string;
   location: string;
+  pronouns: string;
   customUrl: string;
   slogan: string;
   shareActivity: boolean;
@@ -165,6 +173,7 @@ export type CustomizationInput = {
   canvasHeight: number;
   customEnabled: boolean;
   hideTopBanner: boolean;
+  hideCardTitles: boolean;
 };
 
 export type LoadState = "loading" | "ready" | "error" | "empty";

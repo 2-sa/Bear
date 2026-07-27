@@ -169,8 +169,8 @@ const addons: Record<string, string> = {
 
   "Organize addons": "تنظيم الإضافات",
   "Back to addons": "العودة إلى الإضافات",
-  "The order decides who answers first when you press Play. Drag, use the arrows, or jump anything straight to the top.":
-    "يحدّد الترتيب من يستجيب أولًا عند الضغط على تشغيل. اسحب، أو استخدم الأسهم، أو انقل أي عنصر مباشرة إلى الأعلى.",
+  "This order drives your catalog rows and the default stream order. A stream priority set in Settings overrides it for streams.":
+    "يحدّد هذا الترتيب صفوف الكتالوج لديك وترتيب البث الافتراضي. وتتجاوزه أولوية البث المضبوطة في الإعدادات بالنسبة للبثوث.",
   Backups: "النسخ الاحتياطية",
   "Save order": "حفظ الترتيب",
   "Couldn't load your Stremio collection. Nothing can be reordered safely without it.":
@@ -194,8 +194,8 @@ const addons: Record<string, string> = {
   "Sign in to Stremio to organize the addons synced to your account.":
     "سجّل الدخول إلى Stremio لتنظيم الإضافات المتزامنة مع حسابك.",
   "Good to know": "جدير بالمعرفة",
-  "Number 1 gets asked first for streams when you press Play.":
-    "يُسأل رقم 1 أولًا عن البثوث عند الضغط على تشغيل.",
+  "Number 1 answers first when you press Play, unless Settings has a stream priority.":
+    "يستجيب رقم 1 أولًا عند الضغط على تشغيل، ما لم تكن هناك أولوية بث في الإعدادات.",
   "The order also decides which addon's rows win on your Home screen.":
     "يحدّد الترتيب أيضًا صفوف أي إضافة تفوز في شاشتك الرئيسية.",
   "Nothing changes until you press Save. Leaving this page discards edits.":

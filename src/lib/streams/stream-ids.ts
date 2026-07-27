@@ -60,5 +60,15 @@ export function buildStreamIds(
     push(`${mappedImdb}:${episode!.imdbSeason}:${episode!.imdbEpisode}`);
   }
 
+  const synthSeason =
+    animeMeta &&
+    episode?.kitsuStreamId == null &&
+    episode?.imdbSeason != null &&
+    episode.imdbSeason >= 2 &&
+    episode.season === episode.imdbSeason;
+  if (synthSeason && mappedImdb && mappedImdb.startsWith("tt")) {
+    push(`${mappedImdb}:${episode!.imdbSeason}:${episode!.imdbEpisode}`);
+  }
+
   return out;
 }

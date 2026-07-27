@@ -9,6 +9,8 @@ import { langScore, normalizeLang } from "./language";
 import { SUBTITLE_PROVIDER_TIMEOUT_MS, withSubtitleTimeout } from "./autoload";
 
 export type SearchOptions = {
+  onPartial?: (results: SubResult[], stillFetching: number) => void;
+  timeoutMs?: number;
   providers?: { wyzie?: boolean; addons?: boolean; opensubtitles?: boolean };
   addons?: Addon[];
   preferredLangs: string[];
@@ -32,43 +34,57 @@ export async function searchSubtitles(
   const addonsOn = want.addons ?? true;
   const osOn = want.opensubtitles ?? true;
   dinfo("[subs] search", { q, providers: { osOn, addonsOn, wyzieOn }, addons: opts.addons?.length ?? 0 });
+  const tmo = opts.timeoutMs ?? SUBTITLE_PROVIDER_TIMEOUT_MS;
   const tasks: Array<{ name: string; p: Promise<SubResult[]> }> = [];
   if (osOn)
     tasks.push({
       name: "opensubtitles-v3",
-      p: withSubtitleTimeout(searchOpenSubtitlesV3(q), SUBTITLE_PROVIDER_TIMEOUT_MS, []),
+      p: withSubtitleTimeout(searchOpenSubtitlesV3(q), tmo, []),
     });
   if (wyzieOn)
     tasks.push({
       name: "wyzie",
-      p: withSubtitleTimeout(searchWyzie(q), SUBTITLE_PROVIDER_TIMEOUT_MS, []),
+      p: withSubtitleTimeout(searchWyzie(q), tmo, []),
     });
   if (addonsOn && opts.addons && opts.addons.length > 0)
     tasks.push({
       name: "addons",
-      p: withSubtitleTimeout(searchAddons(opts.addons, q), SUBTITLE_PROVIDER_TIMEOUT_MS, []),
+      p: withSubtitleTimeout(searchAddons(opts.addons, q), tmo, []),
     });
   if (opts.extra)
     tasks.push({
       name: "extra-sources",
       p: withSubtitleTimeout(
         searchExtraSubSources(q, opts.extra).then((a) => a.all.map(toSubResult)),
-        SUBTITLE_PROVIDER_TIMEOUT_MS,
+        tmo,
         [],
       ),
     });
-  const settled = await Promise.allSettled(tasks.map((t) => t.p));
   const all: SubResult[] = [];
-  settled.forEach((r, i) => {
-    if (r.status === "fulfilled") {
-      dinfo(`[subs] ${tasks[i].name}: ${r.value.length} results`);
-      all.push(...r.value);
-    } else {
-      dwarn(`[subs] ${tasks[i].name} failed`, r.reason);
-    }
-  });
+  let pending = tasks.length;
+  const emit = () => {
+    if (!opts.onPartial) return;
+    opts.onPartial(dedupAndRank(all, opts.preferredLangs, opts.streamHints), pending);
+  };
+  await Promise.all(
+    tasks.map((t) =>
+      t.p.then(
+        (v) => {
+          dinfo(`[subs] ${t.name}: ${v.length} results`);
+          if (v.length > 0) all.push(...v);
+          pending -= 1;
+          emit();
+        },
+        (e) => {
+          dwarn(`[subs] ${t.name} failed`, e);
+          pending -= 1;
+          emit();
+        },
+      ),
+    ),
+  );
   const ranked = dedupAndRank(all, opts.preferredLangs, opts.streamHints);
-  dinfo(`[subs] total ${ranked.length} after dedup/rank`);
+  dinfo(`[subs] total ${ranked.length} after dedup/rank from ${tasks.length} sources`);
   return ranked;
 }
 

@@ -30,7 +30,10 @@ function spotifyPath(u: URL): string | null {
   return m ? `${m[1]}/${m[2]}` : null;
 }
 
-export function parseProfileAudio(raw: string, opts?: { autoplay?: boolean }): ProfileAudio | null {
+export function parseProfileAudio(
+  raw: string,
+  opts?: { autoplay?: boolean; muted?: boolean },
+): ProfileAudio | null {
   const trimmed = raw?.trim();
   if (!trimmed) return null;
   let u: URL;
@@ -41,6 +44,7 @@ export function parseProfileAudio(raw: string, opts?: { autoplay?: boolean }): P
   }
   if (u.protocol !== "https:") return null;
   const autoplay = opts?.autoplay ?? false;
+  const muted = opts?.muted === true;
 
   const yt = ytId(u);
   if (yt) {
@@ -51,6 +55,7 @@ export function parseProfileAudio(raw: string, opts?: { autoplay?: boolean }): P
       modestbranding: "1",
       iv_load_policy: "3",
       autoplay: autoplay ? "1" : "0",
+      mute: muted ? "1" : "0",
     });
     return {
       provider: "youtube",
@@ -118,6 +123,23 @@ export async function fetchAudioMeta(a: ProfileAudio, signal?: AbortSignal): Pro
   } catch {
     metaCache.set(a.url, null);
     return null;
+  }
+}
+
+export function sendAudioVolume(
+  frame: HTMLIFrameElement | null,
+  provider: AudioProvider,
+  volume: number,
+): void {
+  const win = frame?.contentWindow;
+  if (!win) return;
+  const v = Math.max(0, Math.min(100, Math.round(volume)));
+  if (provider === "youtube") {
+    win.postMessage(JSON.stringify({ event: "command", func: "setVolume", args: [v] }), "*");
+    return;
+  }
+  if (provider === "soundcloud") {
+    win.postMessage(JSON.stringify({ method: "setVolume", value: v }), "*");
   }
 }
 

@@ -126,6 +126,25 @@ export function CustomizationEditors({
         </button>
       </div>
 
+      <div className="flex items-center justify-between gap-3 rounded-[10px] bg-elevated px-3 py-2.5 ring-1 ring-edge-soft">
+        <div className="min-w-0">
+          <div className="text-[13px] font-medium text-ink">Hide card titles</div>
+          <div className="text-[12px] text-ink-subtle">Drop the About and Custom labels so an embed fills the card cleanly.</div>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={form.hideCardTitles}
+          aria-label="Hide card titles"
+          onClick={() => set("hideCardTitles", !form.hideCardTitles)}
+          className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full p-0.5 transition-colors ${form.hideCardTitles ? "bg-accent" : "bg-edge"}`}
+        >
+          <span
+            className={`block h-5 w-5 rounded-full bg-white shadow-sm transition-transform duration-200 ${form.hideCardTitles ? "translate-x-5" : "translate-x-0"}`}
+          />
+        </button>
+      </div>
+
       <FaviconField form={form} set={set} onSaved={onSaved} />
     </div>
   );

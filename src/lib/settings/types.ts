@@ -62,6 +62,8 @@ export interface SimklGranularFilters {
 
 export type ProfileAudioMode = "auto" | "click" | "off";
 
+export type StreamPriorityEntry = { key: string; name: string };
+
 export type Settings = {
   soundTheme: "none" | "glass" | "modern" | "retro" | "cinematic";
   sfxVolume: number;
@@ -435,6 +437,7 @@ export type Settings = {
   syncIndicatorPosition: SyncIndicatorPosition;
   pickerLayout: "condensed" | "stremio";
   streamSort: "harbor" | "addon";
+  streamPriority: StreamPriorityEntry[];
   fullStreamDescription: boolean;
   pickerShowFilename: boolean;
   pickerRefreshNextToBack: boolean;

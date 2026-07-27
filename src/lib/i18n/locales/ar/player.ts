@@ -402,6 +402,7 @@ const player: Record<string, string> = {
   "{word} {n} seconds": "{word} {n} ثانية",
   "{word} {n} seconds. Hold for options": "{word} {n} ثانية. اضغط مطولاً للخيارات",
   "{word} {n}s · hold for options": "{word} {n}ث · اضغط مطولاً للخيارات",
+  "Still searching {count} more…": "لا يزال البحث في {count} أخرى…",
 };
 
 export default player;

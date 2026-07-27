@@ -26,6 +26,7 @@ export type {
   ContentFilters,
   Settings,
   StreamingService,
+  StreamPriorityEntry,
   WebhookTrigger,
 } from "./settings/types";
 

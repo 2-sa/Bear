@@ -6,6 +6,32 @@ import type { ActivityItem, Badge, Friend, LoadState, ProfileSummary } from "./p
 
 const LIVE_INTERVAL_MS = 25000;
 
+const LIVE_FIELDS = [
+  "online",
+  "presence",
+  "lastActiveAt",
+  "watching",
+  "counts",
+  "friendState",
+  "mutualCount",
+  "ratings",
+  "showcase",
+] as const;
+
+function mergeLive(prev: ProfileSummary, next: ProfileSummary): ProfileSummary {
+  let changed = false;
+  const out = { ...prev };
+  for (const k of LIVE_FIELDS) {
+    const a = (prev as Record<string, unknown>)[k];
+    const b = (next as Record<string, unknown>)[k];
+    if (JSON.stringify(a) === JSON.stringify(b)) continue;
+    (out as Record<string, unknown>)[k] = b;
+    changed = true;
+  }
+  return changed ? out : prev;
+}
+
+
 export type ProfileBundle = {
   state: LoadState;
   summary: ProfileSummary | null;
@@ -68,7 +94,9 @@ export function useProfile(handle: string): ProfileBundle {
     const ac = new AbortController();
     const sync = () => {
       if (document.visibilityState === "hidden") return;
-      void fetchSummary(handle, ac.signal).then((s) => !ac.signal.aborted && setSummary(s)).catch(() => {});
+      void fetchSummary(handle, ac.signal)
+        .then((s) => !ac.signal.aborted && setSummary((prev) => (prev ? mergeLive(prev, s) : s)))
+        .catch(() => {});
       void fetchFriends(handle, ac.signal).then((f) => !ac.signal.aborted && setFriends(f)).catch(() => {});
       void fetchBadges(handle, ac.signal).then((b) => !ac.signal.aborted && setBadges(b)).catch(() => {});
     };

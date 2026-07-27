@@ -291,6 +291,7 @@ export function loadStoredSettings(rawKey: string = STORAGE_KEY): Settings {
       },
       webhookRules: Array.isArray(parsed.webhookRules) ? parsed.webhookRules : [],
       customStreamFilters: Array.isArray(parsed.customStreamFilters) ? parsed.customStreamFilters : DEFAULT.customStreamFilters,
+      streamPriority: Array.isArray(parsed.streamPriority) ? parsed.streamPriority : DEFAULT.streamPriority,
       animeFavoriteGenres: Array.isArray(parsed.animeFavoriteGenres)
         ? parsed.animeFavoriteGenres.filter((g): g is number => typeof g === "number")
         : DEFAULT.animeFavoriteGenres,

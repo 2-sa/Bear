@@ -10,11 +10,13 @@ export function AboutCard({
   isOwner,
   userFont,
   onEdit,
+  hideTitle,
 }: {
   description?: string;
   isOwner: boolean;
   userFont?: string;
   onEdit?: () => void;
+  hideTitle?: boolean;
 }) {
   const t = useT();
   const html = useMemo(() => (description ? renderBbcode(description) : ""), [description]);
@@ -22,7 +24,7 @@ export function AboutCard({
 
   return (
     <section aria-label={t("About")} className="rounded-[14px] bg-surface p-5 ring-1 ring-edge-soft">
-      <SectionHeader icon={<ScrollText size={20} />} label={t("About")} />
+      {!hideTitle && <SectionHeader icon={<ScrollText size={20} />} label={t("About")} />}
       {html ? (
         <div
           className="max-w-none break-words text-[14px] leading-relaxed text-ink-muted [&_a]:break-words"

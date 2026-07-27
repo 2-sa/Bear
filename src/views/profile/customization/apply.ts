@@ -13,6 +13,7 @@ export type ResolvedCustom = {
   hasCanvas: boolean;
   hiddenFromVisitors: boolean;
   hideTopBanner: boolean;
+  hideCardTitles: boolean;
 };
 
 const SCRIM = "color-mix(in oklab, var(--color-canvas) 62%, transparent)";
@@ -46,6 +47,7 @@ export function resolveCustomization(s: ProfileSummary): ResolvedCustom {
     hasCanvas,
     hiddenFromVisitors: !s.customEnabled && !!s.isOwner,
     hideTopBanner: allowed && !!s.hideTopBanner,
+    hideCardTitles: allowed && !!s.hideCardTitles,
   };
 }
 

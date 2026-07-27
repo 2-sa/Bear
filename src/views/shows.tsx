@@ -252,7 +252,7 @@ export function Shows({ active = true }: { active?: boolean }) {
   }, [rows, hero, top10.length]);
 
   return (
-    <main ref={scrollCb} className="relative h-full overflow-y-auto bg-canvas">
+    <main ref={scrollCb} className="relative h-full overflow-y-auto overflow-x-hidden bg-canvas">
       <ScrollRootContext.Provider value={scrollEl}>
         <div className="relative flex w-full flex-col gap-12 px-12 pb-32 pt-32">
           <PageMast />

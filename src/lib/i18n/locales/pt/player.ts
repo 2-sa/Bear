@@ -361,6 +361,7 @@ const player: Record<string, string> = {
   "{word} {n} seconds": "{word} {n} segundos",
   "{word} {n} seconds. Hold for options": "{word} {n} segundos. Segure para opções",
   "{word} {n}s · hold for options": "{word} {n}s · segure para opções",
+  "Still searching {count} more…": "Ainda a procurar em mais {count}…",
 };
 
 export default player;

@@ -18,12 +18,14 @@ export function StremioVolume({
   onVolume,
   capabilities,
   style = "slider",
+  compact = false,
 }: {
   snap: PlayerSnapshot;
   onMute: () => void;
   onVolume: (v: number) => void;
   capabilities: PlayerCapabilities;
   style?: VolumeStyle;
+  compact?: boolean;
 }) {
   const tr = useT();
   const [hover, setHover] = useState(false);
@@ -177,7 +179,7 @@ export function StremioVolume({
           onPointerCancel={onPointerUp}
           onMouseEnter={() => setBarNear(true)}
           onMouseLeave={() => setBarNear(false)}
-          className="relative flex h-44 w-9 cursor-pointer touch-none items-stretch justify-center"
+          className={`relative flex ${compact ? "h-32 w-7" : "h-44 w-9"} cursor-pointer touch-none items-stretch justify-center`}
         >
           <div
             className="relative self-stretch rounded-full bg-white/25 transition-[width] duration-150 ease-out"

@@ -208,6 +208,7 @@ type ViewValue = {
   cancelLeavePartyForLive: () => void;
   addonDetailId: string | null;
   openAddonDetail: (id: string) => void;
+  navDepth: number;
   canGoBack: boolean;
   goBack: () => void;
   canGoForward: boolean;
@@ -1046,6 +1047,7 @@ export function ViewProvider({ children }: { children: ReactNode }) {
       cancelLeavePartyForLive,
       addonDetailId,
       openAddonDetail,
+      navDepth: stack.length,
       canGoBack,
       goBack: pop,
       canGoForward,

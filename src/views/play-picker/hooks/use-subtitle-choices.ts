@@ -78,6 +78,7 @@ export function useSubtitleChoices(src: PlayerSrc) {
             filename: src.streamRef?.parsedTitle ?? src.streamRef?.title ?? undefined,
           },
           {
+            timeoutMs: 7_000,
             providers: {
               wyzie: enabled.wyzie ?? true,
               addons: enabled.addons ?? true,

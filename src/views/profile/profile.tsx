@@ -30,6 +30,7 @@ import { UserRatings } from "@/views/ratings/user-ratings";
 import { ImportModal } from "@/views/ratings/import/import-modal";
 import { WatchNowCard } from "./watch-now-card";
 import { ProfileAudioCard } from "./profile-audio-card";
+import { MinecraftCard } from "./minecraft-card";
 import { ProfileHero } from "./profile-hero";
 import { ProfileSettings } from "./profile-settings";
 import { ScrollToTop } from "./scroll-to-top";
@@ -77,11 +78,16 @@ export function ProfileView({
 
   useScrollMemory(`profile:${handle}`, scrollRef);
 
+  const cloudWatched = summary?.counts.watched ?? 0;
+  const cloudManga = summary?.counts.mangaRead ?? 0;
+
   useEffect(() => {
     if (!isOwner) return;
-    const w = Math.max(watchedCount, libWatched);
-    pushStats(w > 0 ? w : null, mangaProgress.length);
-  }, [isOwner, libWatched, watchedCount, mangaProgress.length]);
+    const w = Math.max(watchedCount, libWatched, cloudWatched);
+    const m = Math.max(mangaProgress.length, cloudManga);
+    if (w <= cloudWatched && m <= cloudManga) return;
+    pushStats(w > 0 ? w : null, m > 0 ? m : null);
+  }, [isOwner, libWatched, watchedCount, mangaProgress.length, cloudWatched, cloudManga]);
 
   useEffect(() => {
     if (isOwner && consumeProfileEditIntent(handle)) setEditing(true);
@@ -131,6 +137,7 @@ export function ProfileView({
         isOwner={summary.isOwner}
         userFont={c.font}
         onEdit={() => setEditing(true)}
+        hideTitle={c.hideCardTitles}
       />
     ),
     ratings: (
@@ -143,7 +150,7 @@ export function ProfileView({
       />
     ),
     canvas: c.hasCanvas ? (
-      <CanvasCard html={c.html} css={c.css} height={c.height} hiddenFromVisitors={c.hiddenFromVisitors} />
+      <CanvasCard html={c.html} css={c.css} height={c.height} hiddenFromVisitors={c.hiddenFromVisitors} hideTitle={c.hideCardTitles} />
     ) : undefined,
     showcase: (
       <Showcase item={summary.showcase} onOpen={onOpenMeta} isOwner={summary.isOwner} onCleared={patchSummary} />
@@ -171,7 +178,7 @@ export function ProfileView({
       />
     ),
     comments: (
-      <CommentsSection handle={handle} isOwner={summary.isOwner} signedIn={!!authKey} onOpenAuthor={onOpenProfile} />
+      <CommentsSection handle={handle} isOwner={summary.isOwner} signedIn={viewerSignedIn} onOpenAuthor={onOpenProfile} />
     ),
   };
   const presentCards = CARD_ORDER_DEFAULT.filter((k) => cardNodes[k] != null);
@@ -240,6 +247,7 @@ export function ProfileView({
             </div>
             <aside className="space-y-6 lg:sticky lg:top-24 lg:self-start">
               <ProfileAudioCard audioUrl={summary.audioUrl} />
+              <MinecraftCard name={summary.minecraftName} background={summary.minecraftBg} hideTitle={c.hideCardTitles} />
               <WatchNowCard watching={summary.watching} />
               <FriendsPanel friends={friends} onOpen={onOpenProfile} isOwner={summary.isOwner} total={summary.counts.friends} />
               <GroupsPanel isOwner={summary.isOwner} handle={handle} />

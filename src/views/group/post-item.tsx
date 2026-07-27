@@ -14,6 +14,7 @@ import {
 } from "@/lib/social/group-posts";
 import { Avatar, timeAgo } from "@/views/profile/profile-bits";
 import { UserHoverCard } from "@/views/profile/user-hover-card";
+import { VerifiedBadge } from "@/views/account/verified-badge";
 
 const POST_MAX = 2000;
 
@@ -275,6 +276,7 @@ function AuthorName({
         className="flex items-baseline gap-2 text-start"
       >
         <span className="text-[13.5px] font-semibold text-ink">{post.author.alias}</span>
+        {post.author.verified && <VerifiedBadge size="sm" />}
         <span className="text-[12px] text-ink-subtle">@{post.author.handle}</span>
       </button>
     </UserHoverCard>

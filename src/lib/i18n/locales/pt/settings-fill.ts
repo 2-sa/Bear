@@ -166,6 +166,16 @@ const settingsFill: Record<string, string> = {
   "On by default. The top-bar icons sit clean over the artwork with no pill behind them, and Watch Together opens as a top-right panel. Turn it off to bring back the filled pill buttons.": "Ativado por padrão. Os ícones da barra superior ficam limpos sobre a arte, sem cápsula atrás deles, e o Assistir Juntos abre como um painel no canto superior direito. Desative para trazer de volta os botões de cápsula preenchidos.",
   "Drag the window from anywhere": "Arrastar a janela de qualquer lugar",
   "Move Harbor by dragging any empty space on a page, not just the top bar. Leave this off to keep clicks inside pages from nudging the window.": "Mova o Harbor arrastando qualquer espaço vazio de uma página, não apenas a barra superior. Deixe desativado para evitar que cliques dentro das páginas movam a janela sem querer.",
+  "Stream priority": "Prioridade de streams",
+  "Results from addons higher in this list come first. If one finds nothing, the next fills in.": "Os resultados dos addons mais acima nesta lista vêm primeiro. Se um não encontrar nada, o próximo assume.",
+  "Following addon order": "Seguindo a ordem dos addons",
+  "Use addon order": "Usar a ordem dos addons",
+  "Not installed": "Não instalado",
+  "Remove from list": "Remover da lista",
+  "Priority applies once you have two or more stream addons.": "A prioridade passa a valer quando você tem dois ou mais addons de stream.",
+  "{n} addons don't provide streams and aren't listed.": "{n} addons não fornecem streams e não aparecem aqui.",
+  "Moved {name} to position {n} of {total}": "{name} movido para a posição {n} de {total}",
+  "Harbor ranking puts the best-scoring sources first. Addon order keeps each addon's results in the order it returned them, like the Stremio and Vidi apps. Stream priority below decides which addon leads, in both modes.": "A classificação do Harbor coloca as fontes com melhor pontuação primeiro. A ordem dos addons mantém os resultados de cada addon na ordem em que foram retornados, como nos apps Stremio e Vidi. A prioridade de streams abaixo decide qual addon lidera, nos dois modos.",
 };
 
 export default settingsFill;

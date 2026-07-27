@@ -34,6 +34,7 @@ export type MiniUser = {
   handle: string;
   alias: string;
   avatarUrl?: string;
+  verified?: boolean;
 };
 
 export type Group = {

@@ -25,7 +25,7 @@ export function ContributorCard() {
           onClick={() => openUrl(REPO)}
           className="flex h-9 items-center gap-2 rounded-lg border border-edge-soft bg-elevated px-3 text-[12.5px] font-medium text-ink-muted transition-colors hover:bg-raised hover:text-ink"
         >
-          <GitHubIcon size={13} />
+          <GitHubIcon size={13} strokeWidth={1.9} />
           Open repo on GitHub
         </button>
         <button

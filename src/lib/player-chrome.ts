@@ -87,7 +87,7 @@ export function isVariantAware(id: PlayerControlId): boolean {
   return VARIANT_AWARE_CONTROLS.includes(id);
 }
 
-export type VolumeStyle = "slider" | "stepper" | "icon-only";
+export type VolumeStyle = "slider" | "vertical" | "stepper" | "icon-only";
 export type TimeFormat = "start-end" | "remaining" | "elapsed-only";
 
 export type CustomIconMap = Record<string, string>;

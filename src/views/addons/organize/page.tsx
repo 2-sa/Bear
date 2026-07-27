@@ -270,7 +270,7 @@ export function OrganizeAddonsPage({
               {t("Organize addons")}
             </h1>
             <p className="hidden truncate text-[13px] text-ink-muted sm:block">
-              {t("The order decides who answers first when you press Play. Drag, use the arrows, or jump anything straight to the top.")}
+              {t("This order drives your catalog rows and the default stream order. A stream priority set in Settings overrides it for streams.")}
             </p>
           </div>
           {showBackups && (
@@ -492,7 +492,7 @@ export function OrganizeAddonsPage({
                     </h2>
                   </div>
                   <ul className="flex flex-col gap-2.5 text-[13px] leading-relaxed text-ink-muted">
-                    <li>{t("Number 1 gets asked first for streams when you press Play.")}</li>
+                    <li>{t("Number 1 answers first when you press Play, unless Settings has a stream priority.")}</li>
                     <li>{t("The order also decides which addon's rows win on your Home screen.")}</li>
                     <li>{t("Nothing changes until you press Save. Leaving this page discards edits.")}</li>
                     <li>{t("The Backups button at the top keeps your last five orders. One click restores any of them.")}</li>

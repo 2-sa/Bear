@@ -4,7 +4,7 @@ import { useAuth } from "@/lib/auth";
 import type { Addon } from "@/lib/addons";
 import { gatherSubtitleAddons } from "@/lib/subtitles/addon-source";
 import { languageName } from "@/lib/subtitles/language";
-import { searchSubtitles } from "@/lib/subtitles/search";
+import { searchSubtitles, type SearchOptions } from "@/lib/subtitles/search";
 import { providerLabel, releaseOf } from "@/lib/subtitles/provider-label";
 import type { SubResult } from "@/lib/subtitles/types";
 import {
@@ -67,6 +67,8 @@ export function SearchSection(props: SubtitleMenuProps) {
   const [addons, setAddons] = useState<Addon[] | null>(null);
   const [addonsLoading, setAddonsLoading] = useState(true);
   const initialSearchDone = useRef(false);
+  const searchSeq = useRef(0);
+  const [pendingSources, setPendingSources] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -103,7 +105,7 @@ export function SearchSection(props: SubtitleMenuProps) {
         episode: tgt.episode ?? undefined,
         langs: settings.preferredSubLangs ?? [],
       };
-      const searchOpts = {
+      const searchOpts: SearchOptions = {
         providers: {
           wyzie: titleOnly ? true : enabled.wyzie === true,
           addons: enabled.addons ?? true,
@@ -119,8 +121,17 @@ export function SearchSection(props: SubtitleMenuProps) {
           enabled: { subdl: enabled.subdl === true, subsource: enabled.subsource === true },
         },
       };
+      const seq = ++searchSeq.current;
+      searchOpts.onPartial = (partial, stillFetching) => {
+        if (seq !== searchSeq.current) return;
+        setResults(partial);
+        setPendingSources(stillFetching);
+        if (partial.length > 0) setLoading(false);
+      };
       const r = await searchSubtitles(searchQuery, searchOpts);
+      if (seq !== searchSeq.current) return;
       setResults(r);
+      setPendingSources(0);
     } finally {
       setLoading(false);
     }
@@ -312,6 +323,12 @@ export function SearchSection(props: SubtitleMenuProps) {
           {addonsLoading
             ? t("Loading subtitle addons…")
             : t("Searching {count} sources…", { count: 1 + (addons?.length ?? 0) })}
+        </p>
+      )}
+      {pendingSources > 0 && results !== null && results.length > 0 && (
+        <p className="flex items-center gap-2 px-4 py-1.5 text-[12px] text-ink-subtle">
+          <Loader2 size={12} className="animate-spin" />
+          {t("Still searching {count} more…", { count: pendingSources })}
         </p>
       )}
       {results !== null && results.length === 0 && (
