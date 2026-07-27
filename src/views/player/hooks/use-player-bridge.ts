@@ -8,8 +8,9 @@ import { generalShaderChain, generalShaderKey, shaderCompanionOptions } from "@/
 import type { PlayerSrc } from "@/lib/view";
 import type { Settings } from "@/lib/settings";
 import { setPlaybackClock } from "@/lib/player/playback-clock";
-import { isWindowsDesktop } from "@/lib/platform";
-import { svpEnsureRunning } from "@/lib/svp";
+import { isLinuxDesktop, isWindowsDesktop } from "@/lib/platform";
+import { svpEnsureRunning, svpStatus } from "@/lib/svp";
+import { isSvpActiveForMedia } from "@/lib/player/svp-policy";
 import { pickBridge } from "../player-utils";
 
 function snapChangedIgnoringClock(a: PlayerSnapshot, b: PlayerSnapshot): boolean {
@@ -52,10 +53,31 @@ export function usePlayerBridge(params: {
   const embedActive = settings.playerMpvEmbed && !hdrOpaqueWindow;
   const isAnimeSrc = metaIsAnime(src.meta) || !!src.isAnime;
   const anime4kOn = settings.playerAnime4k && (!settings.playerAnime4kAnimeOnly || isAnimeSrc);
-  const svpOn =
-    settings.playerSvp &&
-    !!settings.svpVpyPath &&
-    (settings.svpScope === "all" || (settings.svpScope === "anime" ? isAnimeSrc : !isAnimeSrc));
+  const svpRequested = isSvpActiveForMedia(settings, src.meta);
+  const [svpRuntimeReady, setSvpRuntimeReady] = useState<boolean | null>(
+    isLinuxDesktop() && svpRequested ? null : true,
+  );
+  useEffect(() => {
+    if (!svpRequested || !isLinuxDesktop()) {
+      setSvpRuntimeReady(true);
+      return;
+    }
+    let active = true;
+    setSvpRuntimeReady(null);
+    void svpStatus()
+      .then((status) => {
+        if (active)
+          setSvpRuntimeReady(status.supported && status.ready && status.loadable !== false);
+      })
+      .catch(() => {
+        if (active) setSvpRuntimeReady(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [svpRequested, settings.svpVpyPath]);
+  const svpPending = svpRequested && svpRuntimeReady === null;
+  const svpOn = svpRequested && svpRuntimeReady === true;
   useEffect(() => {
     if (svpOn) void svpEnsureRunning().catch(() => {});
   }, [svpOn]);
@@ -67,6 +89,7 @@ export function usePlayerBridge(params: {
   const bridgeKey = `${chosenEngine}|${anime4kOn}|${embedActive}|${anime4kOn ? settings.playerAnime4kShaders.join(",") : ""}|${generalShaderKey(settings)}|${svpOn}|${svpOn ? settings.svpVpyPath : ""}`;
   const [bridgeReady, setBridgeReady] = useState(false);
   useEffect(() => {
+    if (svpPending) return;
     const host = videoMountRef.current;
     if (!host) return;
     let cancelled = false;
@@ -129,7 +152,7 @@ export function usePlayerBridge(params: {
       setPlaybackClock(0, 0);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bridgeKey]);
+  }, [bridgeKey, svpPending]);
 
   useEffect(() => {
     if (engine !== "html5") return;
