@@ -204,6 +204,7 @@ pub async fn probe_audio_streams(
         .arg("stream=index,codec_name,channels:stream_tags=language,title:stream_disposition=default,dub,original,comment,visual_impaired,karaoke")
         .arg("-of")
         .arg("json")
+        .arg("-i")
         .arg(url);
     cmd.stdin(std::process::Stdio::null())
         .stdout(std::process::Stdio::piped())
