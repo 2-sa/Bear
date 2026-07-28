@@ -318,10 +318,12 @@ export function MangaView() {
 
   return (
     <main ref={browseScrollRef} className="flex-1 overflow-y-auto overflow-x-hidden px-12 pb-16 pt-28">
-      <MangaHero
-        featured={featured}
-        onOpen={(id) => setMode({ screen: "detail", mangaId: id })}
-      />
+      {featured.length > 0 && (
+        <MangaHero
+          featured={featured}
+          onOpen={(id) => setMode({ screen: "detail", mangaId: id })}
+        />
+      )}
       <div className="mt-8">
         <MangaContinue onResume={resume} />
       </div>

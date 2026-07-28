@@ -13,7 +13,10 @@ import type { IconThumb } from "./theme-panel/custom-themes-section/community-st
 import { DisplaySection } from "./theme-panel/display-section";
 import { FontGrid } from "./theme-panel/font-grid";
 import { LogoPicker } from "./theme-panel/logo-picker";
-import { CUSTOM_THEME_TOOLS_ENABLED } from "@/lib/security-policy";
+import {
+  CUSTOM_THEME_TOOLS_ENABLED,
+  EXTERNAL_THEME_STORE_ENABLED,
+} from "@/lib/security-policy";
 
 const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
@@ -33,7 +36,7 @@ export function ThemePanel() {
     <>
       {!libraryOpen && (
         <>
-      {CUSTOM_THEME_TOOLS_ENABLED && <ThemeCommunityCta />}
+      {EXTERNAL_THEME_STORE_ENABLED && <ThemeCommunityCta />}
 
       <Section
         title={t("Theme")}

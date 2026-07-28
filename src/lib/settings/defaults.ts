@@ -160,7 +160,7 @@ export const DEFAULT: Settings = {
     shudder: true,
   },
   showAdultAddons: false,
-  togetherRelayUrl: "",
+  togetherRelayUrl: "wss://harbor-together-relay.xyz7.workers.dev",
   togetherCfToken: "",
   togetherCfAccountId: "",
   togetherCfDeployed: false,

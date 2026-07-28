@@ -20,6 +20,7 @@ const RETIRED_GEMINI = new Set([
   "gemini-3-pro-preview",
 ]);
 import { DEFAULT, STORAGE_KEY } from "./defaults";
+import { migrateRelayDefault } from "../together/relay-version";
 import type { Settings } from "./types";
 
 const HEX_RE = /^#[0-9a-f]{6}$/i;
@@ -120,6 +121,7 @@ export function loadStoredSettings(rawKey: string = STORAGE_KEY): Settings {
       _scrapersV2?: boolean;
       _animeRowsV1?: boolean;
       _tennisWtaV1?: boolean;
+      _bearRelayDefaultV1?: boolean;
     };
     if (!parsed._animeRowsV1) {
       const prev = (parsed.animeRows ?? {}) as Partial<Settings["animeRows"]>;
@@ -163,6 +165,10 @@ export function loadStoredSettings(rawKey: string = STORAGE_KEY): Settings {
         if (!parsed.sportsLeagues.includes("TENNIS_WTA")) parsed.sportsLeagues.push("TENNIS_WTA");
       }
       parsed._tennisWtaV1 = true;
+    }
+    if (!parsed._bearRelayDefaultV1) {
+      parsed.togetherRelayUrl = migrateRelayDefault(parsed.togetherRelayUrl);
+      parsed._bearRelayDefaultV1 = true;
     }
     if (typeof parsed.songIdAiModel === "string" && RETIRED_GEMINI.has(parsed.songIdAiModel.trim())) {
       parsed.songIdAiModel = DEFAULT.songIdAiModel;

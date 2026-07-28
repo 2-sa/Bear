@@ -7,6 +7,7 @@ import test from "node:test";
 import {
   ACTIVE_THEME_CONTENT_ENABLED,
   CUSTOM_THEME_TOOLS_ENABLED,
+  EXTERNAL_THEME_STORE_ENABLED,
   IN_APP_EXTERNAL_PAGES_ENABLED,
   SIGNED_UPDATES_ENABLED,
   activeThemeContent,
@@ -32,12 +33,12 @@ function rustCommand(source: string, name: string): string {
   return source.slice(match.index, nextCommand === -1 ? source.length : nextCommand);
 }
 
-test("active theme content is disabled by default", () => {
-  assert.equal(ACTIVE_THEME_CONTENT_ENABLED, false);
-  assert.equal(CUSTOM_THEME_TOOLS_ENABLED, false);
-  assert.equal(activeThemeContent("body { display: none }"), "");
-  assert.equal(activeThemeContent("globalThis.__TAURI_INTERNALS__"), "");
-  assert.equal(activeThemeContent("<img src=x onerror=alert(1)>"), "");
+test("local theme tools stay enabled while the external store stays disabled", () => {
+  assert.equal(ACTIVE_THEME_CONTENT_ENABLED, true);
+  assert.equal(CUSTOM_THEME_TOOLS_ENABLED, true);
+  assert.equal(EXTERNAL_THEME_STORE_ENABLED, false);
+  assert.equal(activeThemeContent("body { display: none }"), "body { display: none }");
+  assert.equal(activeThemeContent(".bear-theme { color: orange }"), ".bear-theme { color: orange }");
 });
 
 test("privileged filesystem access stays narrowly scoped", () => {

@@ -2,11 +2,16 @@ import { getCustomThemes, parseThemeJson, saveCustomTheme, type CustomTheme } fr
 import { scanTheme } from "@/lib/theme-scan";
 import { authToken } from "./theme-auth";
 import { getDownloadRecords, recordDownloadedTheme } from "@/lib/theme-updates";
+import { EXTERNAL_THEME_STORE_ENABLED } from "@/lib/security-policy";
 
 const ORIGIN = "https://harbor.site";
 const API = `${ORIGIN}/themes/api`;
 const UPLOADS_KEY = "harbor.theme-uploads.v1";
 const CLIENT_KEY = "harbor.theme-client-id";
+
+function requireExternalThemeStore(): void {
+  if (!EXTERNAL_THEME_STORE_ENABLED) throw new Error("External theme store is disabled.");
+}
 
 export type StoreTheme = {
   id: string;
@@ -67,6 +72,7 @@ function authHeaders(): Record<string, string> {
 }
 
 export async function browseThemes(sort = "top", q = ""): Promise<StoreTheme[]> {
+  if (!EXTERNAL_THEME_STORE_ENABLED) return [];
   const url = `${API}/themes?sort=${encodeURIComponent(sort)}${q ? `&q=${encodeURIComponent(q)}` : ""}`;
   const r = await fetch(url);
   if (!r.ok) throw new Error("Could not reach the theme library.");
@@ -75,6 +81,7 @@ export async function browseThemes(sort = "top", q = ""): Promise<StoreTheme[]> 
 }
 
 export async function downloadTheme(id: string, preview?: string | null, versionsCount?: number): Promise<CustomTheme> {
+  requireExternalThemeStore();
   const r = await fetch(`${API}/themes/${id}/file?clientId=${encodeURIComponent(clientId())}`);
   if (!r.ok) throw new Error("Download failed.");
   const parsed = parseThemeJson(await r.text());
@@ -143,6 +150,7 @@ export function subscribeUnseen(fn: () => void): () => void {
 }
 
 export async function rateTheme(id: string, value: number): Promise<StoreTheme> {
+  requireExternalThemeStore();
   const r = await fetch(`${API}/themes/${id}/rate`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -173,6 +181,7 @@ function normalizeComment(c: Record<string, unknown>): ThemeComment {
 }
 
 export async function listComments(themeId: string): Promise<ThemeComment[]> {
+  if (!EXTERNAL_THEME_STORE_ENABLED) return [];
   const r = await fetch(`${API}/themes/${themeId}/comments`, { headers: authHeaders() });
   if (!r.ok) throw new Error("Could not load comments.");
   const d = await r.json();
@@ -180,6 +189,7 @@ export async function listComments(themeId: string): Promise<ThemeComment[]> {
 }
 
 export async function postComment(themeId: string, body: string): Promise<ThemeComment> {
+  requireExternalThemeStore();
   const r = await fetch(`${API}/themes/${themeId}/comments`, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...authHeaders() },
@@ -191,6 +201,7 @@ export async function postComment(themeId: string, body: string): Promise<ThemeC
 }
 
 export async function deleteComment(themeId: string, commentId: string): Promise<void> {
+  requireExternalThemeStore();
   const r = await fetch(`${API}/themes/${themeId}/comments/${commentId}/delete`, {
     method: "POST",
     headers: authHeaders(),
@@ -199,6 +210,7 @@ export async function deleteComment(themeId: string, commentId: string): Promise
 }
 
 export async function getTheme(id: string): Promise<StoreTheme> {
+  requireExternalThemeStore();
   const r = await fetch(`${API}/themes/${id}`);
   if (!r.ok) throw new Error("Theme not found.");
   return normalize(await r.json());
@@ -217,6 +229,7 @@ export type ThemeNotification = {
 };
 
 export async function listNotifications(): Promise<{ notifications: ThemeNotification[]; unread: number }> {
+  if (!EXTERNAL_THEME_STORE_ENABLED) return { notifications: [], unread: 0 };
   const r = await fetch(`${API}/me/notifications`, { headers: authHeaders() });
   if (!r.ok) throw new Error("Could not load notifications.");
   const d = await r.json();
@@ -225,6 +238,7 @@ export async function listNotifications(): Promise<{ notifications: ThemeNotific
 }
 
 export async function markNotificationsRead(ids?: string[]): Promise<number> {
+  if (!EXTERNAL_THEME_STORE_ENABLED) return 0;
   const r = await fetch(`${API}/me/notifications/read`, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...authHeaders() },
@@ -268,6 +282,7 @@ export async function uploadTheme(
   screenshots: Blob[],
   author: string,
 ): Promise<{ id: string; ownerToken: string; share: string }> {
+  requireExternalThemeStore();
   const fd = new FormData();
   fd.append("theme", new Blob([themeJson], { type: "application/json" }), "theme.json");
   fd.append("cover", cover, "cover.png");
@@ -280,6 +295,7 @@ export async function uploadTheme(
 }
 
 export async function setVisibility(id: string, ownerToken: string, visibility: "public" | "unlisted"): Promise<void> {
+  requireExternalThemeStore();
   const r = await fetch(`${API}/themes/${id}/visibility`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${ownerToken}` },
@@ -289,6 +305,7 @@ export async function setVisibility(id: string, ownerToken: string, visibility: 
 }
 
 export async function deleteUpload(id: string, ownerToken: string): Promise<void> {
+  requireExternalThemeStore();
   const r = await fetch(`${API}/themes/${id}/delete`, {
     method: "POST",
     headers: { Authorization: `Bearer ${ownerToken}` },
@@ -298,6 +315,7 @@ export async function deleteUpload(id: string, ownerToken: string): Promise<void
 }
 
 export async function myThemes(): Promise<StoreTheme[]> {
+  if (!EXTERNAL_THEME_STORE_ENABLED) return [];
   const r = await fetch(`${API}/me/themes`, { headers: authHeaders() });
   if (!r.ok) throw new Error("Could not load your themes.");
   const d = await r.json();
@@ -311,6 +329,7 @@ export async function updateTheme(
   screenshots: Blob[],
   changelog: string,
 ): Promise<StoreTheme> {
+  requireExternalThemeStore();
   const fd = new FormData();
   fd.append("theme", new Blob([themeJson], { type: "application/json" }), "theme.json");
   if (cover) fd.append("cover", cover, "cover.png");
@@ -323,6 +342,7 @@ export async function updateTheme(
 }
 
 export async function themeVersions(id: string): Promise<{ v: number; changelog: string; createdAt: string }[]> {
+  if (!EXTERNAL_THEME_STORE_ENABLED) return [];
   const r = await fetch(`${API}/themes/${id}/versions`, { headers: authHeaders() });
   if (!r.ok) throw new Error("Could not load version history.");
   const d = await r.json();
@@ -330,6 +350,7 @@ export async function themeVersions(id: string): Promise<{ v: number; changelog:
 }
 
 export async function claimTheme(id: string, ownerToken: string): Promise<StoreTheme> {
+  requireExternalThemeStore();
   const r = await fetch(`${API}/themes/${id}/claim`, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...authHeaders() },

@@ -12,9 +12,12 @@ const TABS: SegmentedItem[] = [
 export function StoreTabs({
   active,
   onSelect,
+  themesEnabled = true,
 }: {
   active: StoreTab;
   onSelect: (t: StoreTab) => void;
+  themesEnabled?: boolean;
 }) {
-  return <MarketSegmented items={TABS} active={active} onSelect={(id) => onSelect(id as StoreTab)} />;
+  const items = themesEnabled ? TABS : TABS.filter((tab) => tab.id === "badges");
+  return <MarketSegmented items={items} active={active} onSelect={(id) => onSelect(id as StoreTab)} />;
 }

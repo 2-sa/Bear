@@ -81,16 +81,39 @@ export function makeSuwayomiProvider(baseUrl: string, basicAuth?: string): Manga
       .filter((m): m is MangaSummary => !!m);
   }
 
+  async function browseAllSources(
+    kind: BrowseKind,
+    offset: number,
+    query: string,
+  ): Promise<MangaSummary[]> {
+    const transport = await pickTransport(client);
+    const sources = await loadSources(client, transport);
+    const lists = await Promise.all(
+      sources.map((source) => browse(source.id, kind, offset, query).catch(() => [])),
+    );
+    const merged: MangaSummary[] = [];
+    const longest = Math.max(0, ...lists.map((list) => list.length));
+    for (let index = 0; index < longest; index++) {
+      for (const list of lists) {
+        if (list[index]) merged.push(list[index]);
+      }
+    }
+    return merged;
+  }
+
   async function popular(offset: number, tagId?: string): Promise<MangaSummary[]> {
-    if (!tagId) return offset > 0 ? [] : library();
-    return browse(tagId, "popular", offset, "");
+    if (tagId) return browse(tagId, "popular", offset, "");
+    const all = await browseAllSources("popular", offset, "");
+    if (all.length || offset > 0) return all;
+    return library();
   }
 
   async function search(query: string, offset: number, tagId?: string): Promise<MangaSummary[]> {
     const q = query.trim();
     if (!q) return popular(offset, tagId);
     if (tagId) return browse(tagId, "search", offset, q);
-    if (offset > 0) return [];
+    const all = await browseAllSources("search", offset, q);
+    if (all.length || offset > 0) return all;
     const lower = q.toLowerCase();
     return (await library()).filter((m) => m.title.toLowerCase().includes(lower));
   }

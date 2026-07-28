@@ -11,6 +11,7 @@ import type { LibraryEntry } from "./library-grid";
 import { BrowserCard } from "./library-browser-card";
 import { MyLibraryFilters, type LibCat } from "./my-library-filters";
 import { ThemeUpdatesBanner } from "./theme-updates-banner";
+import { EXTERNAL_THEME_STORE_ENABLED } from "@/lib/security-policy";
 
 export function LibraryBrowser({
   entries,
@@ -41,13 +42,20 @@ export function LibraryBrowser({
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  const [tab, setTab] = useState<"library" | "community" | "mine">(initialTab);
+  const externalBundle = initialStoreTab === "badges" || initialStoreTab === "awards";
+  const communityEnabled = EXTERNAL_THEME_STORE_ENABLED || externalBundle;
+  const [tab, setTab] = useState<"library" | "community" | "mine">(
+    communityEnabled ? initialTab : "library",
+  );
   const [betaOpen, setBetaOpen] = useState(false);
   const [libQuery, setLibQuery] = useState("");
   const [libCat, setLibCat] = useState<LibCat>("all");
   const [unseen, setUnseen] = useState(() => getUnseenDownloads().length);
 
-  useEffect(() => subscribeUnseen(() => setUnseen(getUnseenDownloads().length)), []);
+  useEffect(() => {
+    if (!EXTERNAL_THEME_STORE_ENABLED) return;
+    return subscribeUnseen(() => setUnseen(getUnseenDownloads().length));
+  }, []);
   useEffect(() => {
     if (tab === "library") clearUnseenDownloads();
   }, [tab]);
@@ -83,25 +91,30 @@ export function LibraryBrowser({
           <ChevronLeft size={16} strokeWidth={2.4} className="dir-icon transition-transform group-hover:-translate-x-0.5 rtl:group-hover:translate-x-0.5" />
           Your themes
         </button>
-        <MarketSegmented
-          items={[
-            { id: "library", label: "My library", badge: unseen > 0 ? unseen : undefined },
-            { id: "community", label: "Community" },
-            { id: "mine", label: "My themes" },
-          ]}
-          active={tab}
-          onSelect={(id) => setTab(id as "library" | "community" | "mine")}
-        />
+        {EXTERNAL_THEME_STORE_ENABLED && (
+          <MarketSegmented
+            items={[
+              { id: "library", label: "My library", badge: unseen > 0 ? unseen : undefined },
+              { id: "community", label: "Community" },
+              { id: "mine", label: "My themes" },
+            ]}
+            active={tab}
+            onSelect={(id) => setTab(id as "library" | "community" | "mine")}
+          />
+        )}
       </div>
 
       <div className="flex flex-col gap-8">
-          {tab === "community" ? (
-            <CommunityStore initialTab={initialStoreTab} />
-          ) : tab === "mine" ? (
+          {communityEnabled && tab === "community" ? (
+            <CommunityStore
+              initialTab={initialStoreTab}
+              themesEnabled={EXTERNAL_THEME_STORE_ENABLED}
+            />
+          ) : EXTERNAL_THEME_STORE_ENABLED && tab === "mine" ? (
             <MyThemesDashboard />
           ) : (
           <>
-          <ThemeUpdatesBanner />
+          {EXTERNAL_THEME_STORE_ENABLED && <ThemeUpdatesBanner />}
           <MyLibraryFilters
             query={libQuery}
             onQuery={setLibQuery}

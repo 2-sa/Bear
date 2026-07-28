@@ -14,7 +14,13 @@ import { BundleBrowse } from "./bundle-browse";
 import { BundleUploadFlow } from "./bundle-upload-flow";
 import type { BundleKind } from "@/lib/bundle-store";
 
-export function CommunityStore({ initialTab = "discover" }: { initialTab?: StoreTab } = {}) {
+export function CommunityStore({
+  initialTab = "discover",
+  themesEnabled = true,
+}: {
+  initialTab?: StoreTab;
+  themesEnabled?: boolean;
+} = {}) {
   const { data, loading, error, reload } = useStoreThemes();
   const [tab, setTab] = useState<StoreTab>(initialTab);
   const [query, setQuery] = useState("");
@@ -66,7 +72,7 @@ export function CommunityStore({ initialTab = "discover" }: { initialTab?: Store
   return (
     <section className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 ps-[9px] pb-1">
-        <StoreTabs active={tab} onSelect={onTab} />
+        <StoreTabs active={tab} onSelect={onTab} themesEnabled={themesEnabled} />
         {themeTab && (
           <div className="flex items-center gap-2.5">
             <div

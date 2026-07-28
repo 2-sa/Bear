@@ -388,8 +388,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2af50177e190e07a26ab74f8b1efbfe2ef87da2116221318cb1c2e82baf7de06"
 
 [[package]]
-name = "bear-beta"
-version = "0.9.120"
+name = "bear"
+version = "0.9.121"
 dependencies = [
  "axum",
  "base64 0.22.1",

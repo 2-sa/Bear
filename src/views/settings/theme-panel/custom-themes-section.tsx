@@ -29,6 +29,7 @@ import {
   type ActiveThemeId,
   type ThemePreset,
 } from "@/lib/theme";
+import { EXTERNAL_THEME_STORE_ENABLED } from "@/lib/security-policy";
 
 export function CustomThemesSection() {
   const { settings, update } = useSettings();
@@ -49,8 +50,10 @@ export function CustomThemesSection() {
   useEffect(() => () => setThemeLibraryOpen(false), []);
 
   const openLibrary = useCallback((tab: "library" | "community" | "mine", storeTab?: StoreTab) => {
-    setLibraryTab(tab);
-    setLibraryStoreTab(storeTab);
+    const externalBundle = storeTab === "badges" || storeTab === "awards";
+    const requestedTab = EXTERNAL_THEME_STORE_ENABLED || externalBundle ? tab : "library";
+    setLibraryTab(requestedTab);
+    setLibraryStoreTab(requestedTab === "community" ? storeTab : undefined);
     setImportedNotice(null);
     setLibraryOpen(true);
   }, []);

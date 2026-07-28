@@ -1,4 +1,14 @@
 const settings: Record<string, string> = {
+  "Profile songs": "أغاني الملف الشخصي",
+  "People can pin a track to their profile. This controls what happens when you visit one.":
+    "يمكن للأشخاص تثبيت مقطع موسيقي في ملفهم الشخصي. يحدد هذا الخيار ما يحدث عند زيارة أحد الملفات.",
+  "Play automatically": "تشغيل تلقائيًا",
+  "Only when I press play": "فقط عند الضغط على تشغيل",
+  "Never": "أبدًا",
+  "Profile songs stay hidden and never play.":
+    "تبقى أغاني الملف الشخصي مخفية ولا يتم تشغيلها.",
+  "You can always mute or stop a song from the card itself.":
+    "يمكنك دائمًا كتم الأغنية أو إيقافها من البطاقة نفسها.",
 "Sign in to Bear": "تسجيل الدخول إلى Bear",
   "Create Bear account": "إنشاء حساب Bear",
   "Claim your handle": "المطالبة بمعرّفك (@handle)",

@@ -1,6 +1,6 @@
 [package]
-name = "bear-beta"
-version = "0.9.120"
+name = "bear"
+version = "0.9.121"
 description = "A Stremio client built for adventure"
 edition = "2021"
 
