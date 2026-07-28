@@ -104,7 +104,7 @@ export function CheatSheet({ onClose }: { onClose: () => void }) {
           <span className="text-[17px] font-semibold tracking-tight">Cheat sheet</span>
         </div>
         <span className="ms-2 hidden text-[13px] text-ink-muted md:inline">
-          Every variable, selector, hook, and recipe for building custom Harbor themes.
+          Every variable, selector, hook, and recipe for building custom Bear themes.
         </span>
         <button
           type="button"
@@ -141,7 +141,7 @@ export function CheatSheet({ onClose }: { onClose: () => void }) {
 
         <div ref={scrollRef} className="flex-1 overflow-y-auto">
           <div className="mx-auto flex max-w-[960px] flex-col gap-12 px-6 py-9 lg:px-10">
-            <Section id="tokens-color" title="Color tokens" sub="Every surface in Harbor maps to one of these 12 variables.">
+            <Section id="tokens-color" title="Color tokens" sub="Every surface in Bear maps to one of these 12 variables.">
               <TokenTable rows={COLOR_TOKENS} swatch />
             </Section>
 
@@ -153,7 +153,7 @@ export function CheatSheet({ onClose }: { onClose: () => void }) {
               <TokenTable rows={EASING_TOKENS} />
             </Section>
 
-            <Section id="api" title="window.harbor API" sub="Call these from onclick handlers or your theme JS. They are stable and safe: each one drives the real Harbor feature, so your chrome never goes stale when Harbor adds menu items.">
+            <Section id="api" title="window.harbor API" sub="Call these from onclick handlers or your theme JS. They are stable and safe: each one drives the real Bear feature, so your chrome never goes stale when Bear adds menu items.">
               <div className="flex flex-col gap-1.5">
                 {WINDOW_HARBOR.map((a) => (
                   <div
@@ -244,7 +244,7 @@ export function CheatSheet({ onClose }: { onClose: () => void }) {
               </div>
             </Section>
 
-            <Section id="events" title="Window events" sub="Dispatched on window. Listen from your theme JS to react to Harbor's lifecycle.">
+            <Section id="events" title="Window events" sub="Dispatched on window. Listen from your theme JS to react to Bear's lifecycle.">
               <div className="flex flex-col gap-1.5">
                 {WINDOW_EVENTS.map((e) => (
                   <div

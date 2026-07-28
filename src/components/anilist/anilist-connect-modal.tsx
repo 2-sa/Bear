@@ -42,7 +42,7 @@ export function AnilistConnectModal({ onClose }: { onClose: () => void }) {
       ? t("Connected")
       : connectState.kind === "verifying"
         ? t("Verifying")
-        : t("Authorize Harbor on AniList");
+        : t("Authorize Bear on AniList");
 
   return (
     <div
@@ -78,7 +78,7 @@ export function AnilistConnectModal({ onClose }: { onClose: () => void }) {
         {connectState.kind === "needs-code" && (
           <div className="flex flex-col gap-5">
             <p className="text-[13px] leading-relaxed text-ink-muted">
-              {t("A browser tab opened on AniList. Approve Harbor there, then copy the text it shows and paste it below.")}
+              {t("A browser tab opened on AniList. Approve Bear there, then copy the text it shows and paste it below.")}
             </p>
             <textarea
               value={draftCode}

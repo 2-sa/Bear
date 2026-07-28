@@ -159,7 +159,7 @@ export function IconAssignStep({
         <p className="text-[12.5px] leading-relaxed text-ink-subtle">
           {kind === "badge"
             ? "Reskin the quality chips (4K, HDR, Dolby Vision, Atmos and more) that ride each stream in the play picker. Click any slot to drop in your own PNG or animated GIF, or import a whole set at once. You do not have to fill every slot."
-            : "Reskin the award trophies shown across Harbor. Click any award to add a PNG or animated GIF, add your own custom award types, or import a whole set at once."}
+            : "Reskin the award trophies shown across Bear. Click any award to add a PNG or animated GIF, add your own custom award types, or import a whole set at once."}
         </p>
       </div>
 

@@ -82,7 +82,7 @@ export function ExtensionRepos({ config, onChanged }: { config: ServerConfig; on
         msg === "invalid_url"
           ? t("That does not look like a repository URL")
           : msg === "repos_unsupported"
-            ? t("This server is too old to add repos from Harbor")
+            ? t("This server is too old to add repos from Bear")
             : t("The server could not load that repository"),
       );
     } finally {

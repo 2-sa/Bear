@@ -84,7 +84,7 @@ export function AutoDownloadModal({ onClose }: { onClose: () => void }) {
         <div className="min-h-[300px] flex-1 overflow-y-auto px-6 pb-6">
           {list.length === 0 ? (
             <p className="rounded-2xl border border-dashed border-edge-soft bg-canvas/30 px-5 py-8 text-center text-[13px] leading-relaxed text-ink-muted">
-              Add a series above and Harbor will grab each new episode as it airs, on your terms.
+              Add a series above and Bear will grab each new episode as it airs, on your terms.
             </p>
           ) : (
             <ul className="flex flex-col gap-2.5">

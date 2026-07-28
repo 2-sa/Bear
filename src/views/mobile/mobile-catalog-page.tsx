@@ -195,7 +195,7 @@ function ErrorState({ onRetry }: { onRetry: () => void }) {
       <div className="flex flex-col gap-1.5">
         <h2 className="font-display text-[19px] font-medium text-ink">Couldn't load this catalog</h2>
         <p className="max-w-xs text-[13.5px] leading-relaxed text-ink-muted">
-          Harbor couldn't reach the catalog servers. Check your connection and try again.
+          Bear couldn't reach the catalog servers. Check your connection and try again.
         </p>
       </div>
       <button

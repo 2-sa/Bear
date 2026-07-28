@@ -246,7 +246,7 @@ function AppIconPicker() {
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className="text-[13.5px] font-semibold text-ink">{t("Or try one of ours")}</span>
           <span className="text-[11.5px] text-ink-subtle">
-            {t("{n} Harbor icons", { n: APP_ICON_PRESETS.length })}
+            {t("{n} Bear icons", { n: APP_ICON_PRESETS.length })}
           </span>
         </div>
         <ChevronDown

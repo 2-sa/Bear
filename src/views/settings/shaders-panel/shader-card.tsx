@@ -30,7 +30,7 @@ export function ShaderCard({ entry }: { entry: ShaderCatalogEntry }) {
   const lockReason = entry.conflictsWith?.some((c) =>
     c === "hdrToSdr" ? settings.playerHdrToSdr : c === "rtxHdr" ? settings.playerRtxHdr : false,
   )
-    ? "Harbor's built-in HDR to SDR conversion is on. Turn it off in Video tuning to use this instead. Running both double-processes the picture."
+    ? "Bear's built-in HDR to SDR conversion is on. Turn it off in Video tuning to use this instead. Running both double-processes the picture."
     : undefined;
 
   const patch = (next: { enabled?: boolean; variant?: string; dir?: string }) => {

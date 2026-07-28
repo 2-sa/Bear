@@ -225,7 +225,7 @@ async function detectFailedUpdate(): Promise<boolean> {
     status: "error",
     installFailed: true,
     version: pending.version,
-    error: `Harbor ${pending.version} downloaded but did not install on its own.`,
+    error: `Bear ${pending.version} downloaded but did not install on its own.`,
     panelOpen: true,
   });
   return true;

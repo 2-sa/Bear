@@ -146,7 +146,7 @@ function buildDumpText(): string {
   const nm = getNativeMem();
   if (nm.total > 0) {
     lines.push(
-      `  RSS total:     ${nm.total.toFixed(0)} MB (Harbor.exe ${nm.harborRss.toFixed(0)} + webview ${nm.webviewRss.toFixed(0)}) tier ${getRamTier()}`,
+      `  RSS total:     ${nm.total.toFixed(0)} MB (Bear.exe ${nm.harborRss.toFixed(0)} + webview ${nm.webviewRss.toFixed(0)}) tier ${getRamTier()}`,
     );
   }
   lines.push("");

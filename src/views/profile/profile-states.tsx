@@ -30,7 +30,7 @@ export function ProfileError({ onRetry, onBack }: { onRetry: () => void; onBack:
     <Shell
       icon={<RefreshCw size={28} />}
       title={t("Could not load this profile")}
-      body={t("Something went wrong reaching Harbor. Check your connection and try again.")}
+      body={t("Something went wrong reaching Bear. Check your connection and try again.")}
       action={
         <div className="flex gap-3">
           <button

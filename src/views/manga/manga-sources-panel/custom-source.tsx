@@ -121,7 +121,7 @@ export function CustomSource() {
           <div className="flex min-w-0 flex-1 flex-col gap-0.5">
             <span className="text-[16px] font-semibold text-ink">{t("Custom source")}</span>
             <span className="truncate text-[13px] text-ink-muted">
-              {t("Point Harbor's built-in scraper at any HTML site with a config")}
+              {t("Point Bear's built-in scraper at any HTML site with a config")}
             </span>
           </div>
           <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-raised text-ink-muted ring-1 ring-edge-soft transition-colors group-hover/byos:text-ink">
@@ -140,7 +140,7 @@ export function CustomSource() {
             <p>
               <b className="text-ink">{t("Publicly accessible pages only.")}</b>{" "}
               {t(
-                "Harbor logs into nothing and bypasses no password, paywall, or access control, and must not be used to attempt it. Point it only at content you are legally allowed to read, and never at official or licensed publisher sites. You alone are responsible for what you connect and for following copyright and each site's terms. Harbor bundles and endorses no sites.",
+                "Bear logs into nothing and bypasses no password, paywall, or access control, and must not be used to attempt it. Point it only at content you are legally allowed to read, and never at official or licensed publisher sites. You alone are responsible for what you connect and for following copyright and each site's terms. Bear bundles and endorses no sites.",
               )}
             </p>
           </div>

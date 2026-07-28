@@ -146,7 +146,7 @@ export function useTrackAutoload(params: {
         (enabled.subdl === true && settings.subdlApiKey) ||
         (enabled.subsource === true && settings.subsourceApiKey)
           ? {
-              userAgent: "Harbor",
+              userAgent: "Bear",
               netAllowed: true,
               subdlApiKey: settings.subdlApiKey || null,
               subsourceApiKey: settings.subsourceApiKey || null,

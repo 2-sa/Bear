@@ -39,11 +39,11 @@ export function LinkOutInterstitial() {
           <ExternalLink size={26} className="text-ink-muted" strokeWidth={1.9} />
         </div>
         <h1 className="mt-6 font-display text-[26px] font-medium tracking-tight text-ink">
-          You're leaving Harbor
+          You're leaving Bear
         </h1>
         <p className="mt-2 text-[14px] leading-relaxed text-ink-muted">
-          This link goes to an external site that Harbor does not control or vouch for. Triple-check
-          the address before you continue, and never enter your Harbor password anywhere but Harbor.
+          This link goes to an external site that Bear does not control or vouch for. Triple-check
+          the address before you continue, and never enter your Bear password anywhere but Bear.
         </p>
         <div className="mt-6 flex flex-col gap-1 rounded-[14px] border border-edge-soft bg-surface p-4 text-start">
           <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-subtle">

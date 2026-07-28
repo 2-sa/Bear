@@ -20,7 +20,7 @@ export function PlayModePanel() {
     {
       id: "instant",
       label: t("Instant"),
-      sub: t("Hitting Play jumps straight into playback with the best stream Harbor finds."),
+      sub: t("Hitting Play jumps straight into playback with the best stream Bear finds."),
       recommended: true,
     },
     {
@@ -31,7 +31,7 @@ export function PlayModePanel() {
     {
       id: "season",
       label: t("Lock to season server"),
-      sub: t("Pick a source once and Harbor keeps playing the rest of that season from the same release, no re-picking. Works best with a debrid season pack. For anime it locks the whole series to that release."),
+      sub: t("Pick a source once and Bear keeps playing the rest of that season from the same release, no re-picking. Works best with a debrid season pack. For anime it locks the whole series to that release."),
     },
   ];
 
@@ -164,7 +164,7 @@ export function PlayModePanel() {
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <span className="text-[15px] font-semibold text-ink">{t("Keep same source on next episode")}</span>
           <span className="text-[12.5px] leading-snug text-ink-muted">
-            {t("When auto-playing the next episode, keep the same release/source you were just watching instead of Harbor's top-ranked stream. Falls back to the best stream if that source isn't available.")}
+            {t("When auto-playing the next episode, keep the same release/source you were just watching instead of Bear's top-ranked stream. Falls back to the best stream if that source isn't available.")}
           </span>
         </div>
       </button>

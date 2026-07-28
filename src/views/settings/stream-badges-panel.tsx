@@ -217,8 +217,8 @@ function ruleSource(r: CustomBadgeRule): string | null {
   const id = r.id.startsWith("nuvio-") ? r.id.slice(6) : r.id;
   if (id.startsWith("minimal-")) return "Minimal";
   if (id.startsWith("abstract-")) return "Abstract";
-  if (id.startsWith("harborlight-")) return "Harbor Light";
-  if (id.startsWith("harborcolor-")) return "Harbor Color";
+  if (id.startsWith("harborlight-")) return "Bear Light";
+  if (id.startsWith("harborcolor-")) return "Bear Color";
   return r.id.startsWith("nuvio-") ? "Nuvio" : null;
 }
 
@@ -586,7 +586,7 @@ function PackCard({
           {installed ? <Check size={14} strokeWidth={2.6} /> : <Download size={14} />}
           {busy ? t("Installing…") : installed ? t("Reinstall") : t("Install")}
         </button>
-        {pack.kind === "nuvio" && pack.author === "Harbor" && (
+        {pack.kind === "nuvio" && pack.author === "Bear" && (
           <button
             type="button"
             title={pack.url}
@@ -673,7 +673,7 @@ function PacksSection() {
     <div ref={rootRef} className="scroll-mt-24">
     <Section
       title={t("Packs & import")}
-      subtitle={t("One-click community packs. Rulesets bring full badge sets with their own matching; art remaps only swap the pictures on Harbor's built-in badges. Anything shared as a badges.json link on the Nuvio Discord or Reddit imports here too.")}
+      subtitle={t("One-click community packs. Rulesets bring full badge sets with their own matching; art remaps only swap the pictures on Bear's built-in badges. Anything shared as a badges.json link on the Nuvio Discord or Reddit imports here too.")}
     >
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
         {COMMUNITY_PACKS.map((p) => (
@@ -848,7 +848,7 @@ export function StreamBadgesPanel() {
 
       <Section
         title={t("Badge art")}
-        subtitle={t("Every format badge Harbor can show on streams. Click one to swap its art, hide it, or reset it. Changes apply everywhere badges appear.")}
+        subtitle={t("Every format badge Bear can show on streams. Click one to swap its art, hide it, or reset it. Changes apply everywhere badges appear.")}
       >
         {overrideCount > 0 && (
           <div className="flex items-center justify-between gap-3 rounded-xl border border-edge-soft bg-surface/40 px-4 py-2">

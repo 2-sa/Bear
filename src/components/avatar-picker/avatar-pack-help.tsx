@@ -16,7 +16,7 @@ export function AvatarPackHelp({ onClose }: { onClose: () => void }) {
     { icon: FolderPlus, title: t("Import images"), body: t("Pick one or many images. They collect in an Uploads set in your library. PNG, JPG, WebP, and GIF all work.") },
     { icon: FolderInput, title: t("Import a folder, keep your sets"), body: t("Label the subfolders inside the folder you pick, and each one becomes its own set (like Heroes or Cats). Loose images in the folder go to Uploads.") },
     { icon: Images, title: t("Square looks best"), body: t("Avatars display as squares, so square images fill the tile cleanly. Others are center-cropped.") },
-    { icon: ShieldCheck, title: t("You own the content"), body: t("Nothing is uploaded and nothing ships with Harbor. Everything stays on this device and you are responsible for the images you add.") },
+    { icon: ShieldCheck, title: t("You own the content"), body: t("Nothing is uploaded and nothing ships with Bear. Everything stays on this device and you are responsible for the images you add.") },
   ];
 
   return (

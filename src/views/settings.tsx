@@ -72,17 +72,17 @@ const SECTION_META: Record<SectionId, { label: string; sub: string }> = {
   },
   letterboxd: {
     label: "Letterboxd",
-    sub: "Bring your Letterboxd watchlist, diary, liked films and lists into Harbor via the Stremboxd bridge.",
+    sub: "Bring your Letterboxd watchlist, diary, liked films and lists into Bear via the Stremboxd bridge.",
   },
   relay: {
-    label: "Harbor Relay",
+    label: "Bear Relay",
     sub: IS_WEB
-      ? "Watch Together rooms are routed through Harbor's hosted relay."
+      ? "Watch Together rooms are routed through Bear's hosted relay."
       : "A Cloudflare Worker on your own account that hosts your Watch Together rooms.",
   },
   streaming: {
     label: "Streaming sources",
-    sub: "How Harbor finds and resolves playable streams. Debrid keys and addon installs live here.",
+    sub: "How Bear finds and resolves playable streams. Debrid keys and addon installs live here.",
   },
   streamFilters: {
     label: "Stream filters",
@@ -90,7 +90,7 @@ const SECTION_META: Record<SectionId, { label: string; sub: string }> = {
   },
   p2p: {
     label: "P2P & servers",
-    sub: "Harbor's built-in peer-to-peer engine, its self-test, and any streaming server you point it at.",
+    sub: "Bear's built-in peer-to-peer engine, its self-test, and any streaming server you point it at.",
   },
   language: {
     label: "Languages",
@@ -98,7 +98,7 @@ const SECTION_META: Record<SectionId, { label: string; sub: string }> = {
   },
   subSources: {
     label: "Sub sources",
-    sub: "Choose where Harbor pulls subtitles from. OpenSubtitles is built in and on by default.",
+    sub: "Choose where Bear pulls subtitles from. OpenSubtitles is built in and on by default.",
   },
   autoSync: {
     label: "Subtitle auto-sync",
@@ -118,7 +118,7 @@ const SECTION_META: Record<SectionId, { label: string; sub: string }> = {
   },
   shaders: {
     label: "Shaders",
-    sub: "GPU shaders that reshape the picture as it plays: Anime4K upscaling, HDR tone-mapping, neural upscalers, and sharpeners. Download the ones you want and Harbor applies them in the mpv engine.",
+    sub: "GPU shaders that reshape the picture as it plays: Anime4K upscaling, HDR tone-mapping, neural upscalers, and sharpeners. Download the ones you want and Bear applies them in the mpv engine.",
   },
   playerLayout: {
     label: "Player layout",
@@ -126,15 +126,15 @@ const SECTION_META: Record<SectionId, { label: string; sub: string }> = {
   },
   hotkeys: {
     label: "Hotkeys",
-    sub: "Every shortcut Harbor responds to. Click a binding to rebind it.",
+    sub: "Every shortcut Bear responds to. Click a binding to rebind it.",
   },
   controllers: {
     label: "Controllers",
-    sub: "Use a game controller to browse Harbor and control playback. Tune the sticks and see the button map.",
+    sub: "Use a game controller to browse Bear and control playback. Tune the sticks and see the button map.",
   },
   theme: {
     label: "Theme & appearance",
-    sub: "Color presets, custom backgrounds, and the font pair Harbor renders in.",
+    sub: "Color presets, custom backgrounds, and the font pair Bear renders in.",
   },
   badges: {
     label: "Stream badges",
@@ -142,7 +142,7 @@ const SECTION_META: Record<SectionId, { label: string; sub: string }> = {
   },
   awardIcons: {
     label: "Award icons",
-    sub: "Install icon packs or upload your own image for every award. Packs are hosted by their makers, not bundled with Harbor.",
+    sub: "Install icon packs or upload your own image for every award. Packs are hosted by their makers, not bundled with Bear.",
   },
   webhooks: {
     label: "Webhooks",
@@ -150,15 +150,15 @@ const SECTION_META: Record<SectionId, { label: string; sub: string }> = {
   },
   bug: {
     label: "Report a bug",
-    sub: "Send a bug report straight to the Harbor team. Screenshots and screen recordings welcome.",
+    sub: "Send a bug report straight to the Bear team. Screenshots and screen recordings welcome.",
   },
   remotes: {
     label: "Remotes",
-    sub: "Harbor on your other devices: the web app, the phone remote, and the manga reader remote.",
+    sub: "Bear on your other devices: the web app, the phone remote, and the manga reader remote.",
   },
   storage: {
     label: "Storage",
-    sub: "See what Harbor stores on this computer and clear caches when you want the space back.",
+    sub: "See what Bear stores on this computer and clear caches when you want the space back.",
   },
   advanced: {
     label: "Advanced",

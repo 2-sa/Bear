@@ -74,7 +74,7 @@ export function RemotesPanel() {
     return (
       <div className="flex flex-col gap-5">
         <p className="text-[13.5px] leading-relaxed text-ink-muted">
-          {t("Remotes are served by the desktop app. Open these settings on your computer's Harbor to get the links.")}
+          {t("Remotes are served by the desktop app. Open these settings on your computer's Bear to get the links.")}
         </p>
       </div>
     );
@@ -83,20 +83,20 @@ export function RemotesPanel() {
   return (
     <div className="flex flex-col gap-5">
       <Section
-        anchor="Harbor on other devices"
-        title={t("Harbor on other devices")}
-        sub={t("Serves this exact install of Harbor as a web app on your network. Open it on a phone, laptop, or TV browser, sign in there, and it streams through this computer.")}
+        anchor="Bear on other devices"
+        title={t("Bear on other devices")}
+        sub={t("Serves this exact install of Bear as a web app on your network. Open it on a phone, laptop, or TV browser, sign in there, and it streams through this computer.")}
       >
         <ToggleRow
-          label={t("Serve Harbor on your network")}
+          label={t("Serve Bear on your network")}
           sub={t("One switch powers everything on this page: the web app, the phone remote, and the manga reader remote.")}
           value={enabled}
           onChange={(v) => update({ serveWebUi: v, remoteControlEnabled: v })}
         />
         {enabled && (
           <>
-            <AddressRow label={t("Harbor in your browser (this computer)")} url={`http://127.0.0.1:${WEB_PORT}`} openable />
-            {lanIp && <AddressRow label={t("Harbor in your browser (Wi-Fi)")} url={`http://${lanIp}:${WEB_PORT}`} />}
+            <AddressRow label={t("Bear in your browser (this computer)")} url={`http://127.0.0.1:${WEB_PORT}`} openable />
+            {lanIp && <AddressRow label={t("Bear in your browser (Wi-Fi)")} url={`http://${lanIp}:${WEB_PORT}`} />}
             {webError && (
               <span className="text-[12px] text-danger">
                 {t("Couldn't start on port {WEB_PORT}. Another app may be using it; toggle off and on to retry.", { WEB_PORT: String(WEB_PORT) })}

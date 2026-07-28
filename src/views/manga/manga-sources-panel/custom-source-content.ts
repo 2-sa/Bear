@@ -34,15 +34,15 @@ export const EXAMPLE = `{
   }
 }`;
 
-export const GUIDE_TXT = `Harbor custom manga source - setup guide
+export const GUIDE_TXT = `Bear custom manga source - setup guide
 ========================================
 
-Harbor ships the engine, not the sites. You write a short JSON config that
-describes a site with CSS selectors, and Harbor reads the site with them.
+Bear ships the engine, not the sites. You write a short JSON config that
+describes a site with CSS selectors, and Bear reads the site with them.
 Nothing is bundled: point it only at sites you are legally allowed to read.
 
 RULES (read first)
-- Publicly accessible pages only. Harbor logs into nothing and bypasses no
+- Publicly accessible pages only. Bear logs into nothing and bypasses no
   password, paywall, or access control, and must not be used to attempt it.
 - Never target official or licensed publisher sites. Only sites you have the
   right to read.
@@ -86,7 +86,7 @@ CONFIG FIELDS
 
 PAGING + SEARCH TOKENS
   {query}   the search text (searchPath only)
-  {offset}  how many items to skip, starting at 0. Harbor auto-detects the
+  {offset}  how many items to skip, starting at 0. Bear auto-detects the
             site's page size and walks it for you, so you never set a page
             size. Use when the URL counts items.
   {page}    a page number. Add "pageStart": 0 if the first page is 0. Use
@@ -105,9 +105,9 @@ EXAMPLE CONFIG
 ${EXAMPLE}
 `;
 
-export const AI_PROMPT = `You are generating a manga source config for Harbor's built-in HTML scraper.
+export const AI_PROMPT = `You are generating a manga source config for Bear's built-in HTML scraper.
 
-Harbor's scraper does a PLAIN HTTP GET (no JavaScript, no headless browser),
+Bear's scraper does a PLAIN HTTP GET (no JavaScript, no headless browser),
 parses the HTML with the browser DOMParser, and extracts data with CSS
 selectors. It CANNOT run JavaScript, solve Cloudflare/JS challenges, parse JSON
 APIs, or render client-side SPAs. It only reads publicly accessible,
@@ -124,7 +124,7 @@ Produce a single JSON object with these keys:
   name, iconUrl (optional), baseUrl,
   popularPath, searchPath   (tokens: {query}, and {offset} for item-count
                              paging or {page} for page-number paging; prefer
-                             {offset} - Harbor auto-detects page size),
+                             {offset} - Bear auto-detects page size),
   list: { item, link, title, cover },
   detail: { title, cover, description, author, status },
   chapters: { item, link, number, title, date,

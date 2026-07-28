@@ -56,7 +56,7 @@ const SLUG = /^[A-Za-z0-9][A-Za-z0-9._-]{0,120}$/;
 
 const NO_SESSION_MESSAGE = "No Simkl account connected. Connect Simkl in Settings first.";
 const AUTH_MESSAGE = "Simkl sign-in expired. Reconnect your Simkl account in Settings.";
-const BLOCKED_MESSAGE = "Simkl is rate limiting Harbor right now. Wait a minute and try again.";
+const BLOCKED_MESSAGE = "Simkl is rate limiting Bear right now. Wait a minute and try again.";
 
 const BUCKETS: Bucket[] = [
   { path: "movies", mediaType: "movie", label: "Movies" },

@@ -44,7 +44,7 @@ const downloads: Record<string, string> = {
   "Same file": "Mesmo arquivo",
   "{shown} of {total} file from your computer": "{shown} de {total} arquivo do seu computador",
   "{shown} of {total} files from your computer": "{shown} de {total} arquivos do seu computador",
-  "Point Harbor at a folder. We scan it for movies and shows, parse titles from filenames, and enrich them with TMDB so they look the same as everything else here. We just remember the path; nothing is copied or moved.": "Aponte o Harbor para uma pasta. Nós a escaneamos em busca de filmes e séries, extraímos os títulos dos nomes dos arquivos e os enriquecemos com o TMDB para que fiquem iguais a tudo o mais aqui. Só guardamos o caminho; nada é copiado ou movido.",
+  "Point Bear at a folder. We scan it for movies and shows, parse titles from filenames, and enrich them with TMDB so they look the same as everything else here. We just remember the path; nothing is copied or moved.": "Aponte o Bear para uma pasta. Nós a escaneamos em busca de filmes e séries, extraímos os títulos dos nomes dos arquivos e os enriquecemos com o TMDB para que fiquem iguais a tudo o mais aqui. Só guardamos o caminho; nada é copiado ou movido.",
   "No video files found in that folder.": "Nenhum arquivo de vídeo encontrado nessa pasta.",
   "Couldn't scan that folder.": "Não foi possível escanear essa pasta.",
   "Couldn't open this file": "Não foi possível abrir este arquivo",

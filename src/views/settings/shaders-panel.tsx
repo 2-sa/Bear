@@ -40,7 +40,7 @@ export function ShadersPanel() {
     return (
       <Section
         title={t("Desktop only")}
-        subtitle={t("Picture shaders run on the bundled mpv engine in the Harbor desktop app. They have no effect in the browser.")}
+        subtitle={t("Picture shaders run on the bundled mpv engine in the Bear desktop app. They have no effect in the browser.")}
       >
         <span className="text-[13px] text-ink-subtle">{t("Download the desktop app to use shaders.")}</span>
       </Section>
@@ -51,7 +51,7 @@ export function ShadersPanel() {
     <>
       <Section
         title={t("Anime4K upscaling")}
-        subtitle={t("Real-time GPU upscaling that sharpens lines and cleans up gradients on anime, built right into Harbor's player. The one-tap setup below grabs the shaders; nothing else to install.")}
+        subtitle={t("Real-time GPU upscaling that sharpens lines and cleans up gradients on anime, built right into Bear's player. The one-tap setup below grabs the shaders; nothing else to install.")}
       >
         <ToggleRow
           label={t("Enable Anime4K")}
@@ -73,7 +73,7 @@ export function ShadersPanel() {
 
       <Section
         title={t("More picture shaders")}
-        subtitle={t("Neural upscalers, sharpeners, and HDR tone-mapping ported for mpv. Each is hosted by its author, not bundled with Harbor. Download the ones you want; Harbor chains them in the right order and applies them in the player.")}
+        subtitle={t("Neural upscalers, sharpeners, and HDR tone-mapping ported for mpv. Each is hosted by its author, not bundled with Bear. Download the ones you want; Bear chains them in the right order and applies them in the player.")}
       >
         <div className="flex flex-col gap-3.5">
           {SHADER_CATALOG.map((entry) => (

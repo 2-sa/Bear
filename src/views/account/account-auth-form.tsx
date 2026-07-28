@@ -73,7 +73,7 @@ export function AccountAuthForm({ onRecovery }: { onRecovery?: (code: string) =>
         </span>
         <div className="flex min-w-0 flex-col">
           <h3 className="font-display text-[19px] font-medium tracking-tight text-ink">
-            {mode === "register" ? "Join Harbor" : "Welcome back"}
+            {mode === "register" ? "Join Bear" : "Welcome back"}
           </h3>
           <p className="text-[12.5px] text-ink-subtle">
             {mode === "register"

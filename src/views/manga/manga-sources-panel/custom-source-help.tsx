@@ -23,7 +23,7 @@ export function CustomSourceHelp() {
     <div className="harbor-rise flex flex-col gap-4 rounded-xl bg-canvas/60 p-4 text-[13px] leading-relaxed text-ink-muted ring-1 ring-edge-soft">
       <p>
         {t(
-          "Harbor ships the engine, not the sites. You write a short JSON config that describes a site with CSS selectors, and Harbor reads the site with them. Nothing is bundled: point it only at sites you have the right to read.",
+          "Bear ships the engine, not the sites. You write a short JSON config that describes a site with CSS selectors, and Bear reads the site with them. Nothing is bundled: point it only at sites you have the right to read.",
         )}
       </p>
 
@@ -89,7 +89,7 @@ export function CustomSourceHelp() {
           <li>
             <C>{"{offset}"}</C>{" "}
             {t(
-              "is how many items to skip, starting at 0. Harbor auto-detects the site's page size and walks it for you, so you never set a page size. Use this when the URL counts items.",
+              "is how many items to skip, starting at 0. Bear auto-detects the site's page size and walks it for you, so you never set a page size. Use this when the URL counts items.",
             )}
           </li>
           <li>
@@ -160,7 +160,7 @@ export function CustomSourceHelp() {
           </li>
           <li>
             {t(
-              "You are solely responsible for what you connect and for complying with copyright and each site's terms. Harbor bundles and endorses no sites; it only runs the config you supply.",
+              "You are solely responsible for what you connect and for complying with copyright and each site's terms. Bear bundles and endorses no sites; it only runs the config you supply.",
             )}
           </li>
           <li>

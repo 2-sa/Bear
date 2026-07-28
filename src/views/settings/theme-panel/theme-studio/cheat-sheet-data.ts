@@ -50,8 +50,8 @@ export const WINDOW_HARBOR: HarborApi[] = [
   { call: "window.harbor.search()", desc: "Open the full-screen search overlay." },
   { call: "window.harbor.openSettings()", desc: "Jump straight to Settings." },
   { call: "window.harbor.openNotifications()", desc: "Open the real notification center panel. Wire this to your bell button so users never lose their notifications on your theme." },
-  { call: "window.harbor.openAccountMenu(el?)", desc: "Open Harbor's real account dropdown (profiles, View my profile, Notifications, Manage profiles, sign in/out). Pass the clicked element and the menu anchors under it; omit it and the menu opens top-right." },
-  { call: "window.harbor.viewMyProfile()", desc: "Open the signed-in user's own Harbor profile page." },
+  { call: "window.harbor.openAccountMenu(el?)", desc: "Open Bear's real account dropdown (profiles, View my profile, Notifications, Manage profiles, sign in/out). Pass the clicked element and the menu anchors under it; omit it and the menu opens top-right." },
+  { call: "window.harbor.viewMyProfile()", desc: "Open the signed-in user's own Bear profile page." },
   { call: "window.harbor.unreadCount()", desc: "Returns the current unread notification count as a number." },
   { call: "window.harbor.onUnread(cb)", desc: "Subscribe to unread-count changes. cb receives the new number; returns an unsubscribe function. Prefer the data-harbor-unread attribute below if you just need a badge." },
 ];
@@ -97,7 +97,7 @@ export const ROOT_DATA_ATTRS: DataAttr[] = [
   {
     attr: "data-harbor-bridge",
     values: ["present", "absent"],
-    desc: "Present on <html> when this Harbor understands the data-harbor-notifications / data-harbor-account hooks. Gate those controls on it so your theme degrades cleanly on older versions.",
+    desc: "Present on <html> when this Bear understands the data-harbor-notifications / data-harbor-account hooks. Gate those controls on it so your theme degrades cleanly on older versions.",
     example: 'html:not([data-harbor-bridge]) .my-bell { display: none; }',
   },
 ];
@@ -130,10 +130,10 @@ export type HookSelector = { selector: string; where: string; tip?: string };
 
 export const STABLE_SELECTORS: HookSelector[] = [
   { selector: "[data-harbor-notifications]", where: "Put this attribute on any element in your chrome and clicking it opens the real notification center. No JS needed.", tip: "Add a child span with data-harbor-unread for a live badge." },
-  { selector: "[data-harbor-account]", where: "Put this attribute on your profile button and clicking it opens Harbor's real account dropdown, anchored under it.", tip: "You get profile switching, View my profile, Notifications, Manage profiles, and sign in/out for free, forever current." },
-  { selector: "[data-harbor-unread]", where: "Harbor keeps this element's text set to the unread count (9+ capped) and sets data-empty when it is zero.", tip: "Style [data-harbor-unread][data-empty] { display: none } to hide an empty badge. Builder chrome does this already." },
-  { selector: "[data-harbor-status]", where: "A presence dot Harbor keeps painted with the user's live status (green online, gold away, red do-not-disturb, grey offline) and sets data-status on. Clicking it opens the real status picker.", tip: "Give it a size, radius, and position; Harbor handles color, cursor, and the picker. Gate behind html[data-harbor-bridge]." },
-  { selector: "[data-harbor-avatar]", where: "Harbor keeps this filled with the signed-in user's real avatar. On an <img> it sets src and unhides it; on anything else it sets a cover background-image. data-empty is set when there is no avatar.", tip: "Perfect for a profile pill: pair with your own lettered fallback and hide it when the image is showing." },
+  { selector: "[data-harbor-account]", where: "Put this attribute on your profile button and clicking it opens Bear's real account dropdown, anchored under it.", tip: "You get profile switching, View my profile, Notifications, Manage profiles, and sign in/out for free, forever current." },
+  { selector: "[data-harbor-unread]", where: "Bear keeps this element's text set to the unread count (9+ capped) and sets data-empty when it is zero.", tip: "Style [data-harbor-unread][data-empty] { display: none } to hide an empty badge. Builder chrome does this already." },
+  { selector: "[data-harbor-status]", where: "A presence dot Bear keeps painted with the user's live status (green online, gold away, red do-not-disturb, grey offline) and sets data-status on. Clicking it opens the real status picker.", tip: "Give it a size, radius, and position; Bear handles color, cursor, and the picker. Gate behind html[data-harbor-bridge]." },
+  { selector: "[data-harbor-avatar]", where: "Bear keeps this filled with the signed-in user's real avatar. On an <img> it sets src and unhides it; on anything else it sets a cover background-image. data-empty is set when there is no avatar.", tip: "Perfect for a profile pill: pair with your own lettered fallback and hide it when the image is showing." },
   { selector: "[data-harbor-search]", where: "Clicking any element with this attribute opens the search overlay." },
   { selector: ".harbor-profile-dropdown", where: "The account dropdown panel itself. Restyle it to match your theme." },
   { selector: ".pick-card", where: "Portrait poster cards in every rail." },

@@ -6,10 +6,10 @@ import { useT } from "@/lib/i18n";
 
 const SUWAYOMI_RELEASES = "https://github.com/Suwayomi/Suwayomi-Server/releases";
 
-const CHEAT_SHEET = `# Getting manga sources into Harbor
+const CHEAT_SHEET = `# Getting manga sources into Bear
 
-Harbor ships no manga and no scrapers. It is a reader. You bring the sources, and
-what those sources contain belongs to whoever runs them, not to Harbor. There are
+Bear ships no manga and no scrapers. It is a reader. You bring the sources, and
+what those sources contain belongs to whoever runs them, not to Bear. There are
 two ways to add sources.
 
 ## 1. Everything else, through your own server (Suwayomi)
@@ -24,11 +24,11 @@ This is how you get hundreds of community sources.
      (hundreds are available). Suwayomi uses the same extension repos the
      Mihon / Tachiyomi ecosystem does.
 
-  3. Back in Harbor: Manga > Set up a source > Your server, and paste your server
+  3. Back in Bear: Manga > Set up a source > Your server, and paste your server
      address (for example http://localhost:4567, or your LAN IP if it runs on
      another machine, e.g. http://192.168.1.10:4567).
 
-  Every source you enable in Suwayomi then shows up in Harbor. Suwayomi keeps its
+  Every source you enable in Suwayomi then shows up in Bear. Suwayomi keeps its
   extensions updated when a site changes, so they keep working.
 
 ## 2. A local folder
@@ -36,8 +36,8 @@ Manga > Set up a source > Local folder, and choose a folder of manga you already
 own (CBZ files or folders of images).
 
 ## Advanced: build a plugin
-Harbor also has an experimental plugin runtime. If you want to write a source
-plugin, see docs/manga-plugins.md in the Harbor repository. Only install plugins
+Bear also has an experimental plugin runtime. If you want to write a source
+plugin, see docs/manga-plugins.md in the Bear repository. Only install plugins
 from repositories you trust.
 `;
 
@@ -135,7 +135,7 @@ export function SetupGuide() {
           <span className="flex min-w-0 flex-1 flex-col gap-0.5">
             <span className="text-[16px] font-semibold text-ink">{t("Suwayomi / Tachidesk walkthrough")}</span>
             <span className="truncate text-[13px] text-ink-muted">
-              {t("Prefer a server? Run every source through your own Suwayomi and point Harbor at it")}
+              {t("Prefer a server? Run every source through your own Suwayomi and point Bear at it")}
             </span>
           </span>
           <ChevronDown

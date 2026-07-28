@@ -118,7 +118,7 @@ function AvatarButton({ author }: { author: Author }) {
     }
   };
 
-  const hint = !profileAvatar ? "Set a Harbor profile picture first" : undefined;
+  const hint = !profileAvatar ? "Set a Bear profile picture first" : undefined;
 
   if (author.avatar) {
     return (
@@ -126,7 +126,7 @@ function AvatarButton({ author }: { author: Author }) {
         <button
           onClick={use}
           disabled={busy != null || !profileAvatar}
-          title={hint ?? "Re-sync from your Harbor profile picture"}
+          title={hint ?? "Re-sync from your Bear profile picture"}
           className="flex h-9 items-center gap-1.5 rounded-full ring-1 ring-edge-soft px-3.5 text-[12.5px] font-semibold text-ink-muted transition-colors hover:text-ink hover:ring-edge disabled:opacity-50"
         >
           {busy === "set" ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} strokeWidth={2.2} />} Update photo
@@ -147,7 +147,7 @@ function AvatarButton({ author }: { author: Author }) {
     <button
       onClick={use}
       disabled={busy != null || !profileAvatar}
-      title={hint ?? "Show your Harbor profile picture on the community"}
+      title={hint ?? "Show your Bear profile picture on the community"}
       className="flex h-9 items-center gap-1.5 rounded-full ring-1 ring-edge-soft px-3.5 text-[12.5px] font-semibold text-ink-muted transition-colors hover:text-ink hover:ring-edge disabled:opacity-50"
     >
       {busy === "set" ? <Loader2 size={14} className="animate-spin" /> : <ImagePlus size={14} strokeWidth={2.2} />} Use my photo

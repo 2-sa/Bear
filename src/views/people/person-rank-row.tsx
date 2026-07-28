@@ -13,7 +13,7 @@ import { MovementDelta } from "./movement-delta";
 import { DEPT_LABEL, profilePhoto } from "./people-utils";
 
 const SOURCE_TICK: Record<RankSource, string> = {
-  harbor: "Harbor",
+  harbor: "Bear",
   trending: "Trending",
   rising: "Rising",
   contenders: "Contender",

@@ -74,7 +74,7 @@ function socialToCenter(n: SocialNotif): CenterNotif {
       id: `s:${n.id}`,
       source: "social",
       kind: "diagnostics-request",
-      title: n.title || `${staff.name || "Harbor Staff"} requested your diagnostics`,
+      title: n.title || `${staff.name || "Bear Staff"} requested your diagnostics`,
       body: n.body || undefined,
       data: { ...(n.data || {}), requestId: n.entityId },
       createdAt: ms(n.createdAt),

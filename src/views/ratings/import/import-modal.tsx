@@ -83,7 +83,7 @@ export function ImportModal({ onClose }: { onClose: () => void }) {
   if (!signedIn) {
     body = (
       <p className="text-[13.5px] leading-relaxed text-ink-muted">
-        {t("Sign in to your Harbor account first. Imported ratings are saved to your profile.")}
+        {t("Sign in to your Bear account first. Imported ratings are saved to your profile.")}
       </p>
     );
   } else if (busy) {

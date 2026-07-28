@@ -178,7 +178,7 @@ export const SHADER_CATALOG: ShaderCatalogEntry[] = [
     content: "hdr",
     tier: "quality",
     description:
-      "High quality HDR to SDR tone and gamut mapping as a shader pipeline, for PQ (HDR10) sources. Use this instead of Harbor's built-in tone-mapping. Turn off the built-in HDR to SDR conversion first, it cannot run alongside this. Needs the gpu-next renderer, so it is reliable on Windows and unverified on macOS.",
+      "High quality HDR to SDR tone and gamut mapping as a shader pipeline, for PQ (HDR10) sources. Use this instead of Bear's built-in tone-mapping. Turn off the built-in HDR to SDR conversion first, it cannot run alongside this. Needs the gpu-next renderer, so it is reliable on Windows and unverified on macOS.",
     stage: "tonemap",
     source: { label: "natural-harmonia-gropius/hdr-toys", url: "https://github.com/natural-harmonia-gropius/hdr-toys" },
     files: ["clip_both.glsl", "pq_inv.glsl", "astra.glsl", "bottosson.glsl", "bt1886.glsl"],

@@ -201,7 +201,7 @@ export function OrganizeAddonsPage({
               ? t("Couldn't reach Stremio to confirm your collection. Nothing was written.")
               : result.stage === "write"
                 ? t("Stremio didn't confirm the move. Your collection may be unchanged. Reload to see the current state.")
-                : t("Moved, but Harbor couldn't confirm the result. Reload to see the current state."),
+                : t("Moved, but Bear couldn't confirm the result. Reload to see the current state."),
           reload: true,
         });
         return;
@@ -421,7 +421,7 @@ export function OrganizeAddonsPage({
                     {workingDevice.length > 0 && (
                       <SectionCard
                         title={t("On this device only")}
-                        sub={t("These live in Harbor on this computer and never touch your account.")}
+                        sub={t("These live in Bear on this computer and never touch your account.")}
                         count={workingDevice.length}
                         action={
                           <button
@@ -496,7 +496,7 @@ export function OrganizeAddonsPage({
                     <li>{t("The order also decides which addon's rows win on your Home screen.")}</li>
                     <li>{t("Nothing changes until you press Save. Leaving this page discards edits.")}</li>
                     <li>{t("The Backups button at the top keeps your last five orders. One click restores any of them.")}</li>
-                    <li>{t("Harbor double-checks with Stremio after saving, so a half-written order can't slip through.")}</li>
+                    <li>{t("Bear double-checks with Stremio after saving, so a half-written order can't slip through.")}</li>
                   </ul>
                 </section>
               </div>

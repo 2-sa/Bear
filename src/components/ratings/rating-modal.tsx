@@ -17,8 +17,8 @@ function errorText(e: unknown, t: (s: string) => string, action: "save" | "remov
   if (status === 401) return t("Sign in to rate");
   if (msg === "blocked_text") return t("Your review contains language that is not allowed");
   if (status === 429) return t("You are rating too fast, try again in a moment");
-  if (status === undefined) return t("Couldn't reach Harbor, check your connection");
-  if (status >= 500) return t("Harbor is having trouble, try again in a moment");
+  if (status === undefined) return t("Couldn't reach Bear, check your connection");
+  if (status >= 500) return t("Bear is having trouble, try again in a moment");
   return action === "remove" ? t("Could not remove your rating") : t("Could not save your rating");
 }
 

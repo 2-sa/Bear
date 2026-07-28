@@ -114,7 +114,7 @@ export function SearchSection(props: SubtitleMenuProps) {
         addons: addons ?? [],
         preferredLangs: settings.preferredSubLangs ?? [],
         extra: {
-          userAgent: "Harbor",
+          userAgent: "Bear",
           netAllowed: true,
           subdlApiKey: settings.subdlApiKey || null,
           subsourceApiKey: settings.subsourceApiKey || null,

@@ -270,7 +270,7 @@ export function MangaSourcesView({
         <h1 className="font-display text-[34px] font-medium tracking-tight text-ink">{t("Manga sources")}</h1>
         <p className="max-w-xl text-[15.5px] leading-relaxed text-ink-muted">
           {t(
-            "Harbor does not host any manga or any sources. Connect your own server or open a folder you already have, and mix as many as you like.",
+            "Bear does not host any manga or any sources. Connect your own server or open a folder you already have, and mix as many as you like.",
           )}
         </p>
       </div>

@@ -39,7 +39,7 @@ export function TypeSpecimenCard({
     >
       <div className="flex flex-col gap-1 px-3.5 pb-1 pt-3.5">
         <span className="truncate text-[22px] leading-none tracking-tight text-ink" style={{ fontFamily: display }}>
-          Harbor
+          Bear
         </span>
         <span className="truncate text-[13px] text-ink-muted" style={{ fontFamily: body }}>
           The quick brown fox jumps

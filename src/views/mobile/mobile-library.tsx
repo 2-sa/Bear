@@ -200,7 +200,7 @@ function NotConnected() {
       <div className="flex flex-col gap-1">
         <h2 className="text-[15px] font-semibold text-ink">Not connected to a computer</h2>
         <p className="max-w-[260px] text-[13px] leading-relaxed text-ink-muted">
-          Your library lives on Harbor. Connect to your computer and it shows up here.
+          Your library lives on Bear. Connect to your computer and it shows up here.
         </p>
       </div>
     </div>

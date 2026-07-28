@@ -336,7 +336,7 @@ const player: Record<string, string> = {
   "default": "padrão",
   "loading more…": "carregando mais…",
   "min": "min",
-  "mpv is required for recording. Install mpv and restart Harbor.": "o mpv é necessário para gravação. Instale o mpv e reinicie o Harbor.",
+  "mpv is required for recording. Install mpv and restart Bear.": "o mpv é necessário para gravação. Instale o mpv e reinicie o Bear.",
   "to close": "para fechar",
   "unsaved changes": "alterações não salvas",
   "{count} dl": "{count} dl",

@@ -234,7 +234,7 @@ export function parseThemeJson(text: string): { ok: true; theme: CustomTheme } |
     return { ok: false, error: "This file isn't a readable theme." };
   }
   if (!raw || typeof raw !== "object") {
-    return { ok: false, error: "This file isn't a Harbor theme." };
+    return { ok: false, error: "This file isn't a Bear theme." };
   }
   const o = raw as Partial<CustomTheme>;
   const name = typeof o.name === "string" ? o.name.trim() : "";

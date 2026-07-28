@@ -155,12 +155,12 @@ export function SubSourcesPanel() {
     <>
       <Section
         title={t("Subtitle sources")}
-        subtitle={t("Harbor searches every source you enable at the same time, then merges and de-duplicates the results into one clean list. Turn a source off to stop pulling from it.")}
+        subtitle={t("Bear searches every source you enable at the same time, then merges and de-duplicates the results into one clean list. Turn a source off to stop pulling from it.")}
       >
         <div className="flex flex-col gap-2.5">
           <ToggleRow
             label={t("OpenSubtitles")}
-            sub={t("Harbor's built-in OpenSubtitles search, on by default. If you install an OpenSubtitles addon, this steps aside automatically so your results are never duplicated.")}
+            sub={t("Bear's built-in OpenSubtitles search, on by default. If you install an OpenSubtitles addon, this steps aside automatically so your results are never duplicated.")}
             value={osOn}
             onChange={(v) => setProv("opensubtitles", v)}
             leading={<OpenSubsMark />}

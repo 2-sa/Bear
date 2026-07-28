@@ -31,7 +31,7 @@ export const RECIPES: Recipe[] = [
   </button>
 </div>
 <style>[data-harbor-unread][data-empty] { display: none; }</style>`,
-    why: "Drop this in any custom top bar or sidebar. The attributes do everything: the bell opens the real notification center, the badge stays live, and the account button opens Harbor's real dropdown (profiles, View my profile, Notifications, sign in/out) anchored under it. Zero JS, and new menu items appear in your theme automatically with every Harbor update.",
+    why: "Drop this in any custom top bar or sidebar. The attributes do everything: the bell opens the real notification center, the badge stays live, and the account button opens Bear's real dropdown (profiles, View my profile, Notifications, sign in/out) anchored under it. Zero JS, and new menu items appear in your theme automatically with every Bear update.",
   },
   {
     title: "Tint the cinema badge",
@@ -68,7 +68,7 @@ export const RECIPES: Recipe[] = [
               width:220px; display:flex; flex-direction:column; gap:18px;
               padding:26px 16px; background:var(--color-surface);
               border-right:1px solid var(--color-edge); z-index:60;">
-  <div style="font:600 26px var(--font-display); color:var(--color-ink);">Harbor</div>
+  <div style="font:600 26px var(--font-display); color:var(--color-ink);">Bear</div>
   <button onclick="window.harbor.navigate('home')">Home</button>
   <button onclick="window.harbor.navigate('movies')">Movies</button>
   <button onclick="window.harbor.navigate('shows')">Shows</button>
@@ -109,7 +109,7 @@ export const RECIPES: Recipe[] = [
     code: `window.addEventListener('harbor:scroll-top', (e) => {
   console.info('now viewing', e.detail.view);
 });`,
-    why: "Harbor dispatches lifecycle events on window. Listen from your theme JS.",
+    why: "Bear dispatches lifecycle events on window. Listen from your theme JS.",
   },
 ];
 
@@ -119,7 +119,7 @@ export const FULL_EXAMPLES: FullExample[] = [
   {
     title: "Neon Noir (drop-in .harborstyle)",
     desc: "A complete dark theme with a purple accent. Save it as neon-noir.harborstyle and import it.",
-    code: `# Harbor Style
+    code: `# Bear Style
 name: Neon Noir
 blurb: Purple neon on near-black.
 layout: sidebar
@@ -149,7 +149,7 @@ swatch: #0a0a0f, #15151f, #a06bff
   {
     title: "Custom chrome theme (full sidebar)",
     desc: "A theme that hides built-in chrome and ships its own sidebar.",
-    code: `# Harbor Style
+    code: `# Bear Style
 name: My Rail
 blurb: My own navigation.
 layout: custom
@@ -180,7 +180,7 @@ html[data-theme-layout="custom"]:not([data-chrome-hidden]) main { padding-left: 
 
 @html
 <aside class="rail">
-  <div style="font:600 26px var(--font-display); color:var(--color-ink); padding:2px 10px;">Harbor</div>
+  <div style="font:600 26px var(--font-display); color:var(--color-ink); padding:2px 10px;">Bear</div>
   <button onclick="window.harbor.navigate('home')">Home</button>
   <button onclick="window.harbor.navigate('movies')">Movies</button>
   <button onclick="window.harbor.navigate('shows')">Shows</button>

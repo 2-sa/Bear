@@ -19,7 +19,7 @@ export function ListShareButton({
   const [sharing, setSharing] = useState(false);
   if (!handle || !listId) return null;
   const url = listShareUrl(handle, listId);
-  const title = name || t("Harbor list");
+  const title = name || t("Bear list");
   return (
     <>
       <button
@@ -37,7 +37,7 @@ export function ListShareButton({
             linkLabel: t("List link"),
             url,
             cardUrl: `${url}/card.png`,
-            text: t("{title} on Harbor", { title }),
+            text: t("{title} on Bear", { title }),
             name: title,
           }}
           onClose={() => setSharing(false)}

@@ -290,7 +290,7 @@ function Disclaimer() {
         <div className="animate-popover-in absolute start-0 top-full z-20 mt-1.5 w-[300px] rounded-[10px] border border-edge-soft bg-elevated/97 px-3.5 py-3 text-start shadow-[0_18px_50px_-15px_rgba(0,0,0,0.7)] backdrop-blur-md">
           <p className="text-[12px] leading-relaxed text-ink-muted">
             {t(
-              "These avatars are Harbor originals. Imported packs are stored only on this device: you choose what goes in them, and you are responsible for that content.",
+              "These avatars are Bear originals. Imported packs are stored only on this device: you choose what goes in them, and you are responsible for that content.",
             )}
           </p>
         </div>

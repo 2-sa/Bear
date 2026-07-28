@@ -8,7 +8,7 @@ function TokenTip() {
     <span className="group/tip relative inline-flex cursor-help items-center">
       <Info size={13} strokeWidth={2.2} className="text-ink-subtle transition-colors group-hover/tip:text-ink-muted" />
       <span className="pointer-events-none absolute bottom-full start-1/2 z-20 mb-2 w-72 -translate-x-1/2 rounded-xl border border-edge-soft bg-elevated px-3.5 py-3 text-[11.5px] leading-relaxed text-ink-muted opacity-0 shadow-[0_16px_40px_-16px_rgba(0,0,0,0.7)] transition-opacity duration-150 group-hover/tip:opacity-100">
-        Every theme you share gets a private <span className="font-semibold text-ink">owner token</span>. On the device where you shared it, Harbor saved it automatically, so those themes show up right here to claim in one tap. To claim one from a different device, paste that token below. New shares now bind straight to your account, so you will not need this again.
+        Every theme you share gets a private <span className="font-semibold text-ink">owner token</span>. On the device where you shared it, Bear saved it automatically, so those themes show up right here to claim in one tap. To claim one from a different device, paste that token below. New shares now bind straight to your account, so you will not need this again.
       </span>
     </span>
   );

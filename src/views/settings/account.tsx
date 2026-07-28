@@ -84,8 +84,8 @@ export function AccountStub() {
   return (
     <div className="flex flex-col gap-5">
       <Section
-        title={t("Harbor identity")}
-        subtitle={t("Your avatar, name, and handle across Harbor.")}
+        title={t("Bear identity")}
+        subtitle={t("Your avatar, name, and handle across Bear.")}
       >
         <div className="flex flex-col gap-4 rounded-2xl border border-edge-soft bg-canvas/40 p-5">
           <div className="flex items-center gap-5">
@@ -193,7 +193,7 @@ export function AccountStub() {
 
       <Section
         title={t("Profiles")}
-        subtitle={t("Everyone who uses this Harbor gets their own watch history, avatar, color, and optional PIN. Switch anytime.")}
+        subtitle={t("Everyone who uses this Bear gets their own watch history, avatar, color, and optional PIN. Switch anytime.")}
       >
         <div className="flex flex-col gap-5 rounded-2xl border border-edge-soft bg-canvas/40 p-5">
           <ProfilesStrip />
@@ -277,7 +277,7 @@ export function AccountStub() {
 
       <Section
         title={t("Synced addons")}
-        subtitle={t("Harbor pulls your addon collection from Stremio. Manage individual addons in Streaming sources.")}
+        subtitle={t("Bear pulls your addon collection from Stremio. Manage individual addons in Streaming sources.")}
       >
         <SyncedAddonsCard />
       </Section>

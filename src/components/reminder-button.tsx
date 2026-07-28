@@ -162,7 +162,7 @@ function ReminderMenu({
             {active ? t("Save changes") : t("Set reminder")}
           </button>
           <p className="pt-2.5 text-[11.5px] leading-snug text-ink-subtle">
-            {t("Harbor checks a few times a day while it's open and lets you know here.")}
+            {t("Bear checks a few times a day while it's open and lets you know here.")}
           </p>
         </div>
       </div>

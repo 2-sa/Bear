@@ -17,7 +17,7 @@ export function MangaRemoteEmpty({ variant }: { variant: "closed" | "reconnectin
       </span>
       <p className="text-[15px] font-semibold text-ink">Reader closed on your computer</p>
       <p className="max-w-[240px] text-[13px] leading-relaxed text-ink-subtle">
-        Open a manga on Harbor to control the reader from here.
+        Open a manga on Bear to control the reader from here.
       </p>
     </div>
   );

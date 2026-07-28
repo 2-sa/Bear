@@ -326,7 +326,7 @@ export function useAutoSync(params: {
     if (!o || !b) return;
     setOffer(null);
     if (o.subSwap) {
-      const os = defaultOsConfig(settingsRef.current) ?? { apiKey: "", userAgent: "Harbor autosync" };
+      const os = defaultOsConfig(settingsRef.current) ?? { apiKey: "", userAgent: "Bear autosync" };
       const swap = o.subSwap;
       void applySwap(b, swap, os).then((ok) => setStatus(ok ? "synced" : "error"));
       return;
