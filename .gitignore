@@ -44,6 +44,13 @@ local_docs/
 
 # Assets intentionally excluded from desktop builds
 public/kids/avatars/
-public/awards/
-src/assets/awards/
-src/assets/manga-badges/
+
+# Hollywood statuette photos. Unused: award-logo.tsx renders these as trophy.png
+# and users supply their own via award packs. Stripped 2026-07-22, keep them out.
+public/awards/oscar.png
+public/awards/emmy.png
+public/awards/bafta.png
+public/awards/golden-globe.png
+public/awards/cannestrophy.png
+public/awards/sag.png
+public/awards/critics-choice.png
