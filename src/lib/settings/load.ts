@@ -32,6 +32,16 @@ function sanitizePosterDockTransition(value: unknown): number {
   return Math.min(1500, Math.max(250, Math.round(value)));
 }
 
+function sanitizeTopbarAppearance(
+  value: unknown,
+  transparent: unknown,
+  glassControls: unknown,
+): Settings["topbarAppearance"] {
+  if (value === "transparent" || value === "glass" || value === "filled") return value;
+  if (glassControls === true) return "glass";
+  return transparent === false ? "filled" : "transparent";
+}
+
 function legacySeekStep(direction: "back" | "forward"): number | undefined {
   try {
     const raw = localStorage.getItem(`harbor.seek-step.${direction}`);
@@ -103,6 +113,7 @@ export function loadStoredSettings(rawKey: string = STORAGE_KEY): Settings {
   }
   try {
     const parsed = JSON.parse(raw) as Partial<Settings> & {
+      topbarGlassControls?: boolean;
       _subStyleV2?: boolean;
       _subAssForceV1?: boolean;
       _subAssRespectV2?: boolean;
@@ -203,6 +214,11 @@ export function loadStoredSettings(rawKey: string = STORAGE_KEY): Settings {
     return {
       ...DEFAULT,
       ...parsed,
+      topbarAppearance: sanitizeTopbarAppearance(
+        parsed.topbarAppearance,
+        parsed.transparentTopBar,
+        parsed.topbarGlassControls,
+      ),
       posterDockTransitionMs: sanitizePosterDockTransition(parsed.posterDockTransitionMs),
       streaming: { ...DEFAULT.streaming, ...(parsed.streaming ?? {}) },
       subProvidersEnabled: {

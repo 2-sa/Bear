@@ -364,6 +364,7 @@ export const DEFAULT: Settings = {
   hybridTitleBar: false,
   topbarScrollBlur: false,
   transparentTopBar: true,
+  topbarAppearance: "transparent",
   dragAnywhere: false,
   resumeDetailScroll: true,
   cwPerProfile: false,
