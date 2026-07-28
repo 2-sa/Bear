@@ -384,7 +384,7 @@ Download the latest build for macOS or Windows from the [Releases page][releases
 | Platform    | Format                                                                                                   |
 | ----------- | -------------------------------------------------------------------------------------------------------- |
 | **macOS**   | `.dmg` (macOS 11.0 or newer)                                                                             |
-| **Windows** | `.exe` NSIS installer (current user install)                                                             |
+| **Windows** | `.exe` NSIS installer (current user install), or `winget install HarborStremio.Harbor`                   |
 | **Web**     | Open in any modern browser, nothing to install                                                           |
 | **Linux**   | [Unofficial `.deb`, `.rpm`, and Flatpak packages](https://github.com/AdityaHebballe/harbor-linux-builds) |
 
