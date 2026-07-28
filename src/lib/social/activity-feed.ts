@@ -36,6 +36,7 @@ export function buildActivityFeed(input: {
   const receipts = input.imports ?? [];
 
   for (const c of input.cw) {
+    if (!(c.progress > 0)) continue;
     const finished = c.progress >= 0.9;
     const sub = c.type === "series" && c.season && c.episode ? `S${c.season} E${c.episode}` : undefined;
     items.push({
