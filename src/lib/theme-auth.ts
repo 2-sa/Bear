@@ -80,13 +80,49 @@ function toAuthor(u: RawUser): Author {
   };
 }
 
-function readSession(): Session | null {
+function parseSession(raw: string | null): Session | null {
+  if (!raw) return null;
   try {
-    const raw = localStorage.getItem(sessionKey());
-    if (!raw) return null;
     const s = JSON.parse(raw);
     if (typeof s?.token !== "string" || typeof s?.user?.id !== "string" || typeof s?.user?.username !== "string") return null;
     return { token: s.token, refresh: typeof s.refresh === "string" ? s.refresh : null, user: toAuthor(s.user) };
+  } catch {
+    return null;
+  }
+}
+
+function candidateKeys(): string[] {
+  const keys: string[] = [sessionKey()];
+  const primary = primaryProfileId();
+  if (primary) keys.push(SESSION_PREFIX + primary);
+  keys.push(LEGACY_SESSION_KEY);
+  try {
+    for (let i = 0; i < localStorage.length; i += 1) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith(SESSION_PREFIX) && !keys.includes(k)) keys.push(k);
+    }
+  } catch {
+    /* ignore */
+  }
+  return keys;
+}
+
+function readSession(): Session | null {
+  try {
+    for (const key of candidateKeys()) {
+      const found = parseSession(localStorage.getItem(key));
+      if (!found) continue;
+      const want = sessionKey();
+      if (key !== want) {
+        try {
+          localStorage.setItem(want, JSON.stringify(found));
+        } catch {
+          /* ignore */
+        }
+      }
+      return found;
+    }
+    return null;
   } catch {
     return null;
   }
