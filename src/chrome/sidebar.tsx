@@ -78,15 +78,7 @@ export function Sidebar() {
                   transform: "translateY(1px)",
                 }}
               >
-                Harb
-                <img
-                  src="/kids/wheel.png"
-                  alt="o"
-                  draggable={false}
-                  className="inline-block h-[0.92em] w-auto"
-                  style={{ transform: "translateY(0.08em)", marginLeft: "-5px", marginRight: "-5px" }}
-                />
-                r
+                Bear
               </span>
             ) : (
               <span
@@ -96,14 +88,7 @@ export function Sidebar() {
                   transform: "translateY(2px)",
                 }}
               >
-                Harb
-                <span
-                  className="inline-block"
-                  style={{ transform: "rotate(7deg)", transformOrigin: "50% 65%" }}
-                >
-                  o
-                </span>
-                r
+                Bear
               </span>
             ))}
         </div>
