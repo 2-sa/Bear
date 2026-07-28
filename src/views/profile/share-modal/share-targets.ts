@@ -15,12 +15,12 @@ export type EmbedField = { key: string; label: string; value: string };
 export function embedFields(url: string, cardUrl: string, alias: string): EmbedField[] {
   return [
     { key: "image", label: "Direct image URL", value: cardUrl },
-    { key: "markdown", label: "Markdown", value: `[![${alias} on Harbor](${cardUrl})](${url})` },
+    { key: "markdown", label: "Markdown", value: `[![${alias} on Bear](${cardUrl})](${url})` },
     { key: "bbcode", label: "BBCode", value: `[url=${url}][img]${cardUrl}[/img][/url]` },
     {
       key: "iframe",
       label: "Embed (iframe)",
-      value: `<iframe src="${url}" width="600" height="360" style="border:0;border-radius:14px" title="${alias} on Harbor"></iframe>`,
+      value: `<iframe src="${url}" width="600" height="360" style="border:0;border-radius:14px" title="${alias} on Bear"></iframe>`,
     },
   ];
 }

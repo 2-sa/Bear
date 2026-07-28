@@ -49,7 +49,7 @@ export function TempFilesCard() {
           <span className="text-[15px] font-semibold text-ink">{t("Temporary files")}</span>
           <span className="text-[13px] leading-relaxed text-ink-subtle">
             {t(
-              "Leftover installers from past updates, cached trailers, and casting scratch files. Harbor clears old ones on launch, keeping only the most recent installer.",
+              "Leftover installers from past updates, cached trailers, and casting scratch files. Bear clears old ones on launch, keeping only the most recent installer.",
             )}
           </span>
         </div>

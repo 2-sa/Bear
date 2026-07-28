@@ -142,7 +142,7 @@ export function MagnetCard({ raw, onClose }: { raw: string; onClose: () => void 
 
     if (!isTauri) {
       setMode("error");
-      setError("Direct torrent play needs the Harbor desktop app.");
+      setError("Direct torrent play needs the Bear desktop app.");
       return;
     }
 

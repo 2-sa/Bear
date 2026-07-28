@@ -103,7 +103,7 @@ export function TasteStep({
         </h2>
         <p className="text-[13.5px] leading-relaxed text-ink-muted">
           {t(
-            "Choose up to 5 movies or shows you already like. Harbor uses them to tune your featured picks and recommendations. Totally optional.",
+            "Choose up to 5 movies or shows you already like. Bear uses them to tune your featured picks and recommendations. Totally optional.",
           )}
         </p>
       </div>

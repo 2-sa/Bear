@@ -78,9 +78,7 @@ export function BackupRow() {
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className="text-[14px] font-medium text-ink">{t("Export your setup")}</span>
           <span className="text-[12.5px] leading-relaxed text-ink-subtle">
-            {t(
-              "Pick what to save, then everything you choose lands in one file: theme, home layout, settings, addons, profiles, watchlist, player layouts, watch progress, and more. Your Stremio sign-in is left out on purpose.",
-            )}
+            {t("Saves your whole Bear setup to one file: theme, home layout, settings, addons, profiles, watchlist, player layouts, watch progress, and more. Your Stremio sign-in is left out on purpose.")}
           </span>
         </div>
         <button
@@ -293,31 +291,10 @@ function RestoreConfirm({
           {t("Restore this backup?")}
         </h2>
         <p className="mt-2.5 text-[13.5px] leading-relaxed text-ink-muted">
-          {t(
-            "This file restores its {n} saved entries and replaces only those parts of your setup. Anything it does not contain stays exactly as it is.",
-            { n: String(backupKeyCount(backup)) },
-          )}
+          {t("This replaces your current Bear setup (theme, home layout, settings, addons, profiles, and more) with the {n} saved entries in this file. Your Stremio sign-in stays as is. Bear reloads when it finishes.", { n: String(backupKeyCount(backup)) })}
         </p>
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          {sections.map((key) => (
-            <span
-              key={key}
-              className="rounded-full border border-edge-soft bg-canvas/40 px-2.5 py-1 text-[11.5px] font-medium text-ink-subtle"
-            >
-              {t(backupSectionLabel(key))}
-            </span>
-          ))}
-        </div>
-        {backup.sections?.includes("iptv") && !backup.sections.includes("iptvCredentials") && (
-          <p className="mt-3 text-[12px] text-ink-subtle">
-            {t("Xtream credentials were left out of this backup.")}
-          </p>
-        )}
-        <p className="mt-3 text-[12px] text-ink-subtle">
-          {t("Saved {when} from Harbor {app}. Your Stremio sign-in stays as is.", {
-            when,
-            app: backup.app,
-          })}
+        <p className="mt-2 text-[12px] text-ink-subtle">
+          {t("Saved {when} from Bear {app}.", { when, app: backup.app })}
         </p>
         <div className="mt-5 flex justify-end gap-2">
           <button

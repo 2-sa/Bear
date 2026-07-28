@@ -21,8 +21,8 @@ const STEPS: { title: string; body: string; callout?: boolean }[] = [
     body: "After you submit, copy the value labelled API Key (v3 auth). It is the short one, not the long Read Access Token.",
   },
   {
-    title: "Paste it into Harbor",
-    body: "Drop it in the TMDB field right here. Harbor saves it on its own and the whole app lights up.",
+    title: "Paste it into Bear",
+    body: "Drop it in the TMDB field right here. Bear saves it on its own and the whole app lights up.",
   },
 ];
 

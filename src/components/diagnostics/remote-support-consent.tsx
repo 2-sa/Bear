@@ -4,7 +4,7 @@ import { createPortal } from "react-dom";
 import { fetchDiagnosticsRequest, type DiagnosticsRequestSummary } from "@/lib/social/diagnostics";
 
 const TRUST_LINE =
-  "Harbor will always ask before requesting your logs. We never collect or transmit anything without your explicit consent.";
+  "Bear will always ask before requesting your logs. We never collect or transmit anything without your explicit consent.";
 
 const SHARED_ITEMS = [
   "mpv playback logs",
@@ -31,7 +31,7 @@ function StaffCard({ staff }: { staff: DiagnosticsRequestSummary["staff"] }) {
           </span>
         </div>
         <span className="truncate text-[12px] text-ink-subtle">
-          @{staff.handle} · Verified Harbor Staff
+          @{staff.handle} · Verified Bear Staff
         </span>
       </div>
     </div>

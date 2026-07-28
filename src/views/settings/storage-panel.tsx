@@ -136,7 +136,7 @@ export function StoragePanel() {
           <div className="flex flex-col gap-1">
             <h2 className="text-[19px] font-medium tracking-tight text-ink">{t("Storage overview")}</h2>
             <p className="text-[13.5px] leading-relaxed text-ink-muted">
-              {t("Everything Harbor saves lives on this computer. If space runs low, clear a cache below; Harbor rebuilds them as you browse.")}
+              {t("Everything Bear saves lives on this computer. If space runs low, clear a cache below; Bear rebuilds them as you browse.")}
             </p>
           </div>
         </div>
@@ -215,7 +215,7 @@ export function StoragePanel() {
           />
           <ClearRow
             title={t("Dead stream marks")}
-            sub={t("Sources Harbor flagged as broken. Clear to give them another chance.")}
+            sub={t("Sources Bear flagged as broken. Clear to give them another chance.")}
             onClear={() => {
               clearDeadStreams();
               refresh();

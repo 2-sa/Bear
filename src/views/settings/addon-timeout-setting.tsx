@@ -18,7 +18,7 @@ export function AddonTimeoutSetting() {
     <Section
       title={t("Addon wait time")}
       subtitle={t(
-        "How long Harbor waits for each addon to return streams. Aggregators that search many sources can need 45s or more. Results appear as each addon answers, so a longer wait never delays the fast ones.",
+        "How long Bear waits for each addon to return streams. Aggregators that search many sources can need 45s or more. Results appear as each addon answers, so a longer wait never delays the fast ones.",
       )}
     >
       <Segmented

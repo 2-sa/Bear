@@ -495,38 +495,21 @@ export function useAutoSync(params: {
 
   const applyOffer = useCallback(() => {
     const o = offer;
-    if (!o) return;
-    const statusScope = statusScopeRef.current;
-    const isCurrent = () => isCurrentAutoSyncScope(statusScope);
-    void runWithSubtitleFpsReset(
-      async () => {
-        const b = bridgeRef.current;
-        if (!b || !isCurrent()) return;
-        setOffer(null);
-        if (o.subSwap) {
-          const os = defaultOsConfig(settingsRef.current) ?? {
-            apiKey: "",
-            userAgent: "Harbor autosync",
-          };
-          const swap = o.subSwap;
-          const applied = await applySwap(b, swap, os, isCurrent);
-          if (applied) appliedRef.current.changed = true;
-          if (isCurrent()) setStatus(applied ? "synced" : "error");
-          return;
-        }
-        const t = o.candidate;
-        const cues = b.getSelectedTrackCues();
-        if (!t || !cues) return;
-        const applied = await applyTransform(b, cues, formatOf(b), t, isCurrent);
-        if (!applied || !isCurrent()) return;
-        setStatus("synced");
-        startDrift(b, cues);
-      },
-      undefined,
-      isCurrent,
-    ).catch((error) => {
-      dwarn("[auto-sync] offer apply failed", error);
-      if (isCurrent()) setStatus("error");
+    const b = bridgeRef.current;
+    if (!o || !b) return;
+    setOffer(null);
+    if (o.subSwap) {
+      const os = defaultOsConfig(settingsRef.current) ?? { apiKey: "", userAgent: "Bear autosync" };
+      const swap = o.subSwap;
+      void applySwap(b, swap, os).then((ok) => setStatus(ok ? "synced" : "error"));
+      return;
+    }
+    const t = o.candidate;
+    const cues = b.getSelectedTrackCues();
+    if (!t || !cues) return;
+    void applyTransform(b, cues, formatOf(b), t).then(() => {
+      setStatus("synced");
+      startDrift(b, cues);
     });
   }, [
     offer,

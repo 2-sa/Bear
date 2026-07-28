@@ -30,7 +30,7 @@ export function CustomizationDocs() {
       <div>
         <h3 className="text-[14px] font-semibold text-ink">How the canvas works</h3>
         <p className="mt-1 text-[13px] leading-relaxed text-ink-muted">
-          Your HTML and CSS render inside a sandboxed frame, fully isolated from the rest of Harbor. Write it like a
+          Your HTML and CSS render inside a sandboxed frame, fully isolated from the rest of Bear. Write it like a
           tiny self-contained page. Font and page background are separate controls above, applied to the whole profile.
         </p>
       </div>

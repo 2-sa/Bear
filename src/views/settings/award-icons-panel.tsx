@@ -135,7 +135,7 @@ export function AwardIconsPanel() {
         <h2 className="text-[22px] font-medium tracking-tight text-ink">{t("Award Icons")}</h2>
         <p className="max-w-2xl text-[14px] leading-relaxed text-ink-muted">
           {t(
-            "Harbor ships a neutral trophy for every award. Install an icon pack or upload your own image per award to make them yours. Packs are hosted by whoever makes them, so the artwork is theirs, not bundled with Harbor.",
+            "Bear ships a neutral trophy for every award. Install an icon pack or upload your own image per award to make them yours. Packs are hosted by whoever makes them, so the artwork is theirs, not bundled with Bear.",
           )}
         </p>
       </div>
@@ -290,7 +290,7 @@ export function AwardIconsPanel() {
           <div className="flex flex-col gap-3 rounded-xl border border-edge-soft bg-surface/50 p-4 text-[13.5px] leading-relaxed text-ink-muted">
             <p>
               {t(
-                "An award pack is a single JSON file plus the images it points to. Host both anywhere public (your own server, a GitHub repo, etc.) and share the JSON URL. Harbor only stores the URLs you install, never the images.",
+                "An award pack is a single JSON file plus the images it points to. Host both anywhere public (your own server, a GitHub repo, etc.) and share the JSON URL. Bear only stores the URLs you install, never the images.",
               )}
             </p>
             <pre className="overflow-x-auto rounded-lg bg-canvas/70 p-3 text-[12px] text-ink">{`{
@@ -312,7 +312,7 @@ export function AwardIconsPanel() {
             <p className="font-semibold text-ink">{t("Or just zip up images")}</p>
             <p>
               {t(
-                "Name each image file after its award ID and put them in a .zip, then use \"Import a .zip pack\" above. No JSON, no hosting needed. Harbor matches each file to its award, stores it locally, resizes it, and skips anything it doesn't recognize.",
+                "Name each image file after its award ID and put them in a .zip, then use \"Import a .zip pack\" above. No JSON, no hosting needed. Bear matches each file to its award, stores it locally, resizes it, and skips anything it doesn't recognize.",
               )}
             </p>
             <pre className="overflow-x-auto rounded-lg bg-canvas/70 p-3 text-[12px] text-ink">{`my-pack.zip

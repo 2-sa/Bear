@@ -71,7 +71,7 @@ export function ThemePanel() {
         <>
       <Section
         title={t("Typography")}
-        subtitle={t("Pick a display and body pairing, or upload your own font to use across Harbor.")}
+        subtitle={t("Pick a display and body pairing, or upload your own font to use across Bear.")}
       >
         <FontGrid
           pairValue={theme.fontPair}
@@ -98,7 +98,7 @@ export function ThemePanel() {
       {isTauri && (
         <Section
           title={t("Window title bar")}
-          subtitle={t("Use your operating system's native title bar and window buttons instead of Harbor's built-in ones. Handy if the in-app buttons ever feel out of reach, like during playback.")}
+          subtitle={t("Use your operating system's native title bar and window buttons instead of Bear's built-in ones. Handy if the in-app buttons ever feel out of reach, like during playback.")}
         >
           <NativeTitleBarRow />
           <HybridBarRow />
@@ -110,7 +110,7 @@ export function ThemePanel() {
       {isTauri && (
         <Section
           title={t("Moving the window")}
-          subtitle={t("Choose where you can grab Harbor to drag it around your screen.")}
+          subtitle={t("Choose where you can grab Bear to drag it around your screen.")}
         >
           <DragAnywhereRow />
         </Section>
@@ -125,7 +125,7 @@ export function ThemePanel() {
 
       <Section
         title={t("Logo & app icon")}
-        subtitle={t("Make Harbor yours: swap the sidebar logo and the window/taskbar icon.")}
+        subtitle={t("Make Bear yours: swap the sidebar logo and the window/taskbar icon.")}
       >
         <LogoPicker />
       </Section>
@@ -145,7 +145,7 @@ function ThemeCommunityCta() {
     <MarketCta
       variant="browse"
       label="Browse community themes"
-      sublabel="Fresh looks shared by the Harbor community"
+      sublabel="Fresh looks shared by the Bear community"
       preview={COMMUNITY_PREVIEW}
       onClick={() => requestThemeLibrary({ tab: "community" })}
     />
@@ -168,7 +168,7 @@ function NativeTitleBarRow() {
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <span className="text-[14px] font-medium text-ink">{t("Use the native window title bar")}</span>
         <p className="text-[12.5px] leading-relaxed text-ink-subtle">
-          {t("Show your operating system's own title bar with its minimize, maximize, and close buttons. They stay reachable everywhere, including while a video is playing. Turn this off to use Harbor's built-in window buttons.")}
+          {t("Show your operating system's own title bar with its minimize, maximize, and close buttons. They stay reachable everywhere, including while a video is playing. Turn this off to use Bear's built-in window buttons.")}
         </p>
       </div>
       <button
@@ -212,8 +212,8 @@ function HybridBarRow() {
         <span className="text-[14px] font-medium text-ink">{t("Native-style hybrid bar")}</span>
         <p className="text-[12.5px] leading-relaxed text-ink-subtle">
           {nativeOn
-            ? t("Turn off the native window title bar above to use Harbor's hybrid bar instead.")
-            : t("Tuck clean, native-looking window buttons into the top corner, with hover labels. On macOS they become traffic-light dots. Blends into Harbor while feeling like your system's own title bar.")}
+            ? t("Turn off the native window title bar above to use Bear's hybrid bar instead.")
+            : t("Tuck clean, native-looking window buttons into the top corner, with hover labels. On macOS they become traffic-light dots. Blends into Bear while feeling like your system's own title bar.")}
         </p>
       </div>
       <button
@@ -334,7 +334,7 @@ function DragAnywhereRow() {
           <NewBadge id="theme:drag-anywhere" />
         </span>
         <p className="text-[12.5px] leading-relaxed text-ink-subtle">
-          {t("Move Harbor by dragging any empty space on a page, not just the top bar. Leave this off to keep clicks inside pages from nudging the window.")}
+          {t("Move Bear by dragging any empty space on a page, not just the top bar. Leave this off to keep clicks inside pages from nudging the window.")}
         </p>
       </div>
       <button

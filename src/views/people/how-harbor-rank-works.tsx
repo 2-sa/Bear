@@ -41,7 +41,7 @@ export function HowHarborRankWorks({
       className="fixed inset-0 z-[140] flex items-end justify-center bg-canvas/85 backdrop-blur-sm animate-in fade-in duration-150 motion-reduce:animate-none sm:items-center"
       role="dialog"
       aria-modal="true"
-      aria-label={t("How Harbor Rank works")}
+      aria-label={t("How Bear Rank works")}
       onClick={onClose}
     >
       <div
@@ -57,12 +57,12 @@ export function HowHarborRankWorks({
         </button>
 
         <h2 className="font-display pe-12 text-[26px] font-medium leading-tight tracking-tight text-ink">
-          {t("How Harbor Rank works")}
+          {t("How Bear Rank works")}
         </h2>
 
         <p className="mt-3 text-[14px] leading-relaxed text-ink-muted">
           {t(
-            "Harbor Rank scores a whole career, not a single hit. Four things move a rank: how good the work is on average, how much of it earned wide acclaim, the major awards it won, and how often the person carried the work as a lead. Each pillar is weighted, added up, then adjusted for the breadth and recency of the body of work. Every number that feeds a score is shown on the card, so you can always see why.",
+            "Bear Rank scores a whole career, not a single hit. Four things move a rank: how good the work is on average, how much of it earned wide acclaim, the major awards it won, and how often the person carried the work as a lead. Each pillar is weighted, added up, then adjusted for the breadth and recency of the body of work. Every number that feeds a score is shown on the card, so you can always see why.",
           )}
         </p>
 

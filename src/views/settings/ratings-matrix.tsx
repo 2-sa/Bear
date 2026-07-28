@@ -171,7 +171,7 @@ export function RatingsMatrix({
         </span>
         <span className="mt-0.5 flex items-center gap-1.5 text-[11.5px] leading-snug text-ink-subtle/90">
           <Sparkles size={12} strokeWidth={2.2} className="shrink-0 text-accent/80" />
-          <span>{t("Native to Harbor. No RPDB or ratings addon needed.")}</span>
+          <span>{t("Native to Bear. No RPDB or ratings addon needed.")}</span>
           <HoverTooltip
             side="top"
             align="center"

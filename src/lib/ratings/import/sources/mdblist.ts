@@ -232,7 +232,7 @@ async function getPage(apiKey: string, offset: number, signal?: AbortSignal): Pr
   try {
     json = JSON.parse(text) as MdbPage;
   } catch {
-    throw new Error("MDBList returned a response Harbor could not read.");
+    throw new Error("MDBList returned a response Bear could not read.");
   }
   const err = typeof json.error === "string" ? json.error.trim() : "";
   if (err) throw new Error(`MDBList error: ${err}`);

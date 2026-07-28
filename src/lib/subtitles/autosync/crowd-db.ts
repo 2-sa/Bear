@@ -193,7 +193,7 @@ export function crowdConfigFromSettings(
     optOut: settings.communitySyncOptOut === true,
     clientId: extra.clientId,
     appVersion: extra.appVersion,
-    userAgent: extra.userAgent ?? "Harbor autosync",
+    userAgent: extra.userAgent ?? "Bear autosync",
   };
 }
 

@@ -12,7 +12,7 @@ export function AnimePanel() {
     return (
       <Section
         title={t("Desktop only")}
-        subtitle={t("Smooth motion runs on the bundled mpv engine in the Harbor desktop app. It has no effect in the browser.")}
+        subtitle={t("Smooth motion runs on the bundled mpv engine in the Bear desktop app. It has no effect in the browser.")}
       >
         <span className="text-[13px] text-ink-subtle">{t("Download the desktop app to use anime enhancements.")}</span>
       </Section>
@@ -27,7 +27,7 @@ export function AnimePanel() {
       >
         <ToggleRow
           label={t("Motion smoothing")}
-          sub={t("Harbor's built-in frame interpolation. Smooths panning, best on anime. Needs a display refresh rate above the video's frame rate, and can stutter on weak GPUs. Lighter than SVP.")}
+          sub={t("Bear's built-in frame interpolation. Smooths panning, best on anime. Needs a display refresh rate above the video's frame rate, and can stutter on weak GPUs. Lighter than SVP.")}
           value={settings.playerMotionInterp}
           onChange={(v) => update({ playerMotionInterp: v })}
           lockReason={

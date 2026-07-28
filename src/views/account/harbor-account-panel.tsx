@@ -21,7 +21,10 @@ export function HarborAccountPanel() {
   }, [author?.id]);
 
   return (
-    <Section title={t("Harbor account")} subtitle={t("Your handle across Harbor.")}>
+    <Section
+      title={t("Bear account")}
+      subtitle={t("Your handle across Bear.")}
+    >
       {!author ? (
         <div className="rounded-2xl border border-edge-soft bg-canvas/40 p-5">
           <AccountAuthForm onRecovery={setReveal} />

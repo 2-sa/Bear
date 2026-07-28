@@ -152,7 +152,7 @@ export function P2PAdvancedSection() {
         <div className="flex flex-col gap-2 pt-1">
           <span className="text-[13.5px] font-semibold text-ink">{t("Keep at most")}</span>
           <p className="text-[12px] leading-relaxed text-ink-subtle">
-            {t("Cap how much disk the cache can use. When it goes over, Harbor deletes the oldest files first. Enforced on launch and as streams close.")}
+            {t("Cap how much disk the cache can use. When it goes over, Bear deletes the oldest files first. Enforced on launch and as streams close.")}
           </p>
           <div className="flex flex-wrap gap-1.5">
             {CACHE_LIMITS.map((c) => (
@@ -237,7 +237,7 @@ export function P2PAdvancedSection() {
       >
         <ToggleRow
           label={t("Disable torrents entirely")}
-          sub={t("Harbor will not start the torrent engine, contact trackers, or run DHT. Use this if you only want debrid and direct links. Turn off to re-enable torrent streaming.")}
+          sub={t("Bear will not start the torrent engine, contact trackers, or run DHT. Use this if you only want debrid and direct links. Turn off to re-enable torrent streaming.")}
           value={settings.torrentsDisabled}
           onChange={(v) => {
             update({ torrentsDisabled: v });
@@ -255,7 +255,7 @@ export function P2PAdvancedSection() {
         )}
         <ToggleRow
           label={t("Direct torrent streaming")}
-          sub={t("Stream torrents straight from Harbor's built-in engine when you have no debrid set up, or a torrent isn't cached. This connects to peers over your own connection. Turn off to only ever play debrid and direct links.")}
+          sub={t("Stream torrents straight from Bear's built-in engine when you have no debrid set up, or a torrent isn't cached. This connects to peers over your own connection. Turn off to only ever play debrid and direct links.")}
           value={settings.directTorrentStream}
           onChange={(v) => update({ directTorrentStream: v })}
           lockReason={
@@ -268,7 +268,7 @@ export function P2PAdvancedSection() {
         />
         <ToggleRow
           label={t("Auto-confirm peer-to-peer streaming")}
-          sub={t("Skip the 'stream over peer-to-peer?' prompt and start uncached torrents immediately. Harbor remembers your choice after the first confirmation anyway.")}
+          sub={t("Skip the 'stream over peer-to-peer?' prompt and start uncached torrents immediately. Bear remembers your choice after the first confirmation anyway.")}
           value={settings.p2pAutoConsent}
           onChange={(v) => update({ p2pAutoConsent: v })}
         />

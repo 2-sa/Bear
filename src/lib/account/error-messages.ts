@@ -16,7 +16,7 @@ const BY_CODE: Record<string, string> = {
   handle_taken: "That handle is already taken. Try one of the suggestions.",
   handle_cooldown_other: "Someone released that handle recently. It frees up 14 days after they dropped it.",
   handle_cooldown: "You changed your handle recently. You can change it again after the cooldown.",
-  stremio_already_bound: "That Stremio account is already linked to a different Harbor account. Unlink it there first.",
+  stremio_already_bound: "That Stremio account is already linked to a different Bear account. Unlink it there first.",
   stremio_key_invalid: "That Stremio sign-in did not go through. Try again.",
   stremio_anonymous: "Sign in to a real Stremio account, not a guest, to verify.",
   stremio_unreachable: "Could not reach Stremio right now. Try again in a moment.",
@@ -56,7 +56,7 @@ export function accountErrorMessage(err: unknown): string {
   }
   if (reason && BY_REASON[reason]) return BY_REASON[reason];
   if (code && BY_CODE[code]) return BY_CODE[code];
-  if (isNetworkError(e)) return "Couldn't reach Harbor. Check your connection and try again.";
+  if (isNetworkError(e)) return "Couldn't reach Bear. Check your connection and try again.";
   if (SNAKE_CODE_RE.test(code)) return "Something went wrong. Try again.";
   return code || "Something went wrong. Try again.";
 }

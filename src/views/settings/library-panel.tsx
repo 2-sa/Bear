@@ -451,9 +451,7 @@ export function LibraryPanel({
 
       <Section
         title={t("Continue Watching screenshots")}
-        subtitle={t(
-          "When you back out of a title, Harbor saves a frame so the Continue Watching card looks like the spot you left. Tune how long they stick around, or wipe them all.",
-        )}
+        subtitle={t("When you back out of a title, Bear saves a frame so the Continue Watching card looks like the spot you left. Tune how long they stick around, or wipe them all.")}
       >
         <CwSnapshotShowcase />
         <RetentionPicker
@@ -473,9 +471,7 @@ export function LibraryPanel({
 
       <Section
         title={t("Region & language")}
-        subtitle={t(
-          "Used for streaming availability and the Now Playing release window. Pick a country and Harbor can match the interface, metadata, and subtitle languages to it.",
-        )}
+        subtitle={t("Used for streaming availability and the Now Playing release window. Pick a country and Bear can match the interface, metadata, and subtitle languages to it.")}
       >
         <RegionField />
       </Section>
@@ -484,9 +480,7 @@ export function LibraryPanel({
 
       <Section
         title={t("Metadata providers")}
-        subtitle={t(
-          "A free TMDB key is highly recommended. It unlocks the full Harbor experience. The rest are optional, and Cinemeta works out of the box without any.",
-        )}
+        subtitle={t("A free TMDB key is highly recommended. It unlocks the full Bear experience. The rest are optional, and Cinemeta works out of the box without any.")}
       >
         <KeyField
           label={t("TMDB · catalogs and rails")}
@@ -517,7 +511,7 @@ export function LibraryPanel({
           }
           help={
             <>
-              Highly recommended. This is what gives you the full Harbor experience: Popular,
+              Highly recommended. This is what gives you the full Bear experience: Popular,
               Trending, In Theaters, and per-service rails. Free at{" "}
               <ExtLink href="https://www.themoviedb.org/settings/api">
                 themoviedb.org/settings/api
@@ -948,9 +942,7 @@ export function LibraryPanel({
 
       <Section
         title={t("Local library")}
-        subtitle={t(
-          "Options for the Library → Local tab: folders you scan from your own drive. When you export metadata, Harbor writes a Kodi-style .nfo and downloads artwork next to each file at the sizes below.",
-        )}
+        subtitle={t("Options for the Library → Local tab: folders you scan from your own drive. When you export metadata, Bear writes a Kodi-style .nfo and downloads artwork next to each file at the sizes below.")}
       >
         <ToggleRow
           label={t("Show an “on disk” badge on cards")}
@@ -1007,9 +999,7 @@ export function LibraryPanel({
           <div className="flex flex-col gap-0.5">
             <span className="text-[13.5px] font-medium text-ink">{t("Export artwork")}</span>
             <span className="text-[12px] leading-snug text-ink-muted">
-              {t(
-                "The resolution Harbor downloads for each image when you export a title's metadata next to the file on disk.",
-              )}
+              {t("The resolution Bear downloads for each image when you export a title's metadata next to the file on disk.")}
             </span>
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -1132,7 +1122,7 @@ function HomeModePicker({
   const options: Array<{ id: "harbor" | "classic"; label: string; sub: string; img: string }> = [
     {
       id: "harbor",
-      label: "Harbor curated",
+      label: "Bear curated",
       sub: "Hero carousel, Top 10, Trending, In Theaters, per-service rails. Addon catalogs append underneath, deduped.",
       img: harborStyleImg,
     },

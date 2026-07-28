@@ -38,7 +38,7 @@ export function SharedListMissing({
         </h2>
         <p className="max-w-sm text-[13.5px] leading-relaxed text-ink-muted">
           {kind === "error"
-            ? "Something went wrong reaching Harbor. Check your connection and try again."
+            ? "Something went wrong reaching Bear. Check your connection and try again."
             : "This list may be private, unlisted, or no longer shared by its maker."}
         </p>
       </div>

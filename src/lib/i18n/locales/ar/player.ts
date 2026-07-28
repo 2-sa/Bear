@@ -410,9 +410,8 @@ const player: Record<string, string> = {
   "click to cancel": "انقر للإلغاء",
   default: "افتراضي",
   "loading more…": "جارٍ تحميل المزيد…",
-  min: "دقيقة",
-  "mpv is required for recording. Install mpv and restart Harbor.":
-    "محرك mpv مطلوب للتسجيل. ثبّت mpv وأعد تشغيل Harbor.",
+  "min": "دقيقة",
+  "mpv is required for recording. Install mpv and restart Bear.": "محرك mpv مطلوب للتسجيل. ثبّت mpv وأعد تشغيل Bear.",
   "to close": "للإغلاق",
   "unsaved changes": "تغييرات غير محفوظة",
   "{count} dl": "{count} تنزيل",

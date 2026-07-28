@@ -474,7 +474,7 @@ function FailedState({ onRetry }: { onRetry: () => void }) {
     <div className="flex h-[70vh] flex-col items-center justify-center gap-4 px-8 text-center">
       <h2 className="font-display text-[20px] font-medium text-ink">Couldn't load anime</h2>
       <p className="max-w-xs text-[13.5px] leading-relaxed text-ink-muted">
-        Harbor couldn't reach MyAnimeList or AniList. Check your connection and try again.
+        Bear couldn't reach MyAnimeList or AniList. Check your connection and try again.
       </p>
       <button
         type="button"

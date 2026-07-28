@@ -22,13 +22,13 @@ export function AutoSyncPanel() {
       <Section
         title={t("Subtitle auto-sync")}
         subtitle={t(
-          "Harbor times out-of-sync subtitles to the audio for you, on any external subtitle. It works on the mpv player and leaves embedded tracks alone, since those are already in sync.",
+          "Bear times out-of-sync subtitles to the audio for you, on any external subtitle. It works on the mpv player and leaves embedded tracks alone, since those are already in sync.",
         )}
       >
         <ToggleRow
           label={t("Auto-sync subtitles")}
           sub={t(
-            "When a subtitle runs early or late, Harbor measures the speech and corrects the timing on its own. Off by default.",
+            "When a subtitle runs early or late, Bear measures the speech and corrects the timing on its own. Off by default.",
           )}
           value={master}
           onChange={(v) => update({ subtitleAutoSync: v })}
@@ -55,7 +55,7 @@ export function AutoSyncPanel() {
             <ToggleRow
               label={t("Smart resync with speech recognition")}
               sub={t(
-                "For the hardest files and the Try again button, Harbor transcribes a little speech on your device and lines the subtitle up to the actual words. Needs a build with the asr-whisper feature and downloads a small model the first time you use it.",
+                "For the hardest files and the Try again button, Bear transcribes a little speech on your device and lines the subtitle up to the actual words. Needs a build with the asr-whisper feature and downloads a small model the first time you use it.",
               )}
               value={settings.subtitleAutoSyncAsr}
               onChange={(v) => update({ subtitleAutoSyncAsr: v })}
@@ -67,7 +67,7 @@ export function AutoSyncPanel() {
       <Section
         title={t("Community sync")}
         subtitle={t(
-          "A good correction only has to be found once. Harbor can share verified fixes so the next person with the same file and subtitle gets an instant result. Records are keyed by salted fingerprints, never your files or anything personal.",
+          "A good correction only has to be found once. Bear can share verified fixes so the next person with the same file and subtitle gets an instant result. Records are keyed by salted fingerprints, never your files or anything personal.",
         )}
       >
         <ToggleRow
@@ -89,7 +89,7 @@ export function AutoSyncPanel() {
           }}
           saved={urlSaved}
           help={t(
-            "Leave blank to use Harbor's own community server. Enter a URL to point at your own server instead. Private mode below stops all contact either way.",
+            "Leave blank to use Bear's own community server. Enter a URL to point at your own server instead. Private mode below stops all contact either way.",
           )}
         />
         <ToggleRow

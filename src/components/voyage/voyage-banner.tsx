@@ -92,7 +92,7 @@ export function VoyageBanner({ pool }: { pool: Meta[] }) {
 
       <div className="pointer-events-none relative z-20 flex h-full min-h-[172px] max-w-[47%] flex-col justify-center gap-2.5 p-7">
         <span className="text-[10.5px] font-bold uppercase tracking-[0.22em]" style={{ color: accent }}>
-          {t("Harbor Voyages")}
+          {t("Bear Voyages")}
           {streak > 1 && (
             <span className="ms-2 inline-flex items-center gap-1 rounded-full bg-elevated/70 px-2 py-0.5 align-middle text-ink">
               <Flame size={11} strokeWidth={2.2} fill="currentColor" style={{ color: accent }} />

@@ -37,13 +37,13 @@ export function ControllersPanel() {
       <Section
         title={t("Controller support")}
         subtitle={t(
-          "Use a game controller to browse Harbor and control playback. Works with Xbox, PlayStation, and most USB or Bluetooth gamepads.",
+          "Use a game controller to browse Bear and control playback. Works with Xbox, PlayStation, and most USB or Bluetooth gamepads.",
         )}
       >
         <ToggleRow
           label={t("Enable controller")}
           sub={t(
-            "When on, a connected controller moves focus around Harbor and drives the player. Turn it off to ignore all controllers.",
+            "When on, a connected controller moves focus around Bear and drives the player. Turn it off to ignore all controllers.",
           )}
           value={enabled}
           onChange={(v) => update({ controllerSupportEnabled: v })}
@@ -65,7 +65,7 @@ export function ControllersPanel() {
       <Section
         title={t("Connected controllers")}
         subtitle={t(
-          "Controllers Harbor can see right now. Connect one over USB or Bluetooth and it shows up here.",
+          "Controllers Bear can see right now. Connect one over USB or Bluetooth and it shows up here.",
         )}
       >
         {gamepads.length === 0 ? (
@@ -112,7 +112,7 @@ export function ControllersPanel() {
       >
         <SliderRow
           label={t("Deadzone")}
-          sub={t("How far you push the stick before Harbor reacts. Raise it if the focus drifts on its own.")}
+          sub={t("How far you push the stick before Bear reacts. Raise it if the focus drifts on its own.")}
           min={0.05}
           max={0.6}
           step={0.05}

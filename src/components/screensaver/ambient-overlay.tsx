@@ -133,7 +133,7 @@ export function AmbientOverlay({
         <div className="flex items-center gap-2">
           <HarborMark className="h-7 w-7 shrink-0 text-white/85 drop-shadow-[0_2px_12px_rgba(0,0,0,0.7)]" />
           <span className="font-display text-[26px] font-semibold tracking-tight text-white/85 drop-shadow-[0_2px_12px_rgba(0,0,0,0.7)]">
-            Harbor
+            Bear
           </span>
         </div>
       </div>

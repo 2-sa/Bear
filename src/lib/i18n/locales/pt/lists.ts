@@ -10,7 +10,7 @@ const lists: Record<string, string> = {
   "We'll name it from the URL.": "Vamos nomeá-lo com base na URL.",
   "Keep typing, or paste the full list URL.": "Continue digitando ou cole a URL completa da lista.",
   "Paste a Trakt, MDBList, TMDB, Letterboxd, IMDb, or MAL list URL": "Cole a URL de uma lista do Trakt, MDBList, TMDB, Letterboxd, IMDb ou MAL",
-  "Paste a public list from Trakt, MDBList, TMDB, Letterboxd, IMDb, or MyAnimeList. Harbor pulls the titles in and keeps the artwork sharp.": "Cole uma lista pública do Trakt, MDBList, TMDB, Letterboxd, IMDb ou MyAnimeList. O Harbor importa os títulos e mantém as artes em alta qualidade.",
+  "Paste a public list from Trakt, MDBList, TMDB, Letterboxd, IMDb, or MyAnimeList. Bear pulls the titles in and keeps the artwork sharp.": "Cole uma lista pública do Trakt, MDBList, TMDB, Letterboxd, IMDb ou MyAnimeList. O Bear importa os títulos e mantém as artes em alta qualidade.",
   "Every collection": "Toda coleção",
   "Every saga in one place. Search anything: if it exists, it's here.": "Toda saga em um só lugar. Busque qualquer coisa: se existir, está aqui.",
   "Search every collection on TMDB...": "Pesquisar todas as coleções no TMDB...",

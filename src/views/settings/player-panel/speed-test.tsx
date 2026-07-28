@@ -88,7 +88,7 @@ function SpeedResultBadge({ value }: { value: string }) {
             </span>
           </div>
           <p className="mb-2.5 text-[12.5px] leading-snug text-ink-muted">
-            Harbor opens 4 parallel requests to{" "}
+            Bear opens 4 parallel requests to{" "}
             <span className="font-medium text-ink">speed.cloudflare.com</span>, discards the first
             1.2s so TCP slow-start doesn't tank the result, then measures until it has 150 MB or 8
             seconds of steady-state transfer.

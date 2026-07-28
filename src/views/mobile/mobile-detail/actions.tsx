@@ -183,7 +183,7 @@ function ActionsSheet({
           <SheetRow
             icon={<Monitor size={20} strokeWidth={2} />}
             label="Open on computer"
-            sublabel="Send this title to your Harbor app"
+            sublabel="Send this title to your Bear app"
             onClick={() => {
               onClose();
               openOnHost(meta);

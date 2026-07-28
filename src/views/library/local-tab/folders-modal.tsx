@@ -51,7 +51,7 @@ export function FoldersModal({
           <div className="flex flex-col gap-1">
             <h2 className="text-[19px] font-medium tracking-tight text-ink">{t("Your folders")}</h2>
             <p className="text-[12.5px] leading-relaxed text-ink-muted">
-              {t("Folders Harbor imported your movies and shows from. Rescan to pick up new files.")}
+              {t("Folders Bear imported your movies and shows from. Rescan to pick up new files.")}
             </p>
           </div>
           <button

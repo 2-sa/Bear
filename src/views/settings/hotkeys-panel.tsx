@@ -83,7 +83,7 @@ export function HotkeysPanel() {
       <Section title={t("Navigation")} subtitle={t("Move focus with the keyboard, like a TV remote.")}>
         <ToggleRow
           label={t("TV navigation")}
-          sub={t("Use the arrow keys and Enter to move focus through Harbor. Turn this off to keep arrow keys free and disable focus navigation everywhere.")}
+          sub={t("Use the arrow keys and Enter to move focus through Bear. Turn this off to keep arrow keys free and disable focus navigation everywhere.")}
           value={settings.tvNavigation}
           onChange={(v) => update({ tvNavigation: v })}
         />
@@ -142,7 +142,7 @@ export function HotkeysPanel() {
           subgroups.set(g, arr);
         }
         return (
-          <Section key={scope} title={t(scope)} subtitle={scope === "Player" ? t("Inside the playback view.") : t("Anywhere in Harbor.")}>
+          <Section key={scope} title={t(scope)} subtitle={scope === "Player" ? t("Inside the playback view.") : t("Anywhere in Bear.")}>
             <div className="flex flex-col gap-6">
               {Array.from(subgroups.entries()).map(([groupName, items]) => (
                 <div key={groupName} className="flex flex-col gap-1.5">
@@ -173,7 +173,7 @@ export function HotkeysPanel() {
                   {scope === "Global" && groupName === "Interface" && (
                     <ReadOnlyHotkeyRow
                       label={t("Adjust interface scale with wheel")}
-                      description={t("Hold Ctrl or Cmd and scroll to resize Harbor's interface smoothly.")}
+                      description={t("Hold Ctrl or Cmd and scroll to resize Bear's interface smoothly.")}
                       binding="Ctrl / ⌘ + Scroll"
                     />
                   )}

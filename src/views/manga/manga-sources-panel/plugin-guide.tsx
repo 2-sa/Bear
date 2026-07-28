@@ -3,7 +3,7 @@ import { Blocks, Check, ChevronDown, Copy, Download, FileCode2 } from "lucide-re
 import { CARD } from "./shared";
 import { useT } from "@/lib/i18n";
 
-const EXAMPLE_PLUGIN = String.raw`// Harbor manga source plugin, minimal annotated example.
+const EXAMPLE_PLUGIN = String.raw`// Bear manga source plugin, minimal annotated example.
 //
 // This whole file runs as the body of a function that receives one argument named
 // harbor. There is no DOM, no fetch, no storage. Reach the network only through
@@ -20,7 +20,7 @@ async function getDoc(path) {
   return harbor.parseHtml(res.body);
 }
 
-// Covers and page images MUST be absolute http(s) or Harbor drops them.
+// Covers and page images MUST be absolute http(s) or Bear drops them.
 function abs(url) {
   if (!url) return undefined;
   if (/^https?:\/\//i.test(url)) return url;
@@ -35,7 +35,7 @@ function cardToSummary(el) {
   if (!link) return null;
   const href = link.attr("href") || "";
   return {
-    // The id is opaque to Harbor and handed straight back to detail/chapters.
+    // The id is opaque to Bear and handed straight back to detail/chapters.
     id: href.replace(/^\/manga\//, "").replace(/\/$/, ""),
     title: (link.attr("title") || el.querySelector(".title")?.text() || "").trim(),
     cover: abs(img?.attr("data-src") || img?.attr("src")),
@@ -138,12 +138,12 @@ const EXAMPLE_REPO = `{
 }
 `;
 
-const API_REFERENCE = String.raw`# Harbor manga source plugin API
+const API_REFERENCE = String.raw`# Bear manga source plugin API
 
-Harbor ships zero sources and hosts nothing. Every source is a plugin you install from a
+Bear ships zero sources and hosts nothing. Every source is a plugin you install from a
 repo URL you paste in yourself. A plugin is one JavaScript file that runs in a locked-down
 Web Worker: no DOM, no fetch, no storage, no Tauri. Its only link to the outside is the
-"harbor" bridge Harbor injects. You implement one object, MangaProvider, and Harbor drives
+"harbor" bridge Bear injects. You implement one object, MangaProvider, and Bear drives
 it.
 
 ## 1. The MangaProvider interface
@@ -162,7 +162,7 @@ it.
 - offset is an item offset, not a page number. Page one is 0, page two is 48 (MANGA_PAGE).
   If your backend pages by number, divide by 48.
 - tagId is set when the user filters by a tag. Defining tags() turns on that filter.
-- id values are opaque to Harbor and handed straight back to detail, chapters, and
+- id values are opaque to Bear and handed straight back to detail, chapters, and
   pageUrls. Encode whatever you need into them (slug, numeric id, path).
 
 ## 2. Return shapes
@@ -193,7 +193,7 @@ it.
 
     type MangaTag = { id: string; name: string; group?: string };
 
-Harbor sanitizes everything you return. Hard rules:
+Bear sanitizes everything you return. Hard rules:
 - Summaries missing id or title are dropped. Chapters missing id are dropped.
 - cover and every pageUrls entry must be absolute http(s). Resolve relative URLs yourself.
   Do not set chapter.downloaded.
@@ -266,7 +266,7 @@ methods idempotent and side-effect free (workers are warmed and respawned freely
 
 ## 6. The repo / manifest format
 
-A repo is a JSON file you host anywhere. Users paste its URL into Harbor.
+A repo is a JSON file you host anywhere. Users paste its URL into Bear.
 
     {
       "name": "My Manga Repo",
@@ -293,8 +293,8 @@ Serve repo.json and each plugin JS from any static HTTPS host (GitHub Pages,
 raw.githubusercontent.com, an object store, your own server). The simplest layout is
 repo.json and the plugin files side by side in one folder.
 
-In Harbor: Manga > Set up a source > Extensions > paste your repo.json URL > Install. On
-install Harbor fetches the source, hashes it (SHA-256), spins up a throwaway worker to
+In Bear: Manga > Set up a source > Extensions > paste your repo.json URL > Install. On
+install Bear fetches the source, hashes it (SHA-256), spins up a throwaway worker to
 confirm it registers a valid provider, then stores it. Enabled plugins load on startup as
 sources of kind "plugin", exactly like the built-in Suwayomi and local folder sources.
 
@@ -491,7 +491,7 @@ export function PluginGuide() {
 
             <p className="text-[12.5px] leading-relaxed text-ink-subtle">
               {t(
-                "Plugins run sandboxed in an isolated worker with no access to your files, accounts, or the rest of Harbor. What a plugin scrapes is between you and the site it targets. Only install plugins from repositories you trust.",
+                "Plugins run sandboxed in an isolated worker with no access to your files, accounts, or the rest of Bear. What a plugin scrapes is between you and the site it targets. Only install plugins from repositories you trust.",
               )}
             </p>
           </div>

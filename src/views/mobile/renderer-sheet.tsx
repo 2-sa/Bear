@@ -37,7 +37,7 @@ export function RendererSheet({ open, onClose, title = "Play on" }: { open: bool
         <div className="flex flex-col px-2 pb-2">
           <DeviceRow
             name="Your computer"
-            badge={`Harbor ${hostVersion}`}
+            badge={`Bear ${hostVersion}`}
             icon={<MonitorSmartphone size={20} strokeWidth={2} />}
             active={localActive}
             onSelect={() => {

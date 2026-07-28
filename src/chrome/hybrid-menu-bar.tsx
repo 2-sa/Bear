@@ -50,7 +50,7 @@ export function HybridMenuBar() {
           onClick: () => window.location.reload(),
         },
         { kind: "sep" },
-        { kind: "action", label: t("Quit Harbor"), onClick: () => close(), danger: true },
+        { kind: "action", label: t("Quit Bear"), onClick: () => close(), danger: true },
       ],
     },
     {
@@ -90,7 +90,7 @@ export function HybridMenuBar() {
         { kind: "action", label: t("Check for Updates"), onClick: () => void checkForUpdate(true) },
         { kind: "action", label: t("Report a Bug"), onClick: () => openUrl(HARBOR_BUGS_BASE) },
         { kind: "sep" },
-        { kind: "label", label: `Harbor ${APP_VERSION}` },
+        { kind: "label", label: `Bear ${APP_VERSION}` },
       ],
     },
   ];

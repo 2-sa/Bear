@@ -204,7 +204,7 @@ export function MangaView() {
           </h1>
           <p className="mx-auto max-w-md text-balance text-[14px] leading-relaxed text-ink-muted">
             {t(
-              "Harbor does not host any manga or any sources. Connect a self-hosted server you run, install a source plugin from a repository you trust, or open a folder you already have.",
+              "Bear does not host any manga or any sources. Connect a self-hosted server you run, install a source plugin from a repository you trust, or open a folder you already have.",
             )}
           </p>
         </div>
@@ -401,10 +401,10 @@ function EnableGate({ onEnable }: { onEnable: () => void }) {
         <BookOpen size={28} strokeWidth={1.8} />
       </span>
       <h1 className="font-display text-[34px] font-medium leading-tight text-ink">
-        {t("Read manga in Harbor")}
+        {t("Read manga in Bear")}
       </h1>
       <p className="max-w-md text-[14px] leading-relaxed text-ink-muted">
-        {t("Harbor does not host any manga. Add a source plugin from a repository you trust, connect your own server, or open a local folder. You can turn this off anytime in Settings.")}
+        {t("Bear does not host any manga. Add a source plugin from a repository you trust, connect your own server, or open a local folder. You can turn this off anytime in Settings.")}
       </p>
       <button
         type="button"

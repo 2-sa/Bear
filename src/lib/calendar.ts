@@ -506,7 +506,7 @@ export async function fireWebhook(
         ],
       }));
       const body: Record<string, unknown> = {
-        username: "Harbor",
+        username: "Bear",
         content: payload.text,
       };
       if (embeds.length > 0) body.embeds = embeds;

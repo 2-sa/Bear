@@ -460,7 +460,7 @@ export function needsDownload(s: ScoredStream): boolean {
 }
 
 export const ENGINE_WARMING_MESSAGE =
-  "Harbor's peer-to-peer engine is warming up. This clears on its own in a few seconds, then Play works.";
+  "Bear's peer-to-peer engine is warming up. This clears on its own in a few seconds, then Play works.";
 
 export function isEngineWarmingError(msg: string | null): boolean {
   return msg === ENGINE_WARMING_MESSAGE;
@@ -471,7 +471,7 @@ export function debridBannerTitle(e: { name: string; code: string }): string {
     case "traffic-limit":
       return `${e.name} is over its traffic or fair-use limit right now.`;
     case "rate-limited":
-      return `${e.name} is rate-limiting Harbor right now.`;
+      return `${e.name} is rate-limiting Bear right now.`;
     case "unauthorized":
       return `${e.name} rejected your API key.`;
     case "not-premium":
@@ -518,7 +518,7 @@ export function humanError(code: string): string {
     case "addon-not-configured":
       return "This addon isn't fully configured. Open its setup page and finish the wizard.";
     case "external-url-only":
-      return "This source only opens in an external browser, not in Harbor's player.";
+      return "This source only opens in an external browser, not in Bear's player.";
     case "youtube-only":
       return "This is a YouTube link, not a video file. Open it in a browser instead.";
     case "nzb-needs-external-player":

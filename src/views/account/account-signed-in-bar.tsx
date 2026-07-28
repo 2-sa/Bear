@@ -23,7 +23,7 @@ export function AccountSignedInBar({ author }: { author: Author }) {
           {author.verified && <VerifiedBadge />}
         </div>
         <span className="text-[12px] text-ink-subtle">
-          {author.handle ? t("Signed in as {username}", { username: author.username }) : t("Signed in to your Harbor account")}
+          {author.handle ? `Signed in as ${author.username}` : "Signed in to your Bear account"}
         </span>
       </div>
       <button

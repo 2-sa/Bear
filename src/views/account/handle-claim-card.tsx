@@ -132,7 +132,7 @@ function HandleHeader({ hasCustom }: { hasCustom: boolean }) {
     <div className="flex flex-col gap-0.5">
       <span className="text-[13px] font-semibold text-ink">{t("Handle")}</span>
       <span className="text-[12px] text-ink-subtle">
-        {hasCustom ? t("How people find you across Harbor.") : t("Claim one so people can find you across Harbor.")}
+        {hasCustom ? "How people find you across Bear." : "Claim one so people can find you across Bear."}
       </span>
     </div>
   );
@@ -154,7 +154,7 @@ function StatusLine({ status, onPick }: { status: HandleStatus; onPick: (s: stri
   if (status.state === "available")
     return <span className="text-[11.5px] font-medium text-accent">{t("That handle is yours to claim.")}</span>;
   if (status.state === "error")
-    return <span className="text-[11.5px] text-ink-subtle">{t("Sign in to Harbor to check availability.")}</span>;
+    return <span className="text-[11.5px] text-ink-subtle">Sign in to Bear to check availability.</span>;
 
   const label =
     status.state === "taken"

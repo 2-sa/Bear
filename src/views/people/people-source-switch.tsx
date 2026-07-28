@@ -8,7 +8,7 @@ type Tab = { source: RankSource; label: string; provenance: string };
 const TABS: Tab[] = [
   {
     source: "harbor",
-    label: "Harbor Rank",
+    label: "Bear Rank",
     provenance: "Our all-time ranking of a body of work, fully explained.",
   },
   {
@@ -141,7 +141,7 @@ export function PeopleSourceSwitch({
         <button
           type="button"
           onClick={onExplain}
-          aria-label={t("How Harbor Rank works")}
+          aria-label={t("How Bear Rank works")}
           className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-ink-subtle ring-1 ring-edge-soft transition-colors hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent motion-reduce:transition-none"
         >
           <Info size={17} strokeWidth={2} />

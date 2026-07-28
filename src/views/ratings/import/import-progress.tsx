@@ -8,7 +8,7 @@ type Translate = (key: string, vars?: Record<string, string | number>) => string
 const CAPTIONS: Record<ImportPhase, string> = {
   auth: "Checking your connection",
   fetch: "Reading your ratings from {name}",
-  resolve: "Matching titles to Harbor",
+  resolve: "Matching titles to Bear",
   write: "Saving to your profile",
   done: "Wrapping up",
 };
@@ -183,7 +183,7 @@ function Breakdown({ outcome, t }: { outcome: ImportOutcome; t: Translate }) {
 
       {outcome.manga > 0 && (
         <p className="text-[12px] text-ink-subtle">
-          {t("Manga cannot be matched to a Harbor title yet, so {n} were left out.", {
+          {t("Manga cannot be matched to a Bear title yet, so {n} were left out.", {
             n: outcome.manga,
           })}
         </p>
@@ -192,7 +192,7 @@ function Breakdown({ outcome, t }: { outcome: ImportOutcome; t: Translate }) {
       {outcome.samples.length > 0 && (
         <div>
           <div className="mb-1.5 text-[12px] font-medium text-ink-muted">
-            {t("Harbor could not find these")}
+            {t("Bear could not find these")}
           </div>
           <ul className="flex flex-col gap-1">
             {outcome.samples.map((title, i) => (

@@ -1,25 +1,14 @@
 const settings: Record<string, string> = {
-  "Content advisory style": "نمط تنبيه المحتوى",
-  "Use color to distinguish severity, or keep every advisory monochrome.":
-    "استخدم الألوان لتمييز مستوى الشدة، أو اجعل جميع التنبيهات أحادية اللون.",
-  Colored: "ملون",
-  "Monochrome (White)": "أحادي (أبيض)",
-  "When a movie or episode starts, briefly show its Common Sense Media parental guide (violence, nudity, profanity, substances) with severity. Fades on its own.":
-    "عند بدء فيلم أو حلقة، اعرض لفترة وجيزة إرشادات المحتوى من Common Sense Media (العنف والعري والألفاظ والمواد) مع مستوى الشدة، ثم أخفها تلقائياً.",
-  "Smooth scrolling": "تمرير سلس",
-  "Eases mouse-wheel scrolling instead of jumping line by line. Turn off if you prefer an instant response or notice any lag.":
-    "تمرير سلس بعجلة الفأرة بدلا من القفز سطرا بسطر. عطله إذا كنت تفضل استجابة فورية أو لاحظت بطئا.",
-  "Sign in to Harbor": "تسجيل الدخول إلى Harbor",
-  "Create Harbor account": "إنشاء حساب Harbor",
+"Sign in to Bear": "تسجيل الدخول إلى Bear",
+  "Create Bear account": "إنشاء حساب Bear",
   "Claim your handle": "المطالبة بمعرّفك (@handle)",
   "Reset password (recovery key)": "إعادة تعيين كلمة المرور (مفتاح الاسترداد)",
-  "Sign out of Harbor account": "تسجيل الخروج من حساب Harbor",
+  "Sign out of Bear account": "تسجيل الخروج من حساب Bear",
   "Verified status": "حالة التوثيق",
   "Settings for this profile (shared or independent)":
     "إعدادات هذا الملف الشخصي (مشتركة أو مستقلة)",
   "PIN-locked profiles": "الملفات الشخصية المقفلة برمز PIN",
-  "Home style (Harbor curated / Classic Stremio)":
-    "نمط الصفحة الرئيسية (تنسيق Harbor / Stremio الكلاسيكي)",
+  "Home style (Bear curated / Classic Stremio)": "نمط الصفحة الرئيسية (تنسيق Bear / Stremio الكلاسيكي)",
   "When the latest episode ends (Hide / Timer)": "عند انتهاء أحدث حلقة (إخفاء / مؤقّت)",
   "Remove shows once you're caught up": "إزالة المسلسلات بعد اللحاق بجميع الحلقات",
   "AI search provider (OpenRouter / Groq)": "مزوّد البحث بالذكاء الاصطناعي (OpenRouter / Groq)",
@@ -110,29 +99,19 @@ const settings: Record<string, string> = {
   "Add an MDBList key above to unlock.": "أضف مفتاح MDBList أعلاه لإلغاء القفل.",
   "Add an OMDb key above to unlock.": "أضف مفتاح OMDb أعلاه لإلغاء القفل.",
   "Add rule": "إضافة قاعدة",
-  "Add {n} titles from your Harbor watchlist to Trakt? Trakt skips any it already has.":
-    "إضافة {n} عنوان من قائمة مشاهدة Harbor إلى Trakt؟ يتخطّى Trakt أي عنوان موجود لديه بالفعل.",
-  "Add {n} titles from your Trakt watchlist to Harbor?":
-    "إضافة {n} عنوان من قائمة مشاهدة Trakt إلى Harbor؟",
-  "Added {n} to your Harbor watchlist": "تمت إضافة {n} إلى قائمة مشاهدة Harbor",
-  "Adds a Seasons/Arcs switch on shows that have a story-arc grouping (like One Piece), so you can browse by saga instead of scrolling seasons. Needs a TMDB key. Off by default.":
-    "يضيف مبدّل المواسم/الأقواس في المسلسلات التي لها تجميع حسب أقواس القصة (مثل One Piece)، لتتصفّح حسب الملحمة بدلًا من تمرير المواسم. يتطلب مفتاح TMDB. معطّل افتراضيًا.",
-  "Adds a blurred glass effect behind the stream picker panel.":
-    "يضيف تأثير زجاج ضبابي خلف لوحة منتقي البث.",
-  "Adds a timer button next to Downloads. Set a time or episode limit from anywhere; playback pauses when it runs out.":
-    "يضيف زر مؤقّت بجانب التنزيلات. اضبط حدًا زمنيًا أو حد حلقات من أي مكان؛ يتوقف التشغيل مؤقتًا عند نفاده.",
+  "Add {n} titles from your Bear watchlist to Trakt? Trakt skips any it already has.": "إضافة {n} عنوان من قائمة مشاهدة Bear إلى Trakt؟ يتخطّى Trakt أي عنوان موجود لديه بالفعل.",
+  "Add {n} titles from your Trakt watchlist to Bear?": "إضافة {n} عنوان من قائمة مشاهدة Trakt إلى Bear؟",
+  "Added {n} to your Bear watchlist": "تمت إضافة {n} إلى قائمة مشاهدة Bear",
+  "Adds a Seasons/Arcs switch on shows that have a story-arc grouping (like One Piece), so you can browse by saga instead of scrolling seasons. Needs a TMDB key. Off by default.": "يضيف مبدّل المواسم/الأقواس في المسلسلات التي لها تجميع حسب أقواس القصة (مثل One Piece)، لتتصفّح حسب الملحمة بدلًا من تمرير المواسم. يتطلب مفتاح TMDB. معطّل افتراضيًا.",
+  "Adds a blurred glass effect behind the stream picker panel.": "يضيف تأثير زجاج ضبابي خلف لوحة منتقي البث.",
+  "Adds a timer button next to Downloads. Set a time or episode limit from anywhere; playback pauses when it runs out.": "يضيف زر مؤقّت بجانب التنزيلات. اضبط حدًا زمنيًا أو حد حلقات من أي مكان؛ يتوقف التشغيل مؤقتًا عند نفاده.",
   "Adjust interface scale with wheel": "ضبط حجم الواجهة بعجلة الفأرة",
-  "Advanced. Target .harbor-custom-hover for the poster, .group:hover for the hover state. Shows live in the preview.":
-    "متقدّم. استهدف .harbor-custom-hover للملصق، و.group:hover لحالة التمرير. تظهر مباشرةً في المعاينة.",
-  "After a moment on a slide, the featured title's trailer plays muted in the background. Uses more bandwidth.":
-    "بعد لحظة على الشريحة، يُشغَّل المقطع الدعائي للعنوان المميّز صامتًا في الخلفية. يستهلك بيانات أكثر.",
-  "After the current show's episodes, Next flows into your queue. Off keeps Next/Previous within the current show only.":
-    "بعد حلقات المسلسل الحالي، يتابع زر التالي إلى قائمة انتظارك. الإيقاف يُبقي التالي/السابق ضمن المسلسل الحالي فقط.",
-  "After you pick a source, show a subtitle picker so you can set the exact track and language before the video starts. Off by default, Harbor keeps picking one for you automatically.":
-    "بعد اختيارك مصدرًا، اعرض منتقي ترجمة لتضبط المسار واللغة بدقة قبل بدء الفيديو. معطّل افتراضيًا، ويظل Harbor يختار واحدة لك تلقائيًا.",
-  "After you stop watching, a stream file stays cached for this long so reopening resumes instead of re-downloading. Older files are cleaned up automatically. Off deletes the file as soon as you leave the player.":
-    "بعد توقّفك عن المشاهدة، يبقى ملف البث مخزّنًا مؤقتًا هذه المدة حتى يُستأنف عند إعادة الفتح بدلًا من إعادة التنزيل. تُنظَّف الملفات الأقدم تلقائيًا. الإيقاف يحذف الملف بمجرد مغادرتك المشغّل.",
-  Aired: "حسب العرض",
+  "Advanced. Target .harbor-custom-hover for the poster, .group:hover for the hover state. Shows live in the preview.": "متقدّم. استهدف .harbor-custom-hover للملصق، و.group:hover لحالة التمرير. تظهر مباشرةً في المعاينة.",
+  "After a moment on a slide, the featured title's trailer plays muted in the background. Uses more bandwidth.": "بعد لحظة على الشريحة، يُشغَّل المقطع الدعائي للعنوان المميّز صامتًا في الخلفية. يستهلك بيانات أكثر.",
+  "After the current show's episodes, Next flows into your queue. Off keeps Next/Previous within the current show only.": "بعد حلقات المسلسل الحالي، يتابع زر التالي إلى قائمة انتظارك. الإيقاف يُبقي التالي/السابق ضمن المسلسل الحالي فقط.",
+  "After you pick a source, show a subtitle picker so you can set the exact track and language before the video starts. Off by default, Bear keeps picking one for you automatically.": "بعد اختيارك مصدرًا، اعرض منتقي ترجمة لتضبط المسار واللغة بدقة قبل بدء الفيديو. معطّل افتراضيًا، ويظل Bear يختار واحدة لك تلقائيًا.",
+  "After you stop watching, a stream file stays cached for this long so reopening resumes instead of re-downloading. Older files are cleaned up automatically. Off deletes the file as soon as you leave the player.": "بعد توقّفك عن المشاهدة، يبقى ملف البث مخزّنًا مؤقتًا هذه المدة حتى يُستأنف عند إعادة الفتح بدلًا من إعادة التنزيل. تُنظَّف الملفات الأقدم تلقائيًا. الإيقاف يحذف الملف بمجرد مغادرتك المشغّل.",
+  "Aired": "حسب العرض",
   "All badges back to default": "إعادة جميع الشارات إلى الافتراضي",
   "All content": "كل المحتوى",
   "All custom rules removed": "تمت إزالة جميع القواعد المخصّصة",
@@ -207,8 +186,7 @@ const settings: Record<string, string> = {
     "أنشئ حزمة في أيٍّ من هذه، وصدّر ملف JSON، واستضِفه كـ gist، ثم الصق الرابط الخام أدناه.",
   "Build your own palette": "أنشئ لوحة ألوانك الخاصة",
   "Cache location": "موقع التخزين المؤقت",
-  "Cap how much disk the cache can use. When it goes over, Harbor deletes the oldest files first. Enforced on launch and as streams close.":
-    "حدّد أقصى مساحة قرص يمكن للتخزين المؤقت استخدامها. عند تجاوزها، يحذف Harbor أقدم الملفات أولًا. يُطبَّق عند بدء التشغيل وعند إغلاق البثوث.",
+  "Cap how much disk the cache can use. When it goes over, Bear deletes the oldest files first. Enforced on launch and as streams close.": "حدّد أقصى مساحة قرص يمكن للتخزين المؤقت استخدامها. عند تجاوزها، يحذف Bear أقدم الملفات أولًا. يُطبَّق عند بدء التشغيل وعند إغلاق البثوث.",
   "Card size": "حجم البطاقة",
   Cards: "البطاقات",
   "Change…": "تغيير…",
@@ -241,8 +219,7 @@ const settings: Record<string, string> = {
   "Copy diagnostics grabs the engine status and your P2P settings as JSON, handy to paste into a bug report. The engine folder holds the DHT cache (dht.json) and active torrent data.":
     'ينسخ خيار "نسخ التشخيصات" حالة المحرك وإعدادات P2P بصيغة JSON، وهو مفيد للصقها في تقرير خطأ. يحتوي مجلد المحرك على ذاكرة DHT المؤقتة (dht.json) وبيانات التورنت النشطة.',
   "Copy filename": "نسخ اسم الملف",
-  "Copy your Harbor watchlist over to Trakt, or pull your Trakt watchlist into Harbor. Safe to run again, Trakt skips anything it already has.":
-    "انسخ قائمة مشاهدتك في Harbor إلى Trakt، أو اسحب قائمة مشاهدتك من Trakt إلى Harbor. آمن للتشغيل مرة أخرى، إذ يتخطّى Trakt أي شيء موجود لديه بالفعل.",
+  "Copy your Bear watchlist over to Trakt, or pull your Trakt watchlist into Bear. Safe to run again, Trakt skips anything it already has.": "انسخ قائمة مشاهدتك في Bear إلى Trakt، أو اسحب قائمة مشاهدتك من Trakt إلى Bear. آمن للتشغيل مرة أخرى، إذ يتخطّى Trakt أي شيء موجود لديه بالفعل.",
   "Corner radius": "نصف قطر الزاوية",
   "Corners keep it clear of subtitles along the bottom.":
     "تُبقيه الزوايا بعيدًا عن الترجمة أسفل الشاشة.",
@@ -319,12 +296,10 @@ const settings: Record<string, string> = {
   "Episode cards": "بطاقات الحلقات",
   "Episode ordering": "ترتيب الحلقات",
   "Esc exits fullscreen first": "مفتاح Esc يخرج من ملء الشاشة أولًا",
-  "Every format badge Harbor can show on streams. Click one to swap its art, hide it, or reset it. Changes apply everywhere badges appear.":
-    "كل شارة تنسيق يمكن أن يعرضها Harbor على البثوث. انقر على واحدة لتبديل صورتها أو إخفائها أو إعادة ضبطها. تُطبَّق التغييرات في كل مكان تظهر فيه الشارات.",
-  "Everyone who uses this Harbor gets their own watch history, avatar, color, and optional PIN. Switch anytime.":
-    "يحصل كل من يستخدم Harbor هذا على سجل مشاهدة وصورة رمزية ولون ورمز PIN اختياري خاص به. بدّل في أي وقت.",
-  Experimental: "تجريبي",
-  Expiring: "ينتهي قريبًا",
+  "Every format badge Bear can show on streams. Click one to swap its art, hide it, or reset it. Changes apply everywhere badges appear.": "كل شارة تنسيق يمكن أن يعرضها Bear على البثوث. انقر على واحدة لتبديل صورتها أو إخفائها أو إعادة ضبطها. تُطبَّق التغييرات في كل مكان تظهر فيه الشارات.",
+  "Everyone who uses this Bear gets their own watch history, avatar, color, and optional PIN. Switch anytime.": "يحصل كل من يستخدم Bear هذا على سجل مشاهدة وصورة رمزية ولون ورمز PIN اختياري خاص به. بدّل في أي وقت.",
+  "Experimental": "تجريبي",
+  "Expiring": "ينتهي قريبًا",
   "Export artwork": "تصدير الصورة الفنية",
   "Export my setup": "تصدير إعداداتي",
   "Export player log": "تصدير سجل المشغّل",
@@ -367,15 +342,12 @@ const settings: Record<string, string> = {
   "Group Refresh on the left beside Back instead of the far right of the header.":
     "ضع زر التحديث على اليسار بجانب زر الرجوع بدلًا من أقصى يمين الترويسة.",
   "Group episodes by story arc": "تجميع الحلقات حسب القوس القصصي",
-  HDR: "HDR",
-  "Harbor in your browser (Wi-Fi)": "Harbor في متصفّحك (Wi-Fi)",
-  "Harbor in your browser (this computer)": "Harbor في متصفّحك (هذا الحاسوب)",
-  "Harbor keeps your MyAnimeList watch progress in sync.":
-    "يبقي Harbor تقدّم مشاهدتك في MyAnimeList متزامنًا.",
-  "Harbor ranking puts the best-scoring sources first. Addon order follows your addon priority (organize it in Addons, Installed tab, Reorder) and keeps each addon's results in the order it returned them, like the Stremio and Vidi apps.":
-    "يضع ترتيب Harbor المصادر الأعلى تقييمًا أولًا. يتبع ترتيب الإضافات أولوية إضافاتك (نظّمها في الإضافات، علامة تبويب المثبّتة، إعادة الترتيب) ويحافظ على نتائج كل إضافة بالترتيب الذي أعادتها به، مثل تطبيقَي Stremio وVidi.",
-  "Harbor will not start the torrent engine, contact trackers, or run DHT. Use this if you only want debrid and direct links. Turn off to re-enable torrent streaming.":
-    "لن يشغّل Harbor محرك التورنت، أو يتصل بالمتعقّبات، أو يشغّل DHT. استخدم هذا إن كنت تريد روابط debrid والروابط المباشرة فقط. عطّله لإعادة تفعيل بث التورنت.",
+  "HDR": "HDR",
+  "Bear in your browser (Wi-Fi)": "Bear في متصفّحك (Wi-Fi)",
+  "Bear in your browser (this computer)": "Bear في متصفّحك (هذا الحاسوب)",
+  "Bear keeps your MyAnimeList watch progress in sync.": "يبقي Bear تقدّم مشاهدتك في MyAnimeList متزامنًا.",
+  "Bear ranking puts the best-scoring sources first. Addon order follows your addon priority (organize it in Addons, Installed tab, Reorder) and keeps each addon's results in the order it returned them, like the Stremio and Vidi apps.": "يضع ترتيب Bear المصادر الأعلى تقييمًا أولًا. يتبع ترتيب الإضافات أولوية إضافاتك (نظّمها في الإضافات، علامة تبويب المثبّتة، إعادة الترتيب) ويحافظ على نتائج كل إضافة بالترتيب الذي أعادتها به، مثل تطبيقَي Stremio وVidi.",
+  "Bear will not start the torrent engine, contact trackers, or run DHT. Use this if you only want debrid and direct links. Turn off to re-enable torrent streaming.": "لن يشغّل Bear محرك التورنت، أو يتصل بالمتعقّبات، أو يشغّل DHT. استخدم هذا إن كنت تريد روابط debrid والروابط المباشرة فقط. عطّله لإعادة تفعيل بث التورنت.",
   "Health for {n} service": "حالة {n} خدمة",
   "Health for {n} services": "حالة {n} خدمات",
   "Hide badge": "إخفاء الشارة",
@@ -386,8 +358,7 @@ const settings: Record<string, string> = {
   "Hides the button on its own after a few seconds so a wrong one doesn't sit there the whole episode.":
     "يخفي الزر تلقائيًا بعد بضع ثوانٍ حتى لا يبقى زر خاطئ ظاهرًا طوال الحلقة.",
   "High-quality episode images": "صور حلقات عالية الجودة",
-  "Hold Ctrl or Cmd and scroll to resize Harbor's interface smoothly.":
-    "اضغط مع الاستمرار على Ctrl أو Cmd ثم مرّر لتغيير حجم واجهة Harbor بسلاسة.",
+  "Hold Ctrl or Cmd and scroll to resize Bear's interface smoothly.": "اضغط مع الاستمرار على Ctrl أو Cmd ثم مرّر لتغيير حجم واجهة Bear بسلاسة.",
   "Home Rail Settings": "إعدادات صفوف الرئيسية",
   "Home hero audio": "صوت واجهة العنوان المميّز",
   "Home hero shadow": "ظل واجهة العنوان المميّز",
@@ -436,10 +407,8 @@ const settings: Record<string, string> = {
   "Keep cached files for": "الاحتفاظ بالملفات المؤقتة لمدة",
   "Keep downloading after you leave": "متابعة التنزيل بعد المغادرة",
   "Keep same source on next episode": "الإبقاء على المصدر نفسه في الحلقة التالية",
-  "Keeps HDR inside Harbor with the controls floating above the video. Subtitles render on the video. If the control bar does not appear, press Esc or use separate window.":
-    "يُبقي HDR داخل Harbor مع طفو عناصر التحكم فوق الفيديو. تُعرض الترجمات على الفيديو. إذا لم يظهر شريط التحكم، فاضغط Esc أو استخدم نافذة منفصلة.",
-  "Keeps fetching the full torrent in the background, even when paused, so you can pre-buffer big remuxes and scrub a finished file with no re-downloading. Uses more bandwidth and disk; cleaned up when you switch or close like normal.":
-    "يواصل جلب التورنت الكامل في الخلفية، حتى عند الإيقاف المؤقت، لتتمكّن من التخزين المؤقت المسبق لملفات remux الكبيرة والتنقّل عبر ملف مكتمل دون إعادة تنزيل. يستهلك المزيد من البيانات ومساحة القرص؛ ويُنظَّف عند التبديل أو الإغلاق كالمعتاد.",
+  "Keeps HDR inside Bear with the controls floating above the video. Subtitles render on the video. If the control bar does not appear, press Esc or use separate window.": "يُبقي HDR داخل Bear مع طفو عناصر التحكم فوق الفيديو. تُعرض الترجمات على الفيديو. إذا لم يظهر شريط التحكم، فاضغط Esc أو استخدم نافذة منفصلة.",
+  "Keeps fetching the full torrent in the background, even when paused, so you can pre-buffer big remuxes and scrub a finished file with no re-downloading. Uses more bandwidth and disk; cleaned up when you switch or close like normal.": "يواصل جلب التورنت الكامل في الخلفية، حتى عند الإيقاف المؤقت، لتتمكّن من التخزين المؤقت المسبق لملفات remux الكبيرة والتنقّل عبر ملف مكتمل دون إعادة تنزيل. يستهلك المزيد من البيانات ومساحة القرص؛ ويُنظَّف عند التبديل أو الإغلاق كالمعتاد.",
   "Live preview": "معاينة مباشرة",
   "Live preview is on. Done and Save both keep what you've picked as your Custom theme. Reset reverts the editor to the saved palette.":
     "المعاينة المباشرة مُفعّلة. يحتفظ كل من «تم» و«حفظ» بما اخترته كسمتك المخصصة. تُعيد «إعادة التعيين» المحرّر إلى لوحة الألوان المحفوظة.",
@@ -451,12 +420,10 @@ const settings: Record<string, string> = {
   "Lock to season server": "القفل على خادم الموسم",
   Logo: "الشعار",
   "Logo & app icon": "الشعار وأيقونة التطبيق",
-  "Low-level knobs for the peer-to-peer engine, plus quick ways to grab debug info when a stream misbehaves.":
-    "إعدادات دقيقة لمحرك P2P، بالإضافة إلى طرق سريعة لجمع معلومات التصحيح عند تعطّل أحد عمليات البث.",
-  MAL: "MAL",
-  MB: "MB",
-  "Make Harbor yours: swap the sidebar logo and the window/taskbar icon.":
-    "اجعل Harbor خاصًا بك: استبدل شعار الشريط الجانبي وأيقونة النافذة/شريط المهام.",
+  "Low-level knobs for the peer-to-peer engine, plus quick ways to grab debug info when a stream misbehaves.": "إعدادات دقيقة لمحرك P2P، بالإضافة إلى طرق سريعة لجمع معلومات التصحيح عند تعطّل أحد عمليات البث.",
+  "MAL": "MAL",
+  "MB": "MB",
+  "Make Bear yours: swap the sidebar logo and the window/taskbar icon.": "اجعل Bear خاصًا بك: استبدل شعار الشريط الجانبي وأيقونة النافذة/شريط المهام.",
   "Make your own": "أنشئ خاصتك",
   "Maps HDR down to SDR with bt.2446a. Works on any display. Pick this if HDR looks washed-out or grey.":
     "يحوّل HDR إلى SDR باستخدام bt.2446a. يعمل على أي شاشة. اختر هذا إذا بدا HDR باهتًا أو رماديًا.",
@@ -477,8 +444,7 @@ const settings: Record<string, string> = {
     "تتوقّف الأفلام التي شاهدتها والمسلسلات التي أحرزت تقدمًا فيها عن الظهور في صفوف الكتالوج المدمجة، بالاعتماد على سجل مشاهدتك المحلي (وTrakt إذا كان متصلًا). لا يتم المساس بقائمة «متابعة المشاهدة» أبدًا.",
   NEW: "جديد",
   "Name (e.g. REMUX)": "الاسم (مثل REMUX)",
-  "Native to Harbor. No RPDB or ratings addon needed.":
-    "أصلي في Harbor. لا حاجة إلى RPDB أو إضافة تقييمات.",
+  "Native to Bear. No RPDB or ratings addon needed.": "أصلي في Bear. لا حاجة إلى RPDB أو إضافة تقييمات.",
   "Native/Japanese": "الأصلية/اليابانية",
   "New filter": "مرشّح جديد",
   "New hover style": "نمط تمرير جديد",
@@ -501,16 +467,13 @@ const settings: Record<string, string> = {
     "عند التفعيل، تُعرض العناوين بلغة البيانات الوصفية لديك (الإنجليزية افتراضيًا). عند التعطيل، يُحتفَظ بكل عنوان بلغته الأصلية، فتظهر أسماء الأنمي والأفلام الأجنبية بلغتها الأصلية.",
   "On the card": "على البطاقة",
   "On this page": "في هذه الصفحة",
-  "One-click community packs. Rulesets bring full badge sets with their own matching; art remaps only swap the pictures on Harbor's built-in badges. Anything shared as a badges.json link on the Nuvio Discord or Reddit imports here too.":
-    "حزم مجتمعية بنقرة واحدة. تجلب مجموعات القواعد أطقم شارات كاملة بمطابقتها الخاصة؛ أما عمليات إعادة تعيين الصور فتستبدل الصور الموجودة على شارات Harbor المدمجة فقط. كما يُستورَد هنا أيضًا أي شيء يُشارَك كرابط badges.json على Discord أو Reddit الخاص بـ Nuvio.",
-  "Only show titles in these original languages on the Home catalogs. Leave all off to show everything.":
-    "لا تعرض سوى العناوين بهذه اللغات الأصلية في كتالوجات الصفحة الرئيسية. اترك الكل معطّلًا لعرض كل شيء.",
-  Open: "فتح",
+  "One-click community packs. Rulesets bring full badge sets with their own matching; art remaps only swap the pictures on Bear's built-in badges. Anything shared as a badges.json link on the Nuvio Discord or Reddit imports here too.": "حزم مجتمعية بنقرة واحدة. تجلب مجموعات القواعد أطقم شارات كاملة بمطابقتها الخاصة؛ أما عمليات إعادة تعيين الصور فتستبدل الصور الموجودة على شارات Bear المدمجة فقط. كما يُستورَد هنا أيضًا أي شيء يُشارَك كرابط badges.json على Discord أو Reddit الخاص بـ Nuvio.",
+  "Only show titles in these original languages on the Home catalogs. Leave all off to show everything.": "لا تعرض سوى العناوين بهذه اللغات الأصلية في كتالوجات الصفحة الرئيسية. اترك الكل معطّلًا لعرض كل شيء.",
+  "Open": "فتح",
   "Open preview": "فتح المعاينة",
   "OpenRouter API key (sk-or-...)": "مفتاح OpenRouter API (sk-or-...)",
   "Optional overlays that appear over the video.": "تراكبات اختيارية تظهر فوق الفيديو.",
-  "Options for the Library → Local tab: folders you scan from your own drive. When you export metadata, Harbor writes a Kodi-style .nfo and downloads artwork next to each file at the sizes below.":
-    "خيارات علامة تبويب المكتبة → المحلية: المجلدات التي تفحصها من قرصك الخاص. عند تصدير البيانات الوصفية، يكتب Harbor ملف .nfo بنمط Kodi ويُنزّل الصور بجانب كل ملف بالأحجام أدناه.",
+  "Options for the Library → Local tab: folders you scan from your own drive. When you export metadata, Bear writes a Kodi-style .nfo and downloads artwork next to each file at the sizes below.": "خيارات علامة تبويب المكتبة → المحلية: المجلدات التي تفحصها من قرصك الخاص. عند تصدير البيانات الوصفية، يكتب Bear ملف .nfo بنمط Kodi ويُنزّل الصور بجانب كل ملف بالأحجام أدناه.",
   "Or just zip up images": "أو اضغط الصور في ملف zip فقط",
   "Or try one of ours": "أو جرّب أحد خياراتنا",
   "Output device": "جهاز الإخراج",
@@ -524,20 +487,13 @@ const settings: Record<string, string> = {
     "الأقران والسرعة والتقدّم أثناء بث التورنت. يظهر بعيدًا عن زر الخروج، أعلى اليسار.",
   "Phone remote (Wi-Fi)": "جهاز تحكم عبر الهاتف (Wi-Fi)",
   "Phone remote (this computer)": "جهاز تحكم عبر الهاتف (هذا الحاسوب)",
-  "Pick OLED for perfect-black panels to unlock shadow detail in tonemapped HDR.":
-    "اختر OLED لشاشات الأسود المثالي لإظهار تفاصيل الظلال في HDR المُحوَّل درجاته اللونية.",
-  "Pick a display and body pairing, or upload your own font to use across Harbor.":
-    "اختر اقترانًا بين خط العناوين وخط المتن، أو ارفع خطك الخاص لاستخدامه عبر Harbor.",
-  "Pick a look. Every color and surface updates instantly.":
-    "اختر مظهرًا. يتحدّث كل لون وكل سطح فورًا.",
-  "Pick a source once and Harbor keeps playing the rest of that season from the same release, no re-picking. Works best with a debrid season pack. For anime it locks the whole series to that release.":
-    "اختر مصدرًا مرة واحدة وسيواصل Harbor تشغيل بقية ذلك الموسم من الإصدار نفسه، دون إعادة اختيار. يعمل بأفضل صورة مع حزمة موسم debrid. أما بالنسبة للأنمي، فيقفل المسلسل بأكمله على ذلك الإصدار.",
-  "Pick up partly-watched episodes and movies at your saved spot. Anything watched past 80% always restarts. Turn this off to always start from the beginning, handy if you rewatch shows.":
-    "تابع الحلقات والأفلام المُشاهَدة جزئيًا من موضعك المحفوظ. أي شيء تمت مشاهدة أكثر من 80% منه يُعاد تشغيله من البداية دائمًا. عطّل هذا الخيار لتبدأ من البداية دائمًا، وهو مفيد إذا كنت تعيد مشاهدة المسلسلات.",
-  "Pick which audio and subtitle languages Harbor reaches for first.":
-    "اختر لغتي الصوت والترجمة اللتين يلجأ إليهما Harbor أولًا.",
-  "Pick which score anime cards show. IMDb falls back to MAL when a title has no IMDb rating yet.":
-    "اختر التقييم الذي تعرضه بطاقات الأنمي. يعود IMDb إلى MAL عندما لا يكون للعنوان تقييم IMDb بعد.",
+  "Pick OLED for perfect-black panels to unlock shadow detail in tonemapped HDR.": "اختر OLED لشاشات الأسود المثالي لإظهار تفاصيل الظلال في HDR المُحوَّل درجاته اللونية.",
+  "Pick a display and body pairing, or upload your own font to use across Bear.": "اختر اقترانًا بين خط العناوين وخط المتن، أو ارفع خطك الخاص لاستخدامه عبر Bear.",
+  "Pick a look. Every color and surface updates instantly.": "اختر مظهرًا. يتحدّث كل لون وكل سطح فورًا.",
+  "Pick a source once and Bear keeps playing the rest of that season from the same release, no re-picking. Works best with a debrid season pack. For anime it locks the whole series to that release.": "اختر مصدرًا مرة واحدة وسيواصل Bear تشغيل بقية ذلك الموسم من الإصدار نفسه، دون إعادة اختيار. يعمل بأفضل صورة مع حزمة موسم debrid. أما بالنسبة للأنمي، فيقفل المسلسل بأكمله على ذلك الإصدار.",
+  "Pick up partly-watched episodes and movies at your saved spot. Anything watched past 80% always restarts. Turn this off to always start from the beginning, handy if you rewatch shows.": "تابع الحلقات والأفلام المُشاهَدة جزئيًا من موضعك المحفوظ. أي شيء تمت مشاهدة أكثر من 80% منه يُعاد تشغيله من البداية دائمًا. عطّل هذا الخيار لتبدأ من البداية دائمًا، وهو مفيد إذا كنت تعيد مشاهدة المسلسلات.",
+  "Pick which audio and subtitle languages Bear reaches for first.": "اختر لغتي الصوت والترجمة اللتين يلجأ إليهما Bear أولًا.",
+  "Pick which score anime cards show. IMDb falls back to MAL when a title has no IMDb rating yet.": "اختر التقييم الذي تعرضه بطاقات الأنمي. يعود IMDb إلى MAL عندما لا يكون للعنوان تقييم IMDb بعد.",
   "Picker layout": "تخطيط المُنتقي",
   "Play a short sound when changing the player volume. Off by default.":
     "تشغيل صوت قصير عند تغيير مستوى صوت المشغّل. مُعطّل افتراضيًا.",
@@ -632,12 +588,10 @@ const settings: Record<string, string> = {
   "Sending to Trakt…": "جارٍ الإرسال إلى Trakt…",
   "Sent {n} to Trakt": "تم إرسال {n} إلى Trakt",
   "Server couldn't start:": "تعذّر بدء الخادم:",
-  "Serves this exact install of Harbor as a web app on your network. Open it on a phone, laptop, or TV browser, sign in there, and it streams through this computer. You can also use the phone remote to control playback and cast to another device on this machine.":
-    "يقدّم نسخة Harbor المثبّتة هذه بالضبط كتطبيق ويب على شبكتك. افتحه على متصفّح هاتف أو حاسوب محمول أو تلفاز، وسجّل الدخول هناك، وسيبثّ عبر هذا الكمبيوتر. ويمكنك أيضًا استخدام ريموت الهاتف للتحكّم في التشغيل والبثّ إلى جهاز آخر على هذا الكمبيوتر.",
+  "Serves this exact install of Bear as a web app on your network. Open it on a phone, laptop, or TV browser, sign in there, and it streams through this computer. You can also use the phone remote to control playback and cast to another device on this machine.": "يقدّم نسخة Bear المثبّتة هذه بالضبط كتطبيق ويب على شبكتك. افتحه على متصفّح هاتف أو حاسوب محمول أو تلفاز، وسجّل الدخول هناك، وسيبثّ عبر هذا الكمبيوتر. ويمكنك أيضًا استخدام ريموت الهاتف للتحكّم في التشغيل والبثّ إلى جهاز آخر على هذا الكمبيوتر.",
   "Service status": "حالة الخدمة",
   "Set active": "تعيين كنشط",
-  "Set your MyAnimeList profile picture as your Harbor avatar.":
-    "عيّن صورة ملفك الشخصي في MyAnimeList كصورتك الرمزية في Harbor.",
+  "Set your MyAnimeList profile picture as your Bear avatar.": "عيّن صورة ملفك الشخصي في MyAnimeList كصورتك الرمزية في Bear.",
   "Settings for this profile": "إعدادات هذا الملف الشخصي",
   "Setup copied to clipboard as JSON": "تم نسخ الإعداد إلى الحافظة بصيغة JSON",
   Shadow: "الظل",
@@ -647,11 +601,9 @@ const settings: Record<string, string> = {
   "Show P2P status chip": "إظهار شارة حالة P2P",
   "Show Simkl Trending Today rail": "إظهار صف Simkl الرائج اليوم",
   "Show Simkl rails on Home": "إظهار صفوف Simkl في الصفحة الرئيسية",
-  "Show Up Next on Simkl rail": 'إظهار "التالي" في صف Simkl',
-  "Show a Skip Intro / Skip Credits button when Harbor detects one. Turn this off to never show it. You can also tap the X on the button to dismiss a wrong one for the rest of the episode.":
-    "إظهار زر تخطّي المقدمة / تخطّي الشارة عندما يكتشف Harbor واحداً منها. عطّل هذا الخيار لعدم إظهاره أبداً. يمكنك أيضاً النقر على X على الزر لتجاهل زر خاطئ لبقية الحلقة.",
-  "Show a Skip button when a known injected ad plays, and a small report button on new releases so you can mark ads for review.":
-    "إظهار زر تخطّي عند تشغيل إعلان مُدرَج معروف، وزر إبلاغ صغير على الإصدارات الجديدة لتتمكّن من وضع علامة على الإعلانات للمراجعة.",
+  "Show Up Next on Simkl rail": "إظهار \"التالي\" في صف Simkl",
+  "Show a Skip Intro / Skip Credits button when Bear detects one. Turn this off to never show it. You can also tap the X on the button to dismiss a wrong one for the rest of the episode.": "إظهار زر تخطّي المقدمة / تخطّي الشارة عندما يكتشف Bear واحداً منها. عطّل هذا الخيار لعدم إظهاره أبداً. يمكنك أيضاً النقر على X على الزر لتجاهل زر خاطئ لبقية الحلقة.",
+  "Show a Skip button when a known injected ad plays, and a small report button on new releases so you can mark ads for review.": "إظهار زر تخطّي عند تشغيل إعلان مُدرَج معروف، وزر إبلاغ صغير على الإصدارات الجديدة لتتمكّن من وضع علامة على الإعلانات للمراجعة.",
   "Show a bookmark on saved titles": "إظهار إشارة مرجعية على العناوين المحفوظة",
   "Show a button on the detail page to mark a title or episode as watched. Syncs to Trakt and Simkl if connected.":
     "إظهار زر في صفحة التفاصيل لوضع علامة على عنوان أو حلقة كمُشاهَد. يُزامَن مع Trakt و Simkl إذا كانا متصلين.",
@@ -685,24 +637,16 @@ const settings: Record<string, string> = {
     "إظهار زر الإبلاغ على كل بث تورنت، وليس فقط على الإصدارات الجديدة المحتملة.",
   "Show title": "إظهار العنوان",
   "Show torrent name": "إظهار اسم التورنت",
-  "Show what you're actually watching, under the title in the player.":
-    "إظهار ما تشاهده فعلياً، أسفل العنوان في المشغّل.",
-  "Show your operating system's own title bar with its minimize, maximize, and close buttons. They stay reachable everywhere, including while a video is playing. Turn this off to use Harbor's built-in window buttons.":
-    "إظهار شريط عنوان نظام التشغيل الخاص بك مع أزرار التصغير والتكبير والإغلاق. تبقى في متناول اليد في كل مكان، بما في ذلك أثناء تشغيل الفيديو. عطّل هذا الخيار لاستخدام أزرار النوافذ المدمجة في Harbor.",
-  "Shows each episode's rating. Add your free OMDb API key for real IMDb scores; without it, ratings fall back to TMDB.":
-    "يعرض تقييم كل حلقة. أضف مفتاح OMDb API المجاني للحصول على درجات IMDb الحقيقية؛ بدونه، تعود التقييمات إلى TMDB.",
-  "Shows the episode synopsis on the cards. Turn it off to hide it.":
-    "يعرض ملخّص الحلقة على البطاقات. عطّله لإخفائه.",
-  "Sign in to Stremio first so Harbor knows which watchlist to sync.":
-    "سجّل الدخول إلى Stremio أولاً ليعرف Harbor أي قائمة مشاهدة يجب مزامنتها.",
-  "Sign in to Stremio first. This scans the active profile's library.":
-    "سجّل الدخول إلى Stremio أولاً. يفحص هذا مكتبة الملف الشخصي النشط.",
-  "Skip Who's watching and always start as this profile. PIN-locked profiles can't be a default.":
-    'تخطَّ شاشة "من يشاهد" وابدأ دائماً بهذا الملف الشخصي. لا يمكن للملفات الشخصية المحمية بـ PIN أن تكون افتراضية.',
+  "Show what you're actually watching, under the title in the player.": "إظهار ما تشاهده فعلياً، أسفل العنوان في المشغّل.",
+  "Show your operating system's own title bar with its minimize, maximize, and close buttons. They stay reachable everywhere, including while a video is playing. Turn this off to use Bear's built-in window buttons.": "إظهار شريط عنوان نظام التشغيل الخاص بك مع أزرار التصغير والتكبير والإغلاق. تبقى في متناول اليد في كل مكان، بما في ذلك أثناء تشغيل الفيديو. عطّل هذا الخيار لاستخدام أزرار النوافذ المدمجة في Bear.",
+  "Shows each episode's rating. Add your free OMDb API key for real IMDb scores; without it, ratings fall back to TMDB.": "يعرض تقييم كل حلقة. أضف مفتاح OMDb API المجاني للحصول على درجات IMDb الحقيقية؛ بدونه، تعود التقييمات إلى TMDB.",
+  "Shows the episode synopsis on the cards. Turn it off to hide it.": "يعرض ملخّص الحلقة على البطاقات. عطّله لإخفائه.",
+  "Sign in to Stremio first so Bear knows which watchlist to sync.": "سجّل الدخول إلى Stremio أولاً ليعرف Bear أي قائمة مشاهدة يجب مزامنتها.",
+  "Sign in to Stremio first. This scans the active profile's library.": "سجّل الدخول إلى Stremio أولاً. يفحص هذا مكتبة الملف الشخصي النشط.",
+  "Skip Who's watching and always start as this profile. PIN-locked profiles can't be a default.": "تخطَّ شاشة \"من يشاهد\" وابدأ دائماً بهذا الملف الشخصي. لا يمكن للملفات الشخصية المحمية بـ PIN أن تكون افتراضية.",
   "Skip injected ads automatically": "تخطّي الإعلانات المُدرَجة تلقائياً",
   "Skip intros & credits": "تخطّي المقدمات والشارات",
-  "Skip the 'stream over peer-to-peer?' prompt and start uncached torrents immediately. Harbor remembers your choice after the first confirmation anyway.":
-    'تخطّي رسالة "البث عبر الند للند؟" وابدأ تشغيل التورنتات غير المخزّنة مؤقتاً على الفور. يتذكّر Harbor اختيارك بعد التأكيد الأول على أي حال.',
+  "Skip the 'stream over peer-to-peer?' prompt and start uncached torrents immediately. Bear remembers your choice after the first confirmation anyway.": "تخطّي رسالة \"البث عبر الند للند؟\" وابدأ تشغيل التورنتات غير المخزّنة مؤقتاً على الفور. يتذكّر Bear اختيارك بعد التأكيد الأول على أي حال.",
   "Sleep timer in the top bar": "مؤقّت النوم في الشريط العلوي",
   "Some cam and new-release rips have ads spliced into the video itself. When the community has marked one, a Skip button appears. You can also report ads you spot for review. Off by default.":
     "بعض نسخ الكام والإصدارات الجديدة تحتوي على إعلانات مُدمجة داخل الفيديو نفسه. عندما يضع المجتمع علامة على أحدها، يظهر زر تخطّي. يمكنك أيضاً الإبلاغ عن الإعلانات التي تلاحظها للمراجعة. مُعطّل افتراضياً.",
@@ -719,8 +663,7 @@ const settings: Record<string, string> = {
   "Stream cache": "ذاكرة التخزين المؤقت للبث",
   "Stream descriptions": "أوصاف البث",
   "Stream quality in player": "جودة البث في المشغّل",
-  "Stream torrents straight from Harbor's built-in engine when you have no debrid set up, or a torrent isn't cached. This connects to peers over your own connection. Turn off to only ever play debrid and direct links.":
-    "بث التورنتات مباشرةً من محرّك Harbor المدمج عندما لا يكون لديك debrid مُعدّ، أو عندما لا يكون التورنت مخزّناً مؤقتاً. يتصل هذا بالأقران عبر اتصالك الخاص. عطّله لتشغيل روابط debrid والروابط المباشرة فقط.",
+  "Stream torrents straight from Bear's built-in engine when you have no debrid set up, or a torrent isn't cached. This connects to peers over your own connection. Turn off to only ever play debrid and direct links.": "بث التورنتات مباشرةً من محرّك Bear المدمج عندما لا يكون لديك debrid مُعدّ، أو عندما لا يكون التورنت مخزّناً مؤقتاً. يتصل هذا بالأقران عبر اتصالك الخاص. عطّله لتشغيل روابط debrid والروابط المباشرة فقط.",
   "Streaming quality": "جودة البث",
   Structured: "منظّم",
   "Style name": "اسم النمط",
@@ -745,31 +688,19 @@ const settings: Record<string, string> = {
   "The New, In Cinema, Rerun, and Awards chips. Turn off for a cleaner grid. Score chips are separate, below.":
     'شارات "جديد" و"في السينما" و"إعادة عرض" و"الجوائز". عطّلها للحصول على شبكة أنظف. شارات الدرجات منفصلة، في الأسفل.',
   "The TMDB community score.": "درجة مجتمع TMDB.",
-  "The badge that appears over the player when an episode syncs to your tracker.":
-    "الشارة التي تظهر فوق المشغّل عند مزامنة حلقة مع أداة التتبّع الخاصة بك.",
-  "The button set your layout is built on. Your customizations are kept separately for each style.":
-    "مجموعة الأزرار التي بُني عليها تخطيطك. تُحفظ تخصيصاتك بشكل منفصل لكل نمط.",
-  "The free tier is $0 for personal use. Just pick the first option, no payment needed.":
-    "الفئة المجانية هي $0 للاستخدام الشخصي. فقط اختر الخيار الأول، لا حاجة للدفع.",
-  "The home hero trailer plays with sound and a mute button in the corner, then shows a replay button when it ends. Auto-rotation pauses so it stays on the featured title.":
-    "يُشغَّل المقطع الدعائي للبطل في الصفحة الرئيسية مع الصوت وزر كتم في الزاوية، ثم يعرض زر إعادة التشغيل عند انتهائه. يتوقّف التدوير التلقائي مؤقتاً ليبقى على العنوان المميّز.",
-  "The lighter fill showing how much is buffered or downloaded ahead. It hides automatically once a stream is fully cached (green dot).":
-    "التعبئة الأفتح التي تُظهر مقدار ما تم تخزينه مؤقتاً أو تنزيله مسبقاً. تختفي تلقائياً بمجرد تخزين البث بالكامل (نقطة خضراء).",
-  "The little 4K, HDR, codec, and audio chips that ride along each stream in the play picker.":
-    "شارات 4K و HDR والترميز والصوت الصغيرة التي ترافق كل بث في منتقي التشغيل.",
-  "The little score chip printed on poster cards across your rows and grids.":
-    "شارة الدرجة الصغيرة المطبوعة على بطاقات الملصقات في صفوفك وشبكاتك.",
-  "The ratings row on a title's detail page, next to runtime and genre.":
-    "صف التقييمات في صفحة تفاصيل العنوان، بجوار مدة العرض والنوع.",
-  "The resolution Harbor downloads for each image when you export a title's metadata next to the file on disk.":
-    "الدقة التي يحمّلها Harbor لكل صورة عند تصدير البيانات الوصفية للعنوان بجانب الملف على القرص.",
-  "The window and taskbar icon updates right away. The installed shortcut refreshes on the next update.":
-    "تتحدّث أيقونة النافذة وشريط المهام على الفور. أما الاختصار المثبّت فيُحدَّث عند التحديث التالي.",
-  "These badges are drawn on posters as you browse. RPDB, in the keys above, is a separate option that bakes scores into the poster image itself.":
-    "تُرسم هذه الشارات على الملصقات أثناء التصفّح. أما RPDB في المفاتيح أعلاه، فهو خيار منفصل يدمج التقييمات في صورة الملصق نفسها.",
+  "The badge that appears over the player when an episode syncs to your tracker.": "الشارة التي تظهر فوق المشغّل عند مزامنة حلقة مع أداة التتبّع الخاصة بك.",
+  "The button set your layout is built on. Your customizations are kept separately for each style.": "مجموعة الأزرار التي بُني عليها تخطيطك. تُحفظ تخصيصاتك بشكل منفصل لكل نمط.",
+  "The free tier is $0 for personal use. Just pick the first option, no payment needed.": "الفئة المجانية هي $0 للاستخدام الشخصي. فقط اختر الخيار الأول، لا حاجة للدفع.",
+  "The home hero trailer plays with sound and a mute button in the corner, then shows a replay button when it ends. Auto-rotation pauses so it stays on the featured title.": "يُشغَّل المقطع الدعائي للبطل في الصفحة الرئيسية مع الصوت وزر كتم في الزاوية، ثم يعرض زر إعادة التشغيل عند انتهائه. يتوقّف التدوير التلقائي مؤقتاً ليبقى على العنوان المميّز.",
+  "The lighter fill showing how much is buffered or downloaded ahead. It hides automatically once a stream is fully cached (green dot).": "التعبئة الأفتح التي تُظهر مقدار ما تم تخزينه مؤقتاً أو تنزيله مسبقاً. تختفي تلقائياً بمجرد تخزين البث بالكامل (نقطة خضراء).",
+  "The little 4K, HDR, codec, and audio chips that ride along each stream in the play picker.": "شارات 4K و HDR والترميز والصوت الصغيرة التي ترافق كل بث في منتقي التشغيل.",
+  "The little score chip printed on poster cards across your rows and grids.": "شارة الدرجة الصغيرة المطبوعة على بطاقات الملصقات في صفوفك وشبكاتك.",
+  "The ratings row on a title's detail page, next to runtime and genre.": "صف التقييمات في صفحة تفاصيل العنوان، بجوار مدة العرض والنوع.",
+  "The resolution Bear downloads for each image when you export a title's metadata next to the file on disk.": "الدقة التي يحمّلها Bear لكل صورة عند تصدير البيانات الوصفية للعنوان بجانب الملف على القرص.",
+  "The window and taskbar icon updates right away. The installed shortcut refreshes on the next update.": "تتحدّث أيقونة النافذة وشريط المهام على الفور. أما الاختصار المثبّت فيُحدَّث عند التحديث التالي.",
+  "These badges are drawn on posters as you browse. RPDB, in the keys above, is a separate option that bakes scores into the poster image itself.": "تُرسم هذه الشارات على الملصقات أثناء التصفّح. أما RPDB في المفاتيح أعلاه، فهو خيار منفصل يدمج التقييمات في صورة الملصق نفسها.",
   "This score only appears on cards.": "يظهر هذا التقييم على البطاقات فقط.",
-  "This usually means antivirus removed the server file (stremio-server.exe). Add Harbor's install folder to your antivirus exclusions, then reinstall.":
-    "يعني هذا عادةً أن برنامج مكافحة الفيروسات قد أزال ملف الخادم (stremio-server.exe). أضف مجلد تثبيت Harbor إلى استثناءات برنامج مكافحة الفيروسات، ثم أعد التثبيت.",
+  "This usually means antivirus removed the server file (stremio-server.exe). Add Bear's install folder to your antivirus exclusions, then reinstall.": "يعني هذا عادةً أن برنامج مكافحة الفيروسات قد أزال ملف الخادم (stremio-server.exe). أضف مجلد تثبيت Bear إلى استثناءات برنامج مكافحة الفيروسات، ثم أعد التثبيت.",
   "To the side": "إلى الجانب",
   "Tonemap to SDR": "تحويل الألوان إلى SDR",
   Top: "أعلى",
@@ -777,16 +708,11 @@ const settings: Record<string, string> = {
   "Top left": "أعلى اليسار",
   "Top right": "أعلى اليمين",
   "Torrent name": "اسم التورنت",
-  "Torrents are disabled. Uncached streams will not play unless they come from a debrid service or a direct link. To use torrents, toggle this off.":
-    "التورنت معطّل. لن يُشغَّل البث غير المخزّن مؤقتًا إلا إذا كان من خدمة debrid أو رابط مباشر. لاستخدام التورنت، عطّل هذا الخيار.",
-  "Track everything you watch, see your watchlist, and get personalized recommendations on Harbor's home page. Free at trakt.tv.":
-    "تتبّع كل ما تشاهده، واطّلع على قائمة المشاهدة، واحصل على توصيات مخصصة في الصفحة الرئيسية لـ Harbor. مجانًا على trakt.tv.",
-  "Trakt account limit reached. Upgrade to Trakt VIP or trim your watchlist.":
-    "تم بلوغ حد حساب Trakt. قم بالترقية إلى Trakt VIP أو قلّص قائمة المشاهدة.",
-  "Trakt is having server trouble (HTTP {n}). Try again shortly.":
-    "يواجه Trakt مشكلة في الخادم (HTTP {n}). حاول مجددًا بعد قليل.",
-  "Trakt is rate-limiting. Wait a minute and try again.":
-    "يفرض Trakt حدًا على الطلبات. انتظر دقيقة ثم حاول مجددًا.",
+  "Torrents are disabled. Uncached streams will not play unless they come from a debrid service or a direct link. To use torrents, toggle this off.": "التورنت معطّل. لن يُشغَّل البث غير المخزّن مؤقتًا إلا إذا كان من خدمة debrid أو رابط مباشر. لاستخدام التورنت، عطّل هذا الخيار.",
+  "Track everything you watch, see your watchlist, and get personalized recommendations on Bear's home page. Free at trakt.tv.": "تتبّع كل ما تشاهده، واطّلع على قائمة المشاهدة، واحصل على توصيات مخصصة في الصفحة الرئيسية لـ Bear. مجانًا على trakt.tv.",
+  "Trakt account limit reached. Upgrade to Trakt VIP or trim your watchlist.": "تم بلوغ حد حساب Trakt. قم بالترقية إلى Trakt VIP أو قلّص قائمة المشاهدة.",
+  "Trakt is having server trouble (HTTP {n}). Try again shortly.": "يواجه Trakt مشكلة في الخادم (HTTP {n}). حاول مجددًا بعد قليل.",
+  "Trakt is rate-limiting. Wait a minute and try again.": "يفرض Trakt حدًا على الطلبات. انتظر دقيقة ثم حاول مجددًا.",
   "Trakt rejected the request (HTTP {n}).": "رفض Trakt الطلب (HTTP {n}).",
   "Trakt rejected the request (account locked or permission denied).":
     "رفض Trakt الطلب (الحساب مقفل أو تم رفض الإذن).",
@@ -808,12 +734,9 @@ const settings: Record<string, string> = {
   "Type what you want in plain language and let a model find it. Bring your own API key.":
     "اكتب ما تريده بلغة عادية ودع النموذج يعثر عليه. أحضر مفتاح API الخاص بك.",
   "Untitled filter": "مرشّح بلا عنوان",
-  "Upconverts SDR video to HDR on an Nvidia RTX GPU (turn on RTX Video HDR in the Nvidia app; needs GPU decode). Experimental. Unavailable while SVP is active for the current video.":
-    "يرفع فيديو SDR إلى HDR على وحدة معالجة رسومات Nvidia RTX (فعّل RTX Video HDR في تطبيق Nvidia؛ يتطلب فك الترميز عبر GPU). تجريبي. غير متاح أثناء تفعيل SVP للفيديو الحالي.",
-  "Upscales SDR video with AI on an Nvidia RTX GPU (turn on RTX Video Super Resolution in the Nvidia app; needs GPU decode). Experimental. Unavailable while SVP is active for the current video.":
-    "يرفع دقة فيديو SDR بالذكاء الاصطناعي على وحدة معالجة رسومات Nvidia RTX (فعّل RTX Video Super Resolution في تطبيق Nvidia؛ يتطلب فك الترميز عبر GPU). تجريبي. غير متاح أثناء تفعيل SVP للفيديو الحالي.",
-  "Updating separated settings per profile, which may have reset your theme and keys. Harbor still has your old setup saved. Bring it back on this profile, then reload.":
-    "يجري تحديث الإعدادات لتصبح منفصلة لكل ملف شخصي، وقد يكون هذا قد أعاد ضبط سمتك ومفاتيحك. لا يزال Harbor يحتفظ بإعدادك القديم محفوظًا. استعده في هذا الملف الشخصي، ثم أعد التحميل.",
+  "Upconverts SDR video to HDR on an Nvidia RTX GPU (turn on RTX Video HDR in the Nvidia app; needs GPU decode). Experimental. Unavailable while SVP is active for the current video.": "يرفع فيديو SDR إلى HDR على وحدة معالجة رسومات Nvidia RTX (فعّل RTX Video HDR في تطبيق Nvidia؛ يتطلب فك الترميز عبر GPU). تجريبي. غير متاح أثناء تفعيل SVP للفيديو الحالي.",
+  "Upscales SDR video with AI on an Nvidia RTX GPU (turn on RTX Video Super Resolution in the Nvidia app; needs GPU decode). Experimental. Unavailable while SVP is active for the current video.": "يرفع دقة فيديو SDR بالذكاء الاصطناعي على وحدة معالجة رسومات Nvidia RTX (فعّل RTX Video Super Resolution في تطبيق Nvidia؛ يتطلب فك الترميز عبر GPU). تجريبي. غير متاح أثناء تفعيل SVP للفيديو الحالي.",
+  "Updating separated settings per profile, which may have reset your theme and keys. Bear still has your old setup saved. Bring it back on this profile, then reload.": "يجري تحديث الإعدادات لتصبح منفصلة لكل ملف شخصي، وقد يكون هذا قد أعاد ضبط سمتك ومفاتيحك. لا يزال Bear يحتفظ بإعدادك القديم محفوظًا. استعده في هذا الملف الشخصي، ثم أعد التحميل.",
   "Upgrade subtitles when better ones load": "ترقية الترجمة عند تحميل نسخة أفضل",
   Upload: "رفع",
   "Upload image": "رفع صورة",
@@ -826,8 +749,7 @@ const settings: Record<string, string> = {
   "Use free IMDb data without a TMDB key": "استخدام بيانات IMDb المجانية بدون مفتاح TMDB",
   "Use in Nuvio": "استخدام في Nuvio",
   "Use live web context": "استخدام سياق الويب المباشر",
-  "Use the arrow keys and Enter to move focus through Harbor. Turn this off to keep arrow keys free and disable focus navigation everywhere.":
-    "استخدم مفاتيح الأسهم وEnter لنقل التركيز عبر Harbor. عطّل هذا لإبقاء مفاتيح الأسهم متاحة وتعطيل التنقّل بالتركيز في كل مكان.",
+  "Use the arrow keys and Enter to move focus through Bear. Turn this off to keep arrow keys free and disable focus navigation everywhere.": "استخدم مفاتيح الأسهم وEnter لنقل التركيز عبر Bear. عطّل هذا لإبقاء مفاتيح الأسهم متاحة وتعطيل التنقّل بالتركيز في كل مكان.",
   "Use your own image as the app icon": "استخدام صورتك الخاصة كأيقونة للتطبيق",
   Usenet: "Usenet",
   "Volume pop-up while watching": "نافذة مستوى الصوت المنبثقة أثناء المشاهدة",
@@ -843,18 +765,12 @@ const settings: Record<string, string> = {
   "When a movie or episode starts, briefly show its IMDb parental guide (violence, profanity, substances, frightening scenes and more) with severity. Fades on its own.":
     "عند بدء فيلم أو حلقة، اعرض لفترة وجيزة دليل IMDb الإرشادي للآباء (العنف والألفاظ النابية والمواد المخدّرة والمشاهد المخيفة والمزيد) مع درجة الشدّة. يختفي من تلقاء نفسه.",
   "When a title is in your local library": "عندما يكون العنوان في مكتبتك المحلية",
-  "When auto-playing the next episode, keep the same release/source you were just watching instead of Harbor's top-ranked stream. Falls back to the best stream if that source isn't available.":
-    "عند التشغيل التلقائي للحلقة التالية، أبقِ على نفس النسخة/المصدر الذي كنت تشاهده بدلًا من البث الأعلى تصنيفًا في Harbor. يعود إلى أفضل بث إذا لم يكن ذلك المصدر متاحًا.",
-  "When in fullscreen, Esc leaves fullscreen instead of closing the player. Press Esc again to close. Turn off to make Esc always close.":
-    "في وضع ملء الشاشة، يخرج مفتاح Esc من ملء الشاشة بدلًا من إغلاق المشغل. اضغط Esc مجددًا للإغلاق. عطّل الخيار لجعل Esc يُغلق دائمًا.",
-  "When off, a torrent stops the moment you close or switch the stream, so nothing keeps downloading in the background. Turn on to let it keep going after you leave; manage or pause those from the Downloads tab.":
-    "عند إيقافه، يتوقّف التورنت لحظة إغلاقك للبث أو تبديله، فلا يستمر أي تنزيل في الخلفية. فعّله للسماح باستمراره بعد مغادرتك؛ يمكنك إدارة تلك التنزيلات أو إيقافها مؤقتًا من علامة تبويب التنزيلات.",
-  "When you exit fullscreen, return the window to exactly where it was. Turn off to center it on screen instead.":
-    "عند خروجك من ملء الشاشة، أعِد النافذة إلى مكانها السابق تمامًا. عطّل الخيار لتوسيطها على الشاشة بدلًا من ذلك.",
-  "When you exit playback, keep the window fullscreen instead of dropping back to a window. Turn off to leave fullscreen automatically whenever the player closes.":
-    "عند خروجك من التشغيل، أبقِ النافذة بملء الشاشة بدلًا من العودة إلى وضع النافذة. عطّل الخيار للخروج من ملء الشاشة تلقائيًا كلما أُغلق المشغل.",
-  "When you finish an episode or movie, remove its downloaded file right away. Something you stop partway through is kept so you can resume.":
-    "عند انتهائك من حلقة أو فيلم، احذف ملفه المُنزّل على الفور. أما ما توقّفت عنه في المنتصف فيُحتفظ به لتتمكّن من المتابعة.",
+  "When auto-playing the next episode, keep the same release/source you were just watching instead of Bear's top-ranked stream. Falls back to the best stream if that source isn't available.": "عند التشغيل التلقائي للحلقة التالية، أبقِ على نفس النسخة/المصدر الذي كنت تشاهده بدلًا من البث الأعلى تصنيفًا في Bear. يعود إلى أفضل بث إذا لم يكن ذلك المصدر متاحًا.",
+  "When in fullscreen, Esc leaves fullscreen instead of closing the player. Press Esc again to close. Turn off to make Esc always close.": "في وضع ملء الشاشة، يخرج مفتاح Esc من ملء الشاشة بدلًا من إغلاق المشغل. اضغط Esc مجددًا للإغلاق. عطّل الخيار لجعل Esc يُغلق دائمًا.",
+  "When off, a torrent stops the moment you close or switch the stream, so nothing keeps downloading in the background. Turn on to let it keep going after you leave; manage or pause those from the Downloads tab.": "عند إيقافه، يتوقّف التورنت لحظة إغلاقك للبث أو تبديله، فلا يستمر أي تنزيل في الخلفية. فعّله للسماح باستمراره بعد مغادرتك؛ يمكنك إدارة تلك التنزيلات أو إيقافها مؤقتًا من علامة تبويب التنزيلات.",
+  "When you exit fullscreen, return the window to exactly where it was. Turn off to center it on screen instead.": "عند خروجك من ملء الشاشة، أعِد النافذة إلى مكانها السابق تمامًا. عطّل الخيار لتوسيطها على الشاشة بدلًا من ذلك.",
+  "When you exit playback, keep the window fullscreen instead of dropping back to a window. Turn off to leave fullscreen automatically whenever the player closes.": "عند خروجك من التشغيل، أبقِ النافذة بملء الشاشة بدلًا من العودة إلى وضع النافذة. عطّل الخيار للخروج من ملء الشاشة تلقائيًا كلما أُغلق المشغل.",
+  "When you finish an episode or movie, remove its downloaded file right away. Something you stop partway through is kept so you can resume.": "عند انتهائك من حلقة أو فيلم، احذف ملفه المُنزّل على الفور. أما ما توقّفت عنه في المنتصف فيُحتفظ به لتتمكّن من المتابعة.",
   "Where scores appear": "أين تظهر التقييمات",
   "Where the Refresh button sits in the picker header. Default keeps it on the right, across from Back.":
     "موضع زر التحديث في رأس المنتقي. يبقيه الوضع الافتراضي على اليمين، مقابل زر الرجوع.",
@@ -891,11 +807,9 @@ const settings: Record<string, string> = {
   "skipped {n} anime": "تم تخطي {n} أنمي",
   unknown: "غير معروف",
   "{a} badges remapped, {b} rules added": "أُعيد تعيين {a} شارة، وأُضيفت {b} قاعدة",
-  "{count} tracker request blocked this session. Harbor itself sends zero telemetry.":
-    "تم حظر {count} طلب تتبّع في هذه الجلسة. لا يرسل Harbor نفسه أي بيانات قياس عن بُعد.",
-  "{n} Harbor icons": "{n} أيقونة Harbor",
-  "{n} anime titles will be left out (Trakt has no IDs for them).":
-    "سيتم استبعاد {n} عنوان أنمي (لا تملك Trakt معرّفات لها).",
+  "{count} tracker request blocked this session. Bear itself sends zero telemetry.": "تم حظر {count} طلب تتبّع في هذه الجلسة. لا يرسل Bear نفسه أي بيانات قياس عن بُعد.",
+  "{n} Bear icons": "{n} أيقونة Bear",
+  "{n} anime titles will be left out (Trakt has no IDs for them).": "سيتم استبعاد {n} عنوان أنمي (لا تملك Trakt معرّفات لها).",
   "{n} badges customized": "تم تخصيص {n} شارة",
   "{n} connected": "{n} متصل",
   "{n} day ago": "منذ {n} يوم",
@@ -928,7 +842,7 @@ const settings: Record<string, string> = {
   "Region & language": "المنطقة واللغة",
   "English (default)": "الإنجليزية (افتراضي)",
   "Apply {language}": "تطبيق {language}",
-  "Switch Harbor to {language}?": "تبديل Harbor إلى {language}؟",
+  "Switch Bear to {language}?": "تبديل Bear إلى {language}؟",
   "Just change region": "تغيير المنطقة فقط",
   "Translate titles": "ترجمة العناوين",
   "If disabled, titles remain in their original language.":
@@ -943,24 +857,15 @@ const settings: Record<string, string> = {
     "ترجمة الملصقات غير متاحة لأن خدمة الملصقات المخصصة مُفعلة.",
   "Metadata providers": "مزوّدو البيانات الوصفية",
   "Content filters": "مرشّحات المحتوى",
-  "Sets the language of Harbor's own interface: menus, buttons, and labels. Arabic switches the layout to right to left. This is separate from subtitle and metadata languages below.":
-    "يحدّد لغة واجهة Harbor نفسها: القوائم والأزرار والتسميات. تبدّل العربية التخطيط من اليمين إلى اليسار. وهذا منفصل عن لغتي الترجمة والبيانات الوصفية أدناه.",
-  "Switch the menus and buttons to your language. Arabic flips the layout to right to left.":
-    "بدّل القوائم والأزرار إلى لغتك. تقلب العربية التخطيط من اليمين إلى اليسار.",
-  "This sets the interface, metadata, subtitle, and audio languages to match.":
-    "يضبط هذا لغات الواجهة والبيانات الوصفية والترجمة والصوت لتتطابق.",
-  "Titles, overviews, and taglines from TMDB display in this language when a translation exists. Needs a TMDB key.":
-    "تُعرض العناوين والملخصات والشعارات من TMDB بهذه اللغة عند توفّر ترجمة. يتطلب مفتاح TMDB.",
-  "Used for streaming availability and the Now Playing release window. Pick a country and Harbor can match the interface, metadata, and subtitle languages to it.":
-    'يُستخدم لتوفّر البث ونافذة إصدار "يُعرض الآن". اختر دولة ليتمكّن Harbor من مطابقة لغات الواجهة والبيانات الوصفية والترجمة معها.',
-  "A free TMDB key is highly recommended. It unlocks the full Harbor experience. The rest are optional, and Cinemeta works out of the box without any.":
-    "يُنصح بشدة بمفتاح TMDB المجاني. فهو يفتح تجربة Harbor الكاملة. والبقية اختيارية، وتعمل Cinemeta مباشرةً بدون أي مفتاح.",
-  "TMDB asks for an app URL when you create the key. Put any URL at all, like https://harbor.app. The only thing you need back is the API key.":
-    "تطلب TMDB رابط تطبيق عند إنشاء المفتاح. ضع أي رابط على الإطلاق، مثل https://harbor.app. كل ما تحتاجه في المقابل هو مفتاح الـ API.",
-  "RPDB already paints scores onto the poster. Toggle to override.":
-    "يرسم RPDB التقييمات على الملصق بالفعل. بدّل للتجاوز.",
-  "MyAnimeList scores for anime titles. RPDB doesn't cover anime, so this stays optional.":
-    "تقييمات MyAnimeList لعناوين الأنمي. لا يغطّي RPDB الأنمي، لذا يبقى هذا اختياريًا.",
+  "Sets the language of Bear's own interface: menus, buttons, and labels. Arabic switches the layout to right to left. This is separate from subtitle and metadata languages below.": "يحدّد لغة واجهة Bear نفسها: القوائم والأزرار والتسميات. تبدّل العربية التخطيط من اليمين إلى اليسار. وهذا منفصل عن لغتي الترجمة والبيانات الوصفية أدناه.",
+  "Switch the menus and buttons to your language. Arabic flips the layout to right to left.": "بدّل القوائم والأزرار إلى لغتك. تقلب العربية التخطيط من اليمين إلى اليسار.",
+  "This sets the interface, metadata, subtitle, and audio languages to match.": "يضبط هذا لغات الواجهة والبيانات الوصفية والترجمة والصوت لتتطابق.",
+  "Titles, overviews, and taglines from TMDB display in this language when a translation exists. Needs a TMDB key.": "تُعرض العناوين والملخصات والشعارات من TMDB بهذه اللغة عند توفّر ترجمة. يتطلب مفتاح TMDB.",
+  "Used for streaming availability and the Now Playing release window. Pick a country and Bear can match the interface, metadata, and subtitle languages to it.": "يُستخدم لتوفّر البث ونافذة إصدار \"يُعرض الآن\". اختر دولة ليتمكّن Bear من مطابقة لغات الواجهة والبيانات الوصفية والترجمة معها.",
+  "A free TMDB key is highly recommended. It unlocks the full Bear experience. The rest are optional, and Cinemeta works out of the box without any.": "يُنصح بشدة بمفتاح TMDB المجاني. فهو يفتح تجربة Bear الكاملة. والبقية اختيارية، وتعمل Cinemeta مباشرةً بدون أي مفتاح.",
+  "TMDB asks for an app URL when you create the key. Put any URL at all, like https://harbor.app. The only thing you need back is the API key.": "تطلب TMDB رابط تطبيق عند إنشاء المفتاح. ضع أي رابط على الإطلاق، مثل https://harbor.app. كل ما تحتاجه في المقابل هو مفتاح الـ API.",
+  "RPDB already paints scores onto the poster. Toggle to override.": "يرسم RPDB التقييمات على الملصق بالفعل. بدّل للتجاوز.",
+  "MyAnimeList scores for anime titles. RPDB doesn't cover anime, so this stays optional.": "تقييمات MyAnimeList لعناوين الأنمي. لا يغطّي RPDB الأنمي، لذا يبقى هذا اختياريًا.",
   "v3 API key": "مفتاح API الإصدار 3",
   "8-character key": "مفتاح من 8 أحرف",
   "personal key": "مفتاح شخصي",
@@ -1005,8 +910,7 @@ const settings: Record<string, string> = {
     "يخفي الأنمي من صف متابعة المشاهدة في الرئيسية. ويظل يظهر في متابعة المشاهدة الخاصة بعلامة تبويب الأنمي.",
   "Keep anime in the Anime room only": "إبقاء الأنمي في غرفة الأنمي فقط",
   "Start with subtitles off": "البدء مع إيقاف الترجمة",
-  "Harbor still finds and loads subtitles so they're one click away in the player, it just won't turn them on automatically.":
-    "يظل Harbor يبحث عن الترجمات ويحمّلها لتكون على بُعد نقرة واحدة في المشغّل، لكنه لن يفعّلها تلقائيًا.",
+  "Bear still finds and loads subtitles so they're one click away in the player, it just won't turn them on automatically.": "يظل Bear يبحث عن الترجمات ويحمّلها لتكون على بُعد نقرة واحدة في المشغّل، لكنه لن يفعّلها تلقائيًا.",
   "Prefer embedded subtitles": "تفضيل الترجمات المدمجة",
   "When the file ships its own subtitle track, keep it selected instead of switching to a downloaded one. Embedded tracks are usually the best synced.":
     "عندما يأتي الملف بمسار ترجمة خاص به، أبقِه محدّدًا بدلًا من التبديل إلى ترجمة مُنزّلة. المسارات المدمجة عادةً أفضل من حيث التزامن.",
@@ -1017,28 +921,18 @@ const settings: Record<string, string> = {
   "Only show streams in my languages": "إظهار البثوث بلغاتي فقط",
   "Show {langs} only": "إظهار {langs} فقط",
   "{langs} only · {n} hidden": "{langs} فقط · {n} مخفي",
-  "Hides streams with no detected preferred language. Multi-audio releases count as a match.":
-    "يخفي البثوث التي لا توجد بها لغة مفضّلة مكتشفة. وتُحتسب الإصدارات متعددة الصوت كمطابقة.",
-  "Streams in these languages rank first. Toggle below to drop everything else.":
-    "تأتي البثوث بهذه اللغات أولًا. بدّل أدناه لإسقاط كل ما عداها.",
-  "When playback starts, Harbor automatically finds and loads a subtitle in one of these languages, so you never have to search by hand. The first available match wins, so put your main language first.":
-    "عند بدء التشغيل، يجد Harbor تلقائيًا ترجمة بإحدى هذه اللغات ويحمّلها، فلا تضطر للبحث يدويًا أبدًا. تفوز أول مطابقة متاحة، لذا ضع لغتك الأساسية أولًا.",
+  "Hides streams with no detected preferred language. Multi-audio releases count as a match.": "يخفي البثوث التي لا توجد بها لغة مفضّلة مكتشفة. وتُحتسب الإصدارات متعددة الصوت كمطابقة.",
+  "Streams in these languages rank first. Toggle below to drop everything else.": "تأتي البثوث بهذه اللغات أولًا. بدّل أدناه لإسقاط كل ما عداها.",
+  "When playback starts, Bear automatically finds and loads a subtitle in one of these languages, so you never have to search by hand. The first available match wins, so put your main language first.": "عند بدء التشغيل، يجد Bear تلقائيًا ترجمة بإحدى هذه اللغات ويحمّلها، فلا تضطر للبحث يدويًا أبدًا. تفوز أول مطابقة متاحة، لذا ضع لغتك الأساسية أولًا.",
   "Never auto-select tracks containing": "عدم اختيار المسارات تلقائيًا التي تحتوي على",
   "commentary, descriptive": "تعليق صوتي، وصفي",
-  "Comma-separated words. Audio or subtitle tracks whose name matches any of these are skipped during automatic selection. You can still pick them by hand in the player.":
-    "كلمات مفصولة بفواصل. تُتخطّى مسارات الصوت أو الترجمة التي يطابق اسمها أيًا منها أثناء الاختيار التلقائي. وما زال بإمكانك اختيارها يدويًا في المشغّل.",
-  "When a release ships multiple audio tracks, Harbor selects the first match from this list.":
-    "عندما يأتي إصدار بمسارات صوت متعددة، يختار Harbor أول مطابقة من هذه القائمة.",
-  "By default, addon rails that duplicate the built-in ones (Trending, Popular, Top Rated, etc.) are merged so you don't see the same row twice. Turn this on to show every one, duplicates and all.":
-    "افتراضيًا، تُدمج صفوف الإضافات التي تكرّر الصفوف المدمجة (الرائج، الشائع، الأعلى تقييمًا، إلخ) حتى لا ترى الصف نفسه مرتين. فعّل هذا لإظهار كل صف، بما في ذلك التكرارات.",
-  "When you back out of a title, Harbor saves a frame so the Continue Watching card looks like the spot you left. Tune how long they stick around, or wipe them all.":
-    "عند خروجك من عنوان، يحفظ Harbor لقطة لتبدو بطاقة متابعة المشاهدة مثل المكان الذي تركته. اضبط مدة بقائها، أو امسحها جميعًا.",
-  "When you finish an episode, the Home Continue Watching card moves on to the next episode instead of sitting at 0 minutes left.":
-    "عند انتهائك من حلقة، تنتقل بطاقة متابعة المشاهدة في الرئيسية إلى الحلقة التالية بدلًا من البقاء عند 0 دقيقة متبقية.",
-  "Keep the Library Watchlist tab limited to titles you added in Stremio. Turn this off to also include anything Stremio auto-added when you pressed play.":
-    "أبقِ علامة تبويب قائمة المشاهدة في المكتبة مقتصرة على العناوين التي أضفتها في Stremio. عطّل هذا لتضمين أي شيء أضافه Stremio تلقائيًا عند الضغط على تشغيل.",
-  "Heads up: Harbor was built in English. Multi-language support is partial, so your addons usually catch what Harbor's own filters miss. If you speak another language and want to help fill the gaps, the source is open.":
-    "تنبيه: بُني Harbor بالإنجليزية. دعم تعدد اللغات جزئي، لذا تلتقط إضافاتك عادةً ما تفوّته مرشّحات Harbor نفسها. إن كنت تتحدث لغة أخرى وتريد المساعدة في سدّ الثغرات، فالمصدر مفتوح.",
+  "Comma-separated words. Audio or subtitle tracks whose name matches any of these are skipped during automatic selection. You can still pick them by hand in the player.": "كلمات مفصولة بفواصل. تُتخطّى مسارات الصوت أو الترجمة التي يطابق اسمها أيًا منها أثناء الاختيار التلقائي. وما زال بإمكانك اختيارها يدويًا في المشغّل.",
+  "When a release ships multiple audio tracks, Bear selects the first match from this list.": "عندما يأتي إصدار بمسارات صوت متعددة، يختار Bear أول مطابقة من هذه القائمة.",
+  "By default, addon rails that duplicate the built-in ones (Trending, Popular, Top Rated, etc.) are merged so you don't see the same row twice. Turn this on to show every one, duplicates and all.": "افتراضيًا، تُدمج صفوف الإضافات التي تكرّر الصفوف المدمجة (الرائج، الشائع، الأعلى تقييمًا، إلخ) حتى لا ترى الصف نفسه مرتين. فعّل هذا لإظهار كل صف، بما في ذلك التكرارات.",
+  "When you back out of a title, Bear saves a frame so the Continue Watching card looks like the spot you left. Tune how long they stick around, or wipe them all.": "عند خروجك من عنوان، يحفظ Bear لقطة لتبدو بطاقة متابعة المشاهدة مثل المكان الذي تركته. اضبط مدة بقائها، أو امسحها جميعًا.",
+  "When you finish an episode, the Home Continue Watching card moves on to the next episode instead of sitting at 0 minutes left.": "عند انتهائك من حلقة، تنتقل بطاقة متابعة المشاهدة في الرئيسية إلى الحلقة التالية بدلًا من البقاء عند 0 دقيقة متبقية.",
+  "Keep the Library Watchlist tab limited to titles you added in Stremio. Turn this off to also include anything Stremio auto-added when you pressed play.": "أبقِ علامة تبويب قائمة المشاهدة في المكتبة مقتصرة على العناوين التي أضفتها في Stremio. عطّل هذا لتضمين أي شيء أضافه Stremio تلقائيًا عند الضغط على تشغيل.",
+  "Heads up: Bear was built in English. Multi-language support is partial, so your addons usually catch what Bear's own filters miss. If you speak another language and want to help fill the gaps, the source is open.": "تنبيه: بُني Bear بالإنجليزية. دعم تعدد اللغات جزئي، لذا تلتقط إضافاتك عادةً ما تفوّته مرشّحات Bear نفسها. إن كنت تتحدث لغة أخرى وتريد المساعدة في سدّ الثغرات، فالمصدر مفتوح.",
   "Contribute on GitHub": "ساهم على GitHub",
   Settings: "الإعدادات",
   "Stremio account": "حساب Stremio",
@@ -1048,39 +942,27 @@ const settings: Record<string, string> = {
   "Your Stremio sign-in. Library, watch progress, and addons sync from here.":
     "تسجيل دخول Stremio. المكتبة وتقدم المشاهدة والإضافات تُزامَن من هنا.",
   "Library & metadata": "المكتبة والبيانات",
-  "Optional keys that unlock TMDB rails, baked-in poster ratings, fanart, and TVDB episode data.":
-    "مفاتيح اختيارية تفتح محتوى TMDB وتقييمات الملصقات وبيانات Fanart وـ TVDB.",
-  "Connect your Trakt account to scrobble playback, sync your watchlist, and pull personalized recommendations.":
-    "اربط حسابك على Trakt لتسجيل المشاهدات ومزامنة قائمة المتابعة الخاصة بك.",
-  AniList: "أني ليست (AniList)",
-  "Connect your AniList account to show your anime lists as rails on the Anime page.":
-    "اربط حسابك على AniList لعرض قوائم الأنمي كشرائط في صفحة الأنمي.",
-  Simkl: "سيمكل (Simkl)",
-  "Connect your Simkl account to mark what you finish as watched and sync your plan-to-watch list across apps.":
-    "اربط حسابك على Simkl لتحديد ما شاهدته ومزامنة قوائم المشاهدة الخاصة بك.",
-  "Harbor Relay": "Harbor Relay",
-  "A Cloudflare Worker on your own account that hosts your Watch Together rooms.":
-    "عامل Cloudflare على حسابك الخاص يستضيف غرف المشاهدة المشتركة.",
+  "Optional keys that unlock TMDB rails, baked-in poster ratings, fanart, and TVDB episode data.": "مفاتيح اختيارية تفتح محتوى TMDB وتقييمات الملصقات وبيانات Fanart وـ TVDB.",
+  "Connect your Trakt account to scrobble playback, sync your watchlist, and pull personalized recommendations.": "اربط حسابك على Trakt لتسجيل المشاهدات ومزامنة قائمة المتابعة الخاصة بك.",
+  "AniList": "أني ليست (AniList)",
+  "Connect your AniList account to show your anime lists as rails on the Anime page.": "اربط حسابك على AniList لعرض قوائم الأنمي كشرائط في صفحة الأنمي.",
+  "Simkl": "سيمكل (Simkl)",
+  "Connect your Simkl account to mark what you finish as watched and sync your plan-to-watch list across apps.": "اربط حسابك على Simkl لتحديد ما شاهدته ومزامنة قوائم المشاهدة الخاصة بك.",
+  "Bear Relay": "Bear Relay",
+  "A Cloudflare Worker on your own account that hosts your Watch Together rooms.": "عامل Cloudflare على حسابك الخاص يستضيف غرف المشاهدة المشتركة.",
   "Streaming sources": "مصادر البث",
-  "How Harbor finds and resolves playable streams. Debrid keys and addon installs live here.":
-    "كيف يجد Harbor مصادر البث ويحلّها. مفاتيح Debrid وتثبيت الإضافات هنا.",
-  Languages: "اللغات",
-  "Which audio and subtitle languages rank first in stream lists.":
-    "لغات الصوت والترجمة التي تأتي أولاً في قوائم البث.",
-  Hotkeys: "الاختصارات",
-  "Every shortcut Harbor responds to. Click a binding to rebind it.":
-    "جميع الاختصارات التي يستجيب لها Harbor. انقر على اختصار لإعادة تعيينه.",
+  "How Bear finds and resolves playable streams. Debrid keys and addon installs live here.": "كيف يجد Bear مصادر البث ويحلّها. مفاتيح Debrid وتثبيت الإضافات هنا.",
+  "Languages": "اللغات",
+  "Which audio and subtitle languages rank first in stream lists.": "لغات الصوت والترجمة التي تأتي أولاً في قوائم البث.",
+  "Hotkeys": "الاختصارات",
+  "Every shortcut Bear responds to. Click a binding to rebind it.": "جميع الاختصارات التي يستجيب لها Bear. انقر على اختصار لإعادة تعيينه.",
   "Theme & appearance": "السمة والمظهر",
-  "Color presets, custom backgrounds, and the font pair Harbor renders in.":
-    "إعدادات الألوان والخلفيات المخصصة ونوع الخط الذي يستخدمه Harbor.",
-  Webhooks: "ويب هوك",
-  "Push upcoming releases to Discord or Telegram. Pick which calendars feed the notifications.":
-    "إرسال الإصدارات القادمة إلى Discord أو Telegram. اختر التقاويم التي تغذي الإشعارات.",
+  "Color presets, custom backgrounds, and the font pair Bear renders in.": "إعدادات الألوان والخلفيات المخصصة ونوع الخط الذي يستخدمه Bear.",
+  "Webhooks": "ويب هوك",
+  "Push upcoming releases to Discord or Telegram. Pick which calendars feed the notifications.": "إرسال الإصدارات القادمة إلى Discord أو Telegram. اختر التقاويم التي تغذي الإشعارات.",
   "Report a bug": "الإبلاغ عن خطأ",
-  "Send a bug report straight to the Harbor team. Screenshots and screen recordings welcome.":
-    "أرسل تقرير خطأ مباشرة إلى فريق Harbor. نرحب بلقطات الشاشة وتسجيلات الشاشة.",
-  "Highly recommended. This is what gives you the full Harbor experience: Popular, Trending, In Theaters, and per-service rails. Free at ":
-    "موصى به بشدة. هذا ما يمنحك تجربة Harbor الكاملة: الرائج، الترند، في دور السينما، وصفوف لكل خدمة. مجانًا على ",
+  "Send a bug report straight to the Bear team. Screenshots and screen recordings welcome.": "أرسل تقرير خطأ مباشرة إلى فريق Bear. نرحب بلقطات الشاشة وتسجيلات الشاشة.",
+  "Highly recommended. This is what gives you the full Bear experience: Popular, Trending, In Theaters, and per-service rails. Free at ": "موصى به بشدة. هذا ما يمنحك تجربة Bear الكاملة: الرائج، الترند، في دور السينما، وصفوف لكل خدمة. مجانًا على ",
   ". Use the v3 key, not the read access token.": ". استخدم مفتاح v3، وليس رمز الوصول للقراءة.",
   "Free at ": "مجانًا على ",
   ". They email an activation link the first time. Click it, then come back and save.":
@@ -1119,39 +1001,29 @@ const settings: Record<string, string> = {
     "شبكة أنظف عندما تطبع خدمة الملصقات لديك العنوان على الصورة بالفعل.",
   "Fanart.tv · logos and backdrops": "FANART.TV · الشعارات والخلفيات",
   "TheTVDB · episode data": "THETVDB · بيانات الحلقات",
-  Advanced: "متقدم",
-  "1 frame stored. Wiping rebuilds them next time you watch.":
-    "تم حفظ لقطة واحدة. مسحها سيجعلها تُبنى مجدداً في المرة القادمة التي تشاهد فيها.",
-  "{count} frames stored. Wiping rebuilds them next time you watch.":
-    "تم حفظ {count} لقطات. مسحها سيجعلها تُبنى مجدداً في المرة القادمة التي تشاهد فيها.",
-  "Diagnostics, manual overrides, things most users never need.":
-    "تشخيصات وتجاوزات يدوية وأشياء لا يحتاجها معظم المستخدمين.",
-  "Watch Together rooms are routed through Harbor's hosted relay.":
-    "يتم توجيه غرف المشاهدة المشتركة عبر الخادم المستضاف لـ Harbor.",
-  Streaming: "البث",
-  Playback: "التشغيل",
-  Appearance: "المظهر",
-  Notifications: "الإشعارات",
-  Help: "المساعدة",
-  العربية: "العربية",
-  "When you back out of a title, Harbor saves a frame so the Continue Watching card looks like the spot you left.":
-    "عند الخروج من عنوان، يحفظ Harbor لقطة ليبدو الكارت مثل المكان الذي توقفت فيه.",
-  "Used for streaming availability and the Now Playing release window.":
-    "تُستخدم لتوفر البث ونافذة الإصدار.",
+  "Advanced": "متقدم",
+  "1 frame stored. Wiping rebuilds them next time you watch.": "تم حفظ لقطة واحدة. مسحها سيجعلها تُبنى مجدداً في المرة القادمة التي تشاهد فيها.",
+  "{count} frames stored. Wiping rebuilds them next time you watch.": "تم حفظ {count} لقطات. مسحها سيجعلها تُبنى مجدداً في المرة القادمة التي تشاهد فيها.",
+  "Diagnostics, manual overrides, things most users never need.": "تشخيصات وتجاوزات يدوية وأشياء لا يحتاجها معظم المستخدمين.",
+  "Watch Together rooms are routed through Bear's hosted relay.": "يتم توجيه غرف المشاهدة المشتركة عبر الخادم المستضاف لـ Bear.",
+  "Streaming": "البث",
+  "Playback": "التشغيل",
+  "Appearance": "المظهر",
+  "Notifications": "الإشعارات",
+  "Help": "المساعدة",
+  "العربية": "العربية",
+  "When you back out of a title, Bear saves a frame so the Continue Watching card looks like the spot you left.": "عند الخروج من عنوان، يحفظ Bear لقطة ليبدو الكارت مثل المكان الذي توقفت فيه.",
+  "Used for streaming availability and the Now Playing release window.": "تُستخدم لتوفر البث ونافذة الإصدار.",
   "MyAnimeList scores for anime titles.": "تقييمات MyAnimeList لعناوين الأنمي.",
-  "Hero carousel, Top 10, Trending, In Theaters, per-service rails.":
-    "عرض دوّار، Top 10، الأكثر رواجاً، في دور السينما، صفوف لكل خدمة.",
-  Updates: "التحديثات",
-  "Harbor checks harbor.site for new versions and installs them in place.":
-    "يتحقق Harbor من harbor.site من إصدارات جديدة ويثبّتها في مكانها.",
+  "Hero carousel, Top 10, Trending, In Theaters, per-service rails.": "عرض دوّار، Top 10، الأكثر رواجاً، في دور السينما، صفوف لكل خدمة.",
+  "Updates": "التحديثات",
+  "Bear checks harbor.site for new versions and installs them in place.": "يتحقق Bear من harbor.site من إصدارات جديدة ويثبّتها في مكانها.",
   "Backup & restore": "النسخ الاحتياطي والاستعادة",
-  "Export your entire Harbor setup to a single file, then restore it on a new computer or keep it as a backup.":
-    "صدّر إعداداتك الكاملة لملف واحد، ثم استعدها على جهاز جديد.",
-  Privacy: "الخصوصية",
+  "Export your entire Bear setup to a single file, then restore it on a new computer or keep it as a backup.": "صدّر إعداداتك الكاملة لملف واحد، ثم استعدها على جهاز جديد.",
+  "Privacy": "الخصوصية",
   "System tray": "شريط النظام",
   "Stremio install links": "روابط تثبيت Stremio",
-  "Harbor catches stremio:// install links so the configure-and-install flow stays inside the app.":
-    "Harbor يلتقط روابط stremio:// ليبقي تدفق التثبيت داخل التطبيق.",
+  "Bear catches stremio:// install links so the configure-and-install flow stays inside the app.": "Bear يلتقط روابط stremio:// ليبقي تدفق التثبيت داخل التطبيق.",
   "Discord Rich Presence": "Discord Rich Presence",
   "Let your Discord friends see what you are watching, with the show poster and a live progress bar.":
     "اسمح لأصدقائك على Discord برؤية ما تشاهد، مع ملصق العرض وشريط تقدم حي.",
@@ -1170,7 +1042,7 @@ const settings: Record<string, string> = {
   "Reveal the show or movie artwork.": "إظهار صورة العرض أو الفيلم.",
   Legal: "إشعار قانوني",
   "Made with": "صُنع بـ",
-  "by Harbor contributors": "بواسطة مساهمي Harbor",
+  "by Bear contributors": "بواسطة مساهمي Bear",
   "Know more": "اعرف المزيد",
   "A special thank you to the team at Stremio-Addons. Please consider supporting them.":
     "شكر خاص لفريق Stremio-Addons. يرجى التفكير في دعمهم.",
@@ -1190,24 +1062,17 @@ const settings: Record<string, string> = {
   "The little 4K · HDR · codec · audio chips that ride along each stream in the play picker.":
     "شارات 4K · HDR · الترميز · الصوت التي تظهر مع كل بث في منتقي التشغيل.",
   "Synced addons": "الإضافات المزامَنة",
-  "How aggressively Harbor rejects shady or mismatched streams before showing them in the picker.":
-    "ما مدى صرامة Harbor في رفض البث المشبوه أو غير المطابق قبل عرضه.",
-  Strict: "صارم",
-  "Default. Rejects size outliers, suspicious extensions, year/episode mismatches, season packs (for episode requests), trailers, and likely cams.":
-    "الافتراضي. يرفض الأحجام غير المنطقية، والامتدادات المشبوهة، وعدم تطابق سنة/حلقة الإصدار، وحزم المواسم (لطلبات الحلقات)، والعروض الدعائية، والجودات الضعيفة (cams).",
-  Balanced: "متوازن",
-  "Keeps the malware/year/episode-mismatch checks but allows season packs and oversized files. Same as hitting Search wider in the picker.":
-    "يحتفظ بفحص الفيروسات وعدم تطابق السنة/الحلقة، ولكنه يسمح بحزم المواسم والملفات كبيرة الحجم. يعادل اختيار 'بحث أوسع' في القائمة.",
-  "No filtering. Every stream every addon returns shows up, including obvious junk. You'll be on your own.":
-    "بدون تصفية. سيظهر كل مصدر تبثه الإضافات، بما في ذلك الملفات العشوائية أو الرديئة. ستكون مسؤوليتك.",
-  Condensed: "مكثف",
-  "Default. Top pick at the top, quality tiles, and an All-Sources drawer. Harbor scores and ranks results.":
-    "الافتراضي. الخيار الأفضل بالأعلى، بطاقات للجودة، وقائمة 'كل المصادر'. Harbor يقوم بتقييم وترتيب النتائج.",
-  "Flat list of sources grouped by addon, with a filter dropdown. No re-ranking. Closest match to the Stremio app's stream picker.":
-    "قائمة مبسطة مرتبة حسب الإضافة، مع قائمة تصفية منسدلة. بدون إعادة ترتيب. الأقرب لتصميم مشغل Stremio.",
-  "Harbor ranking": "ترتيب Harbor",
-  "Default. Harbor parses and scores every source and surfaces the best quality first.":
-    "الافتراضي. Harbor يحلل ويقيم كل مصدر ويعرض أفضل الجودات أولاً.",
+  "How aggressively Bear rejects shady or mismatched streams before showing them in the picker.": "ما مدى صرامة Bear في رفض البث المشبوه أو غير المطابق قبل عرضه.",
+  "Strict": "صارم",
+  "Default. Rejects size outliers, suspicious extensions, year/episode mismatches, season packs (for episode requests), trailers, and likely cams.": "الافتراضي. يرفض الأحجام غير المنطقية، والامتدادات المشبوهة، وعدم تطابق سنة/حلقة الإصدار، وحزم المواسم (لطلبات الحلقات)، والعروض الدعائية، والجودات الضعيفة (cams).",
+  "Balanced": "متوازن",
+  "Keeps the malware/year/episode-mismatch checks but allows season packs and oversized files. Same as hitting Search wider in the picker.": "يحتفظ بفحص الفيروسات وعدم تطابق السنة/الحلقة، ولكنه يسمح بحزم المواسم والملفات كبيرة الحجم. يعادل اختيار 'بحث أوسع' في القائمة.",
+  "No filtering. Every stream every addon returns shows up, including obvious junk. You'll be on your own.": "بدون تصفية. سيظهر كل مصدر تبثه الإضافات، بما في ذلك الملفات العشوائية أو الرديئة. ستكون مسؤوليتك.",
+  "Condensed": "مكثف",
+  "Default. Top pick at the top, quality tiles, and an All-Sources drawer. Bear scores and ranks results.": "الافتراضي. الخيار الأفضل بالأعلى، بطاقات للجودة، وقائمة 'كل المصادر'. Bear يقوم بتقييم وترتيب النتائج.",
+  "Flat list of sources grouped by addon, with a filter dropdown. No re-ranking. Closest match to the Stremio app's stream picker.": "قائمة مبسطة مرتبة حسب الإضافة، مع قائمة تصفية منسدلة. بدون إعادة ترتيب. الأقرب لتصميم مشغل Stremio.",
+  "Bear ranking": "ترتيب Bear",
+  "Default. Bear parses and scores every source and surfaces the best quality first.": "الافتراضي. Bear يحلل ويقيم كل مصدر ويعرض أفضل الجودات أولاً.",
   "Addon order": "ترتيب الإضافة",
   "Show each addon's results in the order it returned them, grouped by your addon list. Matches the Stremio and Vidi apps.":
     "عرض نتائج كل إضافة بالترتيب الذي أرسلته، ومجمعة حسب قائمة إضافاتك. يطابق تطبيقي Stremio و Vidi.",
@@ -1216,16 +1081,12 @@ const settings: Record<string, string> = {
   "Real-Debrid API token": "رمز API لـ Real-Debrid",
   "API token": "رمز API",
   "API key": "مفتاح API",
-  "Faster and quieter than torrents if you already pay for Usenet. Configure on the addon page, paste the manifest URL it returns.":
-    "أسرع وأكثر هدوءًا من التورنت إذا كنت تدفع مقابل Usenet. قم بتكوينه على صفحة الإضافة والصق رابط manifest.",
-  "Searches and streams directly off Easynews. No debrid needed. Just your Easynews login.":
-    "يبحث ويبث مباشرة من Easynews. لا حاجة لـ debrid. فقط تسجيل دخولك إلى Easynews.",
-  Expired: "منتهي",
-  "Harbor pulls your addon collection from Stremio. Manage individual addons in Streaming sources.":
-    "يقوم التطبيق بجلب إضافاتك من Stremio. يمكنك إدارة الإضافات بشكل فردي في مصادر البث.",
-  "A specific summary lands faster than a long paragraph. Steps to reproduce help most of all.":
-    "ملخص محدد يصل أسرع من فقرة طويلة. خطوات الإعادة تساعد أكثر من أي شيء.",
-  Summary: "الملخص",
+  "Faster and quieter than torrents if you already pay for Usenet. Configure on the addon page, paste the manifest URL it returns.": "أسرع وأكثر هدوءًا من التورنت إذا كنت تدفع مقابل Usenet. قم بتكوينه على صفحة الإضافة والصق رابط manifest.",
+  "Searches and streams directly off Easynews. No debrid needed. Just your Easynews login.": "يبحث ويبث مباشرة من Easynews. لا حاجة لـ debrid. فقط تسجيل دخولك إلى Easynews.",
+  "Expired": "منتهي",
+  "Bear pulls your addon collection from Stremio. Manage individual addons in Streaming sources.": "يقوم التطبيق بجلب إضافاتك من Stremio. يمكنك إدارة الإضافات بشكل فردي في مصادر البث.",
+  "A specific summary lands faster than a long paragraph. Steps to reproduce help most of all.": "ملخص محدد يصل أسرع من فقرة طويلة. خطوات الإعادة تساعد أكثر من أي شيء.",
+  "Summary": "الملخص",
   "Steps to reproduce": "خطوات الإعادة",
   "What broke?": "ماذا تعطّل؟",
   "What actually happened": "ما الذي حدث فعلاً",
@@ -1238,7 +1099,7 @@ const settings: Record<string, string> = {
   Theme: "السمة",
   "Theme Library": "مكتبة السمات",
   "Your themes": "سماتك",
-  "Ships with Harbor. Always available.": "مدمجة مع Harbor. متاحة دائماً.",
+  "Ships with Bear. Always available.": "مدمجة مع Bear. متاحة دائماً.",
   "Themes you imported or built.": "السمات التي استوردتها أو بنيتها.",
   "Build a new theme": "بناء سمة جديدة",
   "Copy theme": "نسخ السمة",
@@ -1248,7 +1109,7 @@ const settings: Record<string, string> = {
   Ambience: "الأجواء (Ambience)",
   "The quick brown fox jumps over the lazy dog": "أبجد هوز حطي كلمن سعفص قرشت ثخذ ضظغ",
   "Default. Humanist serif, warm sans.": "الافتراضي. خط كلاسيكي وآخر حديث، يوفران دفئاً.",
-  "Classic. Was Harbor's original pair.": "كلاسيكي. الخط الأصلي لـ Harbor.",
+  "Classic. Was Bear's original pair.": "كلاسيكي. الخط الأصلي لـ Bear.",
   "Clean modern. Sans across the board.": "عصري ونظيف. خطوط بلا حواف في جميع الأقسام.",
   "Editorial. Headline-strong display.": "تحريري. خط عناوين قوي.",
   "Technical. IBM's open family.": "تقني. عائلة خطوط IBM المفتوحة.",
@@ -1293,10 +1154,8 @@ const settings: Record<string, string> = {
   "Pick a layout, set colors and fonts, save it to your library. No code needed.":
     "اختر تخطيطاً، وعيّن الألوان والخطوط، واحفظه في مكتبتك. بدون برمجة.",
   "Open studio": "فتح الاستوديو",
-  "Every variable, selector, hook, and recipe for building custom Harbor themes.":
-    "كل متغير ومحدد ومرجع لبناء سمات مخصصة لـ Harbor.",
-  "Make your own in the Theme Studio, or import one a friend shared.":
-    "اصنع سمة بنفسك في الاستوديو، أو استورد واحدة شاركها صديق.",
+  "Every variable, selector, hook, and recipe for building custom Bear themes.": "كل متغير ومحدد ومرجع لبناء سمات مخصصة لـ Bear.",
+  "Make your own in the Theme Studio, or import one a friend shared.": "اصنع سمة بنفسك في الاستوديو، أو استورد واحدة شاركها صديق.",
   "Open library": "فتح المكتبة",
   "Build a Theme": "بناء سمة",
   "Pick a layout, set colors and fonts. No code needed.":
@@ -1305,30 +1164,25 @@ const settings: Record<string, string> = {
   "Got a theme a friend shared? Drop it in.": "لديك سمة شاركها صديق؟ أسقطها هنا.",
   "Choose file": "اختيار ملف",
   "Window title bar": "شريط عنوان النافذة",
-  "Use your operating system's native title bar and window buttons instead of Harbor's built-in ones. Handy if the in-app buttons ever feel out of reach, like during playback.":
-    "استخدم شريط عنوان النظام وأزرار النافذة الأصلية بدلاً من المدمجة في Harbor. مفيد إذا كانت الأزرار داخل التطبيق صعبة الوصول، كما يحدث أثناء التشغيل.",
+  "Use your operating system's native title bar and window buttons instead of Bear's built-in ones. Handy if the in-app buttons ever feel out of reach, like during playback.": "استخدم شريط عنوان النظام وأزرار النافذة الأصلية بدلاً من المدمجة في Bear. مفيد إذا كانت الأزرار داخل التطبيق صعبة الوصول، كما يحدث أثناء التشغيل.",
   "{name} imported to your library": "{name} تم استيرادها إلى مكتبتك",
-  "Click any binding to rebind it. Press Esc while capturing to cancel. Letters ignore Shift (so K and Shift+K trigger the same action).":
-    "انقر على أي اختصار لإعادة تعيينه. اضغط Esc أثناء التسجيل للإلغاء. الأحرف تتجاهل Shift (لذا K و Shift+K يؤديان نفس الإجراء).",
-  Global: "عام",
-  "Anywhere in Harbor.": "في أي مكان في Harbor.",
-  NAVIGATION: "التنقل",
-  PLAYBACK: "التشغيل",
-  VOLUME: "الصوت",
-  TRACKS: "المسارات",
-  SPEED: "السرعة",
-  PANELS: "اللوحات",
-  Conflict: "تعارض",
+  "Click any binding to rebind it. Press Esc while capturing to cancel. Letters ignore Shift (so K and Shift+K trigger the same action).": "انقر على أي اختصار لإعادة تعيينه. اضغط Esc أثناء التسجيل للإلغاء. الأحرف تتجاهل Shift (لذا K و Shift+K يؤديان نفس الإجراء).",
+  "Global": "عام",
+  "Anywhere in Bear.": "في أي مكان في Bear.",
+  "NAVIGATION": "التنقل",
+  "PLAYBACK": "التشغيل",
+  "VOLUME": "الصوت",
+  "TRACKS": "المسارات",
+  "SPEED": "السرعة",
+  "PANELS": "اللوحات",
+  "Conflict": "تعارض",
   "Press a key…": "اضغط على مفتاح…",
   "Focus search": "التركيز على البحث",
   "Jump to the top-bar search from anywhere.": "الانتقال إلى شريط البحث العلوي من أي مكان.",
-  "Open Harbor's settings outside playback.": "فتح إعدادات Harbor خارج وضع التشغيل.",
-  "Your face in Watch Together rooms, sessions, and chat. Sits on top of your Stremio account.":
-    "صورتك في غرف المشاهدة المشتركة والجلسات والدردشة. تُبنى فوق حسابك في Stremio.",
-  "Use my AniList avatar as my Harbor avatar":
-    "استخدام صورتي الرمزية في AniList كصورة رمزية في Harbor",
-  "Use my Trakt avatar as my Harbor avatar": "استخدام صورتي الرمزية في Trakt كصورة رمزية في Harbor",
-  "Use my Simkl avatar as my Harbor avatar": "استخدام صورتي الرمزية في Simkl كصورة رمزية في Harbor",
+  "Your face in Watch Together rooms, sessions, and chat. Sits on top of your Stremio account.": "صورتك في غرف المشاهدة المشتركة والجلسات والدردشة. تُبنى فوق حسابك في Stremio.",
+  "Use my AniList avatar as my Bear avatar": "استخدام صورتي الرمزية في AniList كصورة رمزية في Bear",
+  "Use my Trakt avatar as my Bear avatar": "استخدام صورتي الرمزية في Trakt كصورة رمزية في Bear",
+  "Use my Simkl avatar as my Bear avatar": "استخدام صورتي الرمزية في Simkl كصورة رمزية في Bear",
   "Not signed in": "غير مسجل الدخول",
   "addon synced": "إضافة متزامنة",
   "addons synced": "إضافات متزامنة",
@@ -1355,8 +1209,7 @@ const settings: Record<string, string> = {
   "URL is saved and ready to share.": "تم حفظ الرابط وجاهز للمشاركة.",
   "Your relay URL": "رابط المُرحّل الخاص بك",
   "Copied. Paste it to your friend.": "تم النسخ. أرسله إلى أصدقائك.",
-  "Send this to anyone you want to watch with. They paste it in their Settings → Harbor Relay. After that, share a 6-character room code from the people icon up top.":
-    "أرسل هذا الرابط لأي شخص تريد المشاهدة معه. ليقوم بلصقه في الإعدادات ← Harbor Relay. بعد ذلك، شارك رمز الغرفة المكون من 6 أحرف من أيقونة الأشخاص في الأعلى.",
+  "Send this to anyone you want to watch with. They paste it in their Settings → Bear Relay. After that, share a 6-character room code from the people icon up top.": "أرسل هذا الرابط لأي شخص تريد المشاهدة معه. ليقوم بلصقه في الإعدادات ← Bear Relay. بعد ذلك، شارك رمز الغرفة المكون من 6 أحرف من أيقونة الأشخاص في الأعلى.",
   "One last thing on Cloudflare's side": "أمر أخير من جانب Cloudflare",
   "Click the button below to open Cloudflare's Workers page.":
     "انقر على الزر أدناه لفتح صفحة Cloudflare Workers.",
@@ -1369,12 +1222,10 @@ const settings: Record<string, string> = {
   "Connect your Trakt account": "ربط حساب Trakt الخاص بك",
   "Connect Trakt": "ربط Trakt",
   "About Trakt": "حول Trakt",
-  "Harbor will scrobble your playback to Trakt and sync your watchlist.":
-    "سيقوم Harbor بتسجيل ما تشاهده في Trakt ومزامنة قائمة المشاهدة الخاصة بك.",
-  Authorized: "مُصرح منذ",
+  "Bear will scrobble your playback to Trakt and sync your watchlist.": "سيقوم Bear بتسجيل ما تشاهده في Trakt ومزامنة قائمة المشاهدة الخاصة بك.",
+  "Authorized": "مُصرح منذ",
   "Open profile": "فتح الملف الشخصي",
-  "Wear your Trakt profile picture across Harbor instead of the default.":
-    "اعرض صورة ملفك الشخصي في Trakt في جميع أنحاء Harbor بدلاً من الصورة الافتراضية.",
+  "Wear your Trakt profile picture across Bear instead of the default.": "اعرض صورة ملفك الشخصي في Trakt في جميع أنحاء Bear بدلاً من الصورة الافتراضية.",
   "Disconnect from Trakt": "قطع الاتصال من Trakt",
   "Disconnect Trakt? Scrobbles and syncs will stop until you reconnect.":
     "هل تريد قطع اتصال Trakt؟ سيتوقف تسجيل المشاهدات والمزامنة حتى تقوم بالاتصال مرة أخرى.",
@@ -1391,24 +1242,19 @@ const settings: Record<string, string> = {
   "Connect your Simkl account": "ربط حساب Simkl الخاص بك",
   "Connect Simkl": "ربط Simkl",
   "About Simkl": "حول Simkl",
-  "Harbor will mark what you finish as watched on Simkl and sync your plan-to-watch list.":
-    "سيقوم Harbor بتعليم ما تنهيه كمُشاهد في Simkl ومزامنة قائمة المشاهدة المخطط لها.",
+  "Bear will mark what you finish as watched on Simkl and sync your plan-to-watch list.": "سيقوم Bear بتعليم ما تنهيه كمُشاهد في Simkl ومزامنة قائمة المشاهدة المخطط لها.",
   "Authorized on this device": "مُصرح على هذا الجهاز",
-  "Wear your Simkl profile picture across Harbor instead of the default.":
-    "اعرض صورة ملفك الشخصي في Simkl في جميع أنحاء Harbor بدلاً من الصورة الافتراضية.",
+  "Wear your Simkl profile picture across Bear instead of the default.": "اعرض صورة ملفك الشخصي في Simkl في جميع أنحاء Bear بدلاً من الصورة الافتراضية.",
   "Disconnect from Simkl": "قطع الاتصال من Simkl",
   "Disconnect Simkl? Syncing will stop until you reconnect.":
     "هل تريد قطع اتصال Simkl؟ ستتوقف المزامنة حتى تقوم بالاتصال مرة أخرى.",
   "Connect your AniList account": "ربط حساب AniList الخاص بك",
   "Connect AniList": "ربط AniList",
   "About AniList": "حول AniList",
-  "Harbor shows your AniList lists on the Anime page and keeps your progress in sync.":
-    "يعرض Harbor قوائم AniList الخاصة بك في صفحة الأنمي ويزامن تقدمك باستمرار.",
+  "Bear shows your AniList lists on the Anime page and keeps your progress in sync.": "يعرض Bear قوائم AniList الخاصة بك في صفحة الأنمي ويزامن تقدمك باستمرار.",
   "Sync watch progress": "مزامنة تقدم المشاهدة",
-  "Finishing an anime episode updates your AniList progress. Forward only: it never lowers a count you already have.":
-    "يؤدي إنهاء حلقة أنمي إلى تحديث تقدمك في AniList. للأمام فقط: لن يقلل أبدًا من العدد الذي لديك بالفعل.",
-  "Show your AniList profile picture as your Harbor avatar.":
-    "اعرض صورة ملفك الشخصي في AniList كصورتك الرمزية في Harbor.",
+  "Finishing an anime episode updates your AniList progress. Forward only: it never lowers a count you already have.": "يؤدي إنهاء حلقة أنمي إلى تحديث تقدمك في AniList. للأمام فقط: لن يقلل أبدًا من العدد الذي لديك بالفعل.",
+  "Show your AniList profile picture as your Bear avatar.": "اعرض صورة ملفك الشخصي في AniList كصورتك الرمزية في Bear.",
   "Disconnect from AniList": "قطع الاتصال من AniList",
   "Discord webhook URL": "رابط ويب هوك Discord",
   Sources: "المصادر",
@@ -1434,14 +1280,10 @@ const settings: Record<string, string> = {
   "Each rule fires independently. Define what triggers a ping and where it goes.":
     "كل قاعدة تعمل بشكل مستقل. حدد ما الذي يؤدي إلى إرسال إشعار وإلى أين يذهب.",
   "New rule": "قاعدة جديدة",
-  "Add a Discord or Telegram URL above before creating rules.":
-    "أضف رابط Discord أو Telegram أعلاه قبل إنشاء القواعد.",
-  "No automations yet. Hit New rule to wire one up.":
-    "لا توجد أتمتة بعد. انقر على قاعدة جديدة لإنشاء واحدة.",
-  "Discord posts a message to a channel whenever Harbor pings it. Takes about a minute to set up.":
-    "يقوم Discord بنشر رسالة إلى قناة كلما أرسل Harbor إشعاراً. يستغرق الإعداد حوالي دقيقة.",
-  "Open the Discord server where you want notifications to land.":
-    "افتح خادم Discord الذي تريد أن تصل الإشعارات إليه.",
+  "Add a Discord or Telegram URL above before creating rules.": "أضف رابط Discord أو Telegram أعلاه قبل إنشاء القواعد.",
+  "No automations yet. Hit New rule to wire one up.": "لا توجد أتمتة بعد. انقر على قاعدة جديدة لإنشاء واحدة.",
+  "Discord posts a message to a channel whenever Bear pings it. Takes about a minute to set up.": "يقوم Discord بنشر رسالة إلى قناة كلما أرسل Bear إشعاراً. يستغرق الإعداد حوالي دقيقة.",
+  "Open the Discord server where you want notifications to land.": "افتح خادم Discord الذي تريد أن تصل الإشعارات إليه.",
   "Edit Channel": "Edit Channel",
   Integrations: "Integrations",
   "New Webhook": "New Webhook",
@@ -1463,19 +1305,13 @@ const settings: Record<string, string> = {
   "Open Settings": "فتح الإعدادات",
   "Open Library settings": "فتح إعدادات المكتبة",
   "add one in settings": "أضف واحداً في الإعدادات",
-  "Using AIOStreams or another aggregator addon? Its own sorting and filtering happen inside the addon before Harbor ever sees the results, then Harbor applies the stream filter and result order above on top. If results look thinner than expected, keep one side permissive: either relax the addon's internal filters or set Harbor's stream filter to Balanced or Off.":
-    "هل تستخدم AIOStreams أو إضافة تجميع أخرى؟ الفرز والتصفية الخاصة بها تحدث داخل الإضافة قبل أن يرى Harbor النتائج، ثم يُطبق Harbor فلتر أمان البث وترتيب النتائج أعلاه. إذا كانت النتائج أقل من المتوقع، اجعل أحدهما أكثر مرونة: إما أن تخفف الفلاتر الداخلية للإضافة أو تعين فلتر Harbor على متوازن أو إيقاف.",
+  "Using AIOStreams or another aggregator addon? Its own sorting and filtering happen inside the addon before Bear ever sees the results, then Bear applies the stream filter and result order above on top. If results look thinner than expected, keep one side permissive: either relax the addon's internal filters or set Bear's stream filter to Balanced or Off.": "هل تستخدم AIOStreams أو إضافة تجميع أخرى؟ الفرز والتصفية الخاصة بها تحدث داخل الإضافة قبل أن يرى Bear النتائج، ثم يُطبق Bear فلتر أمان البث وترتيب النتائج أعلاه. إذا كانت النتائج أقل من المتوقع، اجعل أحدهما أكثر مرونة: إما أن تخفف الفلاتر الداخلية للإضافة أو تعين فلتر Bear على متوازن أو إيقاف.",
   "Get yours at ": "احصل عليه من ",
-  ". Used to check cache and unrestrict links. Harbor never adds or removes torrents on its own.":
-    ". يُستخدم للتحقق من التخزين المؤقت وفك القيود. Harbor لا يضيف أو يزيل التورنت بمفرده أبداً.",
-  ". Same read-only usage as Real-Debrid. Also lets you queue uncached torrents from the play picker.":
-    ". نفس استخدام Real-Debrid (للقراءة فقط). يسمح لك أيضاً بوضع التورنت غير المخزن مؤقتاً في قائمة الانتظار من المشغل.",
-  ". AllDebrid deprecated their cache-check endpoint, so streams may show as unknown until you actually hit Play.":
-    ". ألغت AllDebrid نقطة فحص التخزين المؤقت، لذا قد تظهر البثوث غير معروفة حتى تنقر على تشغيل.",
-  ". Uses the directdl endpoint, which skips queueing for anything already cached.":
-    ". يستخدم نقطة نهاية directdl، التي تتجاوز قائمة الانتظار لأي شيء مخزن مسبقاً.",
-  ". EU-hosted, fast cache check. Same read-only usage as the others.":
-    ". استضافة أوروبية وفحص سريع للذاكرة المؤقتة. نفس استخدام البقية (للقراءة فقط).",
+  ". Used to check cache and unrestrict links. Bear never adds or removes torrents on its own.": ". يُستخدم للتحقق من التخزين المؤقت وفك القيود. Bear لا يضيف أو يزيل التورنت بمفرده أبداً.",
+  ". Same read-only usage as Real-Debrid. Also lets you queue uncached torrents from the play picker.": ". نفس استخدام Real-Debrid (للقراءة فقط). يسمح لك أيضاً بوضع التورنت غير المخزن مؤقتاً في قائمة الانتظار من المشغل.",
+  ". AllDebrid deprecated their cache-check endpoint, so streams may show as unknown until you actually hit Play.": ". ألغت AllDebrid نقطة فحص التخزين المؤقت، لذا قد تظهر البثوث غير معروفة حتى تنقر على تشغيل.",
+  ". Uses the directdl endpoint, which skips queueing for anything already cached.": ". يستخدم نقطة نهاية directdl، التي تتجاوز قائمة الانتظار لأي شيء مخزن مسبقاً.",
+  ". EU-hosted, fast cache check. Same read-only usage as the others.": ". استضافة أوروبية وفحص سريع للذاكرة المؤقتة. نفس استخدام البقية (للقراءة فقط).",
   "Easynews+": "Easynews+",
   "{n} services need attention": "{n} خدمات تحتاج إلى انتباه",
   "Health for {n} services below": "حالة {n} خدمات أدناه",
@@ -1492,8 +1328,8 @@ const settings: Record<string, string> = {
   "Pick a profile to continue.": "اختر ملفاً شخصياً للمتابعة.",
   "Add profile": "إضافة ملف شخصي",
   "Profile not found.": "الملف الشخصي غير موجود.",
-  Back: "رجوع",
-  "Harbor identity": "هوية Harbor",
+  "Back": "رجوع",
+  "Bear identity": "هوية Bear",
   "Edit {name}": "تعديل {name}",
   "New profile": "ملف شخصي جديد",
   "Display name": "الاسم",
@@ -1584,8 +1420,7 @@ const settings: Record<string, string> = {
   "Night mode gently compresses loud moments for late-night watching. Profiles take effect when the next track loads and stack with the normalizer.":
     "الوضع الليلي يضغط بلطف اللحظات الصاخبة للمشاهدة في وقت متأخر من الليل. يتم تطبيق الإعدادات عند تحميل المقطع التالي، وتُدمج مع تطبيع مستوى الصوت.",
   "Skip intros": "تخطي المقدمات",
-  "Harbor finds intro and credits timing from AniSkip, TheIntroDB, and the file's own chapters, then shows a Skip button at the right moment.":
-    "يجد Harbor توقيتات المقدمات وأسماء الطاقم من AniSkip و TheIntroDB وفصول الملف نفسه، ثم يظهر زر التخطي في اللحظة المناسبة.",
+  "Bear finds intro and credits timing from AniSkip, TheIntroDB, and the file's own chapters, then shows a Skip button at the right moment.": "يجد Bear توقيتات المقدمات وأسماء الطاقم من AniSkip و TheIntroDB وفصول الملف نفسه، ثم يظهر زر التخطي في اللحظة المناسبة.",
   "Auto-skip intros": "تخطي المقدمات تلقائياً",
   "Jump past openings automatically the moment one starts. The Skip button still shows either way, and seeking back into an intro replays it without skipping again.":
     "تخطي الافتتاحيات تلقائياً بمجرد بدايتها. سيظل زر التخطي يظهر في كل الأحوال، والرجوع للخلف إلى المقدمة سيعيد تشغيلها دون التخطي مجدداً.",
@@ -1598,16 +1433,14 @@ const settings: Record<string, string> = {
   "1 min": "1 دقيقة",
   "1.5 min": "1.5 دقيقة",
   "2 min": "2 دقيقة",
-  Downloads: "التنزيلات",
-  "Where Harbor saves videos when you hit Download in the player. Pick any folder, including one on a different drive.":
-    "المكان الذي يحفظ فيه Harbor الفيديوهات عند الضغط على تنزيل. اختر أي مجلد، حتى لو كان على محرك أقراص آخر.",
-  HTML5: "HTML5",
-  mpv: "mpv",
+  "Downloads": "التنزيلات",
+  "Where Bear saves videos when you hit Download in the player. Pick any folder, including one on a different drive.": "المكان الذي يحفظ فيه Bear الفيديوهات عند الضغط على تنزيل. اختر أي مجلد، حتى لو كان على محرك أقراص آخر.",
+  "HTML5": "HTML5",
+  "mpv": "mpv",
   "Anime4K upscaling": "تحسين Anime4K",
-  Flat_Style: "مسطح",
-  Background: "الخلفية",
-  "{name} will be removed from Harbor. Anything you've set to use it will fall back to Inter.":
-    "سيتم إزالة {name} من Harbor. سيعود أي شيء قمت بتعيينه لاستخدامه إلى خط Inter.",
+  "Flat_Style": "مسطح",
+  "Background": "الخلفية",
+  "{name} will be removed from Bear. Anything you've set to use it will fall back to Inter.": "سيتم إزالة {name} من Bear. سيعود أي شيء قمت بتعيينه لاستخدامه إلى خط Inter.",
   "Player & quality": "المشغل والجودة",
   "Pick the playback engine and which quality chips show up on cards.":
     "اختر محرك التشغيل والجودات التي تظهر على البطاقات.",
@@ -1618,13 +1451,11 @@ const settings: Record<string, string> = {
   Restart: "إعادة التشغيل",
   "Start server": "بدء تشغيل الخادم",
   "Your streaming server address": "عنوان خادم البث الخاص بك",
-  "Harbor runs a small streaming server right on this computer. This is where it lives. To stream from this machine on another device, copy the Wi-Fi address and paste it into Remote streaming server in Harbor over there.":
-    "يقوم Harbor بتشغيل خادم بث صغير على هذا الكمبيوتر مباشرةً. من هنا يتم العمل. للبث من هذا الجهاز على جهاز آخر، انسخ عنوان Wi-Fi والصقه في خادم البث عن بعد في Harbor هناك.",
+  "Bear runs a small streaming server right on this computer. This is where it lives. To stream from this machine on another device, copy the Wi-Fi address and paste it into Remote streaming server in Bear over there.": "يقوم Bear بتشغيل خادم بث صغير على هذا الكمبيوتر مباشرةً. من هنا يتم العمل. للبث من هذا الجهاز على جهاز آخر، انسخ عنوان Wi-Fi والصقه في خادم البث عن بعد في Bear هناك.",
   "On this computer": "على هذا الكمبيوتر",
   "From other devices on your Wi-Fi": "من أجهزة أخرى على شبكة Wi-Fi الخاصة بك",
-  "Harbor in your browser": "Harbor في متصفحك",
-  "Serves this exact install of Harbor as a web app on your network. Open it on a phone, laptop, or TV browser, sign in there, and it streams through this computer.":
-    "يُقدم هذه النسخة تماماً من Harbor كتطبيق ويب على شبكتك. افتحها على متصفح الهاتف أو الكمبيوتر المحمول أو التلفزيون، وسجّل الدخول هناك، وسيتم البث عبر هذا الكمبيوتر.",
+  "Bear in your browser": "Bear في متصفحك",
+  "Serves this exact install of Bear as a web app on your network. Open it on a phone, laptop, or TV browser, sign in there, and it streams through this computer.": "يُقدم هذه النسخة تماماً من Bear كتطبيق ويب على شبكتك. افتحها على متصفح الهاتف أو الكمبيوتر المحمول أو التلفزيون، وسجّل الدخول هناك، وسيتم البث عبر هذا الكمبيوتر.",
   "From any browser on your Wi-Fi": "من أي متصفح على شبكة Wi-Fi الخاصة بك",
   "Couldn't start on port {WEB_PORT}. Another app may be using it; toggle off and on to retry.":
     "تعذر البدء على المنفذ {WEB_PORT}. قد يكون هناك تطبيق آخر يستخدمه؛ قم بإيقافه وتشغيله لإعادة المحاولة.",
@@ -1639,10 +1470,8 @@ const settings: Record<string, string> = {
   "Injected into a fixed-position layer above the app (pointer-events disabled by default). Wrap in a div with pointer-events:auto to make it interactive.":
     "يتم حقنه في طبقة ثابتة أعلى التطبيق (تعطيل أحداث المؤشر افتراضيًا). ضعها داخل div مع pointer-events:auto لجعلها قابلة للتفاعل.",
   "Custom code": "رمز مخصص",
-  "Power-user knob. Inject your own CSS, JS, and HTML into Harbor. Lives in your local settings; nothing leaves your machine.":
-    "إعداد للمستخدمين المتقدمين. قم بحقن رموز CSS و JS و HTML الخاصة بك في Harbor. تُحفظ في إعداداتك المحلية؛ لا شيء يغادر جهازك.",
-  "You're modding your own client. Custom JS has full access to your Harbor session. Only paste code you wrote or fully trust.":
-    "أنت تقوم بتعديل العميل الخاص بك. الكود المخصص له حق الوصول الكامل إلى جلستك. قم بلصق الكود الذي كتبته أو تثق به تماماً.",
+  "Power-user knob. Inject your own CSS, JS, and HTML into Bear. Lives in your local settings; nothing leaves your machine.": "إعداد للمستخدمين المتقدمين. قم بحقن رموز CSS و JS و HTML الخاصة بك في Bear. تُحفظ في إعداداتك المحلية؛ لا شيء يغادر جهازك.",
+  "You're modding your own client. Custom JS has full access to your Bear session. Only paste code you wrote or fully trust.": "أنت تقوم بتعديل العميل الخاص بك. الكود المخصص له حق الوصول الكامل إلى جلستك. قم بلصق الكود الذي كتبته أو تثق به تماماً.",
   "{n} chars": "{n} حرف",
   "Player layout": "تخطيط المشغل",
   "Pick a theme, then rearrange every button in the player chrome. Hide what you never use, promote what you do.":
@@ -1654,8 +1483,8 @@ const settings: Record<string, string> = {
   hidden: "مخفي",
   "on the {themeName} theme.": "في سمة {themeName}.",
   "Edit player layout": "تعديل تخطيط المشغل",
-  "Harbor's native player chrome.": "واجهة مشغل Harbor الأصلية.",
-  Stremio: "Stremio",
+  "Bear's native player chrome.": "واجهة مشغل Bear الأصلية.",
+  "Stremio": "Stremio",
   "Familiar Stremio button order.": "ترتيب أزرار Stremio المألوف.",
   "Confirm full reset": "تأكيد إعادة الضبط الكامل",
   "Reset all to default": "إعادة ضبط الكل للافتراضي",
@@ -1694,52 +1523,39 @@ const settings: Record<string, string> = {
   "Back to relay": "العودة إلى الخادم",
   Documentation: "المستندات",
   "Self-host": "الاستضافة الذاتية",
-  "Run your own Harbor Relay": "قم بتشغيل خادم Harbor الخاص بك",
-  "Two paths: Harbor handles the deploy for you, or you do it yourself with wrangler.":
-    "مساران: يتعامل Harbor مع النشر نيابة عنك، أو تقوم بذلك بنفسك باستخدام wrangler.",
-  Overview: "نظرة عامة",
-  "The Harbor relay is a Cloudflare Worker that hosts WebSocket rooms for Watch Together. Each user runs their own. There is no central Harbor server.":
-    "خادم Harbor هو Cloudflare Worker يستضيف غرف WebSocket للمشاهدة معًا. يدير كل مستخدم الخادم الخاص به. لا يوجد خادم مركزي لـ Harbor.",
-  "Source: {code}. About 200 lines of JavaScript, no dependencies. Read it before deploying if you want to know what runs.":
-    "المصدر: {code}. حوالي 200 سطر من JavaScript، بدون تبعيات. اقرأه قبل النشر إذا كنت تريد معرفة ما يتم تشغيله.",
-  Requirements: "المتطلبات",
+  "Run your own Bear Relay": "قم بتشغيل خادم Bear الخاص بك",
+  "Two paths: Bear handles the deploy for you, or you do it yourself with wrangler.": "مساران: يتعامل Bear مع النشر نيابة عنك، أو تقوم بذلك بنفسك باستخدام wrangler.",
+  "Overview": "نظرة عامة",
+  "The Bear relay is a Cloudflare Worker that hosts WebSocket rooms for Watch Together. Each user runs their own. There is no central Bear server.": "خادم Bear هو Cloudflare Worker يستضيف غرف WebSocket للمشاهدة معًا. يدير كل مستخدم الخادم الخاص به. لا يوجد خادم مركزي لـ Bear.",
+  "Source: {code}. About 200 lines of JavaScript, no dependencies. Read it before deploying if you want to know what runs.": "المصدر: {code}. حوالي 200 سطر من JavaScript، بدون تبعيات. اقرأه قبل النشر إذا كنت تريد معرفة ما يتم تشغيله.",
+  "Requirements": "المتطلبات",
   "A free Cloudflare account.": "حساب Cloudflare مجاني.",
   "About two minutes for the auto-deploy path.": "حوالي دقيقتين لمسار النشر التلقائي.",
   "For the manual path: {code} 20+ and {code} CLI.": "للمسار اليدوي: {code} 20+ و {code} CLI.",
-  "Auto-deploy from Harbor": "النشر التلقائي من Harbor",
-  "Easiest path. Harbor uploads the worker, creates the Durable Object namespace, and stores the resulting URL.":
-    "أسهل مسار. يقوم Harbor برفع worker، وإنشاء مساحة اسم Durable Object، وتخزين الرابط الناتج.",
-  "Open Settings, then Harbor Relay.": "افتح الإعدادات، ثم Harbor Relay.",
+  "Auto-deploy from Bear": "النشر التلقائي من Bear",
+  "Easiest path. Bear uploads the worker, creates the Durable Object namespace, and stores the resulting URL.": "أسهل مسار. يقوم Bear برفع worker، وإنشاء مساحة اسم Durable Object، وتخزين الرابط الناتج.",
+  "Open Settings, then Bear Relay.": "افتح الإعدادات، ثم Bear Relay.",
   "Click {kbd}.": "انقر على {kbd}.",
-  "Generate a Cloudflare API token with {code1} and {code2} permissions at {code3}. Paste it into Harbor.":
-    "قم بإنشاء رمز Cloudflare API بصلاحيات {code1} و {code2} في {code3}. الصقه في Harbor.",
+  "Generate a Cloudflare API token with {code1} and {code2} permissions at {code3}. Paste it into Bear.": "قم بإنشاء رمز Cloudflare API بصلاحيات {code1} و {code2} في {code3}. الصقه في Bear.",
   "Pick the Cloudflare account to deploy under.": "اختر حساب Cloudflare لنشره ضمنه.",
-  "Wait for the upload to finish. The relay URL gets written to {code} in Harbor settings.":
-    "انتظر حتى ينتهي الرفع. سيتم كتابة رابط الخادم إلى {code} في إعدادات Harbor.",
+  "Wait for the upload to finish. The relay URL gets written to {code} in Bear settings.": "انتظر حتى ينتهي الرفع. سيتم كتابة رابط الخادم إلى {code} في إعدادات Bear.",
   "Manual deploy with wrangler": "النشر اليدوي باستخدام wrangler",
   "For users who want to deploy themselves or already have a wrangler workflow.":
     "للمستخدمين الذين يرغبون في النشر بأنفسهم أو لديهم سير عمل بـ wrangler بالفعل.",
   "Install wrangler and authenticate:": "قم بتثبيت wrangler والمصادقة:",
-  "Save the worker source. Copy {code1} from the Harbor repo into a new directory as {code2}.":
-    "احفظ مصدر worker. انسخ {code1} من مستودع Harbor إلى مجلد جديد باسم {code2}.",
+  "Save the worker source. Copy {code1} from the Bear repo into a new directory as {code2}.": "احفظ مصدر worker. انسخ {code1} من مستودع Bear إلى مجلد جديد باسم {code2}.",
   "Save this {code} next to it:": "احفظ ملف {code} هذا بجانبه:",
   "Deploy:": "نشر:",
-  "Note the URL Cloudflare returns. It looks like {code}.":
-    "لاحظ الرابط الذي تعيده Cloudflare. يبدو مثل {code}.",
-  "In Harbor: Settings, Harbor Relay, then {kbd}. Paste the URL with {code1} as the scheme instead of {code2}.":
-    "في Harbor: الإعدادات، Harbor Relay، ثم {kbd}. الصق الرابط مع استخدام مخطط {code1} بدلاً من {code2}.",
+  "Note the URL Cloudflare returns. It looks like {code}.": "لاحظ الرابط الذي تعيده Cloudflare. يبدو مثل {code}.",
+  "In Bear: Settings, Bear Relay, then {kbd}. Paste the URL with {code1} as the scheme instead of {code2}.": "في Bear: الإعدادات، Bear Relay، ثم {kbd}. الصق الرابط مع استخدام مخطط {code1} بدلاً من {code2}.",
   "Verify it works": "التحقق من عمله",
-  "Settings, Harbor Relay, then {kbd}.": "الإعدادات، Harbor Relay، ثم {kbd}.",
-  "The test calls {code} and confirms the worker is reachable and running a current version. A passing test means Watch Together rooms will connect.":
-    "يستدعي الاختبار مسار {code} ويؤكد إمكانية الوصول إلى worker وتشغيله لإصدار حالي. يعني نجاح الاختبار أن غرف المشاهدة معًا ستتصل.",
-  "If the Watch Together popover shows an outdated-relay banner, redeploying with the steps above is the fix. The banner clears automatically the next time you connect once the relay reports the current version.":
-    "إذا أظهرت نافذة المشاهدة معًا إشعارًا بخادم قديم، فإن إعادة النشر بالخطوات المذكورة أعلاه هو الحل. يختفي الإشعار تلقائيًا في المرة التالية التي تتصل فيها بمجرد إبلاغ الخادم عن الإصدار الحالي.",
+  "Settings, Bear Relay, then {kbd}.": "الإعدادات، Bear Relay، ثم {kbd}.",
+  "The test calls {code} and confirms the worker is reachable and running a current version. A passing test means Watch Together rooms will connect.": "يستدعي الاختبار مسار {code} ويؤكد إمكانية الوصول إلى worker وتشغيله لإصدار حالي. يعني نجاح الاختبار أن غرف المشاهدة معًا ستتصل.",
+  "If the Watch Together popover shows an outdated-relay banner, redeploying with the steps above is the fix. The banner clears automatically the next time you connect once the relay reports the current version.": "إذا أظهرت نافذة المشاهدة معًا إشعارًا بخادم قديم، فإن إعادة النشر بالخطوات المذكورة أعلاه هو الحل. يختفي الإشعار تلقائيًا في المرة التالية التي تتصل فيها بمجرد إبلاغ الخادم عن الإصدار الحالي.",
   "Sharing your relay": "مشاركة الخادم الخاص بك",
-  "A relay URL is shareable. Anyone with the URL can join Watch Together rooms hosted on your relay. The unique {code} subdomain acts as the access token. There is no login.":
-    "رابط الخادم قابل للمشاركة. يمكن لأي شخص لديه الرابط الانضمام إلى غرف المشاهدة معًا المستضافة على الخادم الخاص بك. يعمل النطاق الفرعي المميز {code} كرمز وصول. لا يوجد تسجيل دخول.",
-  "To run a public relay, post the {code} URL on r/Stremio or wherever your community lives. Other Harbor users paste it into Settings, Harbor Relay, {kbd}.":
-    "لتشغيل خادم عام، انشر رابط {code} على r/Stremio أو في أي مكان يتواجد فيه مجتمعك. يقوم مستخدمو Harbor الآخرون بلصقه في الإعدادات، Harbor Relay، ثم {kbd}.",
-  Costs: "التكاليف",
+  "A relay URL is shareable. Anyone with the URL can join Watch Together rooms hosted on your relay. The unique {code} subdomain acts as the access token. There is no login.": "رابط الخادم قابل للمشاركة. يمكن لأي شخص لديه الرابط الانضمام إلى غرف المشاهدة معًا المستضافة على الخادم الخاص بك. يعمل النطاق الفرعي المميز {code} كرمز وصول. لا يوجد تسجيل دخول.",
+  "To run a public relay, post the {code} URL on r/Stremio or wherever your community lives. Other Bear users paste it into Settings, Bear Relay, {kbd}.": "لتشغيل خادم عام، انشر رابط {code} على r/Stremio أو في أي مكان يتواجد فيه مجتمعك. يقوم مستخدمو Bear الآخرون بلصقه في الإعدادات، Bear Relay، ثم {kbd}.",
+  "Costs": "التكاليف",
   "Cloudflare Workers free tier:": "الفئة المجانية لـ Cloudflare Workers:",
   "100,000 requests per day.": "100,000 طلب في اليوم.",
   "10ms CPU time per request.": "10 مللي ثانية من وقت وحدة المعالجة المركزية لكل طلب.",
@@ -1779,10 +1595,8 @@ const settings: Record<string, string> = {
   "Create Token": "Create Token",
   "Create Custom Token": "Create Custom Token",
   "Get started": "Get started",
-  "Cloudflare token form filled with name 'Harbor Relay' and one permission row set to Account / Workers Scripts / Edit":
-    "نموذج رمز Cloudflare المليء بالاسم 'Harbor Relay' وصف أذونات واحد تم تعيينه على Account / Workers Scripts / Edit",
-  "Token name can be anything. The permission row must be exactly {b1} + {b2} + {b3}.":
-    "يمكن أن يكون اسم الرمز المميز أي شيء. يجب أن يكون صف الأذونات بالتحديد {b1} + {b2} + {b3}.",
+  "Cloudflare token form filled with name 'Bear Relay' and one permission row set to Account / Workers Scripts / Edit": "نموذج رمز Cloudflare المليء بالاسم 'Bear Relay' وصف أذونات واحد تم تعيينه على Account / Workers Scripts / Edit",
+  "Token name can be anything. The permission row must be exactly {b1} + {b2} + {b3}.": "يمكن أن يكون اسم الرمز المميز أي شيء. يجب أن يكون صف الأذونات بالتحديد {b1} + {b2} + {b3}.",
   "Workers Scripts": "Workers Scripts",
   Edit: "Edit",
   "Leave everything below it alone. Scroll down, click {b1}, then {b2}. Copy the long string it shows you (you only see it once) and bring it back here.":
@@ -1829,14 +1643,11 @@ const settings: Record<string, string> = {
   "Step zoom out to restore baked-in black bars (Zoom mode).":
     "تصغير تدريجي لاستعادة الأشرطة السوداء المدمجة (وضع التكبير).",
   "Zoom in": "تكبير",
-  "Step zoom in to crop baked-in black bars (Zoom mode).":
-    "تكبير تدريجي لقص الأشرطة السوداء المدمجة (وضع التكبير).",
-  Screenshot: "لقطة شاشة",
-  "Save the current frame (video only, no subtitles) as a PNG to Pictures/Harbor.":
-    "حفظ الإطار الحالي (فيديو فقط، بدون ترجمة) كصورة PNG في مجلد Pictures/Harbor.",
+  "Step zoom in to crop baked-in black bars (Zoom mode).": "تكبير تدريجي لقص الأشرطة السوداء المدمجة (وضع التكبير).",
+  "Screenshot": "لقطة شاشة",
+  "Save the current frame (video only, no subtitles) as a PNG to Pictures/Bear.": "حفظ الإطار الحالي (فيديو فقط، بدون ترجمة) كصورة PNG في مجلد Pictures/Bear.",
   "Record GIF": "تسجيل صورة متحركة (GIF)",
-  "Start or stop recording a GIF of the video (no subtitles). Saves to Pictures/Harbor.":
-    "بدء أو إيقاف تسجيل صورة متحركة للفيديو (بدون ترجمة). يتم حفظها في مجلد Pictures/Harbor.",
+  "Start or stop recording a GIF of the video (no subtitles). Saves to Pictures/Bear.": "بدء أو إيقاف تسجيل صورة متحركة للفيديو (بدون ترجمة). يتم حفظها في مجلد Pictures/Bear.",
   "Seek back": "رجوع",
   "Jump back by the Back seek step set under Behavior.":
     "الرجوع للخلف حسب خطوة الرجوع المحددة في السلوك.",
@@ -1911,8 +1722,7 @@ const settings: Record<string, string> = {
   "Credit me in the release notes if this report leads to a fix.":
     "اذكرني في ملاحظات الإصدار إذا أدى تقريري إلى إصلاح.",
   "Want to fix it yourself?": "تريد إصلاحه بنفسك؟",
-  "Harbor is open source. PRs that reference a bug get reviewed within 48h and ship with credit in the release notes.":
-    "Harbor مفتوح المصدر. تُراجع طلبات السحب (PRs) التي تشير لخطأ خلال 48 ساعة ويُضاف لك الاعتماد في ملاحظات الإصدار.",
+  "Bear is open source. PRs that reference a bug get reviewed within 48h and ship with credit in the release notes.": "Bear مفتوح المصدر. تُراجع طلبات السحب (PRs) التي تشير لخطأ خلال 48 ساعة ويُضاف لك الاعتماد في ملاحظات الإصدار.",
   "Open repo on GitHub": "افتح المستودع على GitHub",
   "Browse pull requests": "تصفح طلبات السحب",
   "What gets sent": "ما الذي يتم إرساله",
@@ -1927,27 +1737,22 @@ const settings: Record<string, string> = {
     "تستمر أيقونة التحميل للأبد ولا يظهر شيء في المشغل.",
   "Email or Discord": "البريد الإلكتروني أو Discord",
   "Loading environment details…": "جاري تحميل تفاصيل بيئة التشغيل…",
-  "Auto-included. No keys, no library, no URLs. Just structural flags so reproductions go faster.":
-    "تُدرج تلقائياً. بدون مفاتيح، أو مكتبة، أو روابط. مجرد بيانات هيكلية لتسريع حل المشكلة.",
-  "Harbor test message (Discord). If you can read this, your webhook is wired up.":
-    "رسالة اختبار من Harbor (Discord). إذا كنت تقرأ هذا، فإن الويب هوك يعمل.",
-  "Harbor test message (Telegram). If you can read this, your webhook is wired up.":
-    "رسالة اختبار من Harbor (Telegram). إذا كنت تقرأ هذا، فإن الويب هوك يعمل.",
-  Failed: "فشل الإرسال",
-  Types: "الأنواع",
-  Movies: "الأفلام",
-  TV: "المسلسلات",
-  Anime: "الأنمي",
+  "Auto-included. No keys, no library, no URLs. Just structural flags so reproductions go faster.": "تُدرج تلقائياً. بدون مفاتيح، أو مكتبة، أو روابط. مجرد بيانات هيكلية لتسريع حل المشكلة.",
+  "Bear test message (Discord). If you can read this, your webhook is wired up.": "رسالة اختبار من Bear (Discord). إذا كنت تقرأ هذا، فإن الويب هوك يعمل.",
+  "Bear test message (Telegram). If you can read this, your webhook is wired up.": "رسالة اختبار من Bear (Telegram). إذا كنت تقرأ هذا، فإن الويب هوك يعمل.",
+  "Failed": "فشل الإرسال",
+  "Types": "الأنواع",
+  "Movies": "الأفلام",
+  "TV": "المسلسلات",
+  "Anime": "الأنمي",
   "Right-click a text channel, pick": "انقر بزر الماوس الأيمن على قناة نصية، واختر",
   Click: "انقر على",
   "on the left, then": "على اليسار، ثم",
-  "name it Harbor, hit": "سمِّه Harbor، واضغط",
-  "Telegram sends through a bot you create. You need two things: a":
-    "يرسل Telegram عبر بوت تقوم بإنشائه. تحتاج إلى شيئين: ",
+  "name it Bear, hit": "سمِّه Bear، واضغط",
+  "Telegram sends through a bot you create. You need two things: a": "يرسل Telegram عبر بوت تقوم بإنشائه. تحتاج إلى شيئين: ",
   "and your": "و",
-  "Both go in the boxes above. Harbor builds the URL for you.":
-    "كلاهما يوضع في المربعات أعلاه. وسيقوم Harbor بإنشاء الرابط لك.",
-  Tap: "اضغط",
+  "Both go in the boxes above. Bear builds the URL for you.": "كلاهما يوضع في المربعات أعلاه. وسيقوم Bear بإنشاء الرابط لك.",
+  "Tap": "اضغط",
   "below. In Telegram, send him": "أدناه. في Telegram، أرسل له",
   "Pick any name. Pick a username ending in": "اختر أي اسم. اختر اسم مستخدم ينتهي بـ",
   "BotFather replies with a token like": "سيرد BotFather برمز مثل",
@@ -1995,34 +1800,24 @@ const settings: Record<string, string> = {
   Countries: "الدول",
   "Only my favorited channels": "قنواتي المفضلة فقط",
   "Heads up": "إشعار مسبق",
-  "Harbor scans your IPTV playlists' EPG every 30 min for programs about to start.":
-    "يقوم Harbor بفحص دليل البرامج (EPG) في قوائم IPTV كل 30 دقيقة بحثًا عن البرامج التي على وشك البدء.",
-  "Add people in the Custom calendar manager first, then come back here.":
-    "أضف أشخاصًا في مدير التقويم المخصص أولاً، ثم عُد إلى هنا.",
+  "Bear scans your IPTV playlists' EPG every 30 min for programs about to start.": "يقوم Bear بفحص دليل البرامج (EPG) في قوائم IPTV كل 30 دقيقة بحثًا عن البرامج التي على وشك البدء.",
+  "Add people in the Custom calendar manager first, then come back here.": "أضف أشخاصًا في مدير التقويم المخصص أولاً، ثم عُد إلى هنا.",
   "People (empty = all tracked)": "الأشخاص (فارغ = جميع المتابعين)",
   "THEN notify on": "ثم أرسل الإشعار على (THEN notify on)",
   "Save rule": "حفظ القاعدة",
   "My library": "مكتبتي",
   Anticipated: "المنتظرة",
   "Custom calendar": "التقويم المخصص",
-  "Harbor checks harbor.site for new versions and installs them in place. Nothing installs until you choose to, and a dismissed update never nags you again.":
-    "يتحقق Harbor من harbor.site للبحث عن إصدارات جديدة ويثبتها في مكانها. لا يتم تثبيت أي شيء حتى تختار ذلك، ولن يزعجك إشعار التحديث المرفوض مرة أخرى.",
-  "Library, watch progress, and addon collection sync from this account.":
-    "المكتبة، وتقدم المشاهدة، ومجموعة الإضافات تتزامن من هذا الحساب.",
-  "Export your entire Harbor setup to a single file, then restore it on a new computer or keep it as a backup. Everything is included except your Stremio sign-in.":
-    "قم بتصدير إعدادات Harbor بالكامل إلى ملف واحد، ثم استعدها على جهاز كمبيوتر جديد أو احتفظ بها كنسخة احتياطية. كل شيء متضمن باستثناء تسجيل الدخول إلى Stremio الخاص بك.",
-  "Harbor sends no telemetry. This also drops outbound ad, analytics, and tracker requests that addons or metadata providers try to make, before they leave your machine.":
-    "لا يرسل Harbor أي بيانات تتبع (telemetry). وهذا يوقف أيضًا طلبات الإعلانات، التحليلات، ومتتبعات البيانات الصادرة التي تحاول الإضافات أو مزودو البيانات الوصفية إجراؤها، قبل أن تغادر جهازك.",
-  "Keep Harbor a click away. Close it to the system tray instead of quitting, and control it from the tray menu. These also mirror into the tray menu live.":
-    "أبقِ Harbor على بُعد نقرة. أغلقه ليتجه إلى شريط النظام بدلاً من إنهائه، وتحكم فيه من قائمة الشريط. وتنعكس هذه التغييرات أيضًا في قائمة الشريط مباشرةً.",
+  "Bear checks harbor.site for new versions and installs them in place. Nothing installs until you choose to, and a dismissed update never nags you again.": "يتحقق Bear من harbor.site للبحث عن إصدارات جديدة ويثبتها في مكانها. لا يتم تثبيت أي شيء حتى تختار ذلك، ولن يزعجك إشعار التحديث المرفوض مرة أخرى.",
+  "Library, watch progress, and addon collection sync from this account.": "المكتبة، وتقدم المشاهدة، ومجموعة الإضافات تتزامن من هذا الحساب.",
+  "Export your entire Bear setup to a single file, then restore it on a new computer or keep it as a backup. Everything is included except your Stremio sign-in.": "قم بتصدير إعدادات Bear بالكامل إلى ملف واحد، ثم استعدها على جهاز كمبيوتر جديد أو احتفظ بها كنسخة احتياطية. كل شيء متضمن باستثناء تسجيل الدخول إلى Stremio الخاص بك.",
+  "Bear sends no telemetry. This also drops outbound ad, analytics, and tracker requests that addons or metadata providers try to make, before they leave your machine.": "لا يرسل Bear أي بيانات تتبع (telemetry). وهذا يوقف أيضًا طلبات الإعلانات، التحليلات، ومتتبعات البيانات الصادرة التي تحاول الإضافات أو مزودو البيانات الوصفية إجراؤها، قبل أن تغادر جهازك.",
+  "Keep Bear a click away. Close it to the system tray instead of quitting, and control it from the tray menu. These also mirror into the tray menu live.": "أبقِ Bear على بُعد نقرة. أغلقه ليتجه إلى شريط النظام بدلاً من إنهائه، وتحكم فيه من قائمة الشريط. وتنعكس هذه التغييرات أيضًا في قائمة الشريط مباشرةً.",
   "Your color": "لونك",
-  "Used for your cursor in Watch Together, your draw color, and your name pill in chat.":
-    "يُستخدم لمؤشرك في المشاهدة معاً، ولون الرسم الخاص بك، وشريط اسمك في الدردشة.",
-  "Harbor catches stremio:// install links so the configure-and-install flow stays inside the app. Every install also syncs to your Stremio account, so the official app remains the canonical home for your library.":
-    "يلتقط Harbor روابط التثبيت stremio:// بحيث تبقى عملية الإعداد والتثبيت داخل التطبيق. تتم مزامنة كل تثبيت مع حسابك في Stremio أيضًا، بحيث يظل التطبيق الرسمي هو المرجع الأساسي لمكتبتك.",
-  "Let your Discord friends see what you are watching, with the show poster and a live progress bar. Desktop only, and only your own Discord client is involved (nothing touches a Harbor server).":
-    "دع أصدقاءك على Discord يرون ما تشاهده، مع بوستر العرض وشريط تقدم مباشر. متوفر للديسكتوب فقط، ولا يتطلب سوى برنامج Discord الخاص بك (لا شيء يمر عبر خوادم Harbor).",
-  "Saved {d} from Harbor {a}.": "تم الحفظ {d} من Harbor {a}.",
+  "Used for your cursor in Watch Together, your draw color, and your name pill in chat.": "يُستخدم لمؤشرك في المشاهدة معاً، ولون الرسم الخاص بك، وشريط اسمك في الدردشة.",
+  "Bear catches stremio:// install links so the configure-and-install flow stays inside the app. Every install also syncs to your Stremio account, so the official app remains the canonical home for your library.": "يلتقط Bear روابط التثبيت stremio:// بحيث تبقى عملية الإعداد والتثبيت داخل التطبيق. تتم مزامنة كل تثبيت مع حسابك في Stremio أيضًا، بحيث يظل التطبيق الرسمي هو المرجع الأساسي لمكتبتك.",
+  "Let your Discord friends see what you are watching, with the show poster and a live progress bar. Desktop only, and only your own Discord client is involved (nothing touches a Bear server).": "دع أصدقاءك على Discord يرون ما تشاهده، مع بوستر العرض وشريط تقدم مباشر. متوفر للديسكتوب فقط، ولا يتطلب سوى برنامج Discord الخاص بك (لا شيء يمر عبر خوادم Bear).",
+  "Saved {d} from Bear {a}.": "تم الحفظ {d} من Bear {a}.",
   "MPV (native, recommended)": "MPV (أصلي، موصى به)",
   "HTML5 (browser-based)": "HTML5 (مستند للمتصفح)",
   "Player shell": "واجهة المشغل",
@@ -2106,24 +1901,17 @@ const settings: Record<string, string> = {
   "Sign out": "تسجيل الخروج",
   "Reset to default": "الإعادة إلى الافتراضي",
   "Manual picker": "أداة الاختيار اليدوية",
-  "Hitting Play jumps straight into playback with the best stream Harbor finds.":
-    "يقفز الضغط على تشغيل مباشرةً إلى التشغيل بأفضل بثٍّ يجده Harbor.",
-  "Hitting Play opens the source list so you can choose quality, debrid, and audio yourself.":
-    "يفتح الضغط على تشغيل قائمة المصادر لتختار الجودة وDebrid والصوت بنفسك.",
+  "Hitting Play jumps straight into playback with the best stream Bear finds.": "يقفز الضغط على تشغيل مباشرةً إلى التشغيل بأفضل بثٍّ يجده Bear.",
+  "Hitting Play opens the source list so you can choose quality, debrid, and audio yourself.": "يفتح الضغط على تشغيل قائمة المصادر لتختار الجودة وDebrid والصوت بنفسك.",
   "Remember last stream": "تذكّر آخر بثّ",
   "Auto-skip stalled streams": "تخطّي البثوث المتوقّفة تلقائيًا",
-  "If a stream hasn't started playing within 10 seconds (a dead source or an addon that's down), automatically try the next available stream. Off by default.":
-    "إذا لم يبدأ البثّ خلال 10 ثوانٍ (مصدر ميّت أو إضافة معطّلة)، جرّب البثّ المتاح التالي تلقائيًا. مُعطّل افتراضيًا.",
-  "When you resume something you were watching, replay the exact stream you last used (same addon and source) instead of opening the picker again. Turn off to always choose fresh.":
-    "عند استئنافك لشيء كنت تشاهده، أعد تشغيل البثّ نفسه الذي استخدمته آخر مرة (نفس الإضافة والمصدر) بدلًا من فتح الأداة من جديد. عطّله لتختار جديدًا دائمًا.",
-  "mpv on the desktop app, HTML5 in the browser. The right engine without thinking about it.":
-    "mpv في تطبيق سطح المكتب، وHTML5 في المتصفّح. المحرك المناسب دون تفكير.",
-  "Native webview playback. Smooth and integrated, but limited codec coverage.":
-    "تشغيل أصلي عبر webview. سلس ومتكامل، لكن تغطية الترميز محدودة.",
-  "Bundled with Harbor. Plays anything you throw at it.": "مُضمّن مع Harbor. يشغّل أي شيء تعطيه إياه.",
-  "Embed mpv inside Harbor window": "تضمين mpv داخل نافذة Harbor",
-  "Renders mpv inline so playback lives in Harbor itself. Disable to open it in a separate window instead.":
-    "يعرض mpv داخليًا ليكون التشغيل في Harbor نفسه. عطّله لفتحه في نافذة منفصلة بدلًا من ذلك.",
+  "If a stream hasn't started playing within 10 seconds (a dead source or an addon that's down), automatically try the next available stream. Off by default.": "إذا لم يبدأ البثّ خلال 10 ثوانٍ (مصدر ميّت أو إضافة معطّلة)، جرّب البثّ المتاح التالي تلقائيًا. مُعطّل افتراضيًا.",
+  "When you resume something you were watching, replay the exact stream you last used (same addon and source) instead of opening the picker again. Turn off to always choose fresh.": "عند استئنافك لشيء كنت تشاهده، أعد تشغيل البثّ نفسه الذي استخدمته آخر مرة (نفس الإضافة والمصدر) بدلًا من فتح الأداة من جديد. عطّله لتختار جديدًا دائمًا.",
+  "mpv on the desktop app, HTML5 in the browser. The right engine without thinking about it.": "mpv في تطبيق سطح المكتب، وHTML5 في المتصفّح. المحرك المناسب دون تفكير.",
+  "Native webview playback. Smooth and integrated, but limited codec coverage.": "تشغيل أصلي عبر webview. سلس ومتكامل، لكن تغطية الترميز محدودة.",
+  "Bundled with Bear. Plays anything you throw at it.": "مُضمّن مع Bear. يشغّل أي شيء تعطيه إياه.",
+  "Embed mpv inside Bear window": "تضمين mpv داخل نافذة Bear",
+  "Renders mpv inline so playback lives in Bear itself. Disable to open it in a separate window instead.": "يعرض mpv داخليًا ليكون التشغيل في Bear نفسه. عطّله لفتحه في نافذة منفصلة بدلًا من ذلك.",
   "HDR-to-SDR tonemapping": "تحويل ألوان HDR إلى SDR",
   "Maps HDR sources to SDR using bt.2446a. Recommended on SDR displays.":
     "يحوّل مصادر HDR إلى SDR باستخدام bt.2446a. موصى به على شاشات SDR.",
@@ -2131,8 +1919,7 @@ const settings: Record<string, string> = {
   "Plays HDR content in its own window so Windows treats it as true HDR (the SDR brightness slider stops dimming it). Turn off HDR-to-SDR tonemapping above to use this on an HDR display.":
     "يشغّل محتوى HDR في نافذته الخاصة ليعامله Windows كـ HDR حقيقي (يتوقّف شريط سطوع SDR عن تعتيمه). عطّل تحويل ألوان HDR إلى SDR أعلاه لاستخدام هذا على شاشة HDR.",
   "HDR display mode": "وضع عرض HDR",
-  "Keeps Harbor embedded but lifts the HDR video onto its own opaque plane with the controls floating above, so Windows shows true HDR without the brightness slider dimming it. Needs HDR-to-SDR tonemapping off.":
-    "يبقي Harbor مضمّنًا لكنه يرفع فيديو HDR إلى مستواه المعتم الخاص مع طفو عناصر التحكّم فوقه، ليعرض Windows HDR حقيقيًا دون أن يعتّمه شريط السطوع. يتطلب إيقاف تحويل ألوان HDR إلى SDR.",
+  "Keeps Bear embedded but lifts the HDR video onto its own opaque plane with the controls floating above, so Windows shows true HDR without the brightness slider dimming it. Needs HDR-to-SDR tonemapping off.": "يبقي Bear مضمّنًا لكنه يرفع فيديو HDR إلى مستواه المعتم الخاص مع طفو عناصر التحكّم فوقه، ليعرض Windows HDR حقيقيًا دون أن يعتّمه شريط السطوع. يتطلب إيقاف تحويل ألوان HDR إلى SDR.",
   "Line-free video mode": "وضع فيديو بلا خطوط",
   "Forces a compatibility present mode that removes a thin bright line some monitors show at the screen edge. Side effects: 4K playback can drop to a slideshow and HDR content looks dimmer (this mode bypasses the HDR display path). Leave OFF unless you see that line. Restart playback to apply.":
     "يفرض وضع عرض متوافق يزيل خطًا ساطعًا رفيعًا تُظهره بعض الشاشات عند حافة الشاشة. آثار جانبية: قد يتحول تشغيل 4K إلى عرض شرائح ويبدو محتوى HDR أكثر تعتيمًا (يتجاوز هذا الوضع مسار عرض HDR). اتركه معطّلًا ما لم ترَ ذلك الخط. أعد تشغيل التشغيل للتطبيق.",
@@ -2140,11 +1927,9 @@ const settings: Record<string, string> = {
   "Interpolates frames for smoother panning, best on anime. Needs a display refresh rate above the video's frame rate, and can stutter on weak GPUs. mpv only.":
     "يستوفي الإطارات لتحريك أنعم، أفضل في الأنمي. يتطلب معدّل تحديث شاشة أعلى من معدّل إطارات الفيديو، وقد يتقطّع على بطاقات الرسوم الضعيفة. mpv فقط.",
   "Direct torrent streaming": "بثّ التورنت المباشر",
-  "When you have no debrid set up, or a torrent isn't cached, stream it straight from the bundled engine on localhost:11470. This connects to peers over your own connection, the same way Stremio's built-in streaming does.":
-    "عندما لا يكون لديك Debrid معدّ، أو لا يكون التورنت مخزّنًا، ابثّه مباشرةً من المحرك المضمّن على localhost:11470. يتصل هذا بالأقران عبر اتصالك الخاص، تمامًا كما يفعل بثّ Stremio المدمج.",
-  "Use Harbor's built-in engine (beta)": "استخدام محرك Harbor المدمج (تجريبي)",
-  "Stream torrents through Harbor's own Rust peer-to-peer engine instead of the bundled Stremio Server. Falls back automatically if it can't connect. Status and a self-test live in the Local engine card below.":
-    "ابثّ التورنت عبر محرك Harbor الخاص بلغة Rust للنظير إلى النظير بدلًا من خادم Stremio المضمّن. يرجع تلقائيًا إن تعذّر الاتصال. الحالة واختبار ذاتي موجودان في بطاقة المحرك المحلي أدناه.",
+  "When you have no debrid set up, or a torrent isn't cached, stream it straight from the bundled engine on localhost:11470. This connects to peers over your own connection, the same way Stremio's built-in streaming does.": "عندما لا يكون لديك Debrid معدّ، أو لا يكون التورنت مخزّنًا، ابثّه مباشرةً من المحرك المضمّن على localhost:11470. يتصل هذا بالأقران عبر اتصالك الخاص، تمامًا كما يفعل بثّ Stremio المدمج.",
+  "Use Bear's built-in engine (beta)": "استخدام محرك Bear المدمج (تجريبي)",
+  "Stream torrents through Bear's own Rust peer-to-peer engine instead of the bundled Stremio Server. Falls back automatically if it can't connect. Status and a self-test live in the Local engine card below.": "ابثّ التورنت عبر محرك Bear الخاص بلغة Rust للنظير إلى النظير بدلًا من خادم Stremio المضمّن. يرجع تلقائيًا إن تعذّر الاتصال. الحالة واختبار ذاتي موجودان في بطاقة المحرك المحلي أدناه.",
   "Always re-encode when casting (recommended)": "إعادة الترميز دائمًا عند البثّ (موصى به)",
   "On by default. Pipes every cast through ffmpeg as H.264 + AAC + MPEG-TS so Samsung, LG, Sony, and other DLNA TVs accept the stream regardless of source codec. Turn off only if you have a beefy receiver that handles raw HEVC/DTS and want max quality. Requires ffmpeg in PATH.":
     "مفعّل افتراضيًا. يمرّر كل بثّ عبر ffmpeg كـ H.264 + AAC + MPEG-TS لتقبل تلفزيونات Samsung وLG وSony وغيرها من تلفزيونات DLNA البثّ بغض النظر عن ترميز المصدر. عطّله فقط إن كان لديك مستقبِل قوي يتعامل مع HEVC/DTS الخام وتريد أقصى جودة. يتطلب ffmpeg في PATH.",
@@ -2191,8 +1976,7 @@ const settings: Record<string, string> = {
   "Remove {name}": "إزالة {name}",
   "Upload font": "رفع خط",
   "Delete this font?": "حذف هذا الخط؟",
-  "will be removed from Harbor. Anything you've set to use it will fall back to Inter.":
-    "سيُزال من Harbor. وأي شيء ضبطته لاستخدامه سيرجع إلى Inter.",
+  "will be removed from Bear. Anything you've set to use it will fall back to Inter.": "سيُزال من Bear. وأي شيء ضبطته لاستخدامه سيرجع إلى Inter.",
   "Show thumbnail preview on hover": "إظهار معاينة مصغّرة عند التمرير",
   "Generates a frame on the fly as you scrub the seek bar. Works on debrid streams and local files.":
     "يولّد إطارًا فوريًا أثناء سحبك لشريط التقديم. يعمل على بثوث Debrid والملفات المحلية.",
@@ -2235,8 +2019,7 @@ const settings: Record<string, string> = {
     "الاختبار الذاتي معطّل أثناء تفعيل البثّ البعيد الصارم. فهو ينزّل تورنت اختبار عبر النظير إلى النظير على هذا الجهاز.",
   "Self-test": "اختبار ذاتي",
   "Remote streaming server": "خادم بثّ بعيد",
-  "Point Harbor at a streaming server on another machine, like the Stremio service on a home server. Torrents download and stream from that machine instead of this one.":
-    "وجّه Harbor إلى خادم بثّ على جهاز آخر، مثل خدمة Stremio على خادم منزلي. تُنزّل التورنتات وتُبثّ من ذلك الجهاز بدلًا من هذا.",
+  "Point Bear at a streaming server on another machine, like the Stremio service on a home server. Torrents download and stream from that machine instead of this one.": "وجّه Bear إلى خادم بثّ على جهاز آخر، مثل خدمة Stremio على خادم منزلي. تُنزّل التورنتات وتُبثّ من ذلك الجهاز بدلًا من هذا.",
   "Use exclusively (never fall back to local)": "الاستخدام حصريًا (عدم الرجوع إلى المحلي أبدًا)",
   "If the server is unreachable, playback fails instead of streaming locally. Use this when your VPN runs on the server machine and torrent traffic must never leave this one.":
     "إن كان الخادم غير قابل للوصول، يفشل التشغيل بدلًا من البثّ محليًا. استخدم هذا عندما تعمل VPN على جهاز الخادم ويجب ألّا تغادر حركة التورنت هذا الجهاز أبدًا.",
@@ -2245,12 +2028,9 @@ const settings: Record<string, string> = {
   "Run test": "تشغيل الاختبار",
   "Server reachable": "الخادم قابل للوصول",
   "Test failed": "فشل الاختبار",
-  "The server answered with status {status}. Is that a streaming server?":
-    "أجاب الخادم بالحالة {status}. هل هذا خادم بثّ؟",
-  "Server reachable in {ms}ms. Harbor will use it for torrent streaming.":
-    "الخادم قابل للوصول خلال {ms} مللي ثانية. سيستخدمه Harbor لبثّ التورنت.",
-  "Could not reach the server within 1.5 seconds. Check the address and that the server machine is online.":
-    "تعذّر الوصول إلى الخادم خلال 1.5 ثانية. تحقّق من العنوان ومن أن جهاز الخادم متصل.",
+  "The server answered with status {status}. Is that a streaming server?": "أجاب الخادم بالحالة {status}. هل هذا خادم بثّ؟",
+  "Server reachable in {ms}ms. Bear will use it for torrent streaming.": "الخادم قابل للوصول خلال {ms} مللي ثانية. سيستخدمه Bear لبثّ التورنت.",
+  "Could not reach the server within 1.5 seconds. Check the address and that the server machine is online.": "تعذّر الوصول إلى الخادم خلال 1.5 ثانية. تحقّق من العنوان ومن أن جهاز الخادم متصل.",
   "No limit": "بلا حدّ",
   "Internet speed": "سرعة الإنترنت",
   "Pick the cap your link can sustain. Run a real speed test if you need a number.":
@@ -2260,9 +2040,8 @@ const settings: Record<string, string> = {
     "تأتي البثوث التي تتجاوز {cap} ميجابت/ثانية في ترتيب أدنى، حتى عند تخزينها.",
   "Home layout": "تخطيط الرئيسية",
   "How the Home page assembles its rails.": "كيف تجمّع الصفحة الرئيسية صفوفها.",
-  "Harbor curated": "تنسيق Harbor",
-  "Hero carousel, Top 10, Trending, In Theaters, per-service rails. Addon catalogs append underneath, deduped.":
-    "عرض رئيسي دوّار، وأفضل 10، والرائج، وفي دور العرض، وصفوف لكل خدمة. تُضاف كتالوجات الإضافات أسفلها، بلا تكرار.",
+  "Bear curated": "تنسيق Bear",
+  "Hero carousel, Top 10, Trending, In Theaters, per-service rails. Addon catalogs append underneath, deduped.": "عرض رئيسي دوّار، وأفضل 10، والرائج، وفي دور العرض، وصفوف لكل خدمة. تُضاف كتالوجات الإضافات أسفلها، بلا تكرار.",
   "Classic Stremio": "Stremio الكلاسيكي",
   "Continue Watching, then your installed addons. Every catalog renders as its own row, install order, no dedup, no hero.":
     "متابعة المشاهدة، ثم إضافاتك المثبّتة. يُعرض كل كتالوج كصفّ خاص به، بترتيب التثبيت، بلا إزالة تكرار، بلا عرض رئيسي.",
@@ -2308,28 +2087,21 @@ const settings: Record<string, string> = {
   "Lead with the show name instead of the episode title at the top of the player.":
     "ابدأ باسم العمل بدلًا من عنوان الحلقة في أعلى المشغّل.",
   "Block ads & trackers": "حظر الإعلانات والمتعقّبات",
-  "{n} tracker request blocked this session. Harbor itself sends zero telemetry.":
-    "حُظر {n} طلب تعقّب في هذه الجلسة. ولا يرسل Harbor نفسه أي قياسات.",
-  "{n} tracker requests blocked this session. Harbor itself sends zero telemetry.":
-    "حُظر {n} طلب تعقّب في هذه الجلسة. ولا يرسل Harbor نفسه أي قياسات.",
-  "Watching for ad, analytics, and tracking requests. Harbor itself sends zero telemetry.":
-    "يراقب طلبات الإعلانات والتحليلات والتعقّب. ولا يرسل Harbor نفسه أي قياسات.",
-  "Ad, analytics, and tracking requests pass through untouched.":
-    "تمرّ طلبات الإعلانات والتحليلات والتعقّب دون تغيير.",
+  "{n} tracker request blocked this session. Bear itself sends zero telemetry.": "حُظر {n} طلب تعقّب في هذه الجلسة. ولا يرسل Bear نفسه أي قياسات.",
+  "{n} tracker requests blocked this session. Bear itself sends zero telemetry.": "حُظر {n} طلب تعقّب في هذه الجلسة. ولا يرسل Bear نفسه أي قياسات.",
+  "Watching for ad, analytics, and tracking requests. Bear itself sends zero telemetry.": "يراقب طلبات الإعلانات والتحليلات والتعقّب. ولا يرسل Bear نفسه أي قياسات.",
+  "Ad, analytics, and tracking requests pass through untouched.": "تمرّ طلبات الإعلانات والتحليلات والتعقّب دون تغيير.",
   "Close to the system tray": "الإغلاق إلى علبة النظام",
-  "Closing the window tucks Harbor into the tray instead of quitting, so it reopens instantly. Right-click the tray icon for quick controls, or pick Quit to exit fully.":
-    "يدسّ إغلاق النافذة Harbor في العلبة بدلًا من الإنهاء، ليُعاد فتحه فورًا. انقر بزرّ الفأرة الأيمن على أيقونة العلبة للتحكّم السريع، أو اختر إنهاء للخروج كليًا.",
+  "Closing the window tucks Bear into the tray instead of quitting, so it reopens instantly. Right-click the tray icon for quick controls, or pick Quit to exit fully.": "يدسّ إغلاق النافذة Bear في العلبة بدلًا من الإنهاء، ليُعاد فتحه فورًا. انقر بزرّ الفأرة الأيمن على أيقونة العلبة للتحكّم السريع، أو اختر إنهاء للخروج كليًا.",
   "Always on top": "دائمًا في المقدّمة",
-  "Keep the Harbor window above other windows.": "أبقِ نافذة Harbor فوق النوافذ الأخرى.",
+  "Keep the Bear window above other windows.": "أبقِ نافذة Bear فوق النوافذ الأخرى.",
   "Pause when minimized": "الإيقاف المؤقّت عند التصغير",
-  "Stop playback when you minimize Harbor or send it to the tray.":
-    "أوقف التشغيل عند تصغيرك Harbor أو إرساله إلى العلبة.",
+  "Stop playback when you minimize Bear or send it to the tray.": "أوقف التشغيل عند تصغيرك Bear أو إرساله إلى العلبة.",
   "Pause when unfocused": "الإيقاف المؤقّت عند فقد التركيز",
   "Stop playback whenever another window takes focus.":
     "أوقف التشغيل كلّما أخذت نافذة أخرى التركيز.",
   "Export everything": "تصدير كل شيء",
-  "Saves your whole Harbor setup to one file: theme, home layout, settings, addons, profiles, watchlist, player layouts, watch progress, and more. Your Stremio sign-in is left out on purpose.":
-    "يحفظ إعداد Harbor بالكامل في ملف واحد: السمة وتخطيط الرئيسية والإعدادات والإضافات والملفات الشخصية وقائمة المشاهدة وتخطيطات المشغّل وتقدّم المشاهدة والمزيد. يُترك تسجيل دخولك إلى Stremio خارجًا عمدًا.",
+  "Saves your whole Bear setup to one file: theme, home layout, settings, addons, profiles, watchlist, player layouts, watch progress, and more. Your Stremio sign-in is left out on purpose.": "يحفظ إعداد Bear بالكامل في ملف واحد: السمة وتخطيط الرئيسية والإعدادات والإضافات والملفات الشخصية وقائمة المشاهدة وتخطيطات المشغّل وتقدّم المشاهدة والمزيد. يُترك تسجيل دخولك إلى Stremio خارجًا عمدًا.",
   "Restore from a backup": "الاستعادة من نسخة احتياطية",
   "Loads a backup file and replaces your current setup with it. Perfect for a new computer. Your Stremio sign-in on this device stays as is.":
     "يحمّل ملف نسخة احتياطية ويستبدل إعدادك الحالي به. مثالي لحاسوب جديد. يبقى تسجيل دخولك إلى Stremio على هذا الجهاز كما هو.",
@@ -2337,33 +2109,27 @@ const settings: Record<string, string> = {
   "Could not read that file.": "تعذّرت قراءة ذلك الملف.",
   "an unknown date": "تاريخ غير معروف",
   "Restore this backup?": "استعادة هذه النسخة الاحتياطية؟",
-  "This replaces your current Harbor setup (theme, home layout, settings, addons, profiles, and more) with the {n} saved entries in this file. Your Stremio sign-in stays as is. Harbor reloads when it finishes.":
-    "يستبدل هذا إعداد Harbor الحالي (السمة وتخطيط الرئيسية والإعدادات والإضافات والملفات الشخصية والمزيد) بالمدخلات المحفوظة البالغة {n} في هذا الملف. يبقى تسجيل دخولك إلى Stremio كما هو. يُعيد Harbor التحميل عند الانتهاء.",
-  "Saved {when} from Harbor {app}.": "حُفظ في {when} من Harbor {app}.",
+  "This replaces your current Bear setup (theme, home layout, settings, addons, profiles, and more) with the {n} saved entries in this file. Your Stremio sign-in stays as is. Bear reloads when it finishes.": "يستبدل هذا إعداد Bear الحالي (السمة وتخطيط الرئيسية والإعدادات والإضافات والملفات الشخصية والمزيد) بالمدخلات المحفوظة البالغة {n} في هذا الملف. يبقى تسجيل دخولك إلى Stremio كما هو. يُعيد Bear التحميل عند الانتهاء.",
+  "Saved {when} from Bear {app}.": "حُفظ في {when} من Bear {app}.",
   "Restoring...": "جارٍ الاستعادة...",
   "Restore and reload": "الاستعادة وإعادة التحميل",
   "Xtream credentials were left out of this backup.":
     "تمّ استبعاد بيانات اعتماد Xtream من هذه النسخة الاحتياطية.",
   "Get beta updates": "الحصول على التحديثات التجريبية",
-  "Receive early builds with the newest fixes before they reach the stable release. Betas can be rough around the edges; switch this off to return to stable at the next update.":
-    "تلقَّ إصدارات مبكّرة بأحدث الإصلاحات قبل وصولها إلى الإصدار المستقرّ. قد تكون النسخ التجريبية غير مصقولة؛ عطّل هذا للعودة إلى المستقرّ في التحديث القادم.",
-  "Catch stremio:// install links inside Harbor": "التقاط روابط التثبيت ‎stremio://‎ داخل Harbor",
-  "Harbor's in-app installer animates the manifest install and keeps you in context. Anything Harbor installs is also synced to your Stremio account, so the official app stays the canonical library. Turn this off and Stremio becomes the only handler for stremio:// links; Harbor still installs anything you trigger from inside the app (Configure & install, paste, drag-and-drop).":
-    "يحرّك مُثبّت Harbor داخل التطبيق تثبيت البيان ويبقيك في السياق. يتزامن أي شيء يثبّته Harbor أيضًا مع حساب Stremio الخاص بك، ليبقى التطبيق الرسمي المكتبة المعتمدة. عطّل هذا فيصبح Stremio المعالج الوحيد لروابط ‎stremio://‎؛ ويظل Harbor يثبّت أي شيء تطلقه من داخل التطبيق (الإعداد والتثبيت، اللصق، السحب والإفلات).",
-  "Heads up: if Stremio is also installed, Windows may ask which app to use the first time a stremio:// link fires. Pick Harbor to make it stick.":
-    "تنبيه: إن كان Stremio مثبّتًا أيضًا، فقد يسأل Windows عن أي تطبيق تستخدمه في أول مرة يُطلق فيها رابط ‎stremio://‎. اختر Harbor ليثبت ذلك.",
-  "stremio:// links now open in the Stremio app. Harbor will only install when you trigger it from inside Harbor.":
-    "تُفتح روابط ‎stremio://‎ الآن في تطبيق Stremio. ولن يثبّت Harbor إلا عندما تطلقه من داخل Harbor.",
+  "Receive early builds with the newest fixes before they reach the stable release. Betas can be rough around the edges; switch this off to return to stable at the next update.": "تلقَّ إصدارات مبكّرة بأحدث الإصلاحات قبل وصولها إلى الإصدار المستقرّ. قد تكون النسخ التجريبية غير مصقولة؛ عطّل هذا للعودة إلى المستقرّ في التحديث القادم.",
+  "Catch stremio:// install links inside Bear": "التقاط روابط التثبيت ‎stremio://‎ داخل Bear",
+  "Bear's in-app installer animates the manifest install and keeps you in context. Anything Bear installs is also synced to your Stremio account, so the official app stays the canonical library. Turn this off and Stremio becomes the only handler for stremio:// links; Bear still installs anything you trigger from inside the app (Configure & install, paste, drag-and-drop).": "يحرّك مُثبّت Bear داخل التطبيق تثبيت البيان ويبقيك في السياق. يتزامن أي شيء يثبّته Bear أيضًا مع حساب Stremio الخاص بك، ليبقى التطبيق الرسمي المكتبة المعتمدة. عطّل هذا فيصبح Stremio المعالج الوحيد لروابط ‎stremio://‎؛ ويظل Bear يثبّت أي شيء تطلقه من داخل التطبيق (الإعداد والتثبيت، اللصق، السحب والإفلات).",
+  "Heads up: if Stremio is also installed, Windows may ask which app to use the first time a stremio:// link fires. Pick Bear to make it stick.": "تنبيه: إن كان Stremio مثبّتًا أيضًا، فقد يسأل Windows عن أي تطبيق تستخدمه في أول مرة يُطلق فيها رابط ‎stremio://‎. اختر Bear ليثبت ذلك.",
+  "stremio:// links now open in the Stremio app. Bear will only install when you trigger it from inside Bear.": "تُفتح روابط ‎stremio://‎ الآن في تطبيق Stremio. ولن يثبّت Bear إلا عندما تطلقه من داخل Bear.",
   "Checking harbor.site for a newer build.": "يتحقّق من harbor.site بحثًا عن إصدار أحدث.",
   "Downloading {pct}%": "جارٍ التنزيل {pct}%",
   "Downloaded. Ready to install and restart.": "تم التنزيل. جاهز للتثبيت وإعادة التشغيل.",
-  "Installing. Harbor will restart.": "جارٍ التثبيت. سيُعاد تشغيل Harbor.",
+  "Installing. Bear will restart.": "جارٍ التثبيت. سيُعاد تشغيل Bear.",
   "A new version is ready to download.": "إصدار جديد جاهز للتنزيل.",
   "You're on the latest version.": "أنت على أحدث إصدار.",
-  "Couldn't reach the update server. Try again in a moment.":
-    "تعذّر الوصول إلى خادم التحديث. حاول مجددًا بعد لحظة.",
-  "Harbor checks automatically every few hours.": "يتحقّق Harbor تلقائيًا كل بضع ساعات.",
-  "Harbor {version} available": "Harbor {version} متاح",
+  "Couldn't reach the update server. Try again in a moment.": "تعذّر الوصول إلى خادم التحديث. حاول مجددًا بعد لحظة.",
+  "Bear checks automatically every few hours.": "يتحقّق Bear تلقائيًا كل بضع ساعات.",
+  "Bear {version} available": "Bear {version} متاح",
   "Update now": "التحديث الآن",
   "Check for updates": "التحقّق من التحديثات",
   "Show on Discord": "الإظهار على Discord",
@@ -2374,8 +2140,7 @@ const settings: Record<string, string> = {
   "Show while paused": "الإظهار أثناء الإيقاف المؤقّت",
   "Keep the presence visible when playback is paused.": "أبقِ الحضور ظاهرًا عند إيقاف التشغيل مؤقّتًا.",
   "Show while browsing": "الإظهار أثناء التصفّح",
-  "Display 'Browsing Harbor' when nothing is playing.":
-    "اعرض «يتصفّح Harbor» عندما لا يكون هناك تشغيل.",
+  "Display 'Browsing Bear' when nothing is playing.": "اعرض «يتصفّح Bear» عندما لا يكون هناك تشغيل.",
   "Show poster": "إظهار الملصق",
   "Reveal the show or movie artwork. Off keeps the title but hides the poster.":
     "أظهر العمل الفنّي للعمل أو الفيلم. يبقي الإيقاف العنوان لكنه يخفي الملصق.",
@@ -2410,8 +2175,7 @@ const settings: Record<string, string> = {
   "Library is empty. Nothing to repair.": "المكتبة فارغة. لا شيء لإصلاحه.",
   "{repaired} fixed, {clean} already clean": "أُصلح {repaired}، {clean} نظيف بالفعل",
   ", {n} unrepairable": "، {n} غير قابل للإصلاح",
-  "Rewrites every library item to match Stremio's exact schema. Run once if your Stremio app started crashing after Harbor synced playback.":
-    "يعيد كتابة كل عنصر مكتبة ليطابق مخطط Stremio الدقيق. شغّله مرة إن بدأ تطبيق Stremio بالتعطّل بعد مزامنة Harbor للتشغيل.",
+  "Rewrites every library item to match Stremio's exact schema. Run once if your Stremio app started crashing after Bear synced playback.": "يعيد كتابة كل عنصر مكتبة ليطابق مخطط Stremio الدقيق. شغّله مرة إن بدأ تطبيق Stremio بالتعطّل بعد مزامنة Bear للتشغيل.",
   "Fetching {n} items…": "جارٍ جلب {n} عنصر…",
   "Fetching library index…": "جارٍ جلب فهرس المكتبة…",
   "{n} items need repair.": "{n} عنصر يحتاج إصلاحًا.",
@@ -2423,11 +2187,9 @@ const settings: Record<string, string> = {
   "Repair now": "إصلاح الآن",
   "Web build": "إصدار الويب",
   "Where your data lives": "أين تقيم بياناتك",
-  "Everything you save here stays in this browser. Your Stremio login, API keys, watch progress, picker cache, dismissed tips. Harbor servers never see any of it. Clearing your browser data wipes it.":
-    "كل ما تحفظه هنا يبقى في هذا المتصفّح. تسجيل دخولك إلى Stremio ومفاتيح API وتقدّم المشاهدة وذاكرة الأداة المؤقّتة والتلميحات المرفوضة. لا ترى خوادم Harbor أيًا منها أبدًا. ومسح بيانات متصفّحك يمحوها.",
-  "The web build can't run mpv, the trickplay generator, the local bandwidth probe, or your own Cloudflare relay. If you want HDR passthrough, TrueHD or DTS-HD audio, and smoother seeking, grab the desktop app.":
-    "لا يستطيع إصدار الويب تشغيل mpv أو مولّد trickplay أو مسبار النطاق الترددي المحلي أو مُرحّل Cloudflare الخاص بك. إن أردت تمرير HDR وصوت TrueHD أو DTS-HD وتقديمًا أنعم، فاحصل على تطبيق سطح المكتب.",
-  "Get Harbor for desktop": "احصل على Harbor لسطح المكتب",
+  "Everything you save here stays in this browser. Your Stremio login, API keys, watch progress, picker cache, dismissed tips. Bear servers never see any of it. Clearing your browser data wipes it.": "كل ما تحفظه هنا يبقى في هذا المتصفّح. تسجيل دخولك إلى Stremio ومفاتيح API وتقدّم المشاهدة وذاكرة الأداة المؤقّتة والتلميحات المرفوضة. لا ترى خوادم Bear أيًا منها أبدًا. ومسح بيانات متصفّحك يمحوها.",
+  "The web build can't run mpv, the trickplay generator, the local bandwidth probe, or your own Cloudflare relay. If you want HDR passthrough, TrueHD or DTS-HD audio, and smoother seeking, grab the desktop app.": "لا يستطيع إصدار الويب تشغيل mpv أو مولّد trickplay أو مسبار النطاق الترددي المحلي أو مُرحّل Cloudflare الخاص بك. إن أردت تمرير HDR وصوت TrueHD أو DTS-HD وتقديمًا أنعم، فاحصل على تطبيق سطح المكتب.",
+  "Get Bear for desktop": "احصل على Bear لسطح المكتب",
   "Source code": "الشِفرة المصدرية",
   "Your relay is live": "مُرحّلك مباشر",
   "Connected to relay": "متصل بالمُرحّل",
@@ -2440,15 +2202,12 @@ const settings: Record<string, string> = {
   "Testing…": "جارٍ الاختبار…",
   "Relay version {version}. Update available.": "إصدار المُرحّل {version}. يتوفّر تحديث.",
   "Relay is current (v{version}).": "المُرحّل محدّث (الإصدار {version}).",
-  "Harbor's public relay updates automatically; nothing to do.":
-    "يتحدّث مُرحّل Harbor العام تلقائيًا؛ لا شيء عليك فعله.",
-  "Redeploy to pick up the latest Watch Together fixes. The in-app banner clears once the new version is live.":
-    "أعد النشر لالتقاط أحدث إصلاحات المشاهدة الجماعية. تختفي اللافتة داخل التطبيق بمجرّد أن يصبح الإصدار الجديد مباشرًا.",
+  "Bear's public relay updates automatically; nothing to do.": "يتحدّث مُرحّل Bear العام تلقائيًا؛ لا شيء عليك فعله.",
+  "Redeploy to pick up the latest Watch Together fixes. The in-app banner clears once the new version is live.": "أعد النشر لالتقاط أحدث إصلاحات المشاهدة الجماعية. تختفي اللافتة داخل التطبيق بمجرّد أن يصبح الإصدار الجديد مباشرًا.",
   "Running the latest Watch Together protocol.": "يشغّل أحدث بروتوكول للمشاهدة الجماعية.",
   "Redeploy instructions": "تعليمات إعادة النشر",
   "Backup credentials": "نسخ بيانات الاعتماد احتياطيًا",
-  "Cloudflare shows API tokens only once. Save a copy now or you'll lose the ability to stop or redeploy this relay from Harbor.":
-    "تعرض Cloudflare رموز API مرة واحدة فقط. احفظ نسخة الآن وإلا فقدت القدرة على إيقاف هذا المُرحّل أو إعادة نشره من Harbor.",
+  "Cloudflare shows API tokens only once. Save a copy now or you'll lose the ability to stop or redeploy this relay from Bear.": "تعرض Cloudflare رموز API مرة واحدة فقط. احفظ نسخة الآن وإلا فقدت القدرة على إيقاف هذا المُرحّل أو إعادة نشره من Bear.",
   "Relay verified end-to-end": "تم التحقّق من المُرحّل من طرف إلى طرف",
   "Relay test failed": "فشل اختبار المُرحّل",
   "Redeploy relay": "إعادة نشر المُرحّل",
@@ -2462,11 +2221,9 @@ const settings: Record<string, string> = {
   "Relay deployment requires the Cloudflare API, which is unavailable to browser clients. Use the desktop build to deploy a Worker, then enter the resulting URL below.":
     "يتطلب نشر المُرحّل واجهة Cloudflare API، وهي غير متاحة لعملاء المتصفّح. استخدم إصدار سطح المكتب لنشر عامل، ثم أدخل الرابط الناتج أدناه.",
   "Enter an existing relay URL:": "أدخل رابط مُرحّل موجود:",
-  "Only enter URLs for relays you operate or trust. A relay only carries Watch Together sync messages (play, pause, seek). Nothing else passes through it.":
-    "أدخل فقط روابط المُرحّلات التي تشغّلها أو تثق بها. لا يحمل المُرحّل سوى رسائل مزامنة المشاهدة الجماعية (تشغيل، إيقاف مؤقّت، تقديم). ولا يمرّ عبره شيء آخر.",
-  "Hit your daily quota? Use Harbor's public relay, or host your own.":
-    "بلغت حصّتك اليومية؟ استخدم مُرحّل Harbor العام، أو استضِف مُرحّلك الخاص.",
-  "Use Harbor's public relay": "استخدام مُرحّل Harbor العام",
+  "Only enter URLs for relays you operate or trust. A relay only carries Watch Together sync messages (play, pause, seek). Nothing else passes through it.": "أدخل فقط روابط المُرحّلات التي تشغّلها أو تثق بها. لا يحمل المُرحّل سوى رسائل مزامنة المشاهدة الجماعية (تشغيل، إيقاف مؤقّت، تقديم). ولا يمرّ عبره شيء آخر.",
+  "Hit your daily quota? Use Bear's public relay, or host your own.": "بلغت حصّتك اليومية؟ استخدم مُرحّل Bear العام، أو استضِف مُرحّلك الخاص.",
+  "Use Bear's public relay": "استخدام مُرحّل Bear العام",
   "Documentation: run your own relay": "الوثائق: شغّل مُرحّلك الخاص",
   "Install failed": "فشل التثبيت",
   "Installed via {label}": "مُثبّت عبر {label}",
@@ -2478,8 +2235,7 @@ const settings: Record<string, string> = {
     "الصق رابط البيان الذي أعطته إياك صفحة الإعداد",
   "View all": "عرض الكل",
   "Where alerts go": "أين تذهب التنبيهات",
-  "Connect Discord or Telegram and Harbor posts a message when something you follow is about to drop. Hit Test to send yourself a sample first.":
-    "قم بتوصيل Discord أو Telegram وسينشر Harbor رسالة عندما يكون شيء تتابعه على وشك الصدور. اضغط على اختبار لترسل لنفسك عينة أولاً.",
+  "Connect Discord or Telegram and Bear posts a message when something you follow is about to drop. Hit Test to send yourself a sample first.": "قم بتوصيل Discord أو Telegram وسينشر Bear رسالة عندما يكون شيء تتابعه على وشك الصدور. اضغط على اختبار لترسل لنفسك عينة أولاً.",
   "What to send": "ماذا سيتم إرساله",
   "Pick which calendars feed your alerts. Items are deduped across sources before sending.":
     "اختر التقويمات التي تغذي تنبيهاتك. تتم إزالة العناصر المكررة عبر المصادر قبل الإرسال.",
@@ -2488,10 +2244,8 @@ const settings: Record<string, string> = {
     "تصفية حسب النوع بعد دمج المصادر. اتركها جميعاً قيد التشغيل لإرسال كل شيء.",
   AUTOMATIONS: "الأتمتة",
   "Anime tweaks": "تعديلات الأنمي",
-  "Anime4K real-time upscaling, smooth motion, and where SVP fits in. All the anime-specific picture enhancements in one place.":
-    "ترقية دقة Anime4K في الوقت الفعلي، وتنعيم الحركة، وكيفية استخدام SVP. كل تحسينات الصورة الخاصة بالأنمي في مكان واحد.",
-  "Real-time GPU upscaling that sharpens lines and cleans up gradients on anime, built right into Harbor's player. The one-tap setup below grabs the shaders; nothing else to install.":
-    "ترقية الدقة في الوقت الفعلي باستخدام كرت الشاشة التي تزيد من حدة الخطوط وتنظف التدرجات في الأنمي، مدمجة مباشرة في مشغل Harbor. إعداد بنقرة واحدة أدناه يجلب المظللات (shaders)؛ لا شيء آخر للتثبيت.",
+  "Anime4K real-time upscaling, smooth motion, and where SVP fits in. All the anime-specific picture enhancements in one place.": "ترقية دقة Anime4K في الوقت الفعلي، وتنعيم الحركة، وكيفية استخدام SVP. كل تحسينات الصورة الخاصة بالأنمي في مكان واحد.",
+  "Real-time GPU upscaling that sharpens lines and cleans up gradients on anime, built right into Bear's player. The one-tap setup below grabs the shaders; nothing else to install.": "ترقية الدقة في الوقت الفعلي باستخدام كرت الشاشة التي تزيد من حدة الخطوط وتنظف التدرجات في الأنمي، مدمجة مباشرة في مشغل Bear. إعداد بنقرة واحدة أدناه يجلب المظللات (shaders)؛ لا شيء آخر للتثبيت.",
   "Enable Anime4K": "تفعيل Anime4K",
   "Sharper lines and cleaner gradients on anime, in real time. Heaviest on the graphics card of everything here.":
     "خطوط أكثر حدة وتدرجات أنظف في الأنمي، في الوقت الفعلي. هو الخيار الأثقل على كرت الشاشة من بين كل شيء هنا.",
@@ -2499,35 +2253,24 @@ const settings: Record<string, string> = {
   "A small badge over the video (with live FPS) that only appears when Anime4K is actually running. Follows your anime-only setting.":
     "شارة صغيرة فوق الفيديو (مع معدل الإطارات المباشر) تظهر فقط عندما يكون Anime4K قيد التشغيل بالفعل. يتبع إعداد الأنمي فقط الخاص بك.",
   "Smooth motion": "حركة سلسة",
-  "Anime is drawn on twos and threes, so fast pans can judder. Smoothing fills in the gaps so motion glides.":
-    "يُرسم الأنمي على إطارين أو ثلاثة، لذا قد تتقطع اللقطات السريعة. التنعيم يملأ الفراغات لتنساب الحركة بسلاسة.",
-  "Harbor's built-in frame interpolation. Smooths panning, best on anime. Needs a display refresh rate above the video's frame rate, and can stutter on weak GPUs. Lighter than SVP.":
-    "استيفاء الإطارات المدمج في Harbor. ينعم اللقطات، وهو الأفضل للأنمي. يحتاج إلى معدل تحديث شاشة أعلى من معدل إطارات الفيديو، وقد يتقطع على كروت الشاشة الضعيفة. أخف من SVP.",
+  "Anime is drawn on twos and threes, so fast pans can judder. Smoothing fills in the gaps so motion glides.": "يُرسم الأنمي على إطارين أو ثلاثة، لذا قد تتقطع اللقطات السريعة. التنعيم يملأ الفراغات لتنساب الحركة بسلاسة.",
+  "Bear's built-in frame interpolation. Smooths panning, best on anime. Needs a display refresh rate above the video's frame rate, and can stutter on weak GPUs. Lighter than SVP.": "استيفاء الإطارات المدمج في Bear. ينعم اللقطات، وهو الأفضل للأنمي. يحتاج إلى معدل تحديث شاشة أعلى من معدل إطارات الفيديو، وقد يتقطع على كروت الشاشة الضعيفة. أخف من SVP.",
   "SVP frame interpolation": "استيفاء الإطارات SVP",
-  "Genuine 48/60fps motion on anime, rendered right inside Harbor's player. SVP supplies the engine (VapourSynth + svpflow) and runs in your tray for licensing; Harbor's own player applies the interpolation, so it stays embedded and fully under your control. One-time install, then flip it on.":
-    "حركة حقيقية بمعدل 48/60 إطاراً في الثانية للأنمي، يتم تصييرها داخل مشغل Harbor. يوفر SVP المحرك (VapourSynth + svpflow) ويعمل في شريط المهام للترخيص؛ يطبق مشغل Harbor نفسه الاستيفاء، لذلك يبقى مدمجاً وتحت سيطرتك بالكامل. تثبيت لمرة واحدة، ثم قم بتفعيله.",
+  "Genuine 48/60fps motion on anime, rendered right inside Bear's player. SVP supplies the engine (VapourSynth + svpflow) and runs in your tray for licensing; Bear's own player applies the interpolation, so it stays embedded and fully under your control. One-time install, then flip it on.": "حركة حقيقية بمعدل 48/60 إطاراً في الثانية للأنمي، يتم تصييرها داخل مشغل Bear. يوفر SVP المحرك (VapourSynth + svpflow) ويعمل في شريط المهام للترخيص؛ يطبق مشغل Bear نفسه الاستيفاء، لذلك يبقى مدمجاً وتحت سيطرتك بالكامل. تثبيت لمرة واحدة، ثم قم بتفعيله.",
   "SVP (free)": "SVP (مجاني)",
-  "Install SVP once (the free tier is enough). It bundles VapourSynth + svpflow; Harbor reuses them, no extra setup.":
-    "قم بتثبيت SVP مرة واحدة (النسخة المجانية تكفي). يحتوي على VapourSynth + svpflow؛ ويعيد Harbor استخدامهم بدون أي إعدادات إضافية.",
-  "Installed and detected. Harbor found its interpolation engine and will drive it directly.":
-    "مثبت ومكتشف. وجد Harbor محرك الاستيفاء الخاص به وسيقوم بتشغيله مباشرة.",
-  "SVP is installed but Harbor couldn't find its engine files (svpflow + VapourSynth). Try repairing the SVP install, or reopen SVP once.":
-    "تم تثبيت SVP ولكن لم يتمكن Harbor من العثور على ملفات المحرك الخاصة به (svpflow + VapourSynth). حاول إصلاح تثبيت SVP، أو أعد فتح SVP مرة واحدة.",
+  "Install SVP once (the free tier is enough). It bundles VapourSynth + svpflow; Bear reuses them, no extra setup.": "قم بتثبيت SVP مرة واحدة (النسخة المجانية تكفي). يحتوي على VapourSynth + svpflow؛ ويعيد Bear استخدامهم بدون أي إعدادات إضافية.",
+  "Installed and detected. Bear found its interpolation engine and will drive it directly.": "مثبت ومكتشف. وجد Bear محرك الاستيفاء الخاص به وسيقوم بتشغيله مباشرة.",
+  "SVP is installed but Bear couldn't find its engine files (svpflow + VapourSynth). Try repairing the SVP install, or reopen SVP once.": "تم تثبيت SVP ولكن لم يتمكن Bear من العثور على ملفات المحرك الخاصة به (svpflow + VapourSynth). حاول إصلاح تثبيت SVP، أو أعد فتح SVP مرة واحدة.",
   "Get SVP (free)": "احصل على SVP (مجاني)",
   "Open SVP": "فتح SVP",
   "Enable SVP": "تفعيل SVP",
-  "Harbor's player applies the interpolation itself, embedded like normal playback, and starts SVP Manager in the tray for licensing. Restart playback to apply. If video goes black or won't start, turn this off.":
-    "يطبق مشغل Harbor الاستيفاء بنفسه، مدمجاً مثل التشغيل العادي، ويبدأ مدير SVP في شريط المهام للترخيص. أعد التشغيل للتطبيق. إذا أصبحت شاشة الفيديو سوداء أو لم تبدأ، قم بإيقاف هذا.",
-  "Finish the install above first. Flipping this on now won't do anything until Harbor can find SVP's engine.":
-    "أنهِ التثبيت أعلاه أولاً. تفعيل هذا الآن لن يفعل شيئاً حتى يتمكن Harbor من العثور على محرك SVP.",
+  "Bear's player applies the interpolation itself, embedded like normal playback, and starts SVP Manager in the tray for licensing. Restart playback to apply. If video goes black or won't start, turn this off.": "يطبق مشغل Bear الاستيفاء بنفسه، مدمجاً مثل التشغيل العادي، ويبدأ مدير SVP في شريط المهام للترخيص. أعد التشغيل للتطبيق. إذا أصبحت شاشة الفيديو سوداء أو لم تبدأ، قم بإيقاف هذا.",
+  "Finish the install above first. Flipping this on now won't do anything until Bear can find SVP's engine.": "أنهِ التثبيت أعلاه أولاً. تفعيل هذا الآن لن يفعل شيئاً حتى يتمكن Bear من العثور على محرك SVP.",
   "Couldn't start SVP Manager: {err}": "تعذّر بدء مدير SVP: {err}",
   "Couldn't set up SVP: {err}": "تعذّر إعداد SVP: {err}",
-  "Anime4K and smooth-motion run on the bundled mpv engine in the Harbor desktop app. They have no effect in the browser.":
-    "تعمل Anime4K وتنعيم الحركة على محرك mpv المدمج في تطبيق Harbor للكمبيوتر. ليس لها أي تأثير في المتصفح.",
-  "Download the desktop app to use anime enhancements.":
-    "قم بتنزيل تطبيق الكمبيوتر لاستخدام تحسينات الأنمي.",
-  "Match the picture quality to your computer, smooth out weak connections, and fine-tune the mpv engine with plain-language controls.":
-    "طابق جودة الصورة مع جهازك، ونعّم الاتصالات الضعيفة، واضبط محرك mpv بدقة باستخدام أزرار تحكم بسيطة.",
+  "Anime4K and smooth-motion run on the bundled mpv engine in the Bear desktop app. They have no effect in the browser.": "تعمل Anime4K وتنعيم الحركة على محرك mpv المدمج في تطبيق Bear للكمبيوتر. ليس لها أي تأثير في المتصفح.",
+  "Download the desktop app to use anime enhancements.": "قم بتنزيل تطبيق الكمبيوتر لاستخدام تحسينات الأنمي.",
+  "Match the picture quality to your computer, smooth out weak connections, and fine-tune the mpv engine with plain-language controls.": "طابق جودة الصورة مع جهازك، ونعّم الاتصالات الضعيفة، واضبط محرك mpv بدقة باستخدام أزرار تحكم بسيطة.",
   "Picture quality": "جودة الصورة",
   "One choice that sets how hard your computer works to make video look its best. Pick the one that matches your machine. Takes effect on the next thing you play.":
     "خيار واحد يحدد مدى جهد جهازك لجعل الفيديو يبدو في أفضل حالاته. اختر الخيار الذي يناسب جهازك. يسري المفعول على المقطع التالي الذي تقوم بتشغيله.",
@@ -2548,12 +2291,9 @@ const settings: Record<string, string> = {
     "دع كرت الشاشة يقوم بالعمل الشاق لفك تشفير الفيديو. هذا يوفر البطارية ويحافظ على برودة المعالج. تلقائي هو المناسب للجميع تقريباً؛ قم بالتغيير فقط إذا كان التشغيل يبدو خاطئاً أو لم يبدأ.",
   "Force on": "فرض التشغيل",
   "Off (use CPU)": "إيقاف (استخدام المعالج)",
-  "The CPU decodes everything. Most compatible, but it runs hot and can stutter on 4K. Use this only if the picture glitches with hardware decoding on.":
-    "يقوم المعالج بفك التشفير بالكامل. هذا الخيار الأكثر توافقاً، لكنه يرفع الحرارة وقد يتقطع في دقة 4K. استخدمه فقط إذا واجهت مشاكل في الصورة مع تشغيل تسريع الأجهزة.",
-  "Forces the graphics card on. Smoothest and coolest, but a few old or unusual files may refuse to play. Switch back to Auto if something won't start.":
-    "يفرض تشغيل كرت الشاشة. وهو الخيار الأكثر سلاسة وبرودة، لكن بعض الملفات القديمة أو غير المعتادة قد ترفض التشغيل. عد إلى تلقائي إذا لم يبدأ شيء ما.",
-  "Harbor uses the graphics card when it's safe and falls back to the CPU when it isn't. The right call for almost everyone.":
-    "يستخدم Harbor كرت الشاشة عندما يكون آمناً ويعود لاستخدام المعالج عندما لا يكون كذلك. الخيار الأنسب للجميع تقريباً.",
+  "The CPU decodes everything. Most compatible, but it runs hot and can stutter on 4K. Use this only if the picture glitches with hardware decoding on.": "يقوم المعالج بفك التشفير بالكامل. هذا الخيار الأكثر توافقاً، لكنه يرفع الحرارة وقد يتقطع في دقة 4K. استخدمه فقط إذا واجهت مشاكل في الصورة مع تشغيل تسريع الأجهزة.",
+  "Forces the graphics card on. Smoothest and coolest, but a few old or unusual files may refuse to play. Switch back to Auto if something won't start.": "يفرض تشغيل كرت الشاشة. وهو الخيار الأكثر سلاسة وبرودة، لكن بعض الملفات القديمة أو غير المعتادة قد ترفض التشغيل. عد إلى تلقائي إذا لم يبدأ شيء ما.",
+  "Bear uses the graphics card when it's safe and falls back to the CPU when it isn't. The right call for almost everyone.": "يستخدم Bear كرت الشاشة عندما يكون آمناً ويعود لاستخدام المعالج عندما لا يكون كذلك. الخيار الأنسب للجميع تقريباً.",
   "Picture adjustments": "تعديلات الصورة",
   "Nudge the image to taste. Start with a one-tap look below, then fine-tune with the dials. Everything resets cleanly, so you can't break anything.":
     "قم بتعديل الصورة حسب ذوقك. ابدأ بنظرة بنقرة واحدة أدناه، ثم اضبط بدقة باستخدام الأقراص. يتم إعادة تعيين كل شيء بشكل نظيف، لذا لا يمكنك كسر أي شيء.",
@@ -2575,8 +2315,7 @@ const settings: Record<string, string> = {
   Sharpen: "الحدة",
   "Reset picture": "إعادة تعيين الصورة",
   "Color & HDR": "اللون و HDR",
-  "How Harbor squeezes HDR movies onto a normal screen. Auto is right for almost everyone; the curves below just change the look (punchy vs soft). Only matters on HDR sources.":
-    "كيف يضغط Harbor أفلام HDR لتناسب الشاشات العادية. تلقائي هو المناسب للجميع تقريباً؛ المنحنيات أدناه تغير المظهر فقط (حيوي مقابل ناعم). هذا يهم فقط في مصادر HDR.",
+  "How Bear squeezes HDR movies onto a normal screen. Auto is right for almost everyone; the curves below just change the look (punchy vs soft). Only matters on HDR sources.": "كيف يضغط Bear أفلام HDR لتناسب الشاشات العادية. تلقائي هو المناسب للجميع تقريباً؛ المنحنيات أدناه تغير المظهر فقط (حيوي مقابل ناعم). هذا يهم فقط في مصادر HDR.",
   "Tone-mapping curve": "منحنى تعيين النغمات (Tone-mapping)",
   "Auto (recommended)": "تلقائي (موصى به)",
   "Reference (bt.2390)": "مرجعي (bt.2390)",
@@ -2588,8 +2327,7 @@ const settings: Record<string, string> = {
   "On an HDR display, stretches normal (non-HDR) movies to use the extra brightness range. Leave off on a regular screen; it can look washed out.":
     "على شاشة HDR، يقوم بتوسيع الأفلام العادية (غير HDR) لاستخدام نطاق السطوع الإضافي. اتركه مغلقاً على الشاشات العادية؛ وإلا قد تبدو الألوان باهتة.",
   "Slow or unstable connection": "اتصال بطيء أو غير مستقر",
-  "If video keeps pausing to buffer, or you're on spotty Wi-Fi or a far-away server, this gives Harbor a bigger head start so playback rides through the rough patches.":
-    "إذا استمر الفيديو في التوقف المؤقت للتحميل، أو كنت تستخدم شبكة Wi-Fi غير مستقرة أو خادماً بعيداً، فهذا يمنح Harbor بداية أكبر حتى يتجاوز التشغيل الفترات الصعبة.",
+  "If video keeps pausing to buffer, or you're on spotty Wi-Fi or a far-away server, this gives Bear a bigger head start so playback rides through the rough patches.": "إذا استمر الفيديو في التوقف المؤقت للتحميل، أو كنت تستخدم شبكة Wi-Fi غير مستقرة أو خادماً بعيداً، فهذا يمنح Bear بداية أكبر حتى يتجاوز التشغيل الفترات الصعبة.",
   "Build a bigger buffer": "بناء تخزين مؤقت أكبر",
   "Loads more of the video ahead of time before playing. Smoother on weak connections, uses a little more memory and takes a moment longer to start.":
     "يقوم بتحميل جزء أكبر من الفيديو مقدماً قبل التشغيل. أكثر سلاسة في الاتصالات الضعيفة، ويستهلك ذاكرة أكثر قليلاً ويستغرق وقتاً أطول للبدء.",
@@ -2599,8 +2337,7 @@ const settings: Record<string, string> = {
   "Turn on if you watch on a laptop or headphones and dialogue feels too quiet next to the effects. Leave off if you have a real surround setup or a soundbar.":
     "قم بتشغيله إذا كنت تشاهد على حاسوب محمول أو سماعات رأس وكان الحوار يبدو منخفضاً جداً مقارنة بالمؤثرات. اتركه مغلقاً إذا كان لديك إعداد صوت محيطي حقيقي أو مكبر صوت (soundbar).",
   "Advanced (mpv.conf)": "متقدم (mpv.conf)",
-  "The escape hatch for power users. One mpv option per line as key=value, exactly like mpv.conf. These apply last, so they override every dial above. Anything Harbor can't read is skipped, so a typo won't break playback. Restart playback to apply.":
-    "مخرج الطوارئ للمستخدمين المتقدمين. خيار mpv واحد لكل سطر بتنسيق مفتاح=قيمة، تماماً مثل mpv.conf. يتم تطبيقها أخيراً، لذا فهي تتجاوز كل الأقراص أعلاه. أي شيء لا يستطيع Harbor قراءته يتم تخطيه، لذلك الخطأ الإملائي لن يكسر التشغيل. أعد التشغيل للتطبيق.",
+  "The escape hatch for power users. One mpv option per line as key=value, exactly like mpv.conf. These apply last, so they override every dial above. Anything Bear can't read is skipped, so a typo won't break playback. Restart playback to apply.": "مخرج الطوارئ للمستخدمين المتقدمين. خيار mpv واحد لكل سطر بتنسيق مفتاح=قيمة، تماماً مثل mpv.conf. يتم تطبيقها أخيراً، لذا فهي تتجاوز كل الأقراص أعلاه. أي شيء لا يستطيع Bear قراءته يتم تخطيه، لذلك الخطأ الإملائي لن يكسر التشغيل. أعد التشغيل للتطبيق.",
   "1 option active": "خيار واحد مفعل",
   "{n} options active": "{n} خيارات مفعلة",
   "1 line skipped (not valid)": "تم تخطي سطر واحد (غير صالح)",
@@ -2610,8 +2347,7 @@ const settings: Record<string, string> = {
   "Heads up: {keys} can load outside scripts or open your player to the network. Only keep these if you know exactly what they do.":
     "تنبيه: {keys} يمكن أن تقوم بتحميل برامج نصية خارجية أو تفتح مشغلك على الشبكة. احتفظ بها فقط إذا كنت تعرف بالضبط ما تفعله.",
   "See the mpv.conf your dials above generate": "انظر إلى ملف mpv.conf الذي تنشئه الأقراص أعلاه",
-  "These tune the bundled mpv engine, which runs in the Harbor desktop app. They have no effect in the browser.":
-    "هذه تضبط محرك mpv المدمج، والذي يعمل في تطبيق Harbor للكمبيوتر. ليس لها أي تأثير في المتصفح.",
+  "These tune the bundled mpv engine, which runs in the Bear desktop app. They have no effect in the browser.": "هذه تضبط محرك mpv المدمج، والذي يعمل في تطبيق Bear للكمبيوتر. ليس لها أي تأثير في المتصفح.",
   "Download the desktop app to use video tuning.": "قم بتنزيل تطبيق الكمبيوتر لاستخدام ضبط الفيديو.",
   "Ask to resume or start over": "السؤال عن الاستئناف أو البدء من جديد",
   "When you hit Play on something you've partly watched, show a prompt to resume from where you left off or start over. Also covers items synced from Stremio or Trakt.":
@@ -2644,19 +2380,18 @@ const settings: Record<string, string> = {
   "Generate a Cloudflare API token with": "قم بإنشاء رمز Cloudflare API مميز بصلاحيات",
   and: "و",
   "permissions at": "من",
-  "Paste it into Harbor.": "والصقه في Harbor.",
-  "Wait for the upload to finish. The relay URL gets written to":
-    "انتظر حتى ينتهي الرفع. يتم كتابة رابط الموزع في",
-  "in Harbor settings.": "ضمن إعدادات Harbor.",
+  "Paste it into Bear.": "والصقه في Bear.",
+  "Wait for the upload to finish. The relay URL gets written to": "انتظر حتى ينتهي الرفع. يتم كتابة رابط الموزع في",
+  "in Bear settings.": "ضمن إعدادات Bear.",
   "Save the worker source. Copy": "احفظ مصدر worker. انسخ",
-  "from the Harbor repo into a new directory as": "من مستودع Harbor إلى مجلد جديد باسم",
+  "from the Bear repo into a new directory as": "من مستودع Bear إلى مجلد جديد باسم",
   "Save this": "احفظ هذا",
   "next to it:": "بجانبه:",
   "Note the URL Cloudflare returns. It looks like": "لاحظ الرابط الذي يعيده Cloudflare. يبدو هكذا",
-  "In Harbor: Settings, Harbor Relay, then": "في Harbor: الإعدادات، Harbor Relay، ثم",
+  "In Bear: Settings, Bear Relay, then": "في Bear: الإعدادات، Bear Relay، ثم",
   "Paste the URL with": "الصق الرابط باستخدام",
   "as the scheme instead of": "كنظام بدلاً من",
-  "Settings, Harbor Relay, then": "الإعدادات، Harbor Relay، ثم",
+  "Settings, Bear Relay, then": "الإعدادات، Bear Relay، ثم",
   "The test calls": "يقوم الاختبار باستدعاء",
   "and confirms the worker is reachable and running a current version. A passing test means Watch Together rooms will connect.":
     "ويؤكد أن worker يمكن الوصول إليه وأنه يشغل إصداراً حالياً. اجتياز الاختبار يعني أن غرف المشاهدة معاً ستتصل.",
@@ -2664,12 +2399,9 @@ const settings: Record<string, string> = {
     "رابط الموزع قابل للمشاركة. يمكن لأي شخص لديه الرابط الانضمام إلى غرف المشاهدة معاً المستضافة على الموزع الخاص بك. يعمل النطاق الفرعي",
   "subdomain acts as the access token. There is no login.": "الفريد كرمز وصول. لا يوجد تسجيل دخول.",
   "To run a public relay, post the": "لتشغيل موزع عام، انشر رابط",
-  "URL on r/Stremio or wherever your community lives. Other Harbor users paste it into Settings, Harbor Relay,":
-    "على r/Stremio أو أينما يتواجد مجتمعك. يقوم مستخدمو Harbor الآخرون بلصقه في الإعدادات، Harbor Relay،",
-  "returns JSON with the worker version. Used by the test button.":
-    "يعيد JSON يحتوي على إصدار worker. يُستخدم بواسطة زر الاختبار.",
-  "with a WebSocket upgrade: opens a Watch Together room. State is held in a Durable Object, no persistence beyond the active session.":
-    "مع ترقية WebSocket: يفتح غرفة المشاهدة معاً. يتم الاحتفاظ بالحالة في Durable Object، بدون استمرارية بعد الجلسة النشطة.",
+  "URL on r/Stremio or wherever your community lives. Other Bear users paste it into Settings, Bear Relay,": "على r/Stremio أو أينما يتواجد مجتمعك. يقوم مستخدمو Bear الآخرون بلصقه في الإعدادات، Bear Relay،",
+  "returns JSON with the worker version. Used by the test button.": "يعيد JSON يحتوي على إصدار worker. يُستخدم بواسطة زر الاختبار.",
+  "with a WebSocket upgrade: opens a Watch Together room. State is held in a Durable Object, no persistence beyond the active session.": "مع ترقية WebSocket: يفتح غرفة المشاهدة معاً. يتم الاحتفاظ بالحالة في Durable Object، بدون استمرارية بعد الجلسة النشطة.",
   "Add Custom Source": "إضافة قسم خارجي",
   "Provide a JSON link or paste it directly.": "أضف رابط JSON أو الصق الكود مباشرة.",
   "JSON URL": "رابط JSON",
@@ -2684,8 +2416,7 @@ const settings: Record<string, string> = {
   "Focus GIF URL": "رابط الصورة المتحركة (Focus GIF URL)",
   "Addon not installed": "الإضافة غير مثبتة",
   "This section depends on the addon": "هذا القسم يعتمد على إضافة",
-  "You must install this addon in your Stremio account first so Harbor can fetch its works.":
-    "يجب عليك تثبيت هذه الإضافة في حساب Stremio الخاص بك أولاً لكي يتمكن Harbor من جلب الأعمال الخاصة بها.",
+  "You must install this addon in your Stremio account first so Bear can fetch its works.": "يجب عليك تثبيت هذه الإضافة في حساب Stremio الخاص بك أولاً لكي يتمكن Bear من جلب الأعمال الخاصة بها.",
   "Missing TMDB Key": "مفتاح TMDB مفقود",
   "This section relies on TMDB discovery features.":
     "يعتمد هذا القسم على ميزات الاكتشاف الخاصة بـ TMDB.",
@@ -2693,18 +2424,14 @@ const settings: Record<string, string> = {
     "يرجى إضافة مفتاح TMDB API الخاص بك في إعدادات المكتبة والبيانات الوصفية لعرض هذه المجموعة.",
   OK: "حسناً",
   "Loading...": "جاري التحميل...",
-  "Bring your Letterboxd watchlist, diary, liked films and lists into Harbor via the Stremboxd bridge.":
-    "قم بجلب قائمة مشاهدتك، ويومياتك، والأفلام التي أعجبتك وقوائمك من ليتربوكسد (Letterboxd) إلى Harbor عبر جسر Stremboxd.",
+  "Bring your Letterboxd watchlist, diary, liked films and lists into Bear via the Stremboxd bridge.": "قم بجلب قائمة مشاهدتك، ويومياتك، والأفلام التي أعجبتك وقوائمك من ليتربوكسد (Letterboxd) إلى Bear عبر جسر Stremboxd.",
   "Enable Letterboxd integration": "تفعيل دمج ليتربوكسد (Letterboxd)",
-  "Shows your Letterboxd catalogs on the home page and a Letterboxd panel on film pages.":
-    "يعرض كتالوجات ليتربوكسد في الصفحة الرئيسية ولوحة ليتربوكسد في صفحات الأفلام.",
-  Mode: "الوضع",
-  Public: "عام (Public)",
-  Full: "كامل (Full)",
-  "Public mode uses just your username: watchlist, liked films, popular and Top 250. No password needed.":
-    "الوضع العام يستخدم فقط اسم المستخدم: قائمة المشاهدة، الأفلام المعجب بها، الشائعة وأفضل 250 فيلماً. لا يلزم إدخال كلمة مرور.",
-  "Full mode signs in with your Letterboxd password to also unlock your diary, friends activity and your personal ratings. Your password is sent only to Stremboxd to obtain a token — Harbor never stores it.":
-    "الوضع الكامل يسجل الدخول بكلمة مرور ليتربوكسد لفتح مذكراتك ونشاط أصدقائك وتقييماتك الشخصية. تُرسل كلمة مرورك إلى Stremboxd فقط للحصول على الرمز (Token) — ولا يحفظها Harbor أبدًا.",
+  "Shows your Letterboxd catalogs on the home page and a Letterboxd panel on film pages.": "يعرض كتالوجات ليتربوكسد في الصفحة الرئيسية ولوحة ليتربوكسد في صفحات الأفلام.",
+  "Mode": "الوضع",
+  "Public": "عام (Public)",
+  "Full": "كامل (Full)",
+  "Public mode uses just your username: watchlist, liked films, popular and Top 250. No password needed.": "الوضع العام يستخدم فقط اسم المستخدم: قائمة المشاهدة، الأفلام المعجب بها، الشائعة وأفضل 250 فيلماً. لا يلزم إدخال كلمة مرور.",
+  "Full mode signs in with your Letterboxd password to also unlock your diary, friends activity and your personal ratings. Your password is sent only to Stremboxd to obtain a token — Bear never stores it.": "الوضع الكامل يسجل الدخول بكلمة مرور ليتربوكسد لفتح مذكراتك ونشاط أصدقائك وتقييماتك الشخصية. تُرسل كلمة مرورك إلى Stremboxd فقط للحصول على الرمز (Token) — ولا يحفظها Bear أبدًا.",
   "Letterboxd username": "اسم مستخدم ليتربوكسد",
   "Letterboxd password": "كلمة مرور ليتربوكسد",
   "Your Letterboxd password": "كلمة مرور ليتربوكسد الخاصة بك",
@@ -2737,8 +2464,7 @@ const settings: Record<string, string> = {
   "Choose an avatar": "اختر صورة رمزية",
   "{n} avatars across film, TV, and anime.": "{n} صورة رمزية من الأفلام والتلفزيون والأنمي.",
   "Rights and usage": "الحقوق والاستخدام",
-  "Fan-made avatars for personal use. Harbor claims no rights to these characters; they belong to their creators and studios, shown here under fair use. Every one is optimized down to a tiny WebP.":
-    "صور رمزية من صنع المعجبين للاستخدام الشخصي. لا تدّعي Harbor أي حقوق على هذه الشخصيات؛ فهي ملك لمبدعيها واستوديوهاتها، وتُعرض هنا ضمن الاستخدام العادل. كل صورة محسّنة إلى ملف WebP صغير.",
+  "Fan-made avatars for personal use. Bear claims no rights to these characters; they belong to their creators and studios, shown here under fair use. Every one is optimized down to a tiny WebP.": "صور رمزية من صنع المعجبين للاستخدام الشخصي. لا تدّعي Bear أي حقوق على هذه الشخصيات؛ فهي ملك لمبدعيها واستوديوهاتها، وتُعرض هنا ضمن الاستخدام العادل. كل صورة محسّنة إلى ملف WebP صغير.",
   "or use one of our avatars": "أو استخدم إحدى صورنا الرمزية",
   "Random avatar": "صورة رمزية عشوائية",
   "More soon": "المزيد قريباً",

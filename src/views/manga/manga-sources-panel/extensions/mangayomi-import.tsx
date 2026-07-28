@@ -32,7 +32,7 @@ export function MangayomiImport({ url, count }: { url: string; count: number }) 
         </span>
         <p className="text-[13px] leading-relaxed text-ink-muted">
           {t(
-            "This is a Mangayomi repo, but its sources use Dart or are not manga, so Harbor can't import them.",
+            "This is a Mangayomi repo, but its sources use Dart or are not manga, so Bear can't import them.",
           )}
         </p>
       </div>
@@ -47,7 +47,7 @@ export function MangayomiImport({ url, count }: { url: string; count: number }) 
       <div className="flex min-w-0 flex-1 flex-col gap-3">
         <p className="text-[13px] leading-relaxed text-ink-muted">
           {t(
-            "This is a Mangayomi repo. Harbor runs its JavaScript sources natively. Import them to add these sources to your manga library.",
+            "This is a Mangayomi repo. Bear runs its JavaScript sources natively. Import them to add these sources to your manga library.",
           )}
         </p>
 

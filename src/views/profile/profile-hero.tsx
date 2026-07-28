@@ -227,7 +227,7 @@ export function ProfileHero({
               linkLabel: t("Profile link"),
               url: shareUrl,
               cardUrl: `${shareUrl}/card.png`,
-              text: t("{name} on Harbor", { name: p.alias }),
+              text: t("{name} on Bear", { name: p.alias }),
               name: p.alias,
             }}
             onClose={() => setSharing(false)}

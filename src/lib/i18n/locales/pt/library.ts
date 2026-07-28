@@ -18,7 +18,7 @@ const library: Record<string, string> = {
   "Nothing in progress yet. Press Play on something.": "Nada em andamento ainda. Aperte Play em algo.",
   "Press play on something. It'll show up here once you start watching.": "Dê play em algo. Vai aparecer aqui assim que você começar a assistir.",
   "Your watchlist is empty": "Sua watchlist está vazia",
-  "Right-click any title in Harbor or hit \"Add to Watchlist\" on its detail page to save it here.": "Clique com o botão direito em qualquer título no Harbor ou clique em \"Add to Watchlist\" na página de detalhes para salvá-lo aqui.",
+  "Right-click any title in Bear or hit \"Add to Watchlist\" on its detail page to save it here.": "Clique com o botão direito em qualquer título no Bear ou clique em \"Add to Watchlist\" na página de detalhes para salvá-lo aqui.",
   "Loading favorites…": "Carregando favoritos…",
   "Loading favorites from other providers…": "Carregando favoritos de outros provedores…",
   "My Library shows upcoming episodes from the shows you've saved on Stremio. Sign in to wire it up.": "Minha Biblioteca mostra os próximos episódios das séries que você salvou no Stremio. Faça login para configurar.",

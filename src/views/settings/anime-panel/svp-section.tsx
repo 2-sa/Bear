@@ -62,42 +62,17 @@ export function SvpSection() {
   return (
     <Section
       title={t("SVP frame interpolation")}
-      subtitle={
-        linux
-          ? t(
-              "Native 48/60fps motion through your Linux SVP and VapourSynth installation, rendered inside Harbor's embedded player.",
-            )
-          : t(
-              "Genuine 48/60fps motion on anime, rendered right inside Harbor's player. SVP supplies the engine (VapourSynth + svpflow) and runs in your tray for licensing; Harbor's own player applies the interpolation, so it stays embedded and fully under your control. One-time install, then flip it on.",
-            )
-      }
+      subtitle={t("Genuine 48/60fps motion on anime, rendered right inside Bear's player. SVP supplies the engine (VapourSynth + svpflow) and runs in your tray for licensing; Bear's own player applies the interpolation, so it stays embedded and fully under your control. One-time install, then flip it on.")}
     >
       <Step n={1} title={t("SVP (free)")} ok={ready && !loadFailed}>
         <p className="text-[12.5px] leading-relaxed text-ink-muted">
-          {checking
-            ? t("Checking the local SVP and VapourSynth installation...")
-            : !supported
-              ? t(status?.reason ?? "SVP is not supported by this Harbor package.")
-              : loadFailed
-                ? t(
-                    "SVP's files are here but its VapourSynth engine won't load ({err}). This usually means a stale VapourSynth entry or a missing Microsoft VC++ runtime. Reinstall SVP, or install the latest \"Visual C++ Redistributable (x64)\" from Microsoft, then reopen Harbor.",
-                    { err: status?.load_error ?? "load error" },
-                  )
-                : ready
-                  ? linux
-                    ? t(
-                        "Installed and detected. Harbor found the native svpflow plugins and VapourSynth script library.",
-                      )
-                    : t(
-                        "Installed and detected. Harbor found its interpolation engine and will drive it directly.",
-                      )
-                  : installed
-                    ? t(
-                        "SVP is installed but Harbor couldn't find its engine files (svpflow + VapourSynth). Try repairing the SVP install, or reopen SVP once.",
-                      )
-                    : t(
-                        "Install SVP once (the free tier is enough). It bundles VapourSynth + svpflow; Harbor reuses them, no extra setup.",
-                      )}
+          {loadFailed
+            ? t("SVP's files are here but its VapourSynth engine won't load ({err}). This usually means a stale VapourSynth entry or a missing Microsoft VC++ runtime. Reinstall SVP, or install the latest \"Visual C++ Redistributable (x64)\" from Microsoft, then reopen Bear.", { err: status?.load_error ?? "load error" })
+            : ready
+              ? t("Installed and detected. Bear found its interpolation engine and will drive it directly.")
+              : installed
+                ? t("SVP is installed but Bear couldn't find its engine files (svpflow + VapourSynth). Try repairing the SVP install, or reopen SVP once.")
+                : t("Install SVP once (the free tier is enough). It bundles VapourSynth + svpflow; Bear reuses them, no extra setup.")}
         </p>
         <div className="flex flex-wrap items-center gap-2">
           {!supported ? null : installed ? (
@@ -129,16 +104,8 @@ export function SvpSection() {
         label={t("Enable SVP")}
         sub={
           ready
-            ? linux
-              ? t(
-                  "Harbor loads the native svpflow filter through VapourSynth and starts SVP Manager when available. Restart playback to apply.",
-                )
-              : t(
-                  "Harbor's player applies the interpolation itself, embedded like normal playback, and starts SVP Manager in the tray for licensing. Restart playback to apply. If video goes black or won't start, turn this off.",
-                )
-            : t(
-                "Finish the install above first. Flipping this on now won't do anything until Harbor can find SVP's engine.",
-              )
+            ? t("Bear's player applies the interpolation itself, embedded like normal playback, and starts SVP Manager in the tray for licensing. Restart playback to apply. If video goes black or won't start, turn this off.")
+            : t("Finish the install above first. Flipping this on now won't do anything until Bear can find SVP's engine.")
         }
         value={settings.playerSvp}
         onChange={(v) => void onToggle(v)}

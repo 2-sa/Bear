@@ -77,7 +77,7 @@ export function StremioVerifyCard({ author }: { author: Author }) {
         </PrimaryButton>
       ) : (
         <p className="rounded-xl border border-edge-soft bg-canvas/40 px-3.5 py-3 text-[12px] text-ink-subtle">
-          {t("Open Harbor on desktop to verify ownership in your browser.")}
+          Open Bear on desktop to verify ownership in your browser.
         </p>
       )}
 
@@ -94,7 +94,7 @@ export function StremioVerifyCard({ author }: { author: Author }) {
 
       {!hasSession && canBrowser && (
         <p className="text-[11px] leading-snug text-ink-subtle">
-          {t("Opens Stremio in your browser. Works with email, Facebook, and Apple. Harbor never sees your password.")}
+          Opens Stremio in your browser. Works with email, Facebook, and Apple. Bear never sees your password.
         </p>
       )}
 

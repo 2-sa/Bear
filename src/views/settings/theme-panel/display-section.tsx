@@ -192,7 +192,7 @@ export function DisplaySection() {
         <div className="flex flex-col gap-1.5">
           <span className="text-[14px] font-medium text-ink">{t("Featured source")}</span>
           <span className="text-[12.5px] text-ink-subtle">
-            {t("What fills the hero. Trending is a fresh top list from Harbor, refreshed through the day. Classic uses your own Home rows.")}
+            {t("What fills the hero. Trending is a fresh top list from Bear, refreshed through the day. Classic uses your own Home rows.")}
           </span>
           <Segmented
             value={settings.heroFeed}
@@ -236,7 +236,7 @@ export function DisplaySection() {
 
       <Section
         title={t("Screensaver")}
-        subtitle={t("When Harbor sits idle in the foreground, it drifts through cinematic backdrops with a clock and what's trending. Any movement or key brings you back. Off by default.")}
+        subtitle={t("When Bear sits idle in the foreground, it drifts through cinematic backdrops with a clock and what's trending. Any movement or key brings you back. Off by default.")}
       >
         <ToggleRow
           label={t("Ambient screensaver")}

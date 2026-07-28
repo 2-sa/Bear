@@ -27,11 +27,11 @@ function Explainer() {
       </div>
       <p className="text-[13.5px] leading-relaxed text-ink-muted">
         {t(
-          "Harbor ships no manga sources and hosts nothing. Extensions come from repositories other people maintain. Paste a repository URL below to browse its plugins, then install the ones you want. Every plugin runs sandboxed in an isolated worker with no access to your files, accounts, or the rest of the app.",
+          "Bear ships no manga sources and hosts nothing. Extensions come from repositories other people maintain. Paste a repository URL below to browse its plugins, then install the ones you want. Every plugin runs sandboxed in an isolated worker with no access to your files, accounts, or the rest of the app.",
         )}
       </p>
       <p className="text-[13px] leading-relaxed text-ink-subtle">
-        {t("Only add repositories you trust. Harbor cannot vouch for third-party plugins.")}
+        {t("Only add repositories you trust. Bear cannot vouch for third-party plugins.")}
       </p>
     </div>
   );

@@ -10,7 +10,7 @@ export type DeployResult = {
 };
 
 const NOT_NATIVE_MSG =
-  "Relay deploy is only available in the Harbor desktop app. Open Harbor outside the browser to continue.";
+  "Relay deploy is only available in the Bear desktop app. Open Bear outside the browser to continue.";
 
 function ensureNative(): void {
   const hasTauri =
