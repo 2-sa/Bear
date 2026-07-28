@@ -653,6 +653,7 @@ const appFill: Record<string, string> = {
   "Keep the original look, scaled by your size. It multiplies the built-in size, so different releases can still differ.": "Mantém a aparência original, ajustada pelo seu tamanho. Multiplica o tamanho embutido, então lançamentos diferentes ainda podem variar.",
   "Force your size, font, and color onto styled subs so every file looks consistent. Best fix if embedded sizes keep changing, or for Arabic and subs showing boxes. Can affect karaoke and signs.": "Força seu tamanho, fonte e cor nas legendas estilizadas para que todo arquivo fique consistente. Melhor solução se os tamanhos embutidos mudam sempre, ou para árabe e legendas mostrando quadros. Pode afetar karaokê e placas.",
   "Embedded subtitles changing size between titles, or showing empty boxes? Switch to Use my style for a consistent size. For boxes, also choose Arabic under Font.": "Legendas embutidas mudando de tamanho entre títulos ou mostrando quadros vazios? Mude para Usar meu estilo para um tamanho consistente. Para quadros, escolha também Árabe em Fonte.",
+  "Loading your library…": "Carregando sua biblioteca…",
 };
 
 export default appFill;

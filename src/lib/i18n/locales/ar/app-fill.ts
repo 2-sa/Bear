@@ -1096,6 +1096,7 @@ const appFill: Record<string, string> = {
   "Keep the original look, scaled by your size. It multiplies the built-in size, so different releases can still differ.": "يحافظ على المظهر الأصلي مع تحجيمه وفق حجمك. يضاعف الحجم المُضمّن، لذا قد تظل الإصدارات المختلفة متفاوتة.",
   "Force your size, font, and color onto styled subs so every file looks consistent. Best fix if embedded sizes keep changing, or for Arabic and subs showing boxes. Can affect karaoke and signs.": "يفرض حجمك وخطك ولونك على الترجمات المنسّقة ليبدو كل ملف متّسقًا. أفضل حل إذا ظلّت الأحجام المُضمّنة تتغيّر، أو للعربية والترجمات التي تظهر مربّعات. قد يؤثّر على الكاراوكي واللافتات.",
   "Embedded subtitles changing size between titles, or showing empty boxes? Switch to Use my style for a consistent size. For boxes, also choose Arabic under Font.": "هل تتغيّر أحجام الترجمات المُضمّنة بين العناوين أو تظهر مربّعات فارغة؟ بدّل إلى استخدام نمطي للحصول على حجم ثابت. وللمربّعات، اختر أيضًا العربية ضمن الخط.",
+  "Loading your library…": "جارٍ تحميل مكتبتك…",
 };
 
 export default appFill;
