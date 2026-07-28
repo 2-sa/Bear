@@ -1,3 +1,4 @@
+mod cache_path;
 mod cache_sweep;
 mod dht_boot;
 mod netcheck;
@@ -358,18 +359,10 @@ fn read_config(app: &AppHandle) -> EngineConfig {
 }
 
 fn engine_dir(app: &AppHandle, cfg: &EngineConfig) -> Result<std::path::PathBuf, String> {
-    let dir = if let Some(custom) = cfg.dir.as_deref().map(str::trim).filter(|s| !s.is_empty()) {
-        std::path::PathBuf::from(custom).join("bear-beta-stream-cache")
-    } else {
-        app.path()
-            .app_cache_dir()
-            .map_err(|e| e.to_string())?
-            .join("engine")
-    };
-    if !app.fs_scope().is_allowed(&dir) {
-        return Err("torrent cache access requires an explicit system folder selection".into());
-    }
-    Ok(dir)
+    let app_cache_dir = app.path().app_cache_dir().map_err(|e| e.to_string())?;
+    cache_path::resolve(&app_cache_dir, cfg.dir.as_deref(), |dir| {
+        app.fs_scope().is_allowed(dir)
+    })
 }
 
 async fn init(app: AppHandle) -> Result<(), String> {
