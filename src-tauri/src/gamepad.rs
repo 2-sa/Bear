@@ -11,6 +11,8 @@ const EVENT_NAME: &str = "gamepad://event";
 const DPAD_THRESHOLD: f32 = 0.5;
 
 static GAMEPAD_ENABLED: AtomicBool = AtomicBool::new(true);
+static WINDOW_FOCUSED: AtomicBool = AtomicBool::new(true);
+static BACKGROUND_INPUT: AtomicBool = AtomicBool::new(false);
 static GAMEPADS: OnceLock<Mutex<Vec<GamepadInfo>>> = OnceLock::new();
 
 fn gamepads() -> &'static Mutex<Vec<GamepadInfo>> {
@@ -94,8 +96,15 @@ fn emit(app: &AppHandle, payload: GamepadEventPayload) {
     let _ = app.emit(EVENT_NAME, payload);
 }
 
+fn input_allowed() -> bool {
+    if !GAMEPAD_ENABLED.load(Ordering::Relaxed) {
+        return false;
+    }
+    BACKGROUND_INPUT.load(Ordering::Relaxed) || WINDOW_FOCUSED.load(Ordering::Relaxed)
+}
+
 fn emit_input(app: &AppHandle, payload: GamepadEventPayload) {
-    if GAMEPAD_ENABLED.load(Ordering::Relaxed) {
+    if input_allowed() {
         let _ = app.emit(EVENT_NAME, payload);
     }
 }
@@ -324,4 +333,12 @@ pub fn gamepad_list() -> Vec<GamepadInfo> {
 #[tauri::command]
 pub fn gamepad_set_enabled(enabled: bool) {
     GAMEPAD_ENABLED.store(enabled, Ordering::SeqCst);
+}
+#[tauri::command]
+pub fn gamepad_set_background_input(allowed: bool) {
+    BACKGROUND_INPUT.store(allowed, Ordering::SeqCst);
+}
+
+pub fn set_window_focused(focused: bool) {
+    WINDOW_FOCUSED.store(focused, Ordering::SeqCst);
 }

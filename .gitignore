@@ -43,6 +43,11 @@ local_docs/
 .diag/
 
 # Assets intentionally excluded from desktop builds
+# This repo is pnpm (see packageManager + CI). npm lockfiles must not be committed.
+package-lock.json
+
+# Stripped IP assets (legal) - do not re-commit
+public/avatars/
 public/kids/avatars/
 
 # Hollywood statuette photos. Unused: award-logo.tsx renders these as trophy.png

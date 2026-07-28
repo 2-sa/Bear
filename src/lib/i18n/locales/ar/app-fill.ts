@@ -1097,6 +1097,8 @@ const appFill: Record<string, string> = {
   "Force your size, font, and color onto styled subs so every file looks consistent. Best fix if embedded sizes keep changing, or for Arabic and subs showing boxes. Can affect karaoke and signs.": "يفرض حجمك وخطك ولونك على الترجمات المنسّقة ليبدو كل ملف متّسقًا. أفضل حل إذا ظلّت الأحجام المُضمّنة تتغيّر، أو للعربية والترجمات التي تظهر مربّعات. قد يؤثّر على الكاراوكي واللافتات.",
   "Embedded subtitles changing size between titles, or showing empty boxes? Switch to Use my style for a consistent size. For boxes, also choose Arabic under Font.": "هل تتغيّر أحجام الترجمات المُضمّنة بين العناوين أو تظهر مربّعات فارغة؟ بدّل إلى استخدام نمطي للحصول على حجم ثابت. وللمربّعات، اختر أيضًا العربية ضمن الخط.",
   "Loading your library…": "جارٍ تحميل مكتبتك…",
+  "Keep controlling Bear in the background": "مواصلة التحكم في بير في الخلفية",
+  "Off by default, so your controller only drives Bear while it is the focused window. Leave it off if you play games with the same controller.": "معطّل افتراضيًا، ليتحكم ذراع التحكم في بير فقط عندما تكون نافذته نشطة. اتركه معطّلًا إذا كنت تلعب بنفس ذراع التحكم.",
 };
 
 export default appFill;

@@ -36,6 +36,11 @@ export function useGamepad(): void {
   const { settings } = useSettings();
   const { player } = useView();
   const enabled = settings.controllerSupportEnabled;
+  const backgroundInput = settings.controllerBackgroundInput;
+
+  useEffect(() => {
+    void invoke("gamepad_set_background_input", { allowed: backgroundInput }).catch(() => {});
+  }, [backgroundInput]);
 
   const cfgRef = useRef({
     deadzone: settings.controllerDeadzone,

@@ -654,6 +654,8 @@ const appFill: Record<string, string> = {
   "Force your size, font, and color onto styled subs so every file looks consistent. Best fix if embedded sizes keep changing, or for Arabic and subs showing boxes. Can affect karaoke and signs.": "Força seu tamanho, fonte e cor nas legendas estilizadas para que todo arquivo fique consistente. Melhor solução se os tamanhos embutidos mudam sempre, ou para árabe e legendas mostrando quadros. Pode afetar karaokê e placas.",
   "Embedded subtitles changing size between titles, or showing empty boxes? Switch to Use my style for a consistent size. For boxes, also choose Arabic under Font.": "Legendas embutidas mudando de tamanho entre títulos ou mostrando quadros vazios? Mude para Usar meu estilo para um tamanho consistente. Para quadros, escolha também Árabe em Fonte.",
   "Loading your library…": "Carregando sua biblioteca…",
+  "Keep controlling Bear in the background": "Continuar controlando o Bear em segundo plano",
+  "Off by default, so your controller only drives Bear while it is the focused window. Leave it off if you play games with the same controller.": "Desativado por padrão, para que o controle só comande o Bear enquanto ele for a janela em foco. Deixe desativado se você joga com o mesmo controle.",
 };
 
 export default appFill;

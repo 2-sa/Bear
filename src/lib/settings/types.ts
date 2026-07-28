@@ -136,6 +136,7 @@ export type Settings = {
   serveWebUi: boolean;
   remoteControlEnabled: boolean;
   controllerSupportEnabled: boolean;
+  controllerBackgroundInput: boolean;
   controllerDeadzone: number;
   controllerRepeatMs: number;
   controllerInitialDelayMs: number;

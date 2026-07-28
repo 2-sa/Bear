@@ -648,6 +648,7 @@ pub fn run() {
                 }
                 tauri::WindowEvent::Focused(focused) => {
                     use tauri::Emitter;
+                    gamepad::set_window_focused(*focused);
                     if *focused
                         && (pip::window_pip_is_active(window.app_handle())
                             || tray::always_on_top_pref())
@@ -798,6 +799,7 @@ pub fn run() {
             media_controls::media_controls_clear,
             gamepad::gamepad_list,
             gamepad::gamepad_set_enabled,
+            gamepad::gamepad_set_background_input,
             discord_rp::discord_set_enabled,
             cast::cast_discover,
             dlna::lan_ip,

@@ -87,6 +87,7 @@ export const DEFAULT: Settings = {
   serveWebUi: false,
   remoteControlEnabled: false,
   controllerSupportEnabled: true,
+  controllerBackgroundInput: false,
   controllerDeadzone: 0.35,
   controllerRepeatMs: 140,
   controllerInitialDelayMs: 400,
