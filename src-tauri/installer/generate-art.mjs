@@ -19,7 +19,7 @@ function markSvg(fill) {
 }
 
 function wordmarkSvg(fill) {
-  return readFileSync(join(assets, "harbor-wordmark.svg"), "utf8").replace(/class="cls-1"/g, `fill="${fill}"`);
+  return readFileSync(join(assets, "bear-wordmark.svg"), "utf8").replace(/class="wordmark"/g, `fill="${fill}"`);
 }
 
 function rasterByWidth(svg, width) {
@@ -75,7 +75,7 @@ async function sidebar() {
     `<svg xmlns="http://www.w3.org/2000/svg" width="${W * s}" height="${H * s}"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1c1f26"/><stop offset="0.55" stop-color="#15171c"/><stop offset="1" stop-color="#0d0f13"/></linearGradient></defs><rect width="${W * s}" height="${H * s}" fill="url(#g)"/></svg>`,
   );
   const mark = rasterByWidth(markSvg("#f4f4f5"), 86 * s);
-  const word = rasterByWidth(wordmarkSvg("#eef0f2"), 122 * s);
+  const word = rasterByHeight(wordmarkSvg("#eef0f2"), 28 * s);
   const mm = await sharp(mark).metadata();
   const wm = await sharp(word).metadata();
   const gap = 28 * s;
