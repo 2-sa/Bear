@@ -3,6 +3,7 @@ mod anime4k;
 mod asr_model;
 mod binary_lookup;
 mod browser;
+mod display_fit;
 mod cast;
 mod cast_hls;
 mod cast_server;
@@ -357,6 +358,28 @@ fn harbor_resume_webview(app: tauri::AppHandle) {
     }
 }
 
+const REVEAL_FAILSAFE_MS: u64 = 12_000;
+
+fn install_reveal_failsafe(app: &tauri::AppHandle) {
+    use tauri::Manager;
+    let handle = app.clone();
+    std::thread::spawn(move || {
+        std::thread::sleep(std::time::Duration::from_millis(REVEAL_FAILSAFE_MS));
+        let Some(window) = handle.get_webview_window("main") else {
+            return;
+        };
+        if matches!(window.is_visible(), Ok(true)) {
+            return;
+        }
+        eprintln!(
+            "[harbor::reveal] page load did not finish in {REVEAL_FAILSAFE_MS}ms, showing window anyway"
+        );
+        let _ = window.show();
+        let _ = window.unminimize();
+        let _ = window.set_focus();
+    });
+}
+
 fn ensure_window_on_screen(app: &tauri::AppHandle) {
     use tauri::Manager;
     let Some(window) = app.get_webview_window("main") else {
@@ -469,6 +492,10 @@ pub fn run() {
                 let _ = w.set_focus();
                 #[cfg(windows)]
                 force_show_foreground(&w);
+            } else {
+                eprintln!("[harbor::single-instance] no main window to focus, releasing the lock");
+                app.exit(0);
+                return;
             }
             if let Some(url) = args
                 .iter()
@@ -540,6 +567,8 @@ pub fn run() {
             }
             proc_guard::init();
             proc_guard::reap_orphans();
+            display_fit::install(app.handle());
+            install_reveal_failsafe(app.handle());
             #[cfg(windows)]
             {
                 use tauri_plugin_deep_link::DeepLinkExt;

@@ -188,6 +188,16 @@ const settingsFill: Record<string, string> = {
   "{n} addons don't provide streams and aren't listed.": "{n} من الإضافات لا توفّر بثًا ولا تظهر هنا.",
   "Moved {name} to position {n} of {total}": "تم نقل {name} إلى الموضع {n} من {total}",
   "Bear ranking puts the best-scoring sources first. Addon order keeps each addon's results in the order it returned them, like the Stremio and Vidi apps. Stream priority below decides which addon leads, in both modes.": "يضع ترتيب Bear المصادر الأعلى تقييمًا أولًا. ويحافظ ترتيب الإضافات على نتائج كل إضافة بالترتيب الذي أعادتها به، مثل تطبيقَي Stremio وVidi. وتحدّد أولوية البث أدناه أي إضافة تتصدّر، في كلا الوضعين.",
+  "If a stream hasn't started playing in time (a dead source or an addon that's down), automatically try the next available stream. Off by default.": "إذا لم يبدأ البثّ في الوقت المحدّد (مصدر متوقف أو إضافة معطّلة)، جرّب البثّ المتاح التالي تلقائيًا. مُعطّل افتراضيًا.",
+  "How long to wait first": "مدة الانتظار قبل التبديل",
+  "Slow addons and P2P sources often need more than 10 seconds to start. Raise this if streams are being skipped before they get a fair chance.": "غالبًا ما تحتاج الإضافات البطيئة ومصادر P2P إلى أكثر من 10 ثوانٍ لتبدأ. ارفع هذه القيمة إذا كان يتم تخطّي البثّ قبل أن تُتاح له فرصة كافية.",
+  "{n} sec": "{n} ثانية",
+  "Only start the torrent engine when needed": "لا تُشغّل محرّك التورنت إلا عند الحاجة",
+  "Bear normally starts its torrent engine at launch so the first P2P stream connects faster. That keeps a DHT node running and talking to the network even when you are not watching anything. Turn this on if you are on a metered or limited connection: the engine then starts the first time you actually play a torrent. Takes effect next launch.": "يبدأ بير عادةً محرّك التورنت عند الإقلاع ليتصل أول بثّ P2P أسرع، وهذا يُبقي عقدة DHT تعمل وتتواصل مع الشبكة حتى وأنت لا تشاهد شيئًا. فعّل هذا الخيار إذا كان اتصالك محدودًا أو محسوب الاستهلاك: عندها يبدأ المحرّك أول مرة تُشغّل فيها تورنت فعليًا. يسري عند الإقلاع التالي.",
+  "What fullscreen does": "ما الذي يفعله ملء الشاشة",
+  "True fullscreen covers the whole screen and hides the taskbar. Maximize fills the screen but keeps the taskbar and title bar, so you can still switch apps.": "ملء الشاشة الحقيقي يغطّي الشاشة بالكامل ويُخفي شريط المهام. أما التكبير فيملأ الشاشة مع الإبقاء على شريط المهام وشريط العنوان، لتتمكّن من التنقّل بين التطبيقات.",
+  "True fullscreen": "ملء شاشة حقيقي",
+  "Maximize": "تكبير",
 };
 
 export default settingsFill;

@@ -183,6 +183,16 @@ const settingsFill: Record<string, string> = {
   "{n} addons don't provide streams and aren't listed.": "{n} addons não fornecem streams e não aparecem aqui.",
   "Moved {name} to position {n} of {total}": "{name} movido para a posição {n} de {total}",
   "Bear ranking puts the best-scoring sources first. Addon order keeps each addon's results in the order it returned them, like the Stremio and Vidi apps. Stream priority below decides which addon leads, in both modes.": "A classificação do Bear coloca as fontes com melhor pontuação primeiro. A ordem dos addons mantém os resultados de cada addon na ordem em que foram retornados, como nos apps Stremio e Vidi. A prioridade de streams abaixo decide qual addon lidera, nos dois modos.",
+  "If a stream hasn't started playing in time (a dead source or an addon that's down), automatically try the next available stream. Off by default.": "Se um stream não começar a reproduzir a tempo (uma fonte indisponível ou um addon fora do ar), tenta automaticamente o próximo stream disponível. Desativado por padrão.",
+  "How long to wait first": "Quanto tempo esperar antes",
+  "Slow addons and P2P sources often need more than 10 seconds to start. Raise this if streams are being skipped before they get a fair chance.": "Addons lentos e fontes P2P costumam precisar de mais de 10 segundos para começar. Aumente isto se os streams estiverem a ser saltados antes de terem hipótese.",
+  "{n} sec": "{n} s",
+  "Only start the torrent engine when needed": "Só iniciar o motor de torrents quando necessário",
+  "Bear normally starts its torrent engine at launch so the first P2P stream connects faster. That keeps a DHT node running and talking to the network even when you are not watching anything. Turn this on if you are on a metered or limited connection: the engine then starts the first time you actually play a torrent. Takes effect next launch.": "Normalmente o Bear inicia o motor de torrents ao arrancar para que o primeiro stream P2P ligue mais depressa. Isso mantém um nó DHT ativo e a comunicar com a rede mesmo quando não está a ver nada. Ative isto se tiver uma ligação limitada ou tarifada: o motor passa a arrancar só na primeira vez que reproduzir um torrent. Aplica-se no próximo arranque.",
+  "What fullscreen does": "O que o ecrã inteiro faz",
+  "True fullscreen covers the whole screen and hides the taskbar. Maximize fills the screen but keeps the taskbar and title bar, so you can still switch apps.": "O ecrã inteiro real cobre todo o ecrã e esconde a barra de tarefas. Maximizar preenche o ecrã mas mantém a barra de tarefas e a barra de título, para continuar a trocar de aplicações.",
+  "True fullscreen": "Ecrã inteiro real",
+  "Maximize": "Maximizar",
 };
 
 export default settingsFill;
