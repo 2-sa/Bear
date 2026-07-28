@@ -485,6 +485,26 @@ fn network_timeout_for(url: &str) -> &'static str {
     }
 }
 
+const SUBTITLE_CACHE_DIR_NAME: &str = "bear-beta-subs";
+
+fn is_app_owned_subtitle_file_in(target: &std::path::Path, cache_dir: &std::path::Path) -> bool {
+    let extension_allowed = target
+        .extension()
+        .and_then(|value| value.to_str())
+        .is_some_and(|value| matches!(value.to_ascii_lowercase().as_str(), "srt" | "ass" | "vtt"));
+    if !extension_allowed || !target.is_file() {
+        return false;
+    }
+    let (Ok(target), Ok(cache_dir)) = (target.canonicalize(), cache_dir.canonicalize()) else {
+        return false;
+    };
+    target.parent() == Some(cache_dir.as_path())
+}
+
+fn is_app_owned_subtitle_file(target: &std::path::Path) -> bool {
+    is_app_owned_subtitle_file_in(target, &std::env::temp_dir().join(SUBTITLE_CACHE_DIR_NAME))
+}
+
 fn validate_mpv_media_target(app: &AppHandle, target: &str) -> Result<(), String> {
     let lower = target.trim().to_ascii_lowercase();
     const NETWORK_SCHEMES: &[&str] = &[
@@ -500,7 +520,8 @@ fn validate_mpv_media_target(app: &AppHandle, target: &str) -> Result<(), String
     if lower.contains("://") || lower.starts_with("file:") {
         return Err("media protocol is not allowed".into());
     }
-    if app.fs_scope().is_allowed(std::path::Path::new(target)) {
+    let target = std::path::Path::new(target);
+    if is_app_owned_subtitle_file(target) || app.fs_scope().is_allowed(target) {
         Ok(())
     } else {
         Err("local media path is outside the authorized filesystem scope".into())
@@ -1927,7 +1948,7 @@ pub async fn mpv_sub_add(
 }
 
 fn sub_cache_dir() -> PathBuf {
-    let dir = std::env::temp_dir().join("bear-beta-subs");
+    let dir = std::env::temp_dir().join(SUBTITLE_CACHE_DIR_NAME);
     let _ = std::fs::create_dir_all(&dir);
     dir
 }
@@ -2036,7 +2057,32 @@ fn prepare_subtitle_download(
 
 #[cfg(test)]
 mod subtitle_download_tests {
-    use super::{normalize_subtitle_bytes, prepare_subtitle_download, subtitle_extension};
+    use super::{
+        is_app_owned_subtitle_file_in, normalize_subtitle_bytes, prepare_subtitle_download,
+        subtitle_extension,
+    };
+
+    #[test]
+    fn only_direct_subtitle_files_in_the_app_cache_are_trusted() {
+        let root = std::env::temp_dir().join(format!("bear-sub-policy-{}", uuid::Uuid::new_v4()));
+        let nested = root.join("nested");
+        std::fs::create_dir_all(&nested).unwrap();
+        let cached = root.join("downloaded.srt");
+        let wrong_extension = root.join("downloaded.txt");
+        let nested_subtitle = nested.join("downloaded.srt");
+        let outside = root.with_extension("srt");
+        for path in [&cached, &wrong_extension, &nested_subtitle, &outside] {
+            std::fs::write(path, b"1\n00:00:00,000 --> 00:00:01,000\nTest\n").unwrap();
+        }
+
+        assert!(is_app_owned_subtitle_file_in(&cached, &root));
+        assert!(!is_app_owned_subtitle_file_in(&wrong_extension, &root));
+        assert!(!is_app_owned_subtitle_file_in(&nested_subtitle, &root));
+        assert!(!is_app_owned_subtitle_file_in(&outside, &root));
+
+        let _ = std::fs::remove_dir_all(&root);
+        let _ = std::fs::remove_file(&outside);
+    }
 
     #[test]
     fn uses_explicit_ass_format_when_download_url_has_no_extension() {
