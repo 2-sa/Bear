@@ -47,6 +47,17 @@ test("Bear-owned defaults survive upstream syncs", async (context) => {
   ]);
   assert.equal(DISCORD_PARTY_JOIN_ENABLED, false);
 
+  const anilistConfig = readFileSync(
+    new URL("../src/lib/anilist/config.ts", import.meta.url),
+    "utf8",
+  );
+  assert.match(anilistConfig, /ANILIST_CLIENT_ID = "42941"/);
+  assert.match(
+    anilistConfig,
+    /ANILIST_TOKEN_EXCHANGE_URL = "https:\/\/bugs\.harbor\.site\/v1\/anilist\/token"/,
+  );
+  assert.doesNotMatch(anilistConfig, /43455|api\.7mood\.net/);
+
   const discordNative = readFileSync(
     new URL("../src-tauri/src/discord_rp.rs", import.meta.url),
     "utf8",
