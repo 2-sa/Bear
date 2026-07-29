@@ -55,7 +55,7 @@ export function MobileProfile({ onOpenRemote }: { onOpenRemote: () => void }) {
       <section className="overflow-hidden rounded-2xl border border-edge-soft/70 bg-elevated/40">
         <Row icon={<MonitorSmartphone size={20} strokeWidth={2} />} label="Remote" onClick={onOpenRemote} />
         <Divider />
-        <Row icon={<HelpCircle size={20} strokeWidth={2} />} label="Help & feedback" onClick={() => window.open("https://bugs.harbor.site", "_blank")} />
+        <Row icon={<HelpCircle size={20} strokeWidth={2} />} label="Help & feedback" onClick={() => window.open("https://github.com/2-sa/Bear/issues/new", "_blank")} />
         <Divider />
         <Row icon={<FileText size={20} strokeWidth={2} />} label="Legal" onClick={() => {}} />
         {user && (

@@ -4,7 +4,7 @@ This Worker is a read-only front end for the checksum-locked build assets in
 `scripts/binary-lock.json`. It never fetches an upstream URL and it does not
 expose any upload, delete, proxy, or directory-listing endpoint.
 
-Production URL: `https://harbor-binary-mirror.xyz7.workers.dev`
+Production URL: `https://bear.7mood.net`
 
 The current ten unique objects use 336,751,444 bytes (about 0.337 GB), well
 below the account's 10 GB storage limit. Keep only the compressed/raw source

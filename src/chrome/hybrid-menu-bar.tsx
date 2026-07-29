@@ -77,7 +77,7 @@ export function HybridMenuBar() {
       label: t("Help"),
       items: [
         { kind: "action", label: t("Check for Updates"), onClick: () => void checkForUpdate(true) },
-        { kind: "action", label: t("Report a Bug"), onClick: () => openUrl("https://bugs.harbor.site") },
+        { kind: "action", label: t("Report a Bug"), onClick: () => openUrl("https://github.com/2-sa/Bear/issues/new") },
         { kind: "sep" },
         { kind: "label", label: `Bear ${APP_VERSION}` },
       ],

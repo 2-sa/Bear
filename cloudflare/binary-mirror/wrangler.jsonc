@@ -5,6 +5,12 @@
   "compatibility_date": "2026-07-27",
   "workers_dev": true,
   "preview_urls": false,
+  "routes": [
+    {
+      "pattern": "bear.7mood.net",
+      "custom_domain": true
+    }
+  ],
   "observability": {
     "enabled": true,
     "head_sampling_rate": 1

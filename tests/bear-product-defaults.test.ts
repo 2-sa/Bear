@@ -47,6 +47,17 @@ test("Bear-owned defaults survive upstream syncs", async (context) => {
   ]);
   assert.equal(DISCORD_PARTY_JOIN_ENABLED, false);
 
+  const anilistConfig = readFileSync(
+    new URL("../src/lib/anilist/config.ts", import.meta.url),
+    "utf8",
+  );
+  assert.match(anilistConfig, /ANILIST_CLIENT_ID = "43455"/);
+  assert.match(
+    anilistConfig,
+    /ANILIST_TOKEN_EXCHANGE_URL = "https:\/\/api\.7mood\.net\/v1\/anilist\/token"/,
+  );
+  assert.doesNotMatch(anilistConfig, /42941|bugs\.harbor\.site/);
+
   const discordNative = readFileSync(
     new URL("../src-tauri/src/discord_rp.rs", import.meta.url),
     "utf8",
@@ -61,4 +72,18 @@ test("Bear-owned defaults survive upstream syncs", async (context) => {
   );
   assert.match(languagePanel, /https:\/\/github\.com\/2-sa\/Bear/);
   assert.doesNotMatch(languagePanel, /https:\/\/github\.com\/harborstremio\/harbor/);
+
+  const bearOwnedLinkFiles = [
+    "../src/views/settings/build-feedback.tsx",
+    "../src/views/settings/bug-report/success-card.tsx",
+    "../src/views/settings/bug-report/contributor-card.tsx",
+    "../src/views/mobile/mobile-profile.tsx",
+    "../src/chrome/hybrid-menu-bar.tsx",
+    "../src/components/mobile-notice.tsx",
+  ];
+  for (const file of bearOwnedLinkFiles) {
+    const source = readFileSync(new URL(file, import.meta.url), "utf8");
+    assert.match(source, /https:\/\/github\.com\/2-sa\/Bear/);
+    assert.doesNotMatch(source, /harborstremio\/harbor|bugs\.harbor\.site/);
+  }
 });

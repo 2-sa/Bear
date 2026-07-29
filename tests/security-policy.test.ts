@@ -188,7 +188,7 @@ test("only our signature-verified update channel is enabled", () => {
   };
   assert.equal(config.bundle?.createUpdaterArtifacts, false);
   assert.deepEqual(config.plugins?.updater?.endpoints, [
-    "https://github.com/2-sa/Bear/releases/latest/download/latest.json",
+    "https://github.com/2-sa/Bear/releases/download/beta-channel/latest.json",
   ]);
   assert.notEqual(config.plugins?.updater?.pubkey, undefined);
   assert.notEqual(config.plugins?.updater?.pubkey, "");
@@ -213,20 +213,27 @@ test("only our signature-verified update channel is enabled", () => {
   }
 });
 
-test("release workflow signs Windows and macOS updates and keeps them draft", () => {
+test("release workflow stages signed desktop builds and publishes only a complete beta update", () => {
   const workflow = readFileSync(
     new URL("../.github/workflows/tauri-build.yml", import.meta.url),
     "utf8",
   );
+  const releaseConfig = JSON.parse(
+    readFileSync(new URL("../src-tauri/tauri.release.conf.json", import.meta.url), "utf8"),
+  ) as { bundle?: { createUpdaterArtifacts?: boolean } };
   assert.match(workflow, /^\s*workflow_dispatch:/m);
   assert.match(workflow, /contents: write/);
   assert.match(workflow, /environment: release-signing/);
   assert.match(workflow, /TAURI_SIGNING_PRIVATE_KEY: \$\{\{ secrets\.TAURI_SIGNING_PRIVATE_KEY \}\}/);
-  assert.match(workflow, /createUpdaterArtifacts":true/);
-  assert.match(workflow, /tagName: v__VERSION__/);
+  assert.equal(releaseConfig.bundle?.createUpdaterArtifacts, true);
+  assert.match(workflow, /tagName: beta-v__VERSION__/);
   assert.match(workflow, /releaseDraft: true/);
-  assert.match(workflow, /uploadUpdaterJson: true/);
-  assert.match(workflow, /uploadUpdaterSignatures: true/);
+  assert.match(workflow, /includeUpdaterJson:/);
+  assert.match(workflow, /create-platform-update-manifest\.mjs/);
+  assert.match(workflow, /merge-update-manifests\.mjs/);
+  assert.match(workflow, /verify-update-manifest\.mjs/);
+  assert.match(workflow, /gh release upload beta-channel update-channel\/latest\.json --clobber/);
+  assert.match(workflow, /inputs\.publish_update == true && inputs\.target == 'desktop-all'/);
   assert.match(workflow, /x86_64-pc-windows-msvc/);
   assert.match(workflow, /aarch64-pc-windows-msvc/);
   assert.match(workflow, /x86_64-apple-darwin/);
@@ -241,7 +248,7 @@ test("release workflow signs Windows and macOS updates and keeps them draft", ()
   assert.match(setup, /prevent_self_review = \$false/);
   assert.match(setup, /reviewers = @\(/);
   assert.match(setup, /deployment-branch-policies/);
-  assert.match(setup, /\$releaseBranch = "main"/);
+  assert.match(setup, /\$releaseBranch = "beta-branch"/);
   assert.match(setup, /gh secret set TAURI_SIGNING_PRIVATE_KEY --env \$environmentName/);
   assert.doesNotMatch(setup, /Write-Output.+Get-Content/);
 
@@ -268,14 +275,14 @@ test("release builds bundle only checksum-locked executable sidecars", () => {
   );
   assert.doesNotMatch(workflow, /releases\/latest|releases\/download\/latest|osxexperts\.net|johnvansickle\.com/);
   assert.match(workflow, /fetch-binaries\.mjs --target/);
-  assert.match(workflow, /HARBOR_BINARY_MIRROR_URL: https:\/\/harbor-binary-mirror\.xyz7\.workers\.dev/);
+  assert.match(workflow, /HARBOR_BINARY_MIRROR_URL: https:\/\/bear\.7mood\.net/);
   assert.match(workflow, /HARBOR_BINARY_MIRROR_REQUIRED: "1"/);
 
   const appWorkflow = readFileSync(
     new URL("../.github/workflows/app-build.yml", import.meta.url),
     "utf8",
   );
-  assert.match(appWorkflow, /HARBOR_BINARY_MIRROR_URL: https:\/\/harbor-binary-mirror\.xyz7\.workers\.dev/);
+  assert.match(appWorkflow, /HARBOR_BINARY_MIRROR_URL: https:\/\/bear\.7mood\.net/);
   assert.match(appWorkflow, /HARBOR_BINARY_MIRROR_REQUIRED: "1"/);
 
   const fetcher = readFileSync(
@@ -321,6 +328,12 @@ test("R2 mirror is read-only, allowlisted, and never proxies upstream", () => {
     new URL("../cloudflare/binary-mirror/src/index.js", import.meta.url),
     "utf8",
   );
+  const workerConfig = JSON.parse(
+    readFileSync(
+      new URL("../cloudflare/binary-mirror/wrangler.jsonc", import.meta.url),
+      "utf8",
+    ),
+  ) as { routes?: Array<{ pattern?: string; custom_domain?: boolean }> };
   const lock = JSON.parse(
     readFileSync(new URL("../scripts/binary-lock.json", import.meta.url), "utf8"),
   ) as { artifacts: Record<string, Record<string, { mirrorKey: string }>> };
@@ -331,6 +344,9 @@ test("R2 mirror is read-only, allowlisted, and never proxies upstream", () => {
   assert.doesNotMatch(worker, /await\s+fetch\s*\(/);
   assert.doesNotMatch(worker, /\.put\s*\(|\.delete\s*\(|\.list\s*\(/);
   assert.match(worker, /method !== "GET" && method !== "HEAD"/);
+  assert.deepEqual(workerConfig.routes, [
+    { pattern: "bear.7mood.net", custom_domain: true },
+  ]);
 });
 
 test("release workflow actions are pinned to immutable commits", () => {

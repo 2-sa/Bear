@@ -13,7 +13,7 @@ permissions:
   contents: read
 
 env:
-  HARBOR_BINARY_MIRROR_URL: https://harbor-binary-mirror.xyz7.workers.dev
+  HARBOR_BINARY_MIRROR_URL: https://bear.7mood.net
   HARBOR_BINARY_MIRROR_REQUIRED: "1"
 
 concurrency:

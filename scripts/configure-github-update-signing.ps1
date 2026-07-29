@@ -5,7 +5,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 $environmentName = "release-signing"
-$releaseBranch = "main"
+$releaseBranch = "beta-branch"
 
 if (-not (Test-Path -LiteralPath $KeyPath -PathType Leaf)) {
   throw "Updater private key not found at $KeyPath"
@@ -56,4 +56,4 @@ if ($LASTEXITCODE -ne 0) {
   throw "Could not store TAURI_SIGNING_PRIVATE_KEY in the $environmentName environment"
 }
 
-Write-Output "GitHub release-signing environment, main-branch policy, reviewer, and updater key configured for $Repository."
+Write-Output "GitHub release-signing environment, beta-branch policy, reviewer, and updater key configured for $Repository."

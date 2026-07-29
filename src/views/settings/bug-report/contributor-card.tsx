@@ -2,7 +2,7 @@ import { GitPullRequest } from "lucide-react";
 import { GitHubIcon } from "@/components/github-icon";
 import { openUrl } from "@/lib/window";
 
-const REPO = "https://github.com/harborstremio/harbor";
+const REPO = "https://github.com/2-sa/Bear";
 
 export function ContributorCard() {
   return (

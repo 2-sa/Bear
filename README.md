@@ -432,7 +432,7 @@ Harbor is a Tauri 2 app: a React + TypeScript frontend and a Rust shell, with th
 - [`wasm-pack`](https://rustwasm.github.io/wasm-pack/) (only needed to rebuild the WASM stream core)
 
 > [!IMPORTANT]
-> Before your first build, run `pnpm run setup:all`. On Windows and macOS it fetches fixed-version yt-dlp, ffmpeg, and ffprobe assets and verifies their size and SHA-256 against `scripts/binary-lock.json` before bundling them. GitHub release builds require the read-only R2 mirror at `https://harbor-binary-mirror.xyz7.workers.dev`; local builds may use the same mirror through `HARBOR_BINARY_MIRROR_URL` or fall back to the fixed upstream release assets. Linux continues to use system tools. On Windows, extracting mpv needs [7-Zip](https://www.7-zip.org/) (`7z` on `PATH`).
+> Before your first build, run `pnpm run setup:all`. On Windows and macOS it fetches fixed-version yt-dlp, ffmpeg, and ffprobe assets and verifies their size and SHA-256 against `scripts/binary-lock.json` before bundling them. GitHub release builds require the read-only R2 mirror at `https://bear.7mood.net`; local builds may use the same mirror through `HARBOR_BINARY_MIRROR_URL` or fall back to the fixed upstream release assets. Linux continues to use system tools. On Windows, extracting mpv needs [7-Zip](https://www.7-zip.org/) (`7z` on `PATH`).
 
 > Desktop updates for this fork are accepted only from signed releases in `2-sa/Bear`. The manually triggered `Signed Tauri Release` workflow creates a draft GitHub Release for Windows and macOS; publishing that draft makes its signed `latest.json` visible to installed copies. See [`docs/SIGNED_RELEASES.md`](docs/SIGNED_RELEASES.md) for the one-time secret setup and release checklist.
 
