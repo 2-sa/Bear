@@ -1,6 +1,7 @@
 const IS_TAURI = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
-const HARBOR_LOGO = "https://harbor.site/discord/harbordiscord.png";
+const BEAR_LOGO = "bear_logo";
+export const DISCORD_PARTY_JOIN_ENABLED = false;
 
 type DiscordConfig = {
   enabled: boolean;
@@ -75,7 +76,7 @@ function computeBase(): Base {
         payload: {
           details: "Watching something",
           state: playback.paused ? "Paused" : undefined,
-          posterUrl: HARBOR_LOGO,
+          posterUrl: BEAR_LOGO,
           paused: playback.paused,
         },
         key: `hide:${playback.paused}`,
@@ -91,7 +92,7 @@ function computeBase(): Base {
       payload: {
         details: playback.title,
         state,
-        posterUrl: (config.showPoster && playback.posterUrl) || HARBOR_LOGO,
+        posterUrl: (config.showPoster && playback.posterUrl) || BEAR_LOGO,
         smallImageUrl: (config.showPoster && playback.smallImageUrl) || undefined,
         largeText: playback.year != null ? `${playback.title} (${playback.year})` : playback.title,
         startTs: live && config.showTimestamp ? nowSec - Math.floor(playback.positionSec) : undefined,
@@ -103,19 +104,19 @@ function computeBase(): Base {
   }
   if (browse && config.showWhenBrowsing) {
     if (config.hideTitle)
-      return { payload: { details: "Browsing Bear", posterUrl: HARBOR_LOGO }, key: "browse:hide" };
+      return { payload: { details: "Browsing Bear", posterUrl: BEAR_LOGO }, key: "browse:hide" };
     return {
       payload: {
         details: browse.details ?? "Browsing Bear",
         state: browse.state,
-        posterUrl: (config.showPoster && browse.largeImage) || HARBOR_LOGO,
+        posterUrl: (config.showPoster && browse.largeImage) || BEAR_LOGO,
         largeText: browse.largeText ?? browse.details,
       },
       key: `browse:${browse.details ?? ""}|${browse.state ?? ""}|${browse.largeImage ?? ""}`,
     };
   }
   if (party) {
-    return { payload: { details: "In a Watch Party", posterUrl: HARBOR_LOGO }, key: "party-only" };
+    return { payload: { details: "In a Watch Party", posterUrl: BEAR_LOGO }, key: "party-only" };
   }
   return null;
 }
@@ -134,7 +135,7 @@ function compute(): Computed {
     const people = headcount === 1 ? "1 👤" : `${headcount} 👥`;
     payload.details = `Watch Party · ${people}`;
     payload.state = context ?? "In the lobby";
-    if (party.joinUrl && config.showPartyJoin) {
+    if (DISCORD_PARTY_JOIN_ENABLED && party.joinUrl && config.showPartyJoin) {
       payload.buttonLabel = "Join the Watch Party";
       payload.buttonUrl = party.joinUrl;
     }

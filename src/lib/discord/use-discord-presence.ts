@@ -9,7 +9,13 @@ import { awardSourceMeta } from "@/lib/anime-awards";
 import { tmdbPerson, tmdbPersonCached } from "@/lib/providers/tmdb/tmdb-people";
 import type { Meta } from "@/lib/cinemeta";
 import { getMangaReading, subscribeMangaReading, type MangaReadingState } from "@/lib/manga-reading-state";
-import { configureDiscord, setBrowsePresence, setPartyPresence, type BrowsePresence } from "./presence";
+import {
+  configureDiscord,
+  DISCORD_PARTY_JOIN_ENABLED,
+  setBrowsePresence,
+  setPartyPresence,
+  type BrowsePresence,
+} from "./presence";
 import { useActivityHint } from "./activity-hint";
 
 const JOIN_BASE = "https://app.harbor.site";
@@ -194,7 +200,9 @@ export function useDiscordPresence(): void {
       setPartyPresence(null);
       return;
     }
-    const joinUrl = relayUrl ? buildInviteUrl(relayUrl, snapshot.room, JOIN_BASE) : undefined;
+    const joinUrl = DISCORD_PARTY_JOIN_ENABLED && relayUrl
+      ? buildInviteUrl(relayUrl, snapshot.room, JOIN_BASE)
+      : undefined;
     setPartyPresence({
       id: snapshot.room,
       size: Math.max(1, snapshot.participants.length),
