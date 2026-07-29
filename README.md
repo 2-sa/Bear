@@ -103,6 +103,7 @@ HARBOR IS A OPEN CONCEPT AND NOT A ENTITY. WE DO NOT PROFIT OR ACCEPT MONEY FOR 
 - **Casts across the room.** DLNA/UPnP, Chromecast, AirPlay, and Roku via a bundled Rust cast server and a web cast receiver.
 - **Integrations.** Feature rich discord rich presence integration, webhooks for Discord and Telegram, Trakt Sync, and native integrations to TMDB, OMDB, Fanart.Tv, RPDB and more! Customize the location and what badges are shown.
 - **And much more! (seriously this would be very long)**
+
 <p align="right"><a href="#readme-top">&#9650; back to top</a></p>
 
 ## Feature Tour
