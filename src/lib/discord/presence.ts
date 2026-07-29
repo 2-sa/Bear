@@ -3,11 +3,8 @@ import type { MangaReadingState } from "@/lib/manga-reading-state";
 
 const IS_TAURI = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
-const HARBOR_LOGO = `${HARBOR_API_BASE}/discord/harbordiscord.png`;
-// Discord strips buttons that link to its own invites: discord.gg makes it
-// reject the whole activity (presence vanishes), discord.com/invite is dropped
-// silently. A community-invite button needs a redirect on a domain we own.
-const STATIC_BUTTONS = [{ label: "Harbor Website", url: "https://harbor.elfhosted.com/" }];
+const BEAR_LOGO = "bear_logo";
+export const DISCORD_PARTY_JOIN_ENABLED = false;
 
 type DiscordConfig = {
   enabled: boolean;
@@ -83,7 +80,7 @@ function computeBase(): Base {
         payload: {
           details: "Watching something",
           state: playback.paused ? "Paused" : undefined,
-          posterUrl: HARBOR_LOGO,
+          posterUrl: BEAR_LOGO,
           paused: playback.paused,
         },
         key: `hide:${playback.paused}`,
@@ -99,7 +96,7 @@ function computeBase(): Base {
       payload: {
         details: playback.title,
         state,
-        posterUrl: (config.showPoster && playback.posterUrl) || HARBOR_LOGO,
+        posterUrl: (config.showPoster && playback.posterUrl) || BEAR_LOGO,
         smallImageUrl: (config.showPoster && playback.smallImageUrl) || undefined,
         largeText: playback.year != null ? `${playback.title} (${playback.year})` : playback.title,
         startTs:
@@ -134,19 +131,19 @@ function computeBase(): Base {
   }
   if (browse && config.showWhenBrowsing) {
     if (config.hideTitle)
-      return { payload: { details: "Browsing Bear", posterUrl: HARBOR_LOGO }, key: "browse:hide" };
+      return { payload: { details: "Browsing Bear", posterUrl: BEAR_LOGO }, key: "browse:hide" };
     return {
       payload: {
         details: browse.details ?? "Browsing Bear",
         state: browse.state,
-        posterUrl: (config.showPoster && browse.largeImage) || HARBOR_LOGO,
+        posterUrl: (config.showPoster && browse.largeImage) || BEAR_LOGO,
         largeText: browse.largeText ?? browse.details,
       },
       key: `browse:${browse.details ?? ""}|${browse.state ?? ""}|${browse.largeImage ?? ""}`,
     };
   }
   if (party) {
-    return { payload: { details: "In a Watch Party", posterUrl: HARBOR_LOGO }, key: "party-only" };
+    return { payload: { details: "In a Watch Party", posterUrl: BEAR_LOGO }, key: "party-only" };
   }
   return null;
 }
@@ -165,10 +162,10 @@ function compute(): Computed {
     const people = headcount === 1 ? "1 👤" : `${headcount} 👥`;
     payload.details = `Watch Party · ${people}`;
     payload.state = context ?? "In the lobby";
-    payload.buttons =
-      party.joinUrl && config.showPartyJoin
-        ? [{ label: "Join the Watch Party", url: party.joinUrl }, ...STATIC_BUTTONS]
-        : STATIC_BUTTONS;
+    if (DISCORD_PARTY_JOIN_ENABLED && party.joinUrl && config.showPartyJoin) {
+      payload.buttonLabel = "Join the Watch Party";
+      payload.buttonUrl = party.joinUrl;
+    }
     const live = typeof payload.startTs === "number";
     return {
       payload,

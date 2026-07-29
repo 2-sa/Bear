@@ -9,8 +9,8 @@ use discord_rich_presence::{DiscordIpc, DiscordIpcClient};
 use serde::Deserialize;
 use tauri::{AppHandle, Manager};
 
-const APP_ID: &str = "1510339683215736892";
-const SMALL_IMAGE_KEY: &str = "harbor_logo";
+const APP_ID: &str = "1527138265033998437";
+const SMALL_IMAGE_KEY: &str = "bear_logo";
 
 #[derive(Default, Clone)]
 struct Desired {
@@ -76,7 +76,7 @@ fn clean(s: Option<String>) -> Option<String> {
 
 fn safe_image(url: Option<String>) -> Option<String> {
     let u = url?;
-    if u.starts_with("https://") && u.len() <= 256 {
+    if (u.starts_with("https://") && u.len() <= 256) || u == SMALL_IMAGE_KEY {
         Some(u)
     } else {
         None
@@ -184,10 +184,10 @@ pub fn run_loop(app: AppHandle) {
             let mut assets = match desired.small_image.as_deref() {
                 Some(s) => Assets::new()
                     .small_image(s)
-                    .small_text(desired.small_text.as_deref().unwrap_or("Harbor")),
+                    .small_text(desired.small_text.as_deref().unwrap_or("Bear")),
                 None => Assets::new()
                     .small_image(SMALL_IMAGE_KEY)
-                    .small_text("Harbor"),
+                    .small_text("Bear"),
             };
             if let Some(img) = desired.large_image.as_deref() {
                 assets = assets.large_image(img);

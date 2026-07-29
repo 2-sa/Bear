@@ -1652,7 +1652,7 @@ export const DEFAULT_CUSTOM_COLORS: CustomColors = {
 };
 
 export const DEFAULT_THEME: ThemeSettings = {
-  preset: "cool-grey",
+  preset: "tokyo-night",
   backgroundImage: null,
   backgroundDim: 0.65,
   fontPair: "sentient-switzer",
