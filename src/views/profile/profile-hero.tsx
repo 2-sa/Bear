@@ -11,7 +11,7 @@ import { countryName } from "./flags";
 import { saveSlogan } from "./profile-api";
 import { orderShownBadges } from "./badge-catalog";
 import { EditProfileHint } from "./edit-profile-hint";
-import { Avatar, compactNumber, FeaturedBadge, StatPill, VerifiedCheck } from "./profile-bits";
+import { Avatar, compactNumber, FeaturedBadge, formatWatchTime, StatPill, VerifiedCheck } from "./profile-bits";
 import { StatusBubble } from "./status-bubble";
 import type { ProfileSummary } from "./profile-types";
 
@@ -22,7 +22,6 @@ export function ProfileHero({
   avatar,
   avatarFallback,
   mangaReadOverride,
-  watchedOverride,
   badges,
   userFont,
   hideBanner,
@@ -33,7 +32,6 @@ export function ProfileHero({
   avatar?: string;
   avatarFallback?: string;
   mangaReadOverride?: number;
-  watchedOverride?: number;
   badges?: HeroBadge[];
   userFont?: string;
   hideBanner?: boolean;
@@ -179,8 +177,18 @@ export function ProfileHero({
           />
         )}
 
-        <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <StatPill value={compactNumber(watchedOverride ?? p.counts.watched)} label={t("Watched")} />
+        <div className="mt-5 grid grid-cols-3 gap-2 sm:grid-cols-6 sm:gap-3">
+          <WatchTimePill
+            totalMinutes={
+              (p.counts.minutesWatched ?? 0) > 0
+                ? p.counts.minutesWatched!
+                : (p.counts.hoursWatched ?? 0) > 0
+                  ? p.counts.hoursWatched * 60
+                  : (p.counts.moviesWatched ?? 0) * 120 + (p.counts.episodesWatched ?? 0) * 45
+            }
+          />
+          <StatPill value={compactNumber(p.counts.episodesWatched ?? 0)} label={t("Episodes")} />
+          <StatPill value={compactNumber(p.counts.moviesWatched ?? 0)} label={t("Movies")} />
           <StatPill value={compactNumber(mangaReadOverride ?? (p.counts as { mangaRead?: number }).mangaRead ?? 0)} label={t("Read")} />
           <StatPill value={compactNumber(p.counts.friends)} label={t("Friends")} />
           <StatPill value={compactNumber(p.counts.badges)} label={t("Badges")} />
@@ -198,6 +206,24 @@ function HeroBadge({ badge }: { badge: HeroBadge }) {
         {badge.name}
       </span>
     </span>
+  );
+}
+
+function WatchTimePill({ totalMinutes }: { totalMinutes: number }) {
+  const { a, aVal, b, bVal, c, cVal } = formatWatchTime(totalMinutes);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return (
+    <div className="flex flex-col items-center rounded-[10px] bg-surface px-2 py-2.5 ring-1 ring-edge-soft">
+      <span className="flex items-baseline tabular-nums">
+        <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-muted">{a}</span>
+        <span className="ml-1 text-[17px] font-semibold text-ink">{pad(aVal)}</span>
+        <span className="ml-2.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-muted">{b}</span>
+        <span className="ml-1 text-[17px] font-semibold text-ink">{pad(bVal)}</span>
+        <span className="ml-2.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-muted">{c}</span>
+        <span className="ml-1 text-[17px] font-semibold text-ink">{pad(cVal)}</span>
+      </span>
+      <span className="text-[11px] uppercase tracking-[0.1em] text-ink-subtle">Watch Time</span>
+    </div>
   );
 }
 

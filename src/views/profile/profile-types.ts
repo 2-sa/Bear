@@ -28,9 +28,12 @@ export type ShowcaseItem = {
 
 export type ProfileCounts = {
   watched: number;
+  moviesWatched?: number;
+  episodesWatched?: number;
   friends: number;
   badges: number;
   hoursWatched: number;
+  minutesWatched?: number;
   mangaRead?: number;
 };
 
