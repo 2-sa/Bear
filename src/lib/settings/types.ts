@@ -390,6 +390,7 @@ export type Settings = {
   libraryBookmarkedOnly: boolean;
   librarySort: "recent" | "title" | "year";
   preferCustomMetaAddon: boolean;
+  cinemetaEnabled: boolean;
   animeOnlyInAnimeRoom: boolean;
   animeCwEnd: "hide" | "timer";
   cwAdvanceNext: boolean;
