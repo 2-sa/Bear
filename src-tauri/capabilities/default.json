@@ -64,8 +64,8 @@
         { "path": "$APPCACHE/**" },
         { "path": "$APPLOCALDATA/**" },
         { "path": "$TEMP/**" },
-        { "path": "$PICTURE/Harbor" },
-        { "path": "$PICTURE/Harbor/**" }
+        { "path": "$PICTURE/Bear" },
+        { "path": "$PICTURE/Bear/**" }
       ],
       "deny": [
         { "path": "$APPDATA/secrets.json" },

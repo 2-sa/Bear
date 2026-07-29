@@ -60,6 +60,9 @@ test("privileged filesystem access stays narrowly scoped", () => {
   });
 
   assert.equal(filesystemPaths.includes("**"), false);
+  assert.equal(filesystemPaths.includes("$PICTURE/Bear"), true);
+  assert.equal(filesystemPaths.includes("$PICTURE/Bear/**"), true);
+  assert.equal(filesystemPaths.some((path) => path?.includes("$PICTURE/Harbor")), false);
   assert.equal(filesystemPaths.includes("$APPDATA/settings.json"), true);
   assert.equal(filesystemPaths.includes("$APPDATA/settings.json.tmp"), true);
   assert.equal(capability.permissions?.includes("process:default"), false);
@@ -80,6 +83,7 @@ test("privileged filesystem access stays narrowly scoped", () => {
     ? assetScope
     : [...(assetScope?.allow ?? []), ...(assetScope?.deny ?? [])];
   assert.equal(assetPaths.includes("**"), false);
+  assert.equal(assetPaths.includes("$PICTURE/Bear/**"), true);
   assert.equal(assetPaths.includes("$APPDATA/settings.json"), true);
   assert.equal(assetPaths.includes("$APPDATA/settings.json.tmp"), true);
 });
