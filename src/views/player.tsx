@@ -9,7 +9,7 @@ import { nameColor } from "@/lib/together/colors";
 import { useTogether } from "@/lib/together/provider";
 import { buildPlayInvite } from "@/lib/together/build-invite";
 import { useView, type PlayerSrc, type PlayEpisode } from "@/lib/view";
-import { useQueue, useSleepAtEnd, queueIndexOf, queueItemAfter, setQueuePlaying } from "@/lib/queue";
+import { useQueue, useSleepAtEnd, queueIndexOf, setQueuePlaying } from "@/lib/queue";
 import { useSkipSegments, useAdSegments } from "@/lib/skip-intro";
 import { withinAdWindow } from "@/lib/ad-report/window";
 import { isLocalUrl } from "@/lib/player/local-url";
@@ -537,9 +537,8 @@ export function PlayerView({ src }: { src: PlayerSrc }) {
     isNextUp: true,
   });
   const isSeriesPlayback = !!src.episode && src.meta.type === "series";
-  const hasQueueNext = !!queueItemAfter(src.meta, src.episode ?? undefined);
   const showEpisodePanel =
-    isSeriesPlayback || (settings.queueDrivesNav && hasQueueNext && !isLiveLike);
+    isSeriesPlayback || (settings.queueDrivesNav && queue.length > 0 && !isLiveLike);
 
   const showHeaderWarning =
     src.notWebReady === true && engine === "html5" && (snap.status === "error" || snap.status === "loading");

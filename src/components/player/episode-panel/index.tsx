@@ -76,7 +76,9 @@ export function EpisodePanel({
   const [resolvingFor, setResolvingFor] = useState<PlayEpisode | null>(null);
   const [showEpsOpen, setShowEpsOpen] = useState(false);
   const hasQueue = queue.length > 0;
-  const followQueue = settings.queueDrivesNav && hasQueue && meta.type === "series";
+  const isSeries = meta.type === "series";
+  const followQueue = settings.queueDrivesNav && hasQueue && isSeries;
+  const showQueueList = hasQueue && (followQueue || !isSeries);
   useEffect(() => {
     if (!open) {
       setExpandedEp(null);
@@ -328,7 +330,7 @@ export function EpisodePanel({
                   </button>
                 </div>
               )}
-              {followQueue && (
+              {showQueueList && (
                 <QueueUpNext
                   meta={meta}
                   currentEpisode={currentEpisode}
