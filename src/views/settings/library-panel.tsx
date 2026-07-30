@@ -1119,6 +1119,7 @@ function HomeModePicker({
   value: "harbor" | "classic";
   onChange: (v: "harbor" | "classic") => void;
 }) {
+  const t = useT();
   const options: Array<{ id: "harbor" | "classic"; label: string; sub: string; img: string }> = [
     {
       id: "harbor",
@@ -1177,16 +1178,18 @@ function HomeModePicker({
                 selected ? "opacity-0" : "opacity-100 group-hover:opacity-0"
               }`}
             >
-              {opt.label}
+              {t(opt.label)}
             </span>
             <div
               className={`absolute inset-5 z-10 flex flex-col justify-center gap-2 transition-opacity duration-300 ${
                 selected ? "opacity-100" : "opacity-0 group-hover:opacity-100"
               }`}
             >
-              <span className="text-[15px] font-semibold tracking-tight text-ink">{opt.label}</span>
+              <span className="text-[15px] font-semibold tracking-tight text-ink">
+                {t(opt.label)}
+              </span>
               <span className="max-w-[88%] text-[12px] leading-relaxed text-ink-muted">
-                {opt.sub}
+                {t(opt.sub)}
               </span>
             </div>
           </button>

@@ -127,7 +127,9 @@ export function GridView({ grid }: { grid: GridSpec }) {
             <h1 className="font-display text-[30px] font-medium leading-none tracking-tight text-ink">
               {grid.title}
             </h1>
-            <span className="text-[14px] text-ink-subtle">{metas.length} titles</span>
+            <span className="text-[14px] text-ink-subtle">
+              {t("{n} titles", { n: metas.length })}
+            </span>
           </div>
           {body}
         </div>

@@ -5,8 +5,10 @@ import type { Meta } from "@/lib/cinemeta";
 import { searchAll, searchCinemeta } from "@/lib/search";
 import { useSettings } from "@/lib/settings";
 import { addAutoDownload, isAutoDownloaded } from "@/lib/auto-download";
+import { useT } from "@/lib/i18n";
 
 export function AutoDownloadAdd() {
+  const t = useT();
   const { settings } = useSettings();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Meta[]>([]);
@@ -67,16 +69,16 @@ export function AutoDownloadAdd() {
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => setFocused(true)}
           onBlur={() => window.setTimeout(() => setFocused(false), 140)}
-          placeholder="Add a series to auto-download"
+          placeholder={t("Add a series to auto-download")}
           className="h-full w-full bg-transparent text-[14px] text-ink outline-none placeholder:text-ink-subtle"
         />
       </div>
       {showPanel && (
         <div className="absolute inset-x-0 top-full z-30 mt-1.5 overflow-hidden rounded-xl border border-edge bg-elevated shadow-[0_20px_50px_-15px_rgba(0,0,0,0.7)]">
           {loading && results.length === 0 ? (
-            <p className="px-4 py-3 text-[13px] text-ink-subtle">Searching...</p>
+            <p className="px-4 py-3 text-[13px] text-ink-subtle">{t("Searching...")}</p>
           ) : results.length === 0 ? (
-            <p className="px-4 py-3 text-[13px] text-ink-subtle">No series found</p>
+            <p className="px-4 py-3 text-[13px] text-ink-subtle">{t("No series found")}</p>
           ) : (
             <ul className="max-h-[320px] overflow-y-auto py-1">
               {results.map((m) => (
@@ -99,6 +101,7 @@ function AddResult({
   rpdbKey: string;
   onPick: (m: Meta) => void;
 }) {
+  const t = useT();
   const poster = usePosterChain(rpdbKey, meta.id, meta.poster ?? undefined, "series");
   const already = isAutoDownloaded(meta.id);
   return (
@@ -120,7 +123,7 @@ function AddResult({
           )}
         </div>
         {already ? (
-          <span className="shrink-0 text-[11.5px] font-medium text-accent">Added</span>
+          <span className="shrink-0 text-[11.5px] font-medium text-accent">{t("Added")}</span>
         ) : (
           <Plus size={16} className="shrink-0 text-ink-subtle" strokeWidth={2} />
         )}

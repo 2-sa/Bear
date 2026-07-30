@@ -423,7 +423,7 @@ export function EmptyState({ onClose, onOpenGuide }: { onClose: () => void; onOp
               onClick={() => setGenreBrowse(name)}
               className="h-10 rounded-full border border-edge-soft bg-elevated/40 px-4 text-[13.5px] font-medium text-ink-muted transition-colors hover:border-edge hover:text-ink"
             >
-              {name}
+              {t(name)}
             </button>
           ))}
         </div>

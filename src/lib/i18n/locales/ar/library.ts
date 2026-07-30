@@ -1,9 +1,9 @@
 const library: Record<string, string> = {
   "My library": "مكتبتي",
   "Your collection.": "مجموعتك.",
-  "Watchlist is what you've saved for later. History is everything you've watched. Local is files on your computer.": "قائمة المشاهدة هي ما حفظته لوقت لاحق. السجل هو كل ما شاهدته. المحلّي هي الملفات الموجودة على جهازك.",
+  "Watchlist is what you've saved for later. History is everything you've watched. Local is files on your computer.": "تضم قائمة المشاهدة ما حفظته لوقت لاحق، ويعرض السجل ما شاهدته سابقًا، أما قسم «على هذا الجهاز» فيعرض ملفات حاسوبك.",
   History: "السجل",
-  Local: "المحلّي",
+  Local: "على هذا الجهاز",
   Watchlist: "قائمة المشاهدة",
   "Watchlist only": "قائمة المشاهدة فقط",
   "Watchlist shows only saved titles": "تعرض قائمة المشاهدة العناوين المحفوظة فقط",
@@ -31,7 +31,7 @@ const library: Record<string, string> = {
   "Loading favorites from other providers…": "جارٍ تحميل المفضّلة من مزوّدين آخرين…",
 
   "My Library shows upcoming episodes from the shows you've saved on Stremio. Sign in to wire it up.":
-    "تعرض مكتبتي الحلقات القادمة من المسلسلات التي حفظتها على Stremio. سجّل الدخول لربطها.",
+    "تعرض مكتبتي الحلقات القادمة من المسلسلات التي حفظتها على ستريميو. سجّل الدخول لربطها.",
 
   "Open in Movies": "فتح في الأفلام",
   "Open in TV Shows": "فتح في المسلسلات",
@@ -48,7 +48,7 @@ const library: Record<string, string> = {
 
   "What to include": "ما الذي تريد تضمينه",
   "Pick what you want in your calendar. Mix and match: tracked people, genres, streamers, countries, Trakt lists.":
-    "اختر ما تريده في تقويمك. اخلط وطابق: الأشخاص المتابَعون، والأنواع، ومنصّات البث، والدول، وقوائم Trakt.",
+    "اختر ما تريد عرضه في تقويمك، مثل الأشخاص الذين تتابعهم والأنواع ومنصات البث والدول وقوائم تراكت.",
   "Pick it from the home view to follow.": "اختره من العرض الرئيسي للمتابعة.",
 
   "Nothing this month": "لا شيء هذا الشهر",
@@ -79,23 +79,23 @@ const library: Record<string, string> = {
   "This month": "هذا الشهر",
   Everything: "كل شيء",
 
-  "Syncing Trakt…": "جارٍ المزامنة مع Trakt…",
-  "{n} on Trakt": "{n} على Trakt",
-  "Connect Trakt in Settings to sync": "اربط Trakt في الإعدادات للمزامنة",
+  "Syncing Trakt…": "جارٍ المزامنة مع تراكت…",
+  "{n} on Trakt": "{n} على تراكت",
+  "Connect Trakt in Settings to sync": "اربط تراكت من الإعدادات للمزامنة",
   "{n} saved on this device": "{n} محفوظ على هذا الجهاز",
-  "{n} in your Stremio library": "{n} في مكتبة Stremio لديك",
+  "{n} in your Stremio library": "{n} في مكتبة ستريميو لديك",
 
-  "Trakt watchlist": "قائمة مشاهدة Trakt",
-  "Trakt history": "سجلّ Trakt",
-  "Nothing saved on Trakt yet.": "لا شيء محفوظ على Trakt بعد.",
+  "Trakt watchlist": "قائمة مشاهدة تراكت",
+  "Trakt history": "سجلّ تراكت",
+  "Nothing saved on Trakt yet.": "لا شيء محفوظ على تراكت بعد.",
   "No history yet.": "لا يوجد سجلّ بعد.",
-  "Couldn't reach Trakt. Try refreshing.": "تعذّر الوصول إلى Trakt. حاول التحديث.",
+  "Couldn't reach Trakt. Try refreshing.": "تعذّر الوصول إلى تراكت. حاول التحديث.",
 
-  "Simkl plan to watch": "خطة المشاهدة على Simkl",
-  "Simkl history": "سجلّ Simkl",
-  "Nothing on your Simkl plan-to-watch yet.": "لا شيء في خطة المشاهدة على Simkl بعد.",
-  "No Simkl history yet.": "لا يوجد سجلّ Simkl بعد.",
-  "Couldn't reach Simkl. Try refreshing.": "تعذّر الوصول إلى Simkl. حاول التحديث.",
+  "Simkl plan to watch": "خطة المشاهدة على سيمكل",
+  "Simkl history": "سجل سيمكل",
+  "Nothing on your Simkl plan-to-watch yet.": "لا شيء في خطة المشاهدة على سيمكل بعد.",
+  "No Simkl history yet.": "لا يوجد سجل في سيمكل بعد.",
+  "Couldn't reach Simkl. Try refreshing.": "تعذّر الوصول إلى سيمكل. حاول التحديث.",
 
   Sun: "أحد",
   Mon: "إثنين",
@@ -106,24 +106,24 @@ const library: Record<string, string> = {
   Sat: "سبت",
 
   "All upcoming": "كل القادم",
-  "My Trakt": "Trakt الخاص بي",
-  "My Simkl": "Simkl الخاص بي",
-  "Simkl premieres": "العروض الأولى على Simkl",
+  "My Trakt": "تراكت الخاص بي",
+  "My Simkl": "سيمكل الخاص بي",
+  "Simkl premieres": "العروض الأولى على سيمكل",
   "Upcoming episodes and movies from your saved shows":
     "الحلقات والأفلام القادمة من مسلسلاتك المحفوظة",
   "Everything releasing this month from TMDB": "كل ما يصدر هذا الشهر من TMDB",
   "Upcoming episodes and movies from your Trakt watchlist":
-    "الحلقات والأفلام القادمة من قائمة مشاهدة Trakt لديك",
-  "The most anticipated upcoming releases on Trakt": "أكثر الإصدارات القادمة ترقبًا على Trakt",
+    "الحلقات والأفلام القادمة من قائمة مشاهدة تراكت لديك",
+  "The most anticipated upcoming releases on Trakt": "أكثر الإصدارات القادمة ترقبًا على تراكت",
   "Upcoming episodes and movies from your Simkl plan-to-watch list":
-    "الحلقات والأفلام القادمة من قائمة خطة المشاهدة على Simkl لديك",
+    "الحلقات والأفلام القادمة من خطة المشاهدة على سيمكل",
   "New shows and anime premiering this month, from Simkl":
-    "المسلسلات والأنمي الجديدة التي تُعرض لأول مرة هذا الشهر، من Simkl",
+    "المسلسلات والأنمي الجديدة التي تُعرض لأول مرة هذا الشهر على سيمكل",
   "Build your own feed from actors, directors, and Trakt lists":
-    "ابنِ موجزك الخاص من الممثلين والمخرجين وقوائم Trakt",
+    "ابنِ موجزك الخاص من الممثلين والمخرجين وقوائم تراكت",
 
   "Discovery Queue": "قائمة الاكتشاف",
-  Queue: "القائمة",
+  Queue: "قائمة الانتظار",
   "Building tonight's queue…": "جارٍ بناء قائمة الليلة…",
   "Add a TMDB key in Settings to unlock the full discovery feed.":
     "أضف مفتاح TMDB في الإعدادات لفتح موجز الاكتشاف الكامل.",

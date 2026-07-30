@@ -12,6 +12,7 @@ import { useT } from "@/lib/i18n";
 import { FeedRow, NotificationDetail, RequestRow } from "./notification-rows";
 
 export function NotificationCenter({ trigger = true }: { trigger?: boolean } = {}) {
+  const t = useT();
   const nc = useNotificationCenter();
   const t = useT();
   const [open, setOpen] = useState(false);

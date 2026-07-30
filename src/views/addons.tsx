@@ -426,24 +426,22 @@ export function AddonsView() {
                 >
                   {t("All")}
                 </button>
-                {saCategories
-                  .filter((c) => settings.showAdultAddons || c.slug !== "nsfw")
-                  .map((c) => {
-                    const active = categoryFilter === c.slug;
-                    return (
-                      <button
-                        key={c.slug}
-                        onClick={() => setCategoryFilter(c.slug)}
-                        className={`flex h-10 items-center gap-2 rounded-full px-4 text-[13.5px] font-semibold transition-colors ${
-                          active
-                            ? "bg-ink text-canvas"
-                            : "bg-elevated/40 text-ink-muted ring-1 ring-edge-soft/60 hover:bg-elevated/70 hover:text-ink"
-                        }`}
-                      >
-                        <span>{c.name}</span>
-                      </button>
-                    );
-                  })}
+                {saCategories.filter((c) => settings.showAdultAddons || c.slug !== "nsfw").map((c) => {
+                  const active = categoryFilter === c.slug;
+                  return (
+                    <button
+                      key={c.slug}
+                      onClick={() => setCategoryFilter(c.slug)}
+                      className={`flex h-10 items-center gap-2 rounded-full px-4 text-[13.5px] font-semibold transition-colors ${
+                        active
+                          ? "bg-ink text-canvas"
+                          : "bg-elevated/40 text-ink-muted ring-1 ring-edge-soft/60 hover:bg-elevated/70 hover:text-ink"
+                      }`}
+                    >
+                      <span>{t(c.name)}</span>
+                    </button>
+                  );
+                })}
                 <span aria-hidden className="mx-1 h-6 w-px shrink-0 bg-edge-soft" />
                 {BROWSE_MODES.map((m) => {
                   const active = browseMode === m.id;
