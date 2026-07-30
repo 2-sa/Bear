@@ -14,6 +14,7 @@ import { FeedRow, NotificationDetail, RequestRow } from "./notification-rows";
 export function NotificationCenter({ trigger = true }: { trigger?: boolean } = {}) {
   const t = useT();
   const nc = useNotificationCenter();
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [detail, setDetail] = useState<CenterNotif | null>(null);
   const wasOpen = useRef(false);
@@ -55,7 +56,9 @@ export function NotificationCenter({ trigger = true }: { trigger?: boolean } = {
       if (requestId) openDiagnosticsConsent(requestId);
       return;
     }
-    if ((notif.kind === "group-added" || notif.kind === "group-post") && notif.targetId) {
+    const groupKind = notif.kind === "group-added" || notif.kind === "group-post";
+    const groupMention = notif.kind === "mention" && notif.entityType === "group";
+    if ((groupKind || groupMention) && notif.targetId) {
       setOpen(false);
       requestOpenGroup(notif.targetId);
       return;

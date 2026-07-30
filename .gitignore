@@ -46,9 +46,10 @@ local_docs/
 # This repo is pnpm (see packageManager + CI). npm lockfiles must not be committed.
 package-lock.json
 
-# Stripped IP assets (legal) - do not re-commit
-public/avatars/
-public/kids/avatars/
+# public/avatars and public/kids/avatars are TRACKED. The ~627 licensed-IP
+# avatars were deleted; what remains is Harbor's own artwork and ships with the
+# app, so a fresh clone or worktree gets a working avatar picker.
+# Do not re-add third-party character art here.
 
 # Hollywood statuette photos. Unused: award-logo.tsx renders these as trophy.png
 # and users supply their own via award packs. Stripped 2026-07-22, keep them out.
