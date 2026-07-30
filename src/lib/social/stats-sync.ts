@@ -192,6 +192,7 @@ export async function pushStats(
   mangaRead: number | null,
   moviesWatched?: number | null,
   episodesWatched?: number | null,
+  minutesWatched?: number | null,
 ): Promise<void> {
   if (!authToken()) return;
   const body: Record<string, number> = {};
@@ -199,6 +200,7 @@ export async function pushStats(
   if (typeof mangaRead === "number" && mangaRead >= 0) body.mangaRead = mangaRead;
   if (typeof moviesWatched === "number" && moviesWatched >= 0) body.moviesWatched = moviesWatched;
   if (typeof episodesWatched === "number" && episodesWatched >= 0) body.episodesWatched = episodesWatched;
+  if (typeof minutesWatched === "number" && minutesWatched >= 0) body.minutesWatched = minutesWatched;
   if (!Object.keys(body).length) return;
   try {
     await socialPost("/social/u/me/stats", body);
@@ -212,8 +214,9 @@ export async function syncProfileStats(authKey: string | null | undefined, manga
   const watched = bd ? bd.watched : null;
   const movies = bd ? bd.moviesWatched : null;
   const episodes = bd ? bd.episodesWatched : null;
+  const minutes = bd ? bd.minutesWatched : null;
 
-  await pushStats(watched, mangaRead, movies, episodes);
+  await pushStats(watched, mangaRead, movies, episodes, minutes);
 }
 
 export function useLibraryWatchedCount(authKey: string | null | undefined, enabled: boolean): number {

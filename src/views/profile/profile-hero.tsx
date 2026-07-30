@@ -7,6 +7,7 @@ import { acceptFriend, removeFriend, sendFriendRequest } from "@/lib/social/frie
 import { PRESENCE_META, useMyPresence } from "@/lib/social/presence";
 import { useT } from "@/lib/i18n";
 import { useView } from "@/lib/view";
+import { sanitizeStatLayout, STAT_ORDER, watchMinutes, type StatKey } from "@/lib/profile-card-layout";
 import { countryName } from "./flags";
 import { saveSlogan } from "./profile-api";
 import { orderShownBadges } from "./badge-catalog";
@@ -16,6 +17,15 @@ import { StatusBubble } from "./status-bubble";
 import type { ProfileSummary } from "./profile-types";
 
 type HeroBadge = { id: string; name: string; iconUrl?: string };
+
+const STAT_GRID: Record<number, string> = {
+  1: "grid-cols-1",
+  2: "grid-cols-2",
+  3: "grid-cols-3",
+  4: "grid-cols-2 sm:grid-cols-4",
+  5: "grid-cols-3 sm:grid-cols-5",
+  6: "grid-cols-3 sm:grid-cols-6",
+};
 
 export function ProfileHero({
   p,
@@ -55,6 +65,10 @@ export function ProfileHero({
       ? t("Online now")
       : t("Offline");
   const presenceText = p.isOwner ? meta.text : p.online ? "text-success" : "";
+  const hiddenStats = new Set(sanitizeStatLayout(p.statLayout).hidden);
+  const showStat = (k: StatKey) => !hiddenStats.has(k);
+  const shownCount = STAT_ORDER.filter(showStat).length;
+  const statCols = STAT_GRID[shownCount] || "grid-cols-3 sm:grid-cols-6";
   return (
     <header className="relative w-full overflow-hidden">
       <div className="relative h-48 w-full sm:h-60">
@@ -177,21 +191,15 @@ export function ProfileHero({
           />
         )}
 
-        <div className="mt-5 grid grid-cols-3 gap-2 sm:grid-cols-6 sm:gap-3">
-          <WatchTimePill
-            totalMinutes={
-              (p.counts.minutesWatched ?? 0) > 0
-                ? p.counts.minutesWatched!
-                : (p.counts.hoursWatched ?? 0) > 0
-                  ? p.counts.hoursWatched * 60
-                  : (p.counts.moviesWatched ?? 0) * 120 + (p.counts.episodesWatched ?? 0) * 45
-            }
-          />
-          <StatPill value={compactNumber(p.counts.episodesWatched ?? 0)} label={t("Episodes")} />
-          <StatPill value={compactNumber(p.counts.moviesWatched ?? 0)} label={t("Movies")} />
-          <StatPill value={compactNumber(mangaReadOverride ?? (p.counts as { mangaRead?: number }).mangaRead ?? 0)} label={t("Read")} />
-          <StatPill value={compactNumber(p.counts.friends)} label={t("Friends")} />
-          <StatPill value={compactNumber(p.counts.badges)} label={t("Badges")} />
+        <div className={`mt-5 grid gap-2 sm:gap-3 ${statCols}`}>
+          {showStat("watchTime") && <WatchTimePill totalMinutes={watchMinutes(p.counts)} />}
+          {showStat("episodes") && <StatPill value={compactNumber(p.counts.episodesWatched ?? 0)} label={t("Episodes")} />}
+          {showStat("movies") && <StatPill value={compactNumber(p.counts.moviesWatched ?? 0)} label={t("Movies")} />}
+          {showStat("read") && (
+            <StatPill value={compactNumber(mangaReadOverride ?? (p.counts as { mangaRead?: number }).mangaRead ?? 0)} label={t("Read")} />
+          )}
+          {showStat("friends") && <StatPill value={compactNumber(p.counts.friends)} label={t("Friends")} />}
+          {showStat("badges") && <StatPill value={compactNumber(p.counts.badges)} label={t("Badges")} />}
         </div>
       </div>
     </header>
@@ -210,6 +218,7 @@ function HeroBadge({ badge }: { badge: HeroBadge }) {
 }
 
 function WatchTimePill({ totalMinutes }: { totalMinutes: number }) {
+  const t = useT();
   const { a, aVal, b, bVal, c, cVal } = formatWatchTime(totalMinutes);
   const pad = (n: number) => String(n).padStart(2, "0");
   return (
@@ -222,7 +231,7 @@ function WatchTimePill({ totalMinutes }: { totalMinutes: number }) {
         <span className="ml-2.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-muted">{c}</span>
         <span className="ml-1 text-[17px] font-semibold text-ink">{pad(cVal)}</span>
       </span>
-      <span className="text-[11px] uppercase tracking-[0.1em] text-ink-subtle">Watch Time</span>
+      <span className="text-[11px] uppercase tracking-[0.1em] text-ink-subtle">{t("Watch Time")}</span>
     </div>
   );
 }

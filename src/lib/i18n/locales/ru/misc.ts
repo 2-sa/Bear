@@ -495,6 +495,7 @@ const misc: Record<string, string> = {
   "update.of": "{downloaded} из {total}",
   "Hide password": "Скрыть пароль",
   "Show password": "Показать пароль",
+  "Watch Time": "Время просмотра",
   "Episodes": "Серии",
   "Movie": "Фильм",
   "{n} episode": "{n} серия",

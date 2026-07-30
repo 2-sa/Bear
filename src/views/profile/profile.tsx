@@ -84,6 +84,7 @@ export function ProfileView({
   const cloudManga = summary?.counts.mangaRead ?? 0;
   const cloudMovies = summary?.counts.moviesWatched ?? 0;
   const cloudEpisodes = summary?.counts.episodesWatched ?? 0;
+  const cloudMinutes = summary?.counts.minutesWatched ?? 0;
 
   useEffect(() => {
     if (!isOwner) return;
@@ -91,10 +92,24 @@ export function ProfileView({
     const m = Math.max(mangaProgress.length, cloudManga);
     const movies = Math.max(watchedBreakdown.moviesWatched, cloudMovies);
     const episodes = Math.max(watchedBreakdown.episodesWatched, cloudEpisodes);
+    const minutes = Math.max(watchedBreakdown.minutesWatched, cloudMinutes);
 
-    if (w <= cloudWatched && m <= cloudManga && movies <= cloudMovies && episodes <= cloudEpisodes) return;
-    pushStats(w > 0 ? w : null, m > 0 ? m : null, movies > 0 ? movies : null, episodes > 0 ? episodes : null);
-  }, [isOwner, libWatched, watchedCount, mangaProgress.length, cloudWatched, cloudManga, cloudMovies, cloudEpisodes, watchedBreakdown]);
+    if (
+      w <= cloudWatched &&
+      m <= cloudManga &&
+      movies <= cloudMovies &&
+      episodes <= cloudEpisodes &&
+      minutes <= cloudMinutes
+    )
+      return;
+    pushStats(
+      w > 0 ? w : null,
+      m > 0 ? m : null,
+      movies > 0 ? movies : null,
+      episodes > 0 ? episodes : null,
+      minutes > 0 ? minutes : null,
+    );
+  }, [isOwner, libWatched, watchedCount, mangaProgress.length, cloudWatched, cloudManga, cloudMovies, cloudEpisodes, cloudMinutes, watchedBreakdown]);
 
   useEffect(() => {
     if (isOwner && consumeProfileEditIntent(handle)) setEditing(true);

@@ -74,6 +74,7 @@ export type ProfileSummary = {
   showcase?: ShowcaseItem;
   ratings?: RatingsSummary;
   cardLayout?: { order?: string[]; hidden?: string[] };
+  statLayout?: { hidden?: string[] };
   featuredLists?: FeaturedList[];
   socials?: ResolvedSocial[];
   audioUrl?: string;
