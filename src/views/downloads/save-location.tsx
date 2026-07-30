@@ -108,8 +108,8 @@ export function SaveLocationChip() {
           </div>
           <div className="mt-3 border-t border-edge-soft/60 pt-3">
             <ToggleRow
-              label="Organize downloads into folders"
-              note="Create a folder by movie or series name"
+              label={t("Organize downloads into folders")}
+              note={t("Create a folder by movie or series name")}
               value={settings.downloadCreateFolders}
               onChange={(v) => update({ downloadCreateFolders: v })}
             />

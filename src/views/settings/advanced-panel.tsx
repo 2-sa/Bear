@@ -542,7 +542,7 @@ function AboutRow() {
   const t = useT();
   return (
     <div className="flex flex-col gap-2 rounded-xl border border-edge-soft bg-canvas/40 px-4 py-3.5 text-[13px] text-ink-muted">
-      <InfoLine label={t("Version")} value={`${__APP_VERSION__}${IS_BETA_BUILD ? " (Beta)" : ""}`} />
+      <InfoLine label={t("Version")} value={`${__APP_VERSION__}${IS_BETA_BUILD ? ` (${t("Beta")})` : ""}`} />
       <InfoLine label={t("Build")} value={isTauri ? t("Desktop (Tauri 2 / WebView2)") : t("Web")} />
       <InfoLine label={t("Bug reports")} value="bugs@harbor.site" />
     </div>

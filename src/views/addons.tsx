@@ -405,7 +405,7 @@ export function AddonsView() {
                           : "bg-elevated/40 text-ink-muted ring-1 ring-edge-soft/60 hover:bg-elevated/70 hover:text-ink"
                       }`}
                     >
-                      <span>{c.name}</span>
+                      <span>{t(c.name)}</span>
                     </button>
                   );
                 })}

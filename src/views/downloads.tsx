@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Download as DownloadIcon } from "lucide-react";
 import { Poster, usePosterChain } from "@/components/poster";
 import { useSettings } from "@/lib/settings";
+import { useT } from "@/lib/i18n";
 import { useDownloads, type DownloadItem } from "@/lib/download/downloads-store";
 import { StreamingNowButton } from "./downloads/streaming-now";
 import { DownloadRow } from "./downloads/download-row";
@@ -57,6 +58,7 @@ function buildGroups(items: DownloadItem[]): DownloadGroup[] {
 }
 
 export function DownloadsView({ active = false }: { active?: boolean }) {
+  const t = useT();
   const items = useDownloads();
   const [filter, setFilter] = useState<Filter>("all");
 
@@ -81,12 +83,12 @@ export function DownloadsView({ active = false }: { active?: boolean }) {
   );
   const subtitle =
     items.length === 0
-      ? "Saved movies and episodes for offline watching"
+      ? t("Saved movies and episodes for offline watching")
       : [
-          `${items.length} item${items.length === 1 ? "" : "s"}`,
-          counts.active > 0 ? `${counts.active} downloading` : null,
+          items.length === 1 ? t("1 item") : t("{count} items", { count: items.length }),
+          counts.active > 0 ? t("{count} downloading", { count: counts.active }) : null,
           totalBps > 0 ? `↓ ${fmtSpeed(totalBps)}` : null,
-          savedBytes > 0 ? `${fmtBytes(savedBytes)} saved` : null,
+          savedBytes > 0 ? t("{size} saved", { size: fmtBytes(savedBytes) }) : null,
         ]
           .filter(Boolean)
           .join("  ·  ");
@@ -101,7 +103,7 @@ export function DownloadsView({ active = false }: { active?: boolean }) {
       <div className="mx-auto w-full max-w-4xl">
         <header className="mb-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
           <div className="min-w-0">
-            <h1 className="text-[28px] font-semibold tracking-tight text-ink">Downloads</h1>
+            <h1 className="text-[28px] font-semibold tracking-tight text-ink">{t("Downloads")}</h1>
             <p className="mt-1.5 text-[13.5px] tabular-nums text-ink-subtle">{subtitle}</p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
@@ -157,6 +159,7 @@ function FilterTab({
   active: boolean;
   onClick: () => void;
 }) {
+  const t = useT();
   return (
     <button
       type="button"
@@ -168,13 +171,14 @@ function FilterTab({
           : "bg-elevated/50 text-ink-muted ring-1 ring-edge-soft hover:bg-elevated hover:text-ink"
       }`}
     >
-      {label}
+      {t(label)}
       <span className={`tabular-nums ${active ? "text-canvas/70" : "text-ink-subtle"}`}>{count}</span>
     </button>
   );
 }
 
 function EmptyState() {
+  const t = useT();
   const [autoOpen, setAutoOpen] = useState(false);
   return (
     <div className="flex flex-col items-center justify-center gap-4 rounded-[20px] border border-dashed border-edge-soft bg-elevated/30 px-8 py-20 text-center">
@@ -182,9 +186,9 @@ function EmptyState() {
         <DownloadIcon size={26} strokeWidth={1.8} />
       </div>
       <div className="flex flex-col gap-1.5">
-        <p className="text-[15px] font-semibold text-ink">No downloads yet</p>
+        <p className="text-[15px] font-semibold text-ink">{t("No downloads yet")}</p>
         <p className="max-w-[340px] text-[13.5px] leading-relaxed text-ink-muted">
-          Open any movie or show, hover an episode, and click the download icon. Pick the exact source you want and it saves here for offline watching.
+          {t("Open any movie or show, hover an episode, and click the download icon. Pick the exact source you want and it saves here for offline watching.")}
         </p>
       </div>
       <button
@@ -192,7 +196,7 @@ function EmptyState() {
         onClick={() => setAutoOpen(true)}
         className="text-[13px] font-semibold text-accent transition duration-150 hover:opacity-85 active:scale-[0.97]"
       >
-        Or set a series to auto-download
+        {t("Or set a series to auto-download")}
       </button>
       {autoOpen && <AutoDownloadModal onClose={() => setAutoOpen(false)} />}
     </div>

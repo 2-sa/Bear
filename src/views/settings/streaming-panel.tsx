@@ -2,6 +2,7 @@ import { Check, Download, ExternalLink, Key, Loader2, Search, Trash2, X, Zap } f
 import { useEffect, useState } from "react";
 import { AddonLogo } from "@/components/addon-logo";
 import { Flag } from "@/components/flag";
+import { useT } from "@/lib/i18n";
 import { ALL_LANGUAGE_NAMES } from "@/lib/subtitles/language";
 import { ServiceLogo } from "@/components/service-logo";
 import {
@@ -250,6 +251,7 @@ export function LanguagesPicker({
   options?: string[];
   placeholder?: string;
 }) {
+  const t = useT();
   const [query, setQuery] = useState("");
   const selected = new Set(value);
   const toggle = (lang: string) => {
@@ -260,7 +262,9 @@ export function LanguagesPicker({
   };
   const q = query.trim().toLowerCase();
   const available = options.filter((l) => !selected.has(l));
-  const matches = q ? available.filter((l) => l.toLowerCase().includes(q)) : available;
+  const matches = q
+    ? available.filter((l) => l.toLowerCase().includes(q) || t(l).toLocaleLowerCase().includes(q))
+    : available;
   const COMMON = 24;
   const shown = q ? matches : matches.slice(0, COMMON);
   const moreCount = q ? 0 : matches.length - shown.length;
@@ -276,7 +280,7 @@ export function LanguagesPicker({
               className="group inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/15 px-3 py-1.5 text-[12.5px] font-semibold text-accent transition-colors hover:bg-accent/25"
             >
               <Flag language={lang} size="sm" showLabel={false} />
-              <span>{lang}</span>
+              <span>{t(lang)}</span>
               <X size={11} strokeWidth={2.4} className="opacity-70 group-hover:opacity-100" />
             </button>
           ))}
@@ -291,7 +295,7 @@ export function LanguagesPicker({
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder={placeholder}
+          placeholder={t(placeholder)}
           spellCheck={false}
           className="h-10 w-full rounded-xl border border-edge bg-canvas ps-9 pe-3 text-[13.5px] text-ink outline-none transition-colors focus:border-ink placeholder:text-ink-subtle/60"
         />
@@ -304,17 +308,17 @@ export function LanguagesPicker({
             className="inline-flex items-center gap-1.5 rounded-full border border-edge-soft bg-canvas/30 px-2.5 py-1.5 text-[12px] font-medium text-ink-muted transition-colors hover:border-edge hover:text-ink"
           >
             <Flag language={lang} size="sm" showLabel={false} />
-            <span>{lang}</span>
+            <span>{t(lang)}</span>
           </button>
         ))}
         {moreCount > 0 && (
           <span className="inline-flex items-center px-2 py-1.5 text-[12px] text-ink-subtle">
-            +{moreCount} more, search to find yours
+            {t("+{count} more, search to find yours", { count: moreCount })}
           </span>
         )}
         {q.length > 0 && matches.length === 0 && (
           <span className="inline-flex items-center px-2 py-1.5 text-[12px] text-ink-subtle">
-            No language matches that search.
+            {t("No language matches that search.")}
           </span>
         )}
       </div>

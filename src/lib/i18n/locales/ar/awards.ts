@@ -12,7 +12,7 @@ const awards: Record<string, string> = {
   "Winning films & shows": "الأفلام والمسلسلات الفائزة",
   "View all {n} winners": "عرض كل الفائزين الـ{n}",
   "{n} title": "عنوان واحد",
-  "{n} titles": "{n} عنوان",
+  "{n} titles": "{n} عنوانًا",
   "Celebrated actors": "ممثلون مُحتفى بهم",
   "Acclaimed directors": "مخرجون مرموقون",
   "Honored writers": "كُتّاب مُكرَّمون",
