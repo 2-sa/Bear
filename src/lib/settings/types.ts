@@ -177,7 +177,15 @@ export type Settings = {
   hdEpisodeImages: boolean;
   episodeArcGroups: boolean;
   episodeOrderProvider: "default" | "tmdb" | "tvdb";
-  tvdbSeasonType: "aired" | "official" | "dvd" | "absolute" | "tvdbabsolute" | "alternate" | "regional" | "tmdb";
+  tvdbSeasonType:
+    | "aired"
+    | "official"
+    | "dvd"
+    | "absolute"
+    | "tvdbabsolute"
+    | "alternate"
+    | "regional"
+    | "tmdb";
   tvdbOrderPanel: boolean;
   tvdbPin: string;
   harborAvatar: string | null;
@@ -275,7 +283,14 @@ export type Settings = {
   subBoxColor: string;
   subOpacity: number;
   subLineSpacing: number;
-  subProvidersEnabled: { wyzie: boolean; opensubtitles: boolean; jimaku: boolean; addons: boolean; subdl?: boolean; subsource?: boolean };
+  subProvidersEnabled: {
+    wyzie: boolean;
+    opensubtitles: boolean;
+    jimaku: boolean;
+    addons: boolean;
+    subdl?: boolean;
+    subsource?: boolean;
+  };
   subShowInPip: boolean;
   subtitleAutoSync: boolean;
   autoSyncApplyStructural: boolean;
@@ -312,7 +327,15 @@ export type Settings = {
   hidePosterTitles: boolean;
   hoverPreviewEnabled: boolean;
   hoverPreviewPlacement: "over" | "side";
-  cardHoverStyle: "none" | "default" | "marquee" | "elegant" | "frosted" | "cinema" | "spotlight" | "custom";
+  cardHoverStyle:
+    | "none"
+    | "default"
+    | "marquee"
+    | "elegant"
+    | "frosted"
+    | "cinema"
+    | "spotlight"
+    | "custom";
   rowCardStyle: "poster" | "tv";
   tvCardLogoPos: "center" | "bottomStart" | "bottomEnd";
   scrollUpTrailer: boolean;
@@ -366,6 +389,7 @@ export type Settings = {
   hideWatchedInCatalogs: boolean;
   hideUnreleased: boolean;
   localEpisodeSortDesc: boolean;
+  smoothScroll: boolean;
   showPlaylistsTab: boolean;
   skipProfileScreen: boolean;
   profilePromptInterval: "launch" | "15m" | "30m" | "never";
@@ -426,6 +450,11 @@ export type Settings = {
     hidden: string[];
     renamed: Record<string, string>;
   };
+  navCustomizationOwn: {
+    order: string[];
+    hidden: string[];
+    renamed: Record<string, string>;
+  } | null;
   animeRows: {
     order: string[];
     hidden: string[];

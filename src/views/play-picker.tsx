@@ -43,6 +43,7 @@ import {
   debridBannerTitle,
   hasCachedMarker,
   hasUncachedMarker,
+  humanError,
   isEngineWarmingError,
   normalizeLangCode,
   orderByAddonNative,
@@ -71,6 +72,8 @@ import { LocalStreamList } from "./play-picker/local-stream-card";
 import { SubtitleSelectStep } from "./play-picker/subtitle-select-step";
 
 const TIER_ORDER: Tier[] = ["4K_DV", "4K_HDR", "4K", "1080p_HDR", "1080p", "720p", "SD", "ROUGH"];
+
+const RESOLVE_TIMEOUT_MS = 150_000;
 
 export function PlayPicker({
   meta,
@@ -501,6 +504,17 @@ export function PlayPicker({
     },
     [onPlay],
   );
+
+  useEffect(() => {
+    if (!resolving) return;
+    const t = window.setTimeout(() => {
+      abortResolve();
+      setResolving(null);
+      setAutoCancelled(true);
+      setResolveError(humanError("timeout"));
+    }, RESOLVE_TIMEOUT_MS);
+    return () => window.clearTimeout(t);
+  }, [resolving, abortResolve, setResolveError]);
 
   const rememberedInstant =
     !!previousMatch && (isCached(previousMatch) || !!previousMatch.url || p2pAutoConsent);

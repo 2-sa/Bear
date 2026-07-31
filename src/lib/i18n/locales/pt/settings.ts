@@ -1,6 +1,8 @@
 const settings: Record<string, string> = {
 "Sign in to Bear": "Iniciar sessão no Bear",
   "Create Bear account": "Criar conta Bear",
+  "Smooth scrolling": "Deslocamento suave",
+  "Eases mouse-wheel scrolling instead of jumping line by line. Turn off if you prefer an instant response or notice any lag.": "Suaviza o deslocamento com a roda do rato em vez de saltar linha a linha. Desative se preferir uma resposta instantânea ou notar lentidão.",
   "Claim your handle": "Reivindicar o seu identificador (@handle)",
   "Reset password (recovery key)": "Repor palavra-passe (chave de recuperação)",
   "Sign out of Bear account": "Terminar sessão da conta Bear",

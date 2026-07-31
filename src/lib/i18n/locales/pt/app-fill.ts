@@ -658,6 +658,19 @@ const appFill: Record<string, string> = {
   "Off by default, so your controller only drives Bear while it is the focused window. Leave it off if you play games with the same controller.": "Desativado por padrão, para que o controle só comande o Bear enquanto ele for a janela em foco. Deixe desativado se você joga com o mesmo controle.",
   "Use Cinemeta for title metadata": "Usar o Cinemeta para metadados de títulos",
   "Turn this off to take Cinemeta out entirely and use only your own metadata addons, such as AIOMetadata or AIOStreams. Cinemeta can go stale and show already released episodes as TBA. Leave it on unless you have a metadata addon installed, or titles will have no details.": "Desative para remover o Cinemeta por completo e usar apenas seus próprios addons de metadados, como AIOMetadata ou AIOStreams. O Cinemeta pode ficar desatualizado e mostrar episódios já lançados como TBA. Deixe ativado a menos que você tenha um addon de metadados instalado, ou os títulos ficarão sem detalhes.",
+  "Only turn this off if you already have a metadata addon installed, such as AIOMetadata or AIOStreams. Without one, titles and collections can open completely blank. Cinemeta can go stale and show released episodes as TBA, which is the reason to replace it.": "Só desative se já tiver um addon de metadados instalado, como AIOMetadata ou AIOStreams. Sem um, os títulos e coleções podem abrir completamente vazios. O Cinemeta pode ficar desatualizado e mostrar episódios já lançados como TBA, que é a razão para o substituir.",
+  "No metadata addon detected. Bear is falling back to Cinemeta so titles still load, but turn this back on unless you are installing one.": "Nenhum addon de metadados detetado. O Bear está a recorrer ao Cinemeta para que os títulos continuem a carregar, mas volte a ativar isto a menos que vá instalar um.",
+  "Refresh subtitles": "Atualizar legendas",
+  "Search all sources again for more subtitles": "Buscar em todas as fontes novamente por mais legendas",
+  "Searching every source again": "Buscando em todas as fontes novamente",
+  "Pick the subtitle that fits this release": "Escolher a legenda que combina com esta versão",
+  "Already on the closest match for this release": "Já está na legenda mais próxima desta versão",
+  "Switch to {name}: {why}": "Mudar para {name}: {why}",
+  "Switch to {name}": "Mudar para {name}",
+  "Searching every source for more subtitles…": "Buscando mais legendas em todas as fontes…",
+  "Added {count} more subtitles.": "{count} legendas adicionadas.",
+  "No new subtitles found beyond what is already listed.": "Nenhuma legenda nova além das já listadas.",
+  "{time} left": "faltam {time}",
 };
 
 export default appFill;

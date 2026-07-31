@@ -11,6 +11,8 @@ const settings: Record<string, string> = {
     "يمكنك دائمًا كتم الأغنية أو إيقافها من البطاقة نفسها.",
 "Sign in to Bear": "تسجيل الدخول إلى Bear",
   "Create Bear account": "إنشاء حساب Bear",
+  "Smooth scrolling": "تمرير سلس",
+  "Eases mouse-wheel scrolling instead of jumping line by line. Turn off if you prefer an instant response or notice any lag.": "تمرير سلس بعجلة الفأرة بدلا من القفز سطرا بسطر. عطله إذا كنت تفضل استجابة فورية أو لاحظت بطئا.",
   "Claim your handle": "المطالبة بمعرّفك (@handle)",
   "Reset password (recovery key)": "إعادة تعيين كلمة المرور (مفتاح الاسترداد)",
   "Sign out of Bear account": "تسجيل الخروج من حساب Bear",

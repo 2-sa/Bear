@@ -15,7 +15,11 @@ import {
   type CustomTheme,
 } from "@/lib/custom-themes";
 import { downloadText } from "@/lib/download-text";
-import { consumeThemeLibraryRequest, setThemeLibraryOpen, subscribeThemeLibraryRequest } from "./library-open-store";
+import {
+  consumeThemeLibraryRequest,
+  setThemeLibraryOpen,
+  subscribeThemeLibraryRequest,
+} from "./library-open-store";
 import type { StoreTab } from "./custom-themes-section/community-store/store-tabs";
 import { importForeignTheme } from "@/lib/theme-import";
 import { isHarborStyleName, parseHarborStyle, serializeHarborStyle } from "@/lib/harborstyle";
@@ -60,7 +64,9 @@ export function CustomThemesSection() {
 
   useEffect(() => {
     const onOpen = (e: Event) => {
-      const detail = (e as CustomEvent<{ tab?: "library" | "community" | "mine"; storeTab?: StoreTab }>).detail;
+      const detail = (
+        e as CustomEvent<{ tab?: "library" | "community" | "mine"; storeTab?: StoreTab }>
+      ).detail;
       openLibrary(detail?.tab ?? "library", detail?.storeTab);
     };
     window.addEventListener("harbor:open-theme-library", onOpen);
@@ -89,13 +95,28 @@ export function CustomThemesSection() {
   const activateTheme = (id: string, nav?: ThemePreset["navCustomization"]) => {
     const next = getThemeById(id);
     const bg = next?.background;
+    const held = settings.navCustomizationOwn;
+    const navPatch = nav
+      ? {
+          navCustomization: {
+            order: nav.order ?? [],
+            hidden: nav.hidden ?? [],
+            renamed: nav.renamed ?? {},
+          },
+          navCustomizationOwn: held ?? settings.navCustomization,
+        }
+      : held
+        ? { navCustomization: held, navCustomizationOwn: null }
+        : {};
     update({
       theme: {
         ...settings.theme,
         preset: id as ActiveThemeId,
-        ...(bg ? { backgroundImage: bg.image, backgroundDim: bg.dim ?? settings.theme.backgroundDim } : {}),
+        ...(bg
+          ? { backgroundImage: bg.image, backgroundDim: bg.dim ?? settings.theme.backgroundDim }
+          : {}),
       },
-      ...(nav ? { navCustomization: nav } : {}),
+      ...navPatch,
     });
   };
 
@@ -148,8 +169,7 @@ export function CustomThemesSection() {
     input.click();
   };
 
-  const activate = (id: string) =>
-    activateTheme(id, getThemeById(id)?.navCustomization);
+  const activate = (id: string) => activateTheme(id, getThemeById(id)?.navCustomization);
 
   const remove = (id: string) => {
     removeCustomTheme(id);
@@ -173,12 +193,7 @@ export function CustomThemesSection() {
   };
 
   if (studioOpen) {
-    return (
-      <ThemeStudio
-        seed={activeTheme ?? undefined}
-        onClose={() => setStudioOpen(false)}
-      />
-    );
+    return <ThemeStudio seed={activeTheme ?? undefined} onClose={() => setStudioOpen(false)} />;
   }
 
   if (libraryOpen) {
@@ -205,9 +220,7 @@ export function CustomThemesSection() {
       <ActiveBanner
         theme={activeTheme}
         onExport={() => activeTheme && showExport(activeTheme.id)}
-        onCustomize={() =>
-          window.dispatchEvent(new CustomEvent("harbor:open-theme-editor"))
-        }
+        onCustomize={() => window.dispatchEvent(new CustomEvent("harbor:open-theme-editor"))}
       />
 
       <HeroCards

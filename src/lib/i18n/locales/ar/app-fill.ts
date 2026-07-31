@@ -1101,6 +1101,19 @@ const appFill: Record<string, string> = {
   "Off by default, so your controller only drives Bear while it is the focused window. Leave it off if you play games with the same controller.": "معطّل افتراضيًا، ليتحكم ذراع التحكم في بير فقط عندما تكون نافذته نشطة. اتركه معطّلًا إذا كنت تلعب بنفس ذراع التحكم.",
   "Use Cinemeta for title metadata": "استخدام Cinemeta لبيانات العناوين",
   "Turn this off to take Cinemeta out entirely and use only your own metadata addons, such as AIOMetadata or AIOStreams. Cinemeta can go stale and show already released episodes as TBA. Leave it on unless you have a metadata addon installed, or titles will have no details.": "عطّل هذا لإزالة Cinemeta تمامًا واستخدام إضافات البيانات الخاصة بك فقط، مثل AIOMetadata أو AIOStreams. قد تصبح بيانات Cinemeta قديمة وتعرض حلقات صدرت بالفعل على أنها قريبًا. اتركه مفعّلًا ما لم تكن لديك إضافة بيانات مثبتة، وإلا فلن تظهر تفاصيل العناوين.",
+  "Only turn this off if you already have a metadata addon installed, such as AIOMetadata or AIOStreams. Without one, titles and collections can open completely blank. Cinemeta can go stale and show released episodes as TBA, which is the reason to replace it.": "لا تعطّل هذا الخيار إلا إذا كانت لديك إضافة بيانات وصفية مثبتة بالفعل، مثل AIOMetadata أو AIOStreams. بدونها قد تظهر العناوين والمجموعات فارغة تمامًا. قد تتقادم بيانات Cinemeta وتعرض الحلقات الصادرة على أنها TBA، وهذا سبب استبدالها.",
+  "No metadata addon detected. Bear is falling back to Cinemeta so titles still load, but turn this back on unless you are installing one.": "لم يتم العثور على إضافة بيانات وصفية. سيعود بير إلى Cinemeta حتى تظل العناوين قابلة للتحميل، لكن أعد تفعيل هذا الخيار ما لم تكن بصدد تثبيت إضافة.",
+  "Refresh subtitles": "تحديث الترجمات",
+  "Search all sources again for more subtitles": "البحث مجددًا في جميع المصادر عن ترجمات إضافية",
+  "Searching every source again": "جارٍ البحث مجددًا في جميع المصادر",
+  "Pick the subtitle that fits this release": "اختر الترجمة المناسبة لهذه النسخة",
+  "Already on the closest match for this release": "أنت تستخدم بالفعل أقرب ترجمة مطابقة لهذه النسخة",
+  "Switch to {name}: {why}": "التبديل إلى {name}: {why}",
+  "Switch to {name}": "التبديل إلى {name}",
+  "Searching every source for more subtitles…": "جارٍ البحث في جميع المصادر عن ترجمات إضافية…",
+  "Added {count} more subtitles.": "تمت إضافة {count} ترجمة إضافية.",
+  "No new subtitles found beyond what is already listed.": "لم يتم العثور على ترجمات جديدة غير المدرجة بالفعل.",
+  "{time} left": "متبقٍ {time}",
 };
 
 export default appFill;
