@@ -1,5 +1,6 @@
 import { ArrowUpCircle, Download, Loader2, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { clearMangaCache } from "@/lib/manga/api";
 import {
   extensionIconUrl,
   installExtension,
@@ -43,10 +44,11 @@ export function ExtensionRow({
     setError(null);
     try {
       await action();
-      onChanged();
     } catch {
       setError(t("Action failed"));
     } finally {
+      clearMangaCache();
+      onChanged();
       setBusy(false);
     }
   };
