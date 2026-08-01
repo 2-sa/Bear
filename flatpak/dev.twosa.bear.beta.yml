@@ -1,8 +1,8 @@
-app-id: site.harbor.Harbor
+app-id: dev.twosa.bear.beta
 runtime: org.gnome.Platform
 runtime-version: '49'
 sdk: org.gnome.Sdk
-command: harbor
+command: bear
 
 sdk-extensions:
   - org.freedesktop.Sdk.Extension.rust-stable
@@ -22,9 +22,9 @@ finish-args:
 build-options:
   append-path: /usr/lib/sdk/rust-stable/bin:/usr/lib/sdk/node22/bin
   env:
-    CARGO_HOME: /run/build/harbor/cargo
+    CARGO_HOME: /run/build/bear/cargo
     CARGO_NET_OFFLINE: 'true'
-    npm_config_cache: /run/build/harbor/npm-cache
+    npm_config_cache: /run/build/bear/npm-cache
     CI: 'true'
 
 modules:
@@ -78,17 +78,17 @@ modules:
         url: https://github.com/yt-dlp/yt-dlp/releases/download/2026.06.09/yt-dlp
         sha256: e5d57466682cfa9d61e9cf7c8a4f09b00f4a62af37d3bbdc4bcffdf63615feac
 
-  - name: harbor
+  - name: bear
     buildsystem: simple
     build-commands:
       - node flatpak-node/pnpm-cli/bin/pnpm.cjs install --offline --frozen-lockfile --trust-lockfile
       - node node_modules/@tauri-apps/cli/tauri.js build --config src-tauri/tauri.flatpak.conf.json --no-bundle
-      - install -Dm755 src-tauri/target/release/harbor /app/bin/harbor
-      - install -Dm644 flatpak/site.harbor.Harbor.desktop /app/share/applications/site.harbor.Harbor.desktop
-      - install -Dm644 flatpak/site.harbor.Harbor.metainfo.xml /app/share/metainfo/site.harbor.Harbor.metainfo.xml
-      - install -Dm644 src-tauri/icons/32x32.png /app/share/icons/hicolor/32x32/apps/site.harbor.Harbor.png
-      - install -Dm644 src-tauri/icons/128x128.png /app/share/icons/hicolor/128x128/apps/site.harbor.Harbor.png
-      - install -Dm644 src-tauri/icons/icon.png /app/share/icons/hicolor/512x512/apps/site.harbor.Harbor.png
+      - install -Dm755 src-tauri/target/release/bear /app/bin/bear
+      - install -Dm644 flatpak/dev.twosa.bear.beta.desktop /app/share/applications/dev.twosa.bear.beta.desktop
+      - install -Dm644 flatpak/dev.twosa.bear.beta.metainfo.xml /app/share/metainfo/dev.twosa.bear.beta.metainfo.xml
+      - install -Dm644 src-tauri/icons/32x32.png /app/share/icons/hicolor/32x32/apps/dev.twosa.bear.beta.png
+      - install -Dm644 src-tauri/icons/128x128.png /app/share/icons/hicolor/128x128/apps/dev.twosa.bear.beta.png
+      - install -Dm644 src-tauri/icons/icon.png /app/share/icons/hicolor/512x512/apps/dev.twosa.bear.beta.png
       - install -Dm755 /usr/bin/ffmpeg /app/bin/ffmpeg
       - install -Dm755 /usr/bin/ffprobe /app/bin/ffprobe
     sources:

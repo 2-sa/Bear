@@ -1,0 +1,10 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Bear",
+  "identifier": "dev.twosa.bear.beta",
+  "bundle": {
+    "active": false,
+    "createUpdaterArtifacts": false,
+    "externalBin": []
+  }
+}

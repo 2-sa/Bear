@@ -8,8 +8,8 @@ version="$(node -p "require('./package.json').version")"
 tauri_version="$(node -p "require('./src-tauri/tauri.conf.json').version")"
 package_manager="$(node -p "require('./package.json').packageManager")"
 pnpm_version="${package_manager#pnpm@}"
-metadata="flatpak/site.harbor.Harbor.metainfo.xml"
-manifest="flatpak/site.harbor.Harbor.yml"
+metadata="flatpak/dev.twosa.bear.beta.metainfo.xml"
+manifest="flatpak/dev.twosa.bear.beta.yml"
 
 if [[ "$version" != "$tauri_version" ]]; then
   echo "package.json ($version) and tauri.conf.json ($tauri_version) disagree" >&2
@@ -110,7 +110,6 @@ PY
 
 mv "$node_output" flatpak/node-sources.json
 mv "$cargo_output" flatpak/cargo-sources.json
-vp fmt flatpak/node-sources.json
 
 python3 - "$metadata" "$manifest" "$version" "$release_date" "$pnpm_version" "$pnpm_sha256" <<'PY'
 import os
@@ -147,8 +146,8 @@ with open(temporary, "w", encoding="utf-8") as output:
 os.replace(temporary, manifest)
 PY
 
-desktop-file-validate flatpak/site.harbor.Harbor.desktop
+desktop-file-validate flatpak/dev.twosa.bear.beta.desktop
 appstreamcli validate --no-net "$metadata"
 flatpak-builder --show-manifest "$manifest" >/dev/null
 
-echo "Flatpak sources and metadata refreshed for Harbor $version ($release_date)."
+echo "Flatpak sources and metadata refreshed for Bear $version ($release_date)."

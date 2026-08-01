@@ -2,6 +2,7 @@
   "bundle": {
     "createUpdaterArtifacts": false,
     "externalBin": [],
+    "targets": ["appimage", "deb", "rpm"],
     "linux": {
       "deb": {
         "depends": [
