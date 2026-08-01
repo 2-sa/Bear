@@ -66,7 +66,7 @@ const TITLE_BY_KIND: Record<string, string> = {
   downloads: "Downloads milestone",
   stars: "Ratings milestone",
   "diagnostics-request": "Diagnostics requested",
-  system: "Message from Harbor",
+  system: "Message from Bear",
 };
 
 export function notifTitle(notif: CenterNotif, t: Translate): string {

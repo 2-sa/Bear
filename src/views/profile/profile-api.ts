@@ -90,16 +90,16 @@ function mockSummary(handle: string): ProfileSummary {
     xp: isOwner ? 2400 : cleanHandle === "alex_streamer" ? 8900 : 1500,
     xpToNext: isOwner ? 3000 : cleanHandle === "alex_streamer" ? 10000 : 3000,
     slogan: isOwner
-      ? "Cruising the seas of media with Harbor ✨"
+      ? "Cruising the seas of media with Bear ✨"
       : cleanHandle === "alex_streamer"
         ? "Cinephile & Anime lover 🍿"
         : "Sailing through streams & party watching 🏴‍☠️",
     description: isOwner
-      ? "Welcome to my Harbor profile! Developer & Explorer."
+      ? "Welcome to my Bear profile! Developer & Explorer."
       : cleanHandle === "alex_streamer"
         ? "I watch everything. Yes, everything."
         : "Avast! Movie lover and anime watcher.",
-    location: isOwner ? "Harbor Bay" : cleanHandle === "alex_streamer" ? "Tokyo" : "Tortuga",
+    location: isOwner ? "Bear Bay" : cleanHandle === "alex_streamer" ? "Tokyo" : "Tortuga",
     pronouns: isOwner ? "they/them" : "he/him",
     online: true,
     memberSince: new Date().toISOString(),

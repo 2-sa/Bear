@@ -70,7 +70,7 @@ const used: Record<string, string> = {
   "Harbor Rank scores a whole career, not a single hit. Four things move a rank: how good the work is on average, how much of it earned wide acclaim, the major awards it won, and how often the person carried the work as a lead. Each pillar is weighted, added up, then adjusted for the breadth and recency of the body of work. Every number that feeds a score is shown on the card, so you can always see why.": "يقيّم ترتيب Harbor مسيرة كاملة، لا عملًا ناجحًا واحدًا. أربعة عوامل تحرّك الترتيب: مستوى جودة الأعمال في المتوسط، ومقدار ما نال منها إشادة واسعة، والجوائز الكبرى التي فازت بها، وعدد المرات التي حمل فيها الشخص العمل كبطل. تُرجَّح كل ركيزة وتُجمع، ثم تُعدَّل حسب اتساع مجمل الأعمال وحداثتها. يظهر على البطاقة كل رقم يغذّي النتيجة، لتعرف السبب دائمًا.",
   "Harbor could not find these": "لم يعثر Harbor على هذه",
   "Harbor loads the native svpflow filter through VapourSynth and starts SVP Manager when available. Restart playback to apply.": "يحمّل Harbor مرشّح svpflow الأصلي عبر VapourSynth ويشغّل SVP Manager عند توفره. أعد التشغيل للتطبيق.",
-  "Harbor's own menus and labels. Subtitle languages come later, and you can change both in Settings.": "قوائم Harbor وتسمياته. لغات الترجمة تأتي لاحقًا، ويمكنك تغيير كليهما من الإعدادات.",
+  "Bear's own menus and labels. Subtitle languages come later, and you can change both in Settings.": "قوائم بير وتسمياته. لغات الترجمة تأتي لاحقًا، ويمكنك تغيير كليهما من الإعدادات.",
   "Hide breakdown": "إخفاء التفصيل",
   "Hide card": "إخفاء البطاقة",
   "Hide curated packs": "إخفاء الحزم المنتقاة",

@@ -59,7 +59,7 @@ export function LanguageStep() {
         </h1>
         <p className="text-[14px] leading-relaxed text-ink-muted">
           {t(
-            "Harbor's own menus and labels. Subtitle languages come later, and you can change both in Settings.",
+            "Bear's own menus and labels. Subtitle languages come later, and you can change both in Settings.",
           )}
         </p>
       </div>

@@ -502,7 +502,7 @@ export function LibraryPanel({
               side="top"
               align="center"
               label={t(
-                "TMDB asks for an app URL when you create the key. Put any URL at all, like https://harbor.app. The only thing you need back is the API key.",
+                "TMDB asks for an app URL when you create the key. Put any URL at all, like https://github.com/2-sa/Bear. The only thing you need back is the API key.",
               )}
             >
               <button
@@ -695,7 +695,7 @@ export function LibraryPanel({
           warn={
             !settings.cinemetaEnabled && !hasMetaAddon
               ? t(
-                  "No metadata addon detected. Harbor is falling back to Cinemeta so titles still load, but turn this back on unless you are installing one.",
+                  "No metadata addon detected. Bear is falling back to Cinemeta so titles still load, but turn this back on unless you are installing one.",
                 )
               : undefined
           }

@@ -28,7 +28,11 @@ import { useAutoRetry } from "./player/hooks/use-auto-retry";
 import { useWakeReconnect } from "./player/hooks/use-wake-reconnect";
 import { useEngineStats } from "./player/hooks/use-engine-stats";
 import { useContentAdvisory } from "./player/hooks/use-content-advisory";
-import { getPlaybackPosition, setPlaybackDownloaded } from "@/lib/player/playback-clock";
+import {
+  getPlaybackPosition,
+  resolvePlaybackDownloadedFraction,
+  setPlaybackDownloaded,
+} from "@/lib/player/playback-clock";
 import { isBundledEngineUrl, isLocalEngineUrl } from "@/lib/stremio-server";
 import { usePauseOnInactive } from "./player/hooks/use-pause-on-inactive";
 import { spoilerMaskFor } from "@/lib/spoilers";
@@ -158,19 +162,14 @@ export function PlayerView({ src }: { src: PlayerSrc }) {
     active: snap.status !== "ended" && (snap.videoWidth <= 0 || isP2pEngine),
   });
   useEffect(() => {
-    const isLive = src.isLive || !!src.meta.id?.startsWith("iptv:");
-    const isHls = src.url.includes("/hlsv2/");
-    if (isP2pEngine) {
-      const len = engineStats?.streamLen ?? 0;
-      const prog = engineStats?.streamProgress ?? 0;
-      setPlaybackDownloaded(len > 0 ? prog / len : 0);
-    } else if (!isLive && !isHls) {
-      const dur = snap.durationSec || 0;
-      setPlaybackDownloaded(dur > 0 ? Math.min(1, (snap.positionSec + snap.bufferedSec) / dur) : 0);
-    } else {
-      setPlaybackDownloaded(0);
-    }
-  }, [engineStats?.streamProgress, engineStats?.streamLen, src.url, isP2pEngine, src.isLive, src.meta.id, snap.positionSec, snap.bufferedSec, snap.durationSec]);
+    setPlaybackDownloaded(
+      resolvePlaybackDownloadedFraction({
+        isP2pEngine,
+        streamProgress: engineStats?.streamProgress ?? 0,
+        streamLen: engineStats?.streamLen ?? 0,
+      }),
+    );
+  }, [engineStats?.streamProgress, engineStats?.streamLen, isP2pEngine]);
   const shellSnapRef = useRef(snap);
   const snapRef = useRef(snap);
   snapRef.current = snap;

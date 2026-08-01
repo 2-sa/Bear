@@ -133,11 +133,11 @@ export function RatingModal({ target, onClose }: { target: RatingTarget; onClose
             <>
               <div className="flex flex-col items-center gap-1.5 py-2 text-center">
                 <div className="text-[15px] font-semibold text-ink">
-                  {t("Ratings need a Harbor account")}
+                  {t("Ratings need a Bear account")}
                 </div>
                 <div className="max-w-[300px] text-[13px] leading-relaxed text-ink-subtle">
                   {t(
-                    "Your Harbor account is separate from your Stremio sign in. Create one free or sign in from Settings.",
+                    "Your Bear account is separate from your Stremio sign in. Create one free or sign in from Settings.",
                   )}
                 </div>
               </div>
