@@ -33,6 +33,7 @@ export type SectionId =
   | "awardIcons"
   | "webhooks"
   | "bug"
+  | "support"
   | "remotes"
   | "storage"
   | "advanced";

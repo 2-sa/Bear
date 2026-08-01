@@ -107,7 +107,11 @@ export async function checkForUpdate(manual = false): Promise<void> {
     return;
   }
   if (!IS_TAURI) return;
-  if (state.status === "checking" || state.status === "downloading" || state.status === "installing") {
+  if (
+    state.status === "checking" ||
+    state.status === "downloading" ||
+    state.status === "installing"
+  ) {
     return;
   }
   set({ status: "checking", manualCheck: manual, error: null });
@@ -161,7 +165,10 @@ export async function installUpdate(): Promise<void> {
   set({ status: "installing", error: null, installFailed: false });
   try {
     try {
-      localStorage.setItem(PENDING_KEY, JSON.stringify({ version: handle.version, at: Date.now() }));
+      localStorage.setItem(
+        PENDING_KEY,
+        JSON.stringify({ version: handle.version, at: Date.now() }),
+      );
     } catch {
       /* private mode: we just lose next-launch failure detection */
     }

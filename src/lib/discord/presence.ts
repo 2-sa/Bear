@@ -95,7 +95,8 @@ function computeBase(): Base {
         posterUrl: (config.showPoster && playback.posterUrl) || BEAR_LOGO,
         smallImageUrl: (config.showPoster && playback.smallImageUrl) || undefined,
         largeText: playback.year != null ? `${playback.title} (${playback.year})` : playback.title,
-        startTs: live && config.showTimestamp ? nowSec - Math.floor(playback.positionSec) : undefined,
+        startTs:
+          live && config.showTimestamp ? nowSec - Math.floor(playback.positionSec) : undefined,
         endTs: live && config.showTimestamp ? nowSec + Math.floor(remaining) : undefined,
         paused: playback.paused,
       },

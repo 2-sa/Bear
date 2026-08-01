@@ -338,6 +338,7 @@ export const DEFAULT: Settings = {
   hideUnreleased: false,
   localEpisodeSortDesc: false,
   smoothScroll: false,
+  showSimklCard: false,
   showPlaylistsTab: false,
   skipProfileScreen: false,
   profilePromptInterval: "launch",

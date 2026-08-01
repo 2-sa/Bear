@@ -652,6 +652,7 @@ function EdgeArrow({
         onClick={onClick}
         aria-label={label}
         tabIndex={visible ? 0 : -1}
+        data-tv-skip=""
         className={`group/edge grid h-full w-full place-items-center ${
           visible ? "pointer-events-auto" : "pointer-events-none"
         }`}

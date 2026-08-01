@@ -467,7 +467,7 @@ pub fn run() {
     #[cfg(any(windows, target_os = "linux"))]
     svp::prime_svp_env();
     #[cfg(target_os = "linux")]
-    mpv_render_linux::configure_nvidia_graphics();
+    mpv_render_linux::configure_linux_graphics();
     let _ = rustls::crypto::ring::default_provider().install_default();
     trailer::sweep_cache();
     std::thread::spawn(temp_prune::sweep_temp);

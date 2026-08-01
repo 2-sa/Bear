@@ -1,7 +1,8 @@
 import { safeFetch } from "@/lib/safe-fetch";
 import { APP_VERSION, BUILD_ID, IS_BETA_BUILD } from "@/lib/build-info";
+import { HARBOR_BUGS_BASE } from "@/lib/config/endpoints";
 
-const URL = "https://bugs.harbor.site/v1/feedback";
+const URL = `${HARBOR_BUGS_BASE}/v1/feedback`;
 
 export async function submitBuildFeedback(rating: number): Promise<boolean> {
   try {

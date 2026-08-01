@@ -1,4 +1,13 @@
-import { Check, Download, Link2, Loader2, Lock, RotateCw, Wrench } from "lucide-react";
+import {
+  Check,
+  Download,
+  FlaskConical,
+  Link2,
+  Loader2,
+  Lock,
+  RotateCw,
+  Wrench,
+} from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import cornerSvg from "@/assets/corner.svg";
 import harborDiscord from "@/assets/harbor-discord.svg";
@@ -12,13 +21,18 @@ import {
   omdbBudget as readOmdbBudget,
 } from "@/lib/providers/omdb";
 import { useSettings } from "@/lib/settings";
-import { repairStremioLibrary, type RepairProgress, type RepairResult } from "@/lib/stremio-library-repair";
+import {
+  repairStremioLibrary,
+  type RepairProgress,
+  type RepairResult,
+} from "@/lib/stremio-library-repair";
 import { findCorruptAnimeEntries, healCorruptAnimeEntries } from "@/lib/anime-cw-repair";
 import { clearResurfaceCache } from "@/lib/cw-resurface";
 import type { LibraryItem } from "@/lib/stremio";
 import { openUrl } from "@/lib/window";
 import {
   checkForUpdate,
+  clearStagedUpdate,
   openUpdatePanel,
   updateAvailable,
   useUpdate,
@@ -29,6 +43,7 @@ import { isLinuxDesktop } from "@/lib/platform";
 import { BackupRow } from "./backup-row";
 import { SettingsRecoverRow } from "./settings-recover-row";
 import { BuildFeedback } from "./build-feedback";
+import { RollbackRow } from "./rollback-row";
 import { PrivacyRow } from "./privacy-row";
 import { TrayRow } from "./tray-row";
 import { Section } from "./shared";
@@ -56,6 +71,8 @@ export function AdvancedPanel() {
         >
           <div className="flex flex-col gap-2.5">
             <UpdatesRow />
+            <BetaChannelRow />
+            <RollbackRow />
             <BuildFeedback />
           </div>
         </Section>
@@ -112,7 +129,9 @@ export function AdvancedPanel() {
 
       <Section
         title={t("API budget")}
-        subtitle={t("Daily call counter for OMDb rating lookups. Reset if it stops returning fresh scores.")}
+        subtitle={t(
+          "Daily call counter for OMDb rating lookups. Reset if it stops returning fresh scores.",
+        )}
       >
         <OmdbBudgetRow />
       </Section>
@@ -126,7 +145,9 @@ export function AdvancedPanel() {
 
       <Section
         title={t("Stremio library repair")}
-        subtitle={t("Scans your Stremio library and rewrites any item whose shape doesn't match Stremio's exact schema. Safe to run anytime; only items that need fixing get touched.")}
+        subtitle={t(
+          "Scans your Stremio library and rewrites any item whose shape doesn't match Stremio's exact schema. Safe to run anytime; only items that need fixing get touched.",
+        )}
       >
         <DesktopOnlyBlock>
           <LibraryRepairRow />
@@ -138,7 +159,7 @@ export function AdvancedPanel() {
 
       <Section
         title={t("About")}
-        subtitle={t("Build identity. Useful when filing a bug report at bugs@harbor.site.")}
+        subtitle={t("Build identity. Useful when filing a bug report on the Bear GitHub repository.")}
       >
         <AboutRow />
       </Section>
@@ -163,15 +184,15 @@ function LegalDisclaimer() {
         addon author, or trademark holder referenced inside the app.
         &quot;Stremio&quot;, &quot;Cinemeta&quot;, &quot;OpenSubtitles&quot;, &quot;Real-Debrid&quot;,
         &quot;Premiumize&quot;, &quot;AllDebrid&quot;, &quot;TorBox&quot;, &quot;DebridLink&quot;,
-        &quot;TMDB&quot;, &quot;Trakt&quot;, &quot;IMDb&quot;, &quot;Netflix&quot;, &quot;Disney+&quot;,
-        and all other names, logos, and brand references are property of their respective owners
-        and are used here only for compatibility and identification.
+        &quot;TMDB&quot;, &quot;Trakt&quot;, &quot;IMDb&quot;, &quot;Netflix&quot;,
+        &quot;Disney+&quot;, and all other names, logos, and brand references are property of their
+        respective owners and are used here only for compatibility and identification.
       </p>
       <p className="mt-2 text-[12px] leading-relaxed text-ink-muted">
         Bear itself does not host, distribute, or index any media. All streams come from
         third-party addons, debrid services, or your own Stremio account that you configure
-        yourself. You are responsible for what you choose to play and for complying with the
-        laws of your jurisdiction.
+        yourself. You are responsible for what you choose to play and for complying with the laws of
+        your jurisdiction.
       </p>
     </section>
   );
@@ -206,7 +227,9 @@ function WebBuildBanner() {
           {t("Everything you save here stays in this browser. Your Stremio login, API keys, watch progress, picker cache, dismissed tips. Bear servers never see any of it. Clearing your browser data wipes it.")}
         </p>
         <p className="text-[13.5px] leading-relaxed text-ink-muted">
-          {t("The web build can't run mpv, the trickplay generator, the local bandwidth probe, or your own Cloudflare relay. If you want HDR passthrough, TrueHD or DTS-HD audio, and smoother seeking, grab the desktop app.")}
+          {t(
+            "The web build can't run mpv, the trickplay generator, the local bandwidth probe, or your own Cloudflare relay. If you want HDR passthrough, TrueHD or DTS-HD audio, and smoother seeking, grab the desktop app.",
+          )}
         </p>
         <div className="mt-1 flex flex-wrap items-center gap-2">
           <button
@@ -228,6 +251,49 @@ function WebBuildBanner() {
         </div>
       </div>
     </section>
+  );
+}
+
+function BetaChannelRow() {
+  const t = useT();
+  const { settings, update } = useSettings();
+  const on = settings.betaUpdates;
+  return (
+    <div className="flex items-start gap-3 rounded-xl border border-edge-soft bg-canvas/40 px-4 py-3.5">
+      <span
+        className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
+          on ? "bg-accent/15 text-accent" : "bg-raised text-ink-subtle"
+        }`}
+      >
+        <FlaskConical size={15} strokeWidth={2.2} />
+      </span>
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <span className="text-[14px] font-medium text-ink">{t("Get beta updates")}</span>
+        <p className="text-[12.5px] leading-relaxed text-ink-subtle">
+          {t(
+            "Receive early builds with the newest fixes before they reach the stable release. Betas can be rough around the edges; switch this off to return to stable at the next update.",
+          )}
+        </p>
+      </div>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={on}
+        onClick={() => {
+          if (on) clearStagedUpdate();
+          update({ betaUpdates: !on });
+        }}
+        className={`mt-1 flex h-6 w-11 shrink-0 items-center rounded-full px-0.5 transition-colors ${
+          on ? "bg-accent" : "bg-raised"
+        }`}
+      >
+        <span
+          className={`h-5 w-5 rounded-full bg-canvas shadow-sm transition-transform ${
+            on ? "translate-x-5 rtl:-translate-x-5" : "translate-x-0"
+          }`}
+        />
+      </button>
+    </div>
   );
 }
 
@@ -332,7 +398,11 @@ function UpdatesRow() {
           disabled={busy}
           className="flex h-10 shrink-0 items-center gap-1.5 rounded-lg border border-edge px-3.5 text-[13px] font-medium text-ink transition-colors hover:bg-raised disabled:opacity-60"
         >
-          {busy ? <Loader2 size={15} className="animate-spin" /> : <RotateCw size={15} strokeWidth={2.2} />}
+          {busy ? (
+            <Loader2 size={15} className="animate-spin" />
+          ) : (
+            <RotateCw size={15} strokeWidth={2.2} />
+          )}
           {busy ? t("Checking") : t("Check for updates")}
         </button>
       )}
@@ -356,7 +426,9 @@ function DiscordPresenceRow() {
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <span className="text-[14px] font-medium text-ink">{t("Show on Discord")}</span>
           <p className="text-[12.5px] leading-relaxed text-ink-subtle">
-            {t("Display what you are watching on your Discord profile, with the show poster and a live progress bar. Requires the Discord desktop app to be running.")}
+            {t(
+              "Display what you are watching on your Discord profile, with the show poster and a live progress bar. Requires the Discord desktop app to be running.",
+            )}
           </p>
         </div>
         <button
@@ -414,7 +486,9 @@ function DiscordPresenceRow() {
             onToggle={() => update({ discordShowPartyJoin: !settings.discordShowPartyJoin })}
           />
           <p className="px-1 pt-1 text-[11.5px] leading-snug text-ink-subtle">
-            {t("And for the naughty ones: browsing or rating an adult addon never shows on Discord.")}
+            {t(
+              "And for the naughty ones: browsing or rating an adult addon never shows on Discord.",
+            )}
           </p>
         </div>
       )}
@@ -516,7 +590,9 @@ function OnboardingRow() {
         label={tr("Replay walkthrough")}
         sub={tr("Re-runs the welcome flow and clears every dismissed tip.")}
         cta={phase === "walkthrough" ? tr("Done") : tr("Replay")}
-        icon={phase === "walkthrough" ? <Check size={14} strokeWidth={2.6} /> : <RotateCw size={14} />}
+        icon={
+          phase === "walkthrough" ? <Check size={14} strokeWidth={2.6} /> : <RotateCw size={14} />
+        }
         tone={phase === "walkthrough" ? "success" : "neutral"}
         onClick={() => {
           resetOnboarding();
@@ -525,7 +601,9 @@ function OnboardingRow() {
       />
       <ActionRow
         label={tr("Restore dismissed hints")}
-        sub={tr("Brings back the small in-app tips you've dismissed without redoing the welcome flow.")}
+        sub={tr(
+          "Brings back the small in-app tips you've dismissed without redoing the welcome flow.",
+        )}
         cta={phase === "hints" ? tr("Restored") : tr("Restore")}
         icon={phase === "hints" ? <Check size={14} strokeWidth={2.6} /> : <RotateCw size={14} />}
         tone={phase === "hints" ? "success" : "neutral"}
@@ -544,7 +622,7 @@ function AboutRow() {
     <div className="flex flex-col gap-2 rounded-xl border border-edge-soft bg-canvas/40 px-4 py-3.5 text-[13px] text-ink-muted">
       <InfoLine label={t("Version")} value={`${__APP_VERSION__}${IS_BETA_BUILD ? ` (${t("Beta")})` : ""}`} />
       <InfoLine label={t("Build")} value={isTauri ? t("Desktop (Tauri 2 / WebView2)") : t("Web")} />
-      <InfoLine label={t("Bug reports")} value="bugs@harbor.site" />
+      <InfoLine label={t("Bug reports")} value="github.com/2-sa/Bear/issues" />
     </div>
   );
 }
@@ -644,14 +722,19 @@ function LibraryRepairRow() {
     if (result) {
       if (result.total === 0) return t("Library is empty. Nothing to repair.");
       return (
-        t("{repaired} fixed, {clean} already clean", { repaired: result.repaired, clean: result.alreadyClean }) +
+        t("{repaired} fixed, {clean} already clean", {
+          repaired: result.repaired,
+          clean: result.alreadyClean,
+        }) +
         (result.unrepairable > 0 ? t(", {n} unrepairable", { n: result.unrepairable }) : "") +
         "."
       );
     }
     if (!progress) return t("Rewrites every library item to match Stremio's exact schema. Run once if your Stremio app started crashing after Bear synced playback.");
     if (progress.phase === "fetching") {
-      return progress.total ? t("Fetching {n} items…", { n: progress.total }) : t("Fetching library index…");
+      return progress.total
+        ? t("Fetching {n} items…", { n: progress.total })
+        : t("Fetching library index…");
     }
     if (progress.phase === "normalizing") {
       return progress.needsRepair != null
@@ -659,7 +742,10 @@ function LibraryRepairRow() {
         : t("Checking {n} items…", { n: progress.total ?? 0 });
     }
     if (progress.phase === "pushing") {
-      return t("Pushing {pushed} of {total}…", { pushed: progress.pushed ?? 0, total: progress.needsRepair ?? 0 });
+      return t("Pushing {pushed} of {total}…", {
+        pushed: progress.pushed ?? 0,
+        total: progress.needsRepair ?? 0,
+      });
     }
     return t("Done.");
   })();
@@ -669,7 +755,13 @@ function LibraryRepairRow() {
       label={t("Repair library")}
       sub={statusLine}
       cta={busy ? t("Working…") : result ? t("Run again") : t("Repair now")}
-      icon={busy ? <Loader2 size={13} strokeWidth={2.4} className="animate-spin" /> : <Wrench size={13} strokeWidth={2.4} />}
+      icon={
+        busy ? (
+          <Loader2 size={13} strokeWidth={2.4} className="animate-spin" />
+        ) : (
+          <Wrench size={13} strokeWidth={2.4} />
+        )
+      }
       onClick={run}
       disabled={busy}
       tone={result && result.repaired > 0 && !error ? "success" : undefined}
@@ -680,7 +772,9 @@ function LibraryRepairRow() {
 function AnimeRepairRow() {
   const t = useT();
   const { authKey } = useAuth();
-  const [phase, setPhase] = useState<"idle" | "scanning" | "scanned" | "removing" | "done" | "error">("idle");
+  const [phase, setPhase] = useState<
+    "idle" | "scanning" | "scanned" | "removing" | "done" | "error"
+  >("idle");
   const [found, setFound] = useState<LibraryItem[]>([]);
   const [removed, setRemoved] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -723,7 +817,10 @@ function AnimeRepairRow() {
   }
 
   const names =
-    found.slice(0, 4).map((i) => i.name || i._id).join(", ") + (found.length > 4 ? "…" : "");
+    found
+      .slice(0, 4)
+      .map((i) => i.name || i._id)
+      .join(", ") + (found.length > 4 ? "…" : "");
   const showRemove = phase === "scanned" && found.length > 0;
   const busy = phase === "scanning" || phase === "removing";
   const sub = (() => {
@@ -732,10 +829,16 @@ function AnimeRepairRow() {
     if (phase === "scanned")
       return found.length === 0
         ? t("No issues found. Your anime library looks clean.")
-        : t("Found {n}: {names}. These are saved under the wrong id, which breaks Continue Watching and Trakt marking.", { n: found.length, names });
+        : t(
+            "Found {n}: {names}. These are saved under the wrong id, which breaks Continue Watching and Trakt marking.",
+            { n: found.length, names },
+          );
     if (phase === "removing") return t("Removing…");
-    if (phase === "done") return t("Removed {n}. Rewatch and they re-add correctly.", { n: removed });
-    return t("Finds anime saved under a movie or series id (which breaks Continue Watching and Trakt) and removes just those so they re-add correctly.");
+    if (phase === "done")
+      return t("Removed {n}. Rewatch and they re-add correctly.", { n: removed });
+    return t(
+      "Finds anime saved under a movie or series id (which breaks Continue Watching and Trakt) and removes just those so they re-add correctly.",
+    );
   })();
   const cta = (() => {
     if (phase === "scanning") return t("Scanning…");
@@ -751,7 +854,13 @@ function AnimeRepairRow() {
       label={t("Fix corrupted anime")}
       sub={sub}
       cta={cta}
-      icon={busy ? <Loader2 size={13} strokeWidth={2.4} className="animate-spin" /> : <Wrench size={13} strokeWidth={2.4} />}
+      icon={
+        busy ? (
+          <Loader2 size={13} strokeWidth={2.4} className="animate-spin" />
+        ) : (
+          <Wrench size={13} strokeWidth={2.4} />
+        )
+      }
       onClick={showRemove ? remove : scan}
       disabled={busy}
       tone={phase === "done" && removed > 0 ? "success" : undefined}

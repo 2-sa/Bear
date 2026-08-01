@@ -42,7 +42,12 @@ export function HybridMenuBar() {
       label: t("File"),
       items: [
         { kind: "action", label: t("Settings"), onClick: () => setView("settings") },
-        { kind: "action", label: t("Reload"), hint: "Ctrl+R", onClick: () => window.location.reload() },
+        {
+          kind: "action",
+          label: t("Reload"),
+          hint: "Ctrl+R",
+          onClick: () => window.location.reload(),
+        },
         { kind: "sep" },
         { kind: "action", label: t("Quit Bear"), onClick: () => close(), danger: true },
       ],
@@ -51,7 +56,12 @@ export function HybridMenuBar() {
       id: "view",
       label: t("View"),
       items: [
-        { kind: "action", label: t("Toggle Fullscreen"), hint: "F11", onClick: () => void toggleWindowFullscreen() },
+        {
+          kind: "action",
+          label: t("Toggle Fullscreen"),
+          hint: "F11",
+          onClick: () => void toggleWindowFullscreen(),
+        },
         { kind: "sep" },
         { kind: "action", label: t("Zoom In"), hint: "Ctrl +", onClick: () => zoom(0.1) },
         { kind: "action", label: t("Zoom Out"), hint: "Ctrl -", onClick: () => zoom(-0.1) },
@@ -94,7 +104,9 @@ export function HybridMenuBar() {
             onClick={() => setOpenId((o) => (o === m.id ? null : m.id))}
             onMouseEnter={() => setOpenId((o) => (o != null ? m.id : o))}
             className={`flex h-[26px] items-center rounded-[4px] px-2 text-[12.5px] transition-colors ${
-              openId === m.id ? "bg-ink/12 text-ink" : "text-ink-muted hover:bg-ink/[0.08] hover:text-ink"
+              openId === m.id
+                ? "bg-ink/12 text-ink"
+                : "text-ink-muted hover:bg-ink/[0.08] hover:text-ink"
             }`}
           >
             {m.label}

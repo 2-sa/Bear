@@ -431,7 +431,8 @@ function gradient(hue: number) {
 }
 
 function hash(s: string) {
+  const str = typeof s === "string" ? s : "";
   let h = 0;
-  for (let i = 0; i < s.length; i++) h = (h << 5) - h + s.charCodeAt(i);
+  for (let i = 0; i < str.length; i++) h = (h << 5) - h + str.charCodeAt(i);
   return Math.abs(h);
 }

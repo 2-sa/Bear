@@ -1,4 +1,12 @@
-import { Check, ChevronRight, FileText, HelpCircle, LogOut, MonitorSmartphone, Users } from "lucide-react";
+import {
+  Check,
+  ChevronRight,
+  FileText,
+  HelpCircle,
+  LogOut,
+  MonitorSmartphone,
+  Users,
+} from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { useAuth } from "@/lib/auth";
 import { useProfiles } from "@/lib/profiles";
@@ -45,7 +53,9 @@ export function MobileProfile({ onOpenRemote }: { onOpenRemote: () => void }) {
       </button>
 
       <section className="flex flex-col gap-3">
-        <h2 className="px-1 text-[12px] font-bold uppercase tracking-[0.16em] text-ink-subtle">Remote style</h2>
+        <h2 className="px-1 text-[12px] font-bold uppercase tracking-[0.16em] text-ink-subtle">
+          Remote style
+        </h2>
         <div className="grid grid-cols-2 gap-3">
           <StylePreview kind="dpad" label="D-pad" />
           <StylePreview kind="minimal" label="Touchpad" />
@@ -53,15 +63,28 @@ export function MobileProfile({ onOpenRemote }: { onOpenRemote: () => void }) {
       </section>
 
       <section className="overflow-hidden rounded-2xl border border-edge-soft/70 bg-elevated/40">
-        <Row icon={<MonitorSmartphone size={20} strokeWidth={2} />} label="Remote" onClick={onOpenRemote} />
+        <Row
+          icon={<MonitorSmartphone size={20} strokeWidth={2} />}
+          label="Remote"
+          onClick={onOpenRemote}
+        />
         <Divider />
-        <Row icon={<HelpCircle size={20} strokeWidth={2} />} label="Help & feedback" onClick={() => window.open("https://github.com/2-sa/Bear/issues/new", "_blank")} />
+        <Row
+          icon={<HelpCircle size={20} strokeWidth={2} />}
+          label="Help & feedback"
+          onClick={() => window.open("https://github.com/2-sa/Bear/issues/new", "_blank")}
+        />
         <Divider />
         <Row icon={<FileText size={20} strokeWidth={2} />} label="Legal" onClick={() => {}} />
         {user && (
           <>
             <Divider />
-            <Row icon={<LogOut size={20} strokeWidth={2} />} label="Sign out" danger onClick={signOut} />
+            <Row
+              icon={<LogOut size={20} strokeWidth={2} />}
+              label="Sign out"
+              danger
+              onClick={signOut}
+            />
           </>
         )}
       </section>
@@ -89,7 +112,9 @@ function StylePreview({ kind, label }: { kind: MobileRemoteStyle; label: string 
       <span className="flex h-[104px] w-full items-center justify-center rounded-xl bg-canvas/60">
         {kind === "dpad" ? <DpadGlyph /> : <TouchpadGlyph />}
       </span>
-      <span className={`text-[13.5px] font-semibold ${active ? "text-ink" : "text-ink-muted"}`}>{label}</span>
+      <span className={`text-[13.5px] font-semibold ${active ? "text-ink" : "text-ink-muted"}`}>
+        {label}
+      </span>
     </button>
   );
 }
@@ -133,7 +158,9 @@ function Row({
       className="flex w-full items-center gap-3.5 px-4 py-3.5 text-start transition-colors active:bg-raised/60"
     >
       <span className={danger ? "text-danger" : "text-ink-muted"}>{icon}</span>
-      <span className={`flex-1 text-[15px] font-medium ${danger ? "text-danger" : "text-ink"}`}>{label}</span>
+      <span className={`flex-1 text-[15px] font-medium ${danger ? "text-danger" : "text-ink"}`}>
+        {label}
+      </span>
       {!danger && <ChevronRight size={18} strokeWidth={2.2} className="text-ink-subtle" />}
     </button>
   );

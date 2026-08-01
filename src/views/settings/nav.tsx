@@ -288,6 +288,14 @@ function IconBug(p: IconProps) {
   );
 }
 
+function IconSupport(p: IconProps) {
+  return (
+    <IconBase {...p}>
+      <path d="M12 20.5s-7.5-4.3-7.5-9.4A4.1 4.1 0 0 1 12 8.4a4.1 4.1 0 0 1 7.5 2.7c0 5.1-7.5 9.4-7.5 9.4z" />
+    </IconBase>
+  );
+}
+
 function IconTheme(p: IconProps) {
   return (
     <IconBase {...p}>
@@ -642,6 +650,7 @@ const NAV_GROUPS: Array<{ heading: string | null; items: NavItem[] }> = [
     heading: "Help",
     items: [
       { id: "bug", label: "Report a bug", Icon: IconBug, keywords: ["report", "feedback", "issue", "crash"] },
+      { id: "support", label: "Support Harbor", Icon: IconSupport, keywords: ["donate", "donation", "support", "elfhosted", "sponsor", "charity", "give", "contribute", "money", "pay"] },
     ],
   },
   {
@@ -1472,6 +1481,7 @@ export function SettingsNav({
     webhooks: webhookActive ? "live" : null,
     hotkeys: null,
     bug: null,
+    support: null,
     remotes: settings.serveWebUi || settings.remoteControlEnabled ? "live" : null,
     storage: null,
     advanced: null,

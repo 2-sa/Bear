@@ -76,6 +76,36 @@ export function isVisible(el: HTMLElement) {
   return true;
 }
 
+const ONSCREEN_MARGIN = 320;
+
+export function isOnScreen(el: HTMLElement, margin = ONSCREEN_MARGIN): boolean {
+  const r = el.getBoundingClientRect();
+  if (r.width <= 0 || r.height <= 0) return false;
+  const vw = window.innerWidth || document.documentElement.clientWidth;
+  const vh = window.innerHeight || document.documentElement.clientHeight;
+  if (r.right <= -margin || r.bottom <= -margin || r.left >= vw + margin || r.top >= vh + margin) {
+    return false;
+  }
+  let node = el.parentElement;
+  const clips = /(auto|scroll|hidden|clip)/;
+  while (node && node !== document.body) {
+    const s = window.getComputedStyle(node);
+    if (clips.test(s.overflowX) || clips.test(s.overflowY)) {
+      const cr = node.getBoundingClientRect();
+      if (
+        r.right <= cr.left - margin ||
+        r.left >= cr.right + margin ||
+        r.bottom <= cr.top - margin ||
+        r.top >= cr.bottom + margin
+      ) {
+        return false;
+      }
+    }
+    node = node.parentElement;
+  }
+  return true;
+}
+
 export function isInNav(el: HTMLElement): boolean {
   return !!el.closest("[data-harbor-nav]");
 }
@@ -100,7 +130,7 @@ export function getSoundType(el: HTMLElement): "light" | "movie" {
 
 export function getFocusable(root: ParentNode = document): HTMLElement[] {
   const all = Array.from(root.querySelectorAll<HTMLElement>(SELECTOR)).filter(
-    (el) => isVisible(el) && !el.closest("[data-tv-skip]"),
+    (el) => isVisible(el) && !el.closest("[data-tv-skip]") && (zoneOf(el) === "nav" || isOnScreen(el)),
   );
   return all.filter((el) => !all.some((other) => other !== el && other.contains(el)));
 }
