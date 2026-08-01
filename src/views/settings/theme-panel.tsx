@@ -12,6 +12,7 @@ import { MarketCta } from "./theme-panel/custom-themes-section/community-store/m
 import type { IconThumb } from "./theme-panel/custom-themes-section/community-store/market/icon-fan";
 import { DisplaySection } from "./theme-panel/display-section";
 import { FontGrid } from "./theme-panel/font-grid";
+import { FullscreenClockSettings } from "./theme-panel/fullscreen-clock-settings";
 import { LogoPicker } from "./theme-panel/logo-picker";
 import {
   CUSTOM_THEME_TOOLS_ENABLED,
@@ -117,6 +118,13 @@ export function ThemePanel() {
           <DragAnywhereRow />
         </Section>
       )}
+
+      <Section
+        title={t("Fullscreen clock")}
+        subtitle={t("Keep your local time visible during fullscreen playback and choose how it looks.")}
+      >
+        <FullscreenClockSettings />
+      </Section>
 
       <Section
         title={t("Logo & app icon")}

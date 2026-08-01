@@ -1,3 +1,5 @@
+import { stableCardNavigationRect } from "@/lib/poster-backdrop-expansion";
+
 export type Dir = "up" | "down" | "left" | "right";
 
 const SELECTOR = [
@@ -214,12 +216,11 @@ export function isLocallyManaged(target: HTMLElement | null): boolean {
 }
 
 function getRect(el: HTMLElement) {
-  const r = el.getBoundingClientRect();
-  return {
-    left: r.left, right: r.right, top: r.top, bottom: r.bottom,
-    width: r.width, height: r.height,
-    cx: r.left + r.width / 2, cy: r.top + r.height / 2,
-  };
+  const cell = el.closest<HTMLElement>("[data-tv-nav-base-width]");
+  const r = cell?.getBoundingClientRect() ?? el.getBoundingClientRect();
+  const baseWidth = cell ? Number(cell.dataset.tvNavBaseWidth) : undefined;
+  const rtl = cell ? window.getComputedStyle(cell).direction === "rtl" : false;
+  return stableCardNavigationRect(r, baseWidth, rtl);
 }
 
 function overlap(aStart: number, aEnd: number, bStart: number, bEnd: number) {

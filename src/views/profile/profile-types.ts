@@ -53,6 +53,8 @@ export type ProfileWatching = {
   durationSec?: number;
 };
 
+export type FriendsVisibility = "everyone" | "friends" | "only_me";
+
 export type ProfileSummary = {
   handle: string;
   alias: string;
@@ -94,6 +96,8 @@ export type ProfileSummary = {
   friendEdgeId?: string;
   activityPublic?: boolean;
   shareActivity?: boolean;
+  friendsPublic?: boolean;
+  friendsVisibility?: FriendsVisibility;
   private?: boolean;
   customEnabled?: boolean;
   profileFont?: string;
@@ -157,6 +161,7 @@ export type ActivityItem = {
 
 export type Comment = {
   id: string;
+  parentId?: string;
   authorHandle: string;
   authorAlias: string;
   authorVerified?: boolean;
@@ -186,6 +191,7 @@ export type ProfileSettingsInput = {
   customUrl: string;
   slogan: string;
   shareActivity: boolean;
+  friendsVisibility: FriendsVisibility;
   private: boolean;
 };
 

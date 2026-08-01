@@ -8,6 +8,12 @@ import {
 import { languageName } from "@/lib/subtitles/language";
 import { sanitizeSeekStep } from "@/lib/seek-step";
 import { migrateModelId, providerTabFor } from "@/lib/ai-models";
+import {
+  sanitizeFullscreenClockFormat,
+  sanitizeFullscreenClockSize,
+  sanitizeFullscreenClockStyle,
+} from "@/lib/local-time";
+import { normalizePosterCardSettings } from "@/lib/poster-backdrop-expansion";
 
 const RETIRED_GEMINI = new Set([
   "gemini-2.0-flash",
@@ -246,15 +252,32 @@ export function loadStoredSettings(rawKey: string = STORAGE_KEY): Settings {
       }
       parsed._navThemeRepairV1 = true;
     }
+    const posterCards = normalizePosterCardSettings(parsed);
     return {
       ...DEFAULT,
       ...parsed,
+      ...posterCards,
       topbarAppearance: sanitizeTopbarAppearance(
         parsed.topbarAppearance,
         parsed.transparentTopBar,
         parsed.topbarGlassControls,
       ),
       posterDockTransitionMs: sanitizePosterDockTransition(parsed.posterDockTransitionMs),
+      fullscreenClockEnabled:
+        typeof parsed.fullscreenClockEnabled === "boolean"
+          ? parsed.fullscreenClockEnabled
+          : DEFAULT.fullscreenClockEnabled,
+      fullscreenClockFormat: sanitizeFullscreenClockFormat(parsed.fullscreenClockFormat),
+      fullscreenClockStyle: sanitizeFullscreenClockStyle(parsed.fullscreenClockStyle),
+      fullscreenClockShowSeconds:
+        typeof parsed.fullscreenClockShowSeconds === "boolean"
+          ? parsed.fullscreenClockShowSeconds
+          : DEFAULT.fullscreenClockShowSeconds,
+      fullscreenClockShowEndTime:
+        typeof parsed.fullscreenClockShowEndTime === "boolean"
+          ? parsed.fullscreenClockShowEndTime
+          : DEFAULT.fullscreenClockShowEndTime,
+      fullscreenClockSizePx: sanitizeFullscreenClockSize(parsed.fullscreenClockSizePx),
       streaming: { ...DEFAULT.streaming, ...(parsed.streaming ?? {}) },
       subProvidersEnabled: {
         ...DEFAULT.subProvidersEnabled,

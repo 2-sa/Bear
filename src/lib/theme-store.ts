@@ -177,6 +177,7 @@ export async function rateTheme(id: string, value: number): Promise<StoreTheme> 
 export type ThemeComment = {
   id: string;
   themeId: string;
+  parentId?: string | null;
   author: string;
   authorId: string;
   authorHandle?: string | null;
@@ -189,6 +190,7 @@ export type ThemeComment = {
 function normalizeComment(c: Record<string, unknown>): ThemeComment {
   return {
     ...(c as unknown as ThemeComment),
+    parentId: typeof c.parentId === "string" ? c.parentId : null,
     authorHandle: typeof c.authorHandle === "string" ? c.authorHandle : null,
     authorAvatar: abs(c.authorAvatar as string | null),
   };
@@ -202,12 +204,16 @@ export async function listComments(themeId: string): Promise<ThemeComment[]> {
   return ((d.comments as Record<string, unknown>[]) || []).map(normalizeComment);
 }
 
-export async function postComment(themeId: string, body: string): Promise<ThemeComment> {
+export async function postComment(
+  themeId: string,
+  body: string,
+  parentId?: string,
+): Promise<ThemeComment> {
   requireExternalThemeStore();
   const r = await fetch(`${API}/themes/${themeId}/comments`, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...authHeaders() },
-    body: JSON.stringify({ body }),
+    body: JSON.stringify(parentId ? { body, parentId } : { body }),
   });
   const d = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(d.error || "Could not post your comment.");

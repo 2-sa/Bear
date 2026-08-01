@@ -1,4 +1,5 @@
 import { DEFAULT_THEME } from "@/lib/theme";
+import { DEFAULT_FULLSCREEN_CLOCK_SIZE_PX } from "@/lib/local-time";
 import type { Settings } from "./types";
 
 export const STORAGE_KEY = "harbor.settings";
@@ -75,6 +76,8 @@ export const DEFAULT: Settings = {
   defaultLiquidGlassTint: 40,
   experimentalLiquidGlassEnabled: false,
   experimentalLiquidGlassOpacity: 100,
+  posterBackdropExpansion: false,
+  posterFocusedCard: false,
   posterDockMagnification: false,
   posterDockTransitionMs: 760,
   top10Ribbon: false,
@@ -376,6 +379,12 @@ export const DEFAULT: Settings = {
   cwAdvanceNext: true,
   cwHideCaughtUp: true,
   useNativeTitleBar: false,
+  fullscreenClockEnabled: false,
+  fullscreenClockFormat: "system",
+  fullscreenClockStyle: "glass",
+  fullscreenClockShowSeconds: false,
+  fullscreenClockShowEndTime: true,
+  fullscreenClockSizePx: DEFAULT_FULLSCREEN_CLOCK_SIZE_PX,
   hybridTitleBar: false,
   topbarScrollBlur: false,
   transparentTopBar: true,

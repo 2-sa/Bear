@@ -3,6 +3,7 @@ import type { CustomList } from "@/lib/lists/types";
 import type { SourceRow } from "@/lib/custom-sources";
 import type { CustomStreamFilter } from "@/lib/streams/custom-filters";
 import type { SyncIndicatorPosition } from "@/lib/sync-toast-position";
+import type { FullscreenClockFormat, FullscreenClockStyle } from "@/lib/local-time";
 
 export type StreamingService =
   | "netflix"
@@ -124,6 +125,8 @@ export type Settings = {
   defaultLiquidGlassTint: number;
   experimentalLiquidGlassEnabled: boolean;
   experimentalLiquidGlassOpacity: number;
+  posterBackdropExpansion: boolean;
+  posterFocusedCard: boolean;
   posterDockMagnification: boolean;
   posterDockTransitionMs: number;
   top10Ribbon: boolean;
@@ -422,6 +425,12 @@ export type Settings = {
   cwAdvanceNext: boolean;
   cwHideCaughtUp: boolean;
   useNativeTitleBar: boolean;
+  fullscreenClockEnabled: boolean;
+  fullscreenClockFormat: FullscreenClockFormat;
+  fullscreenClockStyle: FullscreenClockStyle;
+  fullscreenClockShowSeconds: boolean;
+  fullscreenClockShowEndTime: boolean;
+  fullscreenClockSizePx: number;
   hybridTitleBar: boolean;
   topbarScrollBlur: boolean;
   transparentTopBar: boolean;

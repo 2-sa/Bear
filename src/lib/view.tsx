@@ -35,6 +35,7 @@ export type View =
   | "shows"
   | "kids"
   | "library"
+  | "collections-hub"
   | "live"
   | "vod"
   | "downloads"
@@ -152,6 +153,7 @@ export type Frame =
   | { kind: "list"; handle: string; listId: string }
   | { kind: "collection"; id: number }
   | { kind: "collections" }
+  | { kind: "collections-hub" }
   | { kind: "filter"; filter: MetaFilter }
   | { kind: "grid"; grid: GridSpec }
   | { kind: "award"; awardType: import("./providers/wikidata").AwardType }
@@ -365,6 +367,8 @@ function frameKey(f: Frame): string {
       return `collection:${f.id}`;
     case "collections":
       return "collections";
+    case "collections-hub":
+      return "collections-hub";
     case "filter":
       return `filter:${f.filter.kind}:${f.filter.mediaType}:${"name" in f.filter ? f.filter.name : f.filter.value}`;
     case "grid":
@@ -464,6 +468,7 @@ export function ViewProvider({ children }: { children: ReactNode }) {
       if (f.kind === "shows") return "shows";
       if (f.kind === "kids") return "kids";
       if (f.kind === "library") return "library";
+      if (f.kind === "collections-hub") return "collections-hub";
       if (f.kind === "live") return "live";
       if (f.kind === "vod") return "vod";
       if (f.kind === "downloads") return "downloads";
@@ -709,6 +714,11 @@ export function ViewProvider({ children }: { children: ReactNode }) {
           scrollMem.current.clear();
           rowScrollMem.current.clear();
           return [{ kind: "library" }];
+        }
+        if (v === "collections-hub") {
+          scrollMem.current.clear();
+          rowScrollMem.current.clear();
+          return [{ kind: "collections-hub" }];
         }
         if (v === "live") {
           scrollMem.current.clear();

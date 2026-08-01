@@ -84,11 +84,15 @@ export function fetchComments(handle: string, cursor?: string, signal?: AbortSig
   return getJson<CommentPage>(`/u/${encodeURIComponent(handle)}/comments${q}`, signal);
 }
 
-export async function postComment(handle: string, body: string): Promise<Comment> {
+export async function postComment(
+  handle: string,
+  body: string,
+  parentId?: string,
+): Promise<Comment> {
   const res = await safeFetch(`${BASE}/u/${encodeURIComponent(handle)}/comments`, {
     method: "POST",
     headers: { ...authHeaders(), "content-type": "application/json" },
-    body: JSON.stringify({ body }),
+    body: JSON.stringify(parentId ? { body, parentId } : { body }),
   });
   if (res.status === 429) throw new ProfileApiError(429);
   if (!res.ok) throw new ProfileApiError(res.status);

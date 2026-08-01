@@ -388,10 +388,11 @@ export function ProfileView({
                 <SimklCard isOwner={false} hideTitle={c.hideCardTitles} published={summary.simkl} />
               ) : null}
               <FriendsPanel
-                friends={friends}
+                friends={summary.isOwner || summary.friendsPublic ? friends : []}
                 onOpen={onOpenProfile}
                 isOwner={summary.isOwner}
                 total={summary.counts.friends}
+                visibilityPrivate={!summary.isOwner && !summary.friendsPublic}
               />
               <GroupsPanel isOwner={summary.isOwner} handle={handle} />
               <SocialsPanel

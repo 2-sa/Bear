@@ -38,11 +38,13 @@ export function FriendsPanel({
   onOpen,
   isOwner = false,
   total,
+  visibilityPrivate = false,
 }: {
   friends: Friend[];
   onOpen?: (h: string) => void;
   isOwner?: boolean;
   total?: number;
+  visibilityPrivate?: boolean;
 }) {
   const t = useT();
   const [addOpen, setAddOpen] = useState(false);
@@ -82,7 +84,13 @@ export function FriendsPanel({
             </button>
           )}
           <span className="text-[12px] tabular-nums text-ink-subtle">
-            <span className="text-success">{online.length}</span> / {total ?? friends.length}
+            {visibilityPrivate ? (
+              total ?? 0
+            ) : (
+              <>
+                <span className="text-success">{online.length}</span> / {total ?? friends.length}
+              </>
+            )}
           </span>
         </div>
       </div>
@@ -102,7 +110,11 @@ export function FriendsPanel({
           </span>
         </div>
       )}
-      {friends.length === 0 ? (
+      {visibilityPrivate ? (
+        <p className="py-6 text-center text-[13px] text-ink-subtle">
+          {t("This user keeps their friends private")}
+        </p>
+      ) : friends.length === 0 ? (
         <p className="py-6 text-center text-[13px] text-ink-subtle">
           {isOwner ? t("Add friends to see them here.") : t("No friends to show yet")}
         </p>
