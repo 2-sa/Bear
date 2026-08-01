@@ -498,10 +498,13 @@ export async function animeDetails(
         : settings.fanartKey && kind === "tv" && tvdbId
           ? fanartTv(settings.fanartKey, tvdbId).catch(() => null)
           : Promise.resolve(null);
+    const mappedTmdbRaw = String(aniZip?.mappings?.themoviedb_id ?? "").trim();
+    const mappedTmdbId = /^\d+$/.test(mappedTmdbRaw) ? Number(mappedTmdbRaw) : null;
+    const resolvedTmdbId = mappedTmdbId ?? tmdbHit?.tmdbId ?? null;
     const tmdbFullPromise =
-      settings.tmdbKey && tmdbHit?.tmdbId
+      settings.tmdbKey && resolvedTmdbId
         ? tmdbDetails(settings.tmdbKey, {
-            id: `tmdb:${kind === "movie" ? "movie" : "tv"}:${tmdbHit.tmdbId}`,
+            id: `tmdb:${kind === "movie" ? "movie" : "tv"}:${resolvedTmdbId}`,
             type: kind === "movie" ? "movie" : "series",
             name: anime.title,
           } as Meta).catch(() => null)
@@ -516,9 +519,14 @@ export async function animeDetails(
     const backdrops = gallery;
     let tmdbFull: TmdbDetail | null = null;
     if (fullRaw) {
-      const ay = Number(anime.year);
-      const ty = Number(fullRaw.year);
-      if (!Number.isFinite(ay) || !Number.isFinite(ty) || Math.abs(ty - ay) <= 1) tmdbFull = fullRaw;
+      if (mappedTmdbId != null) {
+        tmdbFull = fullRaw;
+      } else {
+        // Preserve the previous search-match validation for legacy artwork/crew fallback only.
+        const ay = Number(anime.year);
+        const ty = Number(fullRaw.year);
+        if (!Number.isFinite(ay) || !Number.isFinite(ty) || Math.abs(ty - ay) <= 1) tmdbFull = fullRaw;
+      }
     }
     const patch: AnimeDetailExtras = {
       logo,
@@ -541,6 +549,7 @@ export async function animeDetails(
       editor: tmdbFull?.editor ?? [],
       keywords: tmdbFull?.keywords ?? [],
     };
+    if (mappedTmdbId != null && tmdbFull?.title?.trim()) patch.title = tmdbFull.title.trim();
     if (cast.length === 0) {
       let fallback: CastEntry[] | undefined;
       for (const k of castKeys) {

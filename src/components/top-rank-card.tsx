@@ -1,5 +1,5 @@
 import { Bookmark } from "lucide-react";
-import { memo, useMemo } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import { awardSourceMeta, findTopAward, parseAwardYear } from "@/lib/anime-awards";
 import { resolveAwardIcon, useAwardPacks } from "@/lib/award-icons";
 import type { Meta } from "@/lib/cinemeta";
@@ -15,6 +15,7 @@ import { useTmdbImdbId } from "@/lib/providers/tmdb";
 import { useSettings } from "@/lib/settings";
 import { useView } from "@/lib/view";
 import { useInWatchlist } from "@/lib/watchlist";
+import { resolveTmdbAnimeTitle } from "@/lib/anime-title";
 import { Poster, usePosterChain } from "./poster";
 
 function AwardDot({ name, year }: { name: string; year?: number }) {
@@ -147,6 +148,19 @@ export const AnimeRankCard = memo(function AnimeRankCard({ meta, rank }: { meta:
     meta.poster,
     meta.type === "series" ? "series" : "movie",
   );
+  const [tmdbTitle, setTmdbTitle] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    setTmdbTitle(null);
+    resolveTmdbAnimeTitle(settings.tmdbKey, meta.id, meta.type)
+      .then((title) => {
+        if (!cancelled && title) setTmdbTitle(title);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [meta.id, meta.type, settings.tmdbKey, settings.tmdbLanguage]);
   return (
     <button
       onClick={() => openMeta(meta)}
@@ -200,7 +214,7 @@ export const AnimeRankCard = memo(function AnimeRankCard({ meta, rank }: { meta:
         <AwardDot name={meta.name} year={parseAwardYear(meta.releaseInfo)} />
       </div>
       <p className="absolute top-[93cqw] end-0 w-[63%] truncate text-[12px] leading-[1.35] text-ink-subtle">
-        {meta.name}
+        {tmdbTitle || meta.name}
       </p>
     </button>
   );

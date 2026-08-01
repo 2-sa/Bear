@@ -35,6 +35,7 @@ import { useSimklCardScores, useSimklCardScoresByAnimeId } from "@/lib/simkl/rat
 import { simklRequest } from "@/lib/simkl/client";
 import { getLocalCache } from "@/lib/simkl/activities";
 import { aniZipByKitsu, aniZipByMal } from "@/lib/providers/anizip";
+import { resolveTmdbAnimeTitle } from "@/lib/anime-title";
 import { useView } from "@/lib/view";
 import { TvCard } from "@/components/tv-card";
 import { useTilt } from "@/lib/use-tilt";
@@ -385,6 +386,14 @@ const PosterCard = memo(function PosterCard({
     const preferred = settings.simklAnimeTitleLanguage;
 
     const fetchTitles = async () => {
+      const tmdbTitle = await resolveTmdbAnimeTitle(settings.tmdbKey, meta.id, meta.type);
+      if (cancelled) return;
+      if (tmdbTitle) {
+        setTranslatedTitle(tmdbTitle);
+        return;
+      }
+
+      // Keep the previous AniZip/Kitsu title path as a fallback when TMDB is unavailable.
       if (malId) {
         const map = await aniZipByMal(malId).catch(() => null);
         if (cancelled) return;
@@ -444,7 +453,14 @@ const PosterCard = memo(function PosterCard({
       cancelled = true;
       off?.();
     };
-  }, [meta.id, isAnimeCardId, settings.simklAnimeTitleLanguage]);
+  }, [
+    meta.id,
+    meta.type,
+    isAnimeCardId,
+    settings.tmdbKey,
+    settings.tmdbLanguage,
+    settings.simklAnimeTitleLanguage,
+  ]);
 
   useEffect(() => {
     if (
