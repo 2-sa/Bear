@@ -23,6 +23,9 @@ export type FeaturedList = {
   id: string;
   name: string;
   items: FeaturedItem[];
+  coverImage?: string;
+  bgImage?: string;
+  bgMode?: string;
   likeCount?: number;
   liked?: boolean;
 };
@@ -31,12 +34,18 @@ export type PickableList = {
   id: string;
   name: string;
   items: FeaturedItem[];
+  coverImage?: string;
+  bgImage?: string;
+  bgMode?: string;
 };
 
 export function toPickableList(list: CustomList): PickableList {
   return {
     id: list.id,
     name: list.name,
+    coverImage: list.coverImage,
+    bgImage: list.bgImage,
+    bgMode: list.bgMode,
     items: list.items.slice(0, MAX_FEATURED_ITEMS).map((it) => ({
       id: it.id,
       name: it.name,
@@ -51,7 +60,14 @@ export function readLocalLists(): PickableList[] {
 }
 
 export function toFeaturedList(list: PickableList): FeaturedList {
-  return { id: "", name: list.name, items: list.items };
+  return {
+    id: "",
+    name: list.name,
+    items: list.items,
+    coverImage: list.coverImage,
+    bgImage: list.bgImage,
+    bgMode: list.bgMode,
+  };
 }
 
 export function normalizeListName(name: string): string {
@@ -70,6 +86,9 @@ export function buildFeaturedPayload(
   return selected.map((l) => ({
     id: idByName.get(normalizeListName(l.name)) ?? "",
     name: l.name,
+    coverImage: l.coverImage,
+    bgImage: l.bgImage,
+    bgMode: l.bgMode,
     items: l.items,
   }));
 }
