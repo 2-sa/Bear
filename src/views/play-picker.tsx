@@ -47,6 +47,7 @@ import {
   isEngineWarmingError,
   normalizeLangCode,
   orderByAddonNative,
+  streamIdentity,
   streamMatchesLangs,
 } from "./play-picker/picker-utils";
 import { PickerHeader, PickerNav } from "./play-picker/picker-header";
@@ -93,7 +94,7 @@ export function PlayPicker({
   playerActive?: boolean;
 }) {
   const isDownload = intent === "download";
-  const { openPlayer, openSettings, exitPickerToDetail, setView } = useView();
+  const { openPlayer, openSettings, exitPickerToDetail } = useView();
   const backToDetail = () => {
     if (playerActive) void exitWindowFullscreen();
     exitPickerToDetail(meta);
@@ -460,6 +461,7 @@ export function PlayPicker({
     onPlay,
     onCache,
     queuedHash,
+    queuedDownloadKeys,
     debridDown,
     resetDebridDown,
     abortResolve,
@@ -485,7 +487,6 @@ export function PlayPicker({
     claimHost,
     openPlayer: openPlayerGated,
     intent,
-    onDownloadStarted: () => setView("downloads"),
     autoActive,
     autoAttemptIdx,
     autoCandidatesLength: autoCandidates.length,
@@ -852,6 +853,13 @@ export function PlayPicker({
             matchFor={hostMatch ? matchFor : undefined}
             onPlay={playManually}
             download={isDownload}
+            downloadStateFor={(stream) =>
+              resolving?.stream === stream
+                ? "preparing"
+                : queuedDownloadKeys.has(streamIdentity(stream))
+                  ? "queued"
+                  : "idle"
+            }
             isAnime={isAnimeMetaId}
           />
         ) : (

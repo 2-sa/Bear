@@ -19,7 +19,7 @@ import { buildPlayInvite } from "@/lib/together/build-invite";
 import { type PlayEpisode, type PlayerSrc } from "@/lib/view";
 import { openInAppBrowser, openUrl } from "@/lib/window";
 import { enqueueDownload } from "@/lib/download/downloads-store";
-import { formatStreamQuality, humanError, isDebridFailure } from "./picker-utils";
+import { formatStreamQuality, humanError, isDebridFailure, streamIdentity } from "./picker-utils";
 
 export function usePickHandler({
   meta,
@@ -40,7 +40,6 @@ export function usePickHandler({
   claimHost,
   openPlayer,
   intent,
-  onDownloadStarted,
   autoActive,
   autoAttemptIdx,
   autoCandidatesLength,
@@ -69,7 +68,6 @@ export function usePickHandler({
   claimHost: (fresh: boolean) => void;
   openPlayer: (src: PlayerSrc) => void;
   intent?: "play" | "download";
-  onDownloadStarted?: (label?: string | null) => void;
   autoActive: boolean;
   autoAttemptIdx: number;
   autoCandidatesLength: number;
@@ -81,6 +79,7 @@ export function usePickHandler({
   setResolving: Dispatch<SetStateAction<{ stream: ScoredStream } | null>>;
 }) {
   const [queuedHash, setQueuedHash] = useState<string | null>(null);
+  const [queuedDownloadKeys, setQueuedDownloadKeys] = useState<Set<string>>(() => new Set());
   const [debridDown, setDebridDown] = useState(false);
   const [p2pConfirm, setP2pConfirm] = useState<{ stream: ScoredStream; forceP2p?: boolean } | null>(
     null,
@@ -215,7 +214,7 @@ export function usePickHandler({
           stream.name ||
           stream.addonName ||
           null;
-        void enqueueDownload({
+        await enqueueDownload({
           meta,
           episode,
           streamLabel: label,
@@ -223,8 +222,12 @@ export function usePickHandler({
           headers: r.data.headers,
         });
         opened = true;
+        setQueuedDownloadKeys((prev) => {
+          const next = new Set(prev);
+          next.add(streamIdentity(stream));
+          return next;
+        });
         setResolving(null);
-        onDownloadStarted?.(label);
         return;
       }
       if (inSession && canInvite && inviteSentRef.current == null) {
@@ -402,6 +405,7 @@ export function usePickHandler({
     onPlay,
     onCache,
     queuedHash,
+    queuedDownloadKeys,
     debridDown,
     resetDebridDown,
     abortResolve,

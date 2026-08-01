@@ -710,6 +710,123 @@ main[data-kids="on"]::-webkit-scrollbar-thumb:hover {
   animation: harbor-gear-spin 1.6s var(--ease-out) both;
 }
 
+.download-pause-resume-icon {
+  display: inline-grid;
+  place-items: center;
+}
+
+.download-pause-resume-glyph {
+  grid-area: 1 / 1;
+  transform-box: fill-box;
+  transform-origin: center;
+  transition:
+    opacity 180ms var(--ease-out),
+    transform 180ms var(--ease-out);
+}
+
+.download-pause-resume-icon[data-state="downloading"] [data-icon="pause"],
+.download-pause-resume-icon[data-state="paused"] [data-icon="resume"] {
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
+}
+
+.download-pause-resume-icon[data-state="downloading"] [data-icon="resume"] {
+  opacity: 0;
+  transform: scale(0.62) rotate(-18deg);
+}
+
+.download-pause-resume-icon[data-state="paused"] [data-icon="pause"] {
+  opacity: 0;
+  transform: scale(0.62) rotate(18deg);
+}
+
+.download-cancel-icon {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 140ms var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .download-cancel-trigger:hover .download-cancel-icon {
+    transform: rotate(8deg);
+  }
+}
+
+.download-cancel-trigger:active .download-cancel-icon {
+  transform: rotate(90deg) scale(0.78);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .download-pause-resume-glyph,
+  .download-cancel-icon {
+    transition: none;
+  }
+}
+
+.source-download-morph-icon {
+  transition:
+    opacity 180ms var(--ease-out),
+    transform 180ms var(--ease-out);
+}
+
+.source-download-morph-icon-check {
+  opacity: 0;
+  transform: scale(0.5);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .source-download-button:hover .source-download-morph-icon-default {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+
+  .source-download-button:hover .source-download-morph-icon-check {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes harbor-source-download-trail {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.source-download-trailing-dot {
+  animation: harbor-source-download-trail 1.5s var(--ease-in-out) infinite;
+  transform-origin: center;
+}
+
+@keyframes harbor-download-delete-shake {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-2px) rotate(-10deg);
+  }
+  50% {
+    transform: translateY(0) rotate(10deg);
+  }
+  75% {
+    transform: translateY(-2px) rotate(-10deg);
+  }
+}
+
+.download-delete-icon {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .download-delete-trigger:hover .download-delete-icon {
+    animation: harbor-download-delete-shake 400ms var(--ease-out);
+  }
+}
+
 .harbor-key {
   display: inline-flex;
   transform-origin: 31% 65%;
