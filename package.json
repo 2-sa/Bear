@@ -1,7 +1,7 @@
 {
   "name": "bear",
   "private": true,
-  "version": "0.9.126",
+  "version": "0.9.127",
   "type": "module",
   "license": "MIT",
   "packageManager": "pnpm@11.9.0",
