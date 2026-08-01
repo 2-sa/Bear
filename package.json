@@ -1,7 +1,7 @@
 {
   "name": "bear",
   "private": true,
-  "version": "0.9.127",
+  "version": "0.9.128",
   "license": "MIT",
   "type": "module",
   "scripts": {
