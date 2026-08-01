@@ -6,6 +6,10 @@ const FLOOR_W: f64 = 480.0;
 const FLOOR_H: f64 = 400.0;
 const MARGIN: f64 = 0.94;
 
+fn should_fit_window(maximized: bool, fullscreen: bool) -> bool {
+    !maximized && !fullscreen
+}
+
 fn logical_monitor(window: &WebviewWindow) -> Option<(f64, f64, PhysicalPosition<i32>, f64)> {
     let monitor = window.current_monitor().ok().flatten()?;
     let scale = monitor.scale_factor();
@@ -25,6 +29,13 @@ fn logical_monitor(window: &WebviewWindow) -> Option<(f64, f64, PhysicalPosition
 }
 
 pub fn fit_to_monitor(window: &WebviewWindow) {
+    if !should_fit_window(
+        window.is_maximized().unwrap_or(false),
+        window.is_fullscreen().unwrap_or(false),
+    ) {
+        return;
+    }
+
     let Some((mon_w, mon_h, mon_pos, scale)) = logical_monitor(window) else {
         return;
     };
@@ -64,6 +75,13 @@ pub fn install(app: &tauri::AppHandle) {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn maximized_or_fullscreen_windows_keep_their_native_size() {
+        assert!(!super::should_fit_window(true, false));
+        assert!(!super::should_fit_window(false, true));
+        assert!(super::should_fit_window(false, false));
+    }
+
     #[test]
     fn portrait_1080p_at_125_percent_relaxes_min_width() {
         let mon_w = 1080.0 / 1.25;
