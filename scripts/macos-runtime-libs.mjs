@@ -1,4 +1,4 @@
-import { execFileSync, spawnSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import {
   chmodSync,
   copyFileSync,
@@ -79,12 +79,13 @@ function otoolRpaths(file) {
   return paths;
 }
 
-function removeSignature(file) {
-  spawnSync("codesign", ["--remove-signature", file], { stdio: "ignore" });
-}
-
 function adHocSign(file) {
   run("codesign", ["--force", "--sign", "-", file]);
+}
+
+function updateInstallNames(args) {
+  const command = process.env.MACOS_INSTALL_NAME_TOOL || "install_name_tool";
+  run(command, args);
 }
 
 function expandLoaderPath(value, sourceFile, executableDir) {
@@ -180,15 +181,14 @@ function stageLibraries() {
     const destination = join(stagedDir, entry.name);
     copyFileSync(entry.source, destination);
     chmodSync(destination, 0o755);
-    removeSignature(destination);
-    run("install_name_tool", ["-id", `@rpath/${entry.name}`, destination]);
+    updateInstallNames(["-id", `@rpath/${entry.name}`, destination]);
     for (const dependency of entry.dependencies.slice(1)) {
       if (isSystemDependency(dependency)) continue;
       const name = basename(dependency);
       if (!entries.has(name)) {
         throw new Error(`dependency ${dependency} was not staged for ${entry.name}`);
       }
-      run("install_name_tool", ["-change", dependency, `@rpath/${name}`, destination]);
+      updateInstallNames(["-change", dependency, `@rpath/${name}`, destination]);
     }
     adHocSign(destination);
   }
@@ -212,21 +212,33 @@ function targetDirectory() {
   return configured ? resolve(repoRoot, configured) : join(tauriDir, "target");
 }
 
-function targetTriple() {
+export function resolveTargetTriple(args = process.argv.slice(3), env = process.env) {
+  for (let index = 0; index < args.length; index += 1) {
+    if (args[index] === "--target") return args[index + 1] ?? "";
+    if (args[index].startsWith("--target=")) return args[index].slice("--target=".length);
+  }
   return (
-    process.env.TAURI_ENV_TARGET_TRIPLE ||
-    process.env.TAURI_TARGET_TRIPLE ||
-    process.env.CARGO_BUILD_TARGET ||
+    env.TAURI_ENV_TARGET_TRIPLE ||
+    env.TAURI_TARGET_TRIPLE ||
+    env.CARGO_BUILD_TARGET ||
     ""
   );
 }
 
+function targetTriple() {
+  return resolveTargetTriple();
+}
+
+export function releaseTargetPaths(targetDir, target, ...parts) {
+  const releaseDir = target
+    ? join(targetDir, target, "release")
+    : join(targetDir, "release");
+  return [join(releaseDir, ...parts)];
+}
+
 function findBuiltExecutable() {
   const target = targetTriple();
-  const candidates = [
-    target && join(targetDirectory(), target, "release", "bear"),
-    join(targetDirectory(), "release", "bear"),
-  ].filter(Boolean);
+  const candidates = releaseTargetPaths(targetDirectory(), target, "bear");
   const executable = candidates.find((candidate) => existsSync(candidate));
   if (!executable) {
     throw new Error(`could not find the built Bear executable (checked ${candidates.join(", ")})`);
@@ -241,7 +253,6 @@ function patchExecutable() {
   const bundledNames = new Set(readdirSync(stagedDir).filter((name) => name.endsWith(".dylib")));
   const dependencies = otoolDependencies(executable);
 
-  removeSignature(executable);
   for (const dependency of dependencies) {
     if (isSystemDependency(dependency)) continue;
     const name = basename(dependency);
@@ -249,17 +260,17 @@ function patchExecutable() {
       throw new Error(`the Bear executable needs an unstaged library: ${dependency}`);
     }
     if (dependency !== `@rpath/${name}`) {
-      run("install_name_tool", ["-change", dependency, `@rpath/${name}`, executable]);
+      updateInstallNames(["-change", dependency, `@rpath/${name}`, executable]);
     }
   }
 
   for (const rpath of new Set(otoolRpaths(executable))) {
     if (rpath.startsWith("/opt/homebrew/") || rpath.startsWith("/usr/local/") || rpath.startsWith("/opt/local/")) {
-      run("install_name_tool", ["-delete_rpath", rpath, executable]);
+      updateInstallNames(["-delete_rpath", rpath, executable]);
     }
   }
   if (!otoolRpaths(executable).includes(portableRpath)) {
-    run("install_name_tool", ["-add_rpath", portableRpath, executable]);
+    updateInstallNames(["-add_rpath", portableRpath, executable]);
   }
   adHocSign(executable);
 
@@ -281,10 +292,13 @@ function walkFiles(root) {
 
 function findAppBundle() {
   const target = targetTriple();
-  const candidates = [
-    target && join(targetDirectory(), target, "release", "bundle", "macos", "Bear.app"),
-    join(targetDirectory(), "release", "bundle", "macos", "Bear.app"),
-  ].filter(Boolean);
+  const candidates = releaseTargetPaths(
+    targetDirectory(),
+    target,
+    "bundle",
+    "macos",
+    "Bear.app",
+  );
   const app = candidates.find((candidate) => existsSync(candidate));
   if (!app) throw new Error(`could not find Bear.app (checked ${candidates.join(", ")})`);
   return app;
