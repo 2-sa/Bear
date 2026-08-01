@@ -1,6 +1,51 @@
-import { aniZipByAnilist, aniZipByKitsu, aniZipByMal, type AniZipMapping } from "@/lib/providers/anizip";
+import type { MetaType } from "@/lib/cinemeta";
+import {
+  aniZipByAnidb,
+  aniZipByAnilist,
+  aniZipByKitsu,
+  aniZipByMal,
+  type AniZipMapping,
+} from "@/lib/providers/anizip";
+import { tmdbLiteMeta } from "@/lib/providers/tmdb/tmdb-lite";
 
 export type AnimeTitleLang = "english" | "romaji" | "native";
+
+async function animeMapping(id: string): Promise<AniZipMapping | null> {
+  if (id.startsWith("kitsu:")) {
+    const n = parseInt(id.slice(6), 10);
+    if (Number.isFinite(n)) return aniZipByKitsu(n).catch(() => null);
+  } else if (id.startsWith("mal:")) {
+    const n = parseInt(id.slice(4), 10);
+    if (Number.isFinite(n)) return aniZipByMal(n).catch(() => null);
+  } else if (id.startsWith("anilist:")) {
+    const n = parseInt(id.slice(8), 10);
+    if (Number.isFinite(n)) return aniZipByAnilist(n).catch(() => null);
+  } else if (id.startsWith("anidb:")) {
+    const n = parseInt(id.slice(6), 10);
+    if (Number.isFinite(n)) return aniZipByAnidb(n).catch(() => null);
+  }
+  return null;
+}
+
+export async function resolveTmdbAnimeTitle(
+  key: string,
+  id: string,
+  type: MetaType,
+): Promise<string | null> {
+  if (!key) return null;
+
+  let tmdbId = id.match(/^tmdb:(?:movie|tv):(\d+)$/)?.[1] ?? null;
+  if (!tmdbId) {
+    const mapping = await animeMapping(id);
+    const mapped = String(mapping?.mappings?.themoviedb_id ?? "").trim();
+    tmdbId = /^\d+$/.test(mapped) ? mapped : null;
+  }
+  if (!tmdbId) return null;
+
+  const kind = type === "movie" ? "movie" : "tv";
+  const tmdb = await tmdbLiteMeta(key, `tmdb:${kind}:${tmdbId}`).catch(() => null);
+  return tmdb?.name?.trim() || null;
+}
 
 export function getTitleFromAniZip(
   titles: Record<string, string>,

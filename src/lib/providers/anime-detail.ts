@@ -626,19 +626,16 @@ export async function animeDetails(
         : settings.fanartKey && kind === "tv" && tvdbId
           ? fanartTv(settings.fanartKey, tvdbId).catch(() => null)
           : Promise.resolve(null);
-    const tmdbFullId = Number(aniZip?.mappings?.themoviedb_id) || tmdbHit?.tmdbId || 0;
-    const tmdbFullFromMapping = Number(aniZip?.mappings?.themoviedb_id) > 0;
+    const mappedTmdbRaw = String(aniZip?.mappings?.themoviedb_id ?? "").trim();
+    const mappedTmdbId = /^\d+$/.test(mappedTmdbRaw) ? Number(mappedTmdbRaw) : null;
+    const resolvedTmdbId = mappedTmdbId ?? tmdbHit?.tmdbId ?? null;
     const tmdbFullPromise =
-      settings.tmdbKey && tmdbFullId
-        ? tmdbDetails(
-            settings.tmdbKey,
-            {
-              id: `tmdb:${kind === "movie" ? "movie" : "tv"}:${tmdbFullId}`,
-              type: kind === "movie" ? "movie" : "series",
-              name: anime.title,
-            } as Meta,
-            localized ? iso1 : undefined,
-          ).catch(() => null)
+      settings.tmdbKey && resolvedTmdbId
+        ? tmdbDetails(settings.tmdbKey, {
+            id: `tmdb:${kind === "movie" ? "movie" : "tv"}:${resolvedTmdbId}`,
+            type: kind === "movie" ? "movie" : "series",
+            name: anime.title,
+          } as Meta).catch(() => null)
         : Promise.resolve(null);
     const [fa, fullRaw] = await Promise.all([fanartPromise, tmdbFullPromise]);
     if (fa) {
@@ -650,14 +647,13 @@ export async function animeDetails(
     const backdrops = gallery;
     let tmdbFull: TmdbDetail | null = null;
     if (fullRaw) {
-      // AniZip's themoviedb_id is authoritative per entry; the title-search id can false-positive, so it keeps the year gate.
-      if (tmdbFullFromMapping) {
+      if (mappedTmdbId != null) {
         tmdbFull = fullRaw;
       } else {
+        // Preserve the previous search-match validation for legacy artwork/crew fallback only.
         const ay = Number(anime.year);
         const ty = Number(fullRaw.year);
-        if (!Number.isFinite(ay) || !Number.isFinite(ty) || Math.abs(ty - ay) <= 1)
-          tmdbFull = fullRaw;
+        if (!Number.isFinite(ay) || !Number.isFinite(ty) || Math.abs(ty - ay) <= 1) tmdbFull = fullRaw;
       }
     }
     const patch: AnimeDetailExtras = {
@@ -681,20 +677,7 @@ export async function animeDetails(
       editor: tmdbFull?.editor ?? [],
       keywords: tmdbFull?.keywords ?? [],
     };
-    if (localized && tmdbFull) {
-      const overviewOk = !!tmdbFull.overview && isTextInLanguage(tmdbFull.overview, iso1);
-      const titleOk = !!tmdbFull.title && isTextInLanguage(tmdbFull.title, iso1);
-      if (overviewOk) patch.overview = tmdbFull.overview;
-      if (titleOk) patch.title = tmdbFull.title;
-      // TMDB's tv/{id} response carries per-season localized overviews; surface them so the season
-      // hero can vary per season instead of showing the static series overview everywhere.
-      const seasonOverviews: Record<number, string> = {};
-      for (const s of tmdbFull.seasons ?? []) {
-        if (s.overview && isTextInLanguage(s.overview, iso1))
-          seasonOverviews[s.seasonNumber] = s.overview;
-      }
-      patch.seasonOverviews = seasonOverviews;
-    }
+    if (mappedTmdbId != null && tmdbFull?.title?.trim()) patch.title = tmdbFull.title.trim();
     if (cast.length === 0) {
       let fallback: CastEntry[] | undefined;
       for (const k of castKeys) {

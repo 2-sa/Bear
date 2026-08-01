@@ -172,7 +172,7 @@ export function AnimeView({ active = true }: { active?: boolean }) {
       });
   }, []);
 
-  const filterSig = `${settings.animeExcludeOrigins.join(",")}|${settings.animeHideWatchedPicks}`;
+  const filterSig = `${settings.animeExcludeOrigins.join(",")}|${settings.animeHideWatchedPicks}|${settings.tmdbLanguage}`;
   const [heroSeed, setHeroSeed] = useState(() => Math.floor(Math.random() * 0x7fffffff));
   const [hero, setHero] = useState<HeroBuilt>(() => readCachedHero(filterSig) ?? { metas: [], trending: {} });
   const [malExtra, setMalExtra] = useState<MalHeroItem[]>([]);
@@ -229,7 +229,7 @@ export function AnimeView({ active = true }: { active?: boolean }) {
       const buildId = ++heroBuildRef.current;
       setHero(hosted);
       cacheHero(hosted, filterSig);
-      void upgradeHeroArtFromStatic(hosted).then((up) => {
+      void upgradeHeroArtFromStatic(hosted, settings.tmdbKey).then((up) => {
         if (heroBuildRef.current === buildId) {
           setHero(up);
           cacheHero(up, filterSig);
@@ -237,7 +237,7 @@ export function AnimeView({ active = true }: { active?: boolean }) {
       });
       return true;
     },
-    [hostedHero, settings.animeExcludeOrigins, settings.animeHideWatchedPicks, filterSig],
+    [hostedHero, settings.animeExcludeOrigins, settings.animeHideWatchedPicks, settings.tmdbKey, filterSig],
   );
   useEffect(() => {
     if (hero.metas.length === 0 && buildHostedSelection(heroSeed)) return;

@@ -1,4 +1,4 @@
-import { memo, useEffect, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import type { Meta } from "@/lib/cinemeta";
 import { peekCachedLogo, resolveLogo } from "@/lib/logo";
 import { sizeImageUrl } from "@/lib/img-size";
@@ -6,6 +6,8 @@ import { useContextMenu } from "@/lib/context-menu";
 import { useSettings } from "@/lib/settings";
 import { useView } from "@/lib/view";
 import { usePosterChain } from "@/components/poster";
+import { resolveTmdbAnimeTitle } from "@/lib/anime-title";
+import { observe } from "@/lib/visibility";
 
 const POS = {
   center: "inset-0 items-center justify-center text-center",
@@ -43,8 +45,34 @@ export const TvCard = memo(function TvCard({ meta, kids = false }: { meta: Meta;
   const logo = useLogo(meta);
   const poster = usePosterChain(settings.rpdbKey, meta.id, meta.poster, meta.type === "series" ? "series" : "movie");
   const [artFailed, setArtFailed] = useState(false);
+  const [tmdbTitle, setTmdbTitle] = useState<string | null>(null);
+  const cardRef = useRef<HTMLButtonElement>(null);
   const wide = !artFailed && meta.background && meta.background !== meta.poster ? meta.background : undefined;
   const pos = POS[settings.tvCardLogoPos] ?? POS.bottomStart;
+
+  useEffect(() => {
+    setTmdbTitle(null);
+    if (!/^(kitsu|mal|anilist|anidb):/.test(meta.id)) return;
+    const el = cardRef.current;
+    if (!el) return;
+    let cancelled = false;
+    let started = false;
+    const off = observe(el, (visible) => {
+      if (!visible || started || cancelled) return;
+      started = true;
+      resolveTmdbAnimeTitle(settings.tmdbKey, meta.id, meta.type)
+        .then((title) => {
+          if (!cancelled && title) setTmdbTitle(title);
+        })
+        .catch(() => {});
+    });
+    return () => {
+      cancelled = true;
+      off();
+    };
+  }, [meta.id, meta.type, settings.tmdbKey, settings.tmdbLanguage]);
+
+  const displayTitle = tmdbTitle || meta.name;
 
   const open = () => {
     if (meta.type === "manga") {
@@ -56,10 +84,11 @@ export const TvCard = memo(function TvCard({ meta, kids = false }: { meta: Meta;
 
   return (
     <button
+      ref={cardRef}
       type="button"
       onClick={open}
       onContextMenu={(e) => openContextMenu(e, { kind: "meta", meta })}
-      title={meta.name}
+      title={displayTitle}
       className="group relative block aspect-[16/9] w-full overflow-hidden rounded-[16px] bg-elevated ring-1 ring-edge-soft transition-[box-shadow,--tw-ring-color] duration-200 ease-out hover:ring-edge hover:shadow-[0_10px_28px_-18px_rgba(0,0,0,0.8)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/70"
     >
       {wide ? (
@@ -101,14 +130,14 @@ export const TvCard = memo(function TvCard({ meta, kids = false }: { meta: Meta;
           {logo ? (
             <img
               src={logo}
-              alt={meta.name}
+              alt={displayTitle}
               draggable={false}
               loading="lazy"
               className="max-h-[34px] w-auto max-w-full self-start object-contain object-left [filter:drop-shadow(0_2px_8px_rgba(0,0,0,0.8))]"
             />
           ) : (
             <span className="line-clamp-2 text-[14.5px] font-semibold leading-tight text-ink [text-shadow:0_1px_8px_rgba(0,0,0,0.9)]">
-              {meta.name}
+              {displayTitle}
             </span>
           )}
           {!kids && meta.releaseInfo && (
