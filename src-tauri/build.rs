@@ -43,16 +43,6 @@ fn main() {
         }
         println!("cargo:rustc-link-arg=-Wl,-rpath,@executable_path/../Frameworks");
         println!("cargo:rustc-link-arg=-Wl,-rpath,@loader_path/../Frameworks");
-        #[cfg(target_arch = "aarch64")]
-        {
-            println!("cargo:rustc-link-arg=-Wl,-rpath,/opt/homebrew/lib");
-            println!("cargo:rustc-link-arg=-Wl,-rpath,/opt/homebrew/opt/mpv/lib");
-        }
-        #[cfg(target_arch = "x86_64")]
-        {
-            println!("cargo:rustc-link-arg=-Wl,-rpath,/usr/local/lib");
-            println!("cargo:rustc-link-arg=-Wl,-rpath,/usr/local/opt/mpv/lib");
-        }
     }
 
     if target_os == "linux" {
