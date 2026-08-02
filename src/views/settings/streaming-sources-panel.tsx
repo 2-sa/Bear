@@ -327,12 +327,12 @@ function StreamFilterPicker({
     {
       id: "strict",
       label: t("Strict"),
-      sub: t("Default. Rejects size outliers, suspicious extensions, year/episode mismatches, season packs (for episode requests), trailers, and likely cams."),
+      sub: t("Rejects size outliers, suspicious extensions, year/episode mismatches, season packs (for episode requests), trailers, and likely cams."),
     },
     {
       id: "balanced",
       label: t("Balanced"),
-      sub: t("Keeps the malware/year/episode-mismatch checks but allows season packs and oversized files. Same as hitting Search wider in the picker."),
+      sub: t("Default. Keeps the malware/year/episode-mismatch checks but allows season packs and oversized files. Same as hitting Search wider in the picker."),
     },
     {
       id: "off",

@@ -673,21 +673,15 @@ const settings: Record<string, string> = {
   "The little 4K · HDR · codec · audio chips that ride along each stream in the play picker.":
     "Небольшие метки 4K · HDR · кодек · звук рядом с каждым потоком в окне выбора.",
   "Synced addons": "Синхронизированные дополнения",
-  "How aggressively Harbor rejects shady or mismatched streams before showing them in the picker.":
-    "Насколько строго Harbor отсеивает подозрительные и несовпадающие потоки перед показом в окне выбора.",
-  Strict: "Строгий",
-  "Default. Rejects size outliers, suspicious extensions, year/episode mismatches, season packs (for episode requests), trailers, and likely cams.":
-    "По умолчанию. Отсеивает аномальные размеры, подозрительные расширения, несовпадения года и серии, сезонные раздачи (при запросе серии), трейлеры и вероятные экранки.",
-  Balanced: "Сбалансированный",
-  "Keeps the malware/year/episode-mismatch checks but allows season packs and oversized files. Same as hitting Search wider in the picker.":
-    "Сохраняет проверки на вредоносное ПО, год и серию, но допускает сезонные раздачи и слишком большие файлы. То же, что «Искать шире» в окне выбора.",
-  "No filtering. Every stream every addon returns shows up, including obvious junk. You'll be on your own.":
-    "Без фильтрации. Показываются все потоки от всех дополнений, включая явный мусор. Разбираться придётся самостоятельно.",
-  Condensed: "Компактно",
-  "Default. Top pick at the top, quality tiles, and an All-Sources drawer. Harbor scores and ranks results.":
-    "По умолчанию. Лучший вариант сверху, плитки качества и панель «Все источники». Harbor оценивает и ранжирует результаты.",
-  "Flat list of sources grouped by addon, with a filter dropdown. No re-ranking. Closest match to the Stremio app's stream picker.":
-    "Плоский список источников по дополнениям с фильтром. Без переранжирования. Ближе всего к окну выбора потоков в Stremio.",
+  "How aggressively Harbor rejects shady or mismatched streams before showing them in the picker.": "Насколько строго Harbor отсеивает подозрительные и несовпадающие потоки перед показом в окне выбора.",
+  "Strict": "Строгий",
+  "Rejects size outliers, suspicious extensions, year/episode mismatches, season packs (for episode requests), trailers, and likely cams.": "Отсеивает аномальные размеры, подозрительные расширения, несовпадения года и серии, сезонные раздачи (при запросе серии), трейлеры и вероятные экранки.",
+  "Balanced": "Сбалансированный",
+  "Default. Keeps the malware/year/episode-mismatch checks but allows season packs and oversized files. Same as hitting Search wider in the picker.": "По умолчанию. Сохраняет проверки на вредоносное ПО, год и серию, но допускает сезонные раздачи и слишком большие файлы. То же, что «Искать шире» в окне выбора.",
+  "No filtering. Every stream every addon returns shows up, including obvious junk. You'll be on your own.": "Без фильтрации. Показываются все потоки от всех дополнений, включая явный мусор. Разбираться придётся самостоятельно.",
+  "Condensed": "Компактно",
+  "Default. Top pick at the top, quality tiles, and an All-Sources drawer. Harbor scores and ranks results.": "По умолчанию. Лучший вариант сверху, плитки качества и панель «Все источники». Harbor оценивает и ранжирует результаты.",
+  "Flat list of sources grouped by addon, with a filter dropdown. No re-ranking. Closest match to the Stremio app's stream picker.": "Плоский список источников по дополнениям с фильтром. Без переранжирования. Ближе всего к окну выбора потоков в Stremio.",
   "Harbor ranking": "Ранжирование Harbor",
   "Default. Harbor parses and scores every source and surfaces the best quality first.":
     "По умолчанию. Harbor разбирает и оценивает каждый источник и ставит лучшее качество первым.",
