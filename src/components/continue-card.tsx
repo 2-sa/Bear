@@ -25,7 +25,7 @@ import { localPlayerSrc } from "@/lib/local-library/player-src";
 import { fetchSeasonEpisodes } from "@/lib/series-episodes";
 import { aniZipByAnidb, aniZipByAnilist, aniZipByKitsu, aniZipByMal } from "@/lib/providers/anizip";
 import { peekCachedLogo, resolveLogo } from "@/lib/logo";
-import { resolvePreferredAnimeTitle, resolveTmdbAnimeTitle } from "@/lib/anime-title";
+import { resolvePreferredAnimeTitle } from "@/lib/anime-title";
 import { getAnimeCwId } from "@/lib/anime-cw-ids";
 
 type Props = {
@@ -142,24 +142,11 @@ export const ContinueCard = memo(function ContinueCard({
       if (started) return;
       started = true;
       if (/^(kitsu|mal|anilist|anidb):/.test(item._id)) {
-        void (async () => {
-          const tmdbTitle = await resolveTmdbAnimeTitle(
-            settingsRef.current.tmdbKey,
-            item._id,
-            libraryMetaType(item.type),
-          );
-          if (cancelled) return;
-          if (tmdbTitle) {
-            setTranslatedTitle(tmdbTitle);
-            return;
-          }
-          // Preserve the previous AniZip/Kitsu preference as the failure fallback.
-          const fallback = await resolvePreferredAnimeTitle(
-            item._id,
-            settingsRef.current.simklAnimeTitleLanguage,
-          );
-          if (!cancelled && fallback) setTranslatedTitle(fallback);
-        })().catch(() => {});
+        resolvePreferredAnimeTitle(item._id, settingsRef.current.simklAnimeTitleLanguage)
+          .then((tt) => {
+            if (!cancelled && tt) setTranslatedTitle(tt);
+          })
+          .catch(() => {});
         animeKitsuMeta(item._id)
           .then((m) => {
             if (cancelled || !m) return;
@@ -251,7 +238,7 @@ export const ContinueCard = memo(function ContinueCard({
       cancelled = true;
       io.disconnect();
     };
-  }, [item._id, item.type, item.state?.video_id, settings.tmdbKey, settings.tmdbLanguage]);
+  }, [item._id, item.type, item.state?.video_id]);
 
   useEffect(() => {
     setEpTitle(null);

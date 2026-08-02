@@ -39,10 +39,9 @@ export async function tmdbLiteMeta(key: string, metaId: string): Promise<TmdbLit
   if (!key) return null;
   const match = metaId.match(/^tmdb:(movie|tv):(\d+)$/);
   if (!match) return null;
-  const cacheKey = `${metaId}|${effectiveTmdbLanguage() || "en"}`;
-  const hit = cache.get(cacheKey);
+  const hit = cache.get(metaId);
   if (hit !== undefined) return hit;
-  const existing = inflight.get(cacheKey);
+  const existing = inflight.get(metaId);
   if (existing) return existing;
   const p = (async () => {
     try {
@@ -54,14 +53,14 @@ export async function tmdbLiteMeta(key: string, metaId: string): Promise<TmdbLit
             background: raw.backdrop_path ? `${IMG}/w780${raw.backdrop_path}` : null,
           }
         : null;
-      cache.set(cacheKey, out);
+      cache.set(metaId, out);
       return out;
     } catch {
       return null;
     } finally {
-      inflight.delete(cacheKey);
+      inflight.delete(metaId);
     }
   })();
-  inflight.set(cacheKey, p);
+  inflight.set(metaId, p);
   return p;
 }

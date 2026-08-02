@@ -8,7 +8,6 @@ import { franchiseRootSync, prefetchFranchiseRoot } from "@/lib/providers/anime-
 import { animeKitsuMeta } from "@/lib/providers/anime-kitsu-addon";
 import { stripFranchiseSuffix } from "@/lib/providers/jikan";
 import { SPECS, type RowState } from "./anime-rows";
-import { resolveTmdbAnimeTitle } from "@/lib/anime-title";
 
 export type HeroBuilt = { metas: Meta[]; trending: Record<string, string> };
 
@@ -64,21 +63,18 @@ function cleanMeta(m: Meta): Meta {
   return cleaned === m.name ? m : { ...m, name: cleaned };
 }
 
-export async function upgradeHeroArtFromStatic(built: HeroBuilt, tmdbKey = ""): Promise<HeroBuilt> {
+export async function upgradeHeroArtFromStatic(built: HeroBuilt): Promise<HeroBuilt> {
   await ensureStaticHeroArt();
   return {
     trending: built.trending,
-    metas: await Promise.all(built.metas.map(async (m) => {
+    metas: built.metas.map((m) => {
       const s = peekStaticHeroArt(m.id);
-      const hiRes = !!s?.bg && !s.bg.includes("anilist.co");
+      if (!s) return m;
+      const hiRes = !!s.bg && !s.bg.includes("anilist.co");
       const background = hiRes ? s.bg : m.background;
-      const logo = s?.logo ?? m.logo;
-      const title = await resolveTmdbAnimeTitle(tmdbKey, m.id, m.type).catch(() => null);
-      const name = title || m.name;
-      return background === m.background && logo === m.logo && name === m.name
-        ? m
-        : { ...m, name, background, logo };
-    })),
+      const logo = s.logo ?? m.logo;
+      return background === m.background && logo === m.logo ? m : { ...m, background, logo };
+    }),
   };
 }
 
@@ -272,8 +268,7 @@ async function hydrateSlide(tmdbKey: string, pick: HeroPick): Promise<{ meta: Me
     saveAnimeArt(slide.id, { bg: art.background, logo: art.logo });
   }
   await preloadImage(background);
-  const title = await resolveTmdbAnimeTitle(tmdbKey, slide.id, slide.type).catch(() => null);
-  return { meta: { ...slide, name: title || slide.name, background, logo }, src: pick.src };
+  return { meta: { ...slide, background, logo }, src: pick.src };
 }
 
 export async function resolveHeroSlides(

@@ -25,12 +25,14 @@ test("Bear-owned defaults survive upstream syncs", async (context) => {
   assert.equal(DEFAULT.uiLanguage, "ar");
   assert.equal(DEFAULT.tmdbLanguage, "ar-SA");
   assert.deepEqual(DEFAULT.preferredLanguages, ["Arabic"]);
-  assert.deepEqual(DEFAULT.preferredSubLangs, ["Arabic", "English"]);
+  assert.deepEqual(DEFAULT.preferredSubLangs, ["Arabic"]);
   assert.deepEqual(DEFAULT.preferredAudioLangs, ["Arabic", "English", "Japanese"]);
   assert.deepEqual(DEFAULT.tmdbImageLangs, ["Arabic", "Original"]);
   assert.equal(DEFAULT.discordRichPresence, false);
   assert.equal(DEFAULT.discordShowPartyJoin, false);
   assert.equal(DEFAULT.episodeLayout, "grid");
+  assert.equal(DEFAULT.contentAdvisoryToast, true);
+  assert.equal(DEFAULT.streamFilterLevel, "balanced");
   assert.equal(DEFAULT.togetherRelayUrl, EXPECTED_RELAY);
   assert.deepEqual(DEFAULT.iptvPlaylists, [
     {
