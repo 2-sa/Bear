@@ -125,7 +125,7 @@ export const DEFAULT: Settings = {
   watchlistBadge: "topEnd",
   showWatchedButton: true,
   showPopcornBadge: false,
-  episodeLayout: "list",
+  episodeLayout: "grid",
   episodeCardScale: 1,
   episodeSort: "oldest",
   showEpisodeRating: true,

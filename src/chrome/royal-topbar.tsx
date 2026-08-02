@@ -96,6 +96,7 @@ export function RoyalTopbar() {
             <button
               type="button"
               onClick={() => setView("home")}
+              dir="ltr"
               className="flex shrink-0 items-center gap-2.5 text-ink"
               aria-label={t("chrome.harborHome")}
             >
