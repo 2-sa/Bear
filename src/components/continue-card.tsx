@@ -286,13 +286,14 @@ export const ContinueCard = memo(function ContinueCard({
         background: item.background,
       };
 
-  const onClick = () => {
+  const displayTitle = translatedTitle || hydratedMeta?.name?.trim() || item.name;
+
+  const onOpenDetails = () => {
     const isAnime = /^(kitsu|mal|anilist|anidb):/.test(meta.id);
     openMeta(meta, ep || isAnime ? { episodeHint: ep ?? undefined, exact: isAnime } : undefined);
   };
 
-  const onPlay = async (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const resolveEpisode = async (): Promise<PlayEpisode | undefined> => {
     let episode: PlayEpisode | undefined = item.type === "series" && ep ? ep : undefined;
     if (!episode && kitsuThreeSeg) {
       if (kitsuVideo) {
@@ -343,6 +344,21 @@ export const ContinueCard = memo(function ContinueCard({
       const animeId = getAnimeCwId(item._id);
       if (animeId) episode = { ...episode, sourceMetaId: animeId };
     }
+    return episode;
+  };
+
+  const onChooseSource = async () => {
+    const episode = await resolveEpisode();
+    if (onPlayOverride) {
+      onPlayOverride(episode);
+      return;
+    }
+    openPicker(meta, episode, { autoPlay: false, resume: false });
+  };
+
+  const onPlay = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const episode = await resolveEpisode();
     if (onPlayOverride) {
       onPlayOverride(episode);
       return;
@@ -353,7 +369,7 @@ export const ContinueCard = memo(function ContinueCard({
       mode: settings.localPlaybackMode,
       source: "manual",
       resumeId: meta.id,
-      playStream: () => openPicker(meta, episode, { autoPlay: settings.instantPlay, resume: true }),
+      playStream: () => openPicker(meta, episode, { autoPlay: true, resume: true }),
       playLocal: (entry, o) => {
         const s = localPlayerSrc(entry);
         openPlayer({
@@ -375,9 +391,12 @@ export const ContinueCard = memo(function ContinueCard({
     <div className="group relative w-full min-w-0">
       <button
         ref={cardRef}
-        onClick={onClick}
+        type="button"
+        onClick={() => void onChooseSource()}
         onContextMenu={(e) => openContextMenu(e, { kind: "meta", meta })}
-        className="flex w-full min-w-0 flex-col gap-2.5 text-start"
+        aria-label={`${t("Choose another source")}: ${displayTitle}`}
+        title={t("Choose another source")}
+        className="block w-full min-w-0 rounded-xl text-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
       >
         <div className="harbor-poster relative aspect-[16/9] overflow-hidden rounded-xl bg-elevated shadow-[0_2px_8px_-2px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.06)] will-change-transform [transform:translate3d(0,0,0)] transition-transform duration-[220ms] ease-[cubic-bezier(0.22,0.61,0.36,1)] group-hover:scale-[1.02]">
           <div className="absolute inset-0 bg-gradient-to-br from-raised via-elevated to-surface" />
@@ -489,21 +508,26 @@ export const ContinueCard = memo(function ContinueCard({
             <div className="h-full bg-accent" style={{ width: `${progress * 100}%` }} />
           </div>
         </div>
-        <p className="truncate text-[13px] font-medium text-ink">
-          {translatedTitle || hydratedMeta?.name?.trim() || item.name}
-        </p>
       </button>
       <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex aspect-[16/9] items-center justify-center opacity-0 transition-opacity duration-[220ms] group-hover:opacity-100 group-focus-within:opacity-100">
         <button
           type="button"
           onClick={onPlay}
-          aria-label={t("Play")}
+          aria-label={t("Play {name}", { name: displayTitle })}
           title={t("Play")}
-          className="pointer-events-auto flex h-14 w-14 items-center justify-center rounded-full bg-canvas ring-1 ring-white/15 shadow-[0_10px_28px_-8px_rgba(0,0,0,0.6)] transition-transform duration-150 hover:scale-[1.06]"
+          className="pointer-events-auto flex h-14 w-14 items-center justify-center rounded-full bg-canvas ring-1 ring-white/15 shadow-[0_10px_28px_-8px_rgba(0,0,0,0.6)] transition-transform duration-150 hover:scale-[1.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
           <Play size={22} fill="currentColor" className="ml-0.5 text-ink" />
         </button>
       </div>
+      <button
+        type="button"
+        onClick={onOpenDetails}
+        aria-label={`${t("Open details")}: ${displayTitle}`}
+        className="mt-2.5 block w-full truncate rounded-sm text-start text-[13px] font-medium text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+      >
+        {displayTitle}
+      </button>
       {onDismiss && (
         <button
           type="button"
