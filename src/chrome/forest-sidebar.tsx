@@ -71,6 +71,7 @@ export function ForestSidebar() {
               type="button"
               onClick={() => setView("home")}
               aria-label={t("chrome.harborHome")}
+              dir="ltr"
               className="flex items-center gap-2.5 text-ink"
             >
               <HarborMark className="h-[26px] w-[26px] shrink-0 drop-shadow-[0_0_11px_var(--color-accent-soft)]" />

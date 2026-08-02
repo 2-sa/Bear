@@ -91,7 +91,8 @@ export function TopDock() {
           <button
             type="button"
             onClick={() => setView("home")}
-            className="flex shrink-0 items-center gap-2 text-ink"
+            dir="ltr"
+            className="flex shrink-0 items-center gap-2.5 text-ink"
             aria-label={t("chrome.harborHome")}
           >
             {customMark ? (

@@ -47,8 +47,9 @@ export function Sidebar() {
         {kid && <KidsSidebarDoodles />}
         <div
           data-tauri-drag-region
-          className={`flex shrink-0 items-center justify-center gap-0.5 px-3 text-ink ${
-            collapsed ? "" : "lg:justify-start lg:px-7"
+          dir="ltr"
+          className={`flex shrink-0 items-center justify-center gap-2.5 px-3 text-ink ${
+            collapsed ? "" : "lg:justify-center lg:px-5"
           } ${hybridBar ? "h-12" : "h-20"}`}
         >
           {!hybridBar &&
@@ -82,10 +83,10 @@ export function Sidebar() {
               </span>
             ) : (
               <span
-                className="hidden whitespace-nowrap text-[44px] font-medium leading-none tracking-tight lg:inline"
+                className="hidden whitespace-nowrap text-[44px] font-medium leading-none tracking-tight lg:inline-flex lg:items-center"
                 style={{
                   fontFamily: '"Fraunces", "Iowan Old Style", "Georgia", serif',
-                  transform: "translateY(2px)",
+                  transform: "translateY(1px)",
                 }}
               >
                 Bear

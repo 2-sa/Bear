@@ -71,7 +71,8 @@ export function SideRail() {
           <button
             type="button"
             onClick={() => setView("home")}
-            className="relative flex items-center gap-2 text-accent"
+            dir="ltr"
+            className="relative flex items-center gap-2.5 text-accent"
             aria-label={t("chrome.harborHome")}
           >
             <HarborMark className="h-[22px] w-[22px] shrink-0 drop-shadow-[0_0_10px_var(--color-accent-soft)]" />
