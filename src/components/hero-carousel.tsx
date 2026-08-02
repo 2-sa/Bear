@@ -105,6 +105,12 @@ export function HeroCarousel({
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (e.button !== 0) return;
     if (slides.length < 2) return;
+    if (
+      e.target instanceof Element &&
+      e.target.closest("button, a, input, select, textarea, [role='button']")
+    ) {
+      return;
+    }
     widthRef.current = viewportRef.current?.clientWidth ?? 1000;
     downRef.current = true;
     moved.current = false;
@@ -272,7 +278,7 @@ export function HeroCarousel({
               type="button"
               onClick={() => setActive((a) => (a - 1 + slides.length) % slides.length)}
               aria-label={t("Previous")}
-              className="group/hl absolute inset-y-0 start-0 z-30 my-auto flex h-2/3 w-[14%] max-w-[120px] items-center justify-start ps-4"
+              className="group/hl absolute inset-y-0 start-0 z-30 my-auto flex h-14 w-14 items-center justify-center"
             >
               <NavChevron
                 dir="left"
@@ -284,7 +290,7 @@ export function HeroCarousel({
               type="button"
               onClick={() => setActive((a) => (a + 1) % slides.length)}
               aria-label={t("Next")}
-              className="group/hr absolute inset-y-0 end-0 z-30 my-auto flex h-2/3 w-[14%] max-w-[120px] items-center justify-end pe-4"
+              className="group/hr absolute inset-y-0 end-0 z-30 my-auto flex h-14 w-14 items-center justify-center"
             >
               <NavChevron
                 dir="right"
