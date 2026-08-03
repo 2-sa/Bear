@@ -6,6 +6,7 @@ import { useT } from "@/lib/i18n";
 import { openSyncBar } from "@/lib/player/sub-sync";
 import { useAutoSyncHandle } from "@/components/player/autosync/autosync-store";
 import { Tooltip } from "../transport/tooltip";
+import { filterTracksByPreferredLanguage } from "@/lib/subtitles/language";
 import { SearchSection } from "./search-section";
 import { VariantRow } from "./variant-row";
 import { Count, EmptyState, ImportBanner, Tab, ToggleChip } from "./menu-body-parts";
@@ -17,8 +18,14 @@ const ALL_LANGS = "__all__";
 
 export function MenuBody(props: SubtitleMenuProps & { onClose: () => void }) {
   const tr = useT();
-  const { tracks, selectedId, onSelect, onClose, delaySec, metaReleaseDate, onOpenStyleBar } = props;
-  const groups = useMemo(() => groupByLang(tracks), [tracks]);
+  const { tracks, selectedId, onSelect, onClose, delaySec, metaReleaseDate, onOpenStyleBar } =
+    props;
+  const preferredLanguages = props.preferredLanguages ?? [];
+  const languageTracks = useMemo(
+    () => filterTracksByPreferredLanguage(tracks, preferredLanguages),
+    [tracks, preferredLanguages],
+  );
+  const groups = useMemo(() => groupByLang(languageTracks), [languageTracks]);
   const [searchSettled, setSearchSettled] = useState(false);
   const [activeLang, setActiveLang] = useState<string | null>(null);
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all");
@@ -28,11 +35,11 @@ export function MenuBody(props: SubtitleMenuProps & { onClose: () => void }) {
   const [justImported, setJustImported] = useState<string | null>(null);
 
   useEffect(() => {
-    if (tracks.length > 0) return;
+    if (languageTracks.length > 0) return;
     setSearchSettled(false);
     const timer = setTimeout(() => setSearchSettled(true), 9000);
     return () => clearTimeout(timer);
-  }, [tracks.length]);
+  }, [languageTracks.length]);
 
   useEffect(() => {
     if (groups.length === 0) {
@@ -53,7 +60,7 @@ export function MenuBody(props: SubtitleMenuProps & { onClose: () => void }) {
     [groups, activeLang],
   );
   const visibleVariants = useMemo(() => {
-    const list = allLangs ? tracks : (activeGroup?.variants ?? []);
+    const list = allLangs ? languageTracks : (activeGroup?.variants ?? []);
     return list.filter((t) => {
       if (sourceFilter === "embedded" && t.external) return false;
       if (sourceFilter === "external" && !t.external) return false;
@@ -61,10 +68,10 @@ export function MenuBody(props: SubtitleMenuProps & { onClose: () => void }) {
       if (forcedOnly && !t.forced) return false;
       return true;
     });
-  }, [allLangs, tracks, activeGroup, sourceFilter, hideHI, forcedOnly]);
+  }, [allLangs, languageTracks, activeGroup, sourceFilter, hideHI, forcedOnly]);
 
-  const totalEmbedded = tracks.filter((t) => !t.external).length;
-  const totalExternal = tracks.filter((t) => t.external).length;
+  const totalEmbedded = languageTracks.filter((t) => !t.external).length;
+  const totalExternal = languageTracks.filter((t) => t.external).length;
   const offSelected = selectedId == null;
   const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
   const [localError, setLocalError] = useState<string | null>(null);
@@ -85,7 +92,7 @@ export function MenuBody(props: SubtitleMenuProps & { onClose: () => void }) {
         filters: [{ name: "Subtitles", extensions: ["srt", "ass", "ssa", "vtt", "sub"] }],
       });
       if (typeof path !== "string") return;
-      const name = path.split(/[\\\/]/).pop() || tr("Local subtitle");
+      const name = path.split(/[\\/]/).pop() || tr("Local subtitle");
       const ok = await props.onAddSubtitle(path, undefined, name);
       if (ok === false) {
         setLocalError(tr("Couldn't load that subtitle file. Try another."));
@@ -109,7 +116,7 @@ export function MenuBody(props: SubtitleMenuProps & { onClose: () => void }) {
           <span className="text-[13.5px] font-semibold text-ink">{tr("Subtitles")}</span>
           {tracks.length > 0 && (
             <span className="text-[11.5px] tabular-nums text-ink-subtle">
-              {tracks.length}
+              {languageTracks.length}
             </span>
           )}
         </div>
@@ -246,7 +253,9 @@ export function MenuBody(props: SubtitleMenuProps & { onClose: () => void }) {
             >
               <Languages size={14} strokeWidth={2} className="shrink-0" />
               <span className="flex-1 truncate">{tr("All languages")}</span>
-              <span className="text-[10.5px] tabular-nums text-ink-subtle">{tracks.length}</span>
+              <span className="text-[10.5px] tabular-nums text-ink-subtle">
+                {languageTracks.length}
+              </span>
             </button>
           )}
           {groups.map((g) => {
@@ -264,9 +273,7 @@ export function MenuBody(props: SubtitleMenuProps & { onClose: () => void }) {
               >
                 <Flag language={g.langDisplay} size="sm" showLabel={false} />
                 <span className="flex-1 truncate font-medium">{g.langDisplay}</span>
-                {hasSelected && (
-                  <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-accent" />
-                )}
+                {hasSelected && <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-accent" />}
                 <span className="text-[10.5px] tabular-nums text-ink-subtle">
                   {g.variants.length}
                 </span>
@@ -277,10 +284,10 @@ export function MenuBody(props: SubtitleMenuProps & { onClose: () => void }) {
 
         {/* Track list section */}
         <section className="flex min-h-0 min-w-0 flex-1 flex-col">
-          {!searchOpen && tracks.length > 0 && (activeGroup || allLangs) && (
+          {!searchOpen && languageTracks.length > 0 && (activeGroup || allLangs) && (
             <div className="flex flex-wrap items-center gap-1.5 border-b border-edge-soft bg-canvas/15 px-3 py-2">
               <Tab active={sourceFilter === "all"} onClick={() => setSourceFilter("all")}>
-                {tr("All")} <Count value={tracks.length} />
+                {tr("All")} <Count value={languageTracks.length} />
               </Tab>
               <Tab
                 active={sourceFilter === "embedded"}
@@ -319,7 +326,7 @@ export function MenuBody(props: SubtitleMenuProps & { onClose: () => void }) {
           ) : (
             <div className="flex-1 overflow-y-auto">
               {justImported && <ImportBanner name={justImported} />}
-              {tracks.length === 0 ? (
+              {languageTracks.length === 0 ? (
                 <EmptyState searchSettled={searchSettled} veryNewMovie={veryNewMovie} />
               ) : visibleVariants.length === 0 ? (
                 <p className="px-5 py-6 text-[13.5px] text-ink-muted">
@@ -373,4 +380,3 @@ export function MenuBody(props: SubtitleMenuProps & { onClose: () => void }) {
     </div>
   );
 }
-

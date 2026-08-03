@@ -14,6 +14,7 @@ export type SubtitleMenuProps = {
   metaReleaseDate?: string | null;
   season?: number | null;
   episode?: number | null;
+  preferredLanguages?: string[];
   useOverlayPopup?: boolean;
   onOpenChange?: (open: boolean) => void;
   onOpenStyleBar?: () => void;

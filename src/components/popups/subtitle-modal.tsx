@@ -11,6 +11,7 @@ export type SubtitleModalState = {
   metaReleaseDate: string | null;
   season: number | null;
   episode: number | null;
+  preferredLanguages: string[];
 };
 
 type Props = {
@@ -31,7 +32,7 @@ export function SubtitleModal({ state, onSelect, onDelay, onAddSubtitle, onClose
       }}
     >
       <div
-        className="m-3 mb-[110px] me-[120px] flex max-h-[520px] w-[400px] flex-col overflow-hidden rounded-2xl border border-edge bg-elevated shadow-[0_24px_60px_-15px_rgba(0,0,0,0.85)] backdrop-blur-xl"
+        className="m-2 mb-[84px] flex h-[460px] max-h-[calc(100vh-108px)] w-[560px] max-w-[calc(100vw-16px)] flex-col overflow-hidden rounded-2xl border border-edge bg-elevated shadow-[0_24px_60px_-15px_rgba(0,0,0,0.85)] backdrop-blur-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <SubtitleMenuBody
@@ -46,6 +47,7 @@ export function SubtitleModal({ state, onSelect, onDelay, onAddSubtitle, onClose
           metaReleaseDate={state.metaReleaseDate}
           season={state.season}
           episode={state.episode}
+          preferredLanguages={state.preferredLanguages}
           onClose={onClose}
         />
       </div>
