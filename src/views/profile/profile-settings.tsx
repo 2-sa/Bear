@@ -94,6 +94,8 @@ export function ProfileSettings({
     friendsVisibility: summary.friendsVisibility ?? "everyone",
     private: summary.private ?? false,
   });
+  const initialForm = useRef(form);
+  const isDirty = JSON.stringify(form) !== JSON.stringify(initialForm.current);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pickingLists, setPickingLists] = useState(false);
@@ -188,13 +190,15 @@ export function ProfileSettings({
             >
               Cancel
             </button>
-            <button
-              onClick={() => void save()}
-              disabled={saving}
-              className="inline-flex min-h-11 items-center gap-2 rounded-[10px] bg-accent px-5 text-[14px] font-semibold text-canvas transition-opacity hover:opacity-90 disabled:opacity-40"
-            >
-              <Check size={18} /> {saving ? "Saving" : "Save"}
-            </button>
+            {(isDirty || saving) && (
+              <button
+                onClick={() => void save()}
+                disabled={saving}
+                className="inline-flex min-h-11 items-center gap-2 rounded-[10px] bg-accent px-5 text-[14px] font-semibold text-canvas transition-opacity hover:opacity-90 disabled:opacity-40"
+              >
+                <Check size={18} /> {saving ? "Saving" : "Save"}
+              </button>
+            )}
           </div>
         </div>
 

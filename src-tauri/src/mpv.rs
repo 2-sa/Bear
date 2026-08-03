@@ -2410,11 +2410,13 @@ fn position_embedded_mpv_child(app: &AppHandle, css: MpvGeometry) -> Result<(), 
             }
         }
         let new_rect = (first, x, y, w, h);
-        let prev_rect = {
-            let mut guard = MPV_POS_LAST_RECT.lock().unwrap();
-            let prev = *guard;
-            *guard = Some(new_rect);
-            prev
+        let prev_rect = match MPV_POS_LAST_RECT.lock() {
+            Ok(mut guard) => {
+                let prev = *guard;
+                *guard = Some(new_rect);
+                prev
+            }
+            Err(_) => None,
         };
         let first_position = prev_rect.map(|r| r.0) != Some(first);
         let rect_unchanged = prev_rect == Some(new_rect);
