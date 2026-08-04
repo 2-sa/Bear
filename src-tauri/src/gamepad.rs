@@ -92,6 +92,14 @@ fn map_axis(a: Axis) -> Option<&'static str> {
     })
 }
 
+fn frontend_axis_value(axis: &str, value: f32) -> f32 {
+    // gilrs treats up as positive, while the browser Gamepad API and Harbor's
+    // frontend mapping treat up as negative.
+    match axis {
+        "ly" | "ry" => -value,
+        _ => value,
+    }
+}
 fn emit(app: &AppHandle, payload: GamepadEventPayload) {
     let _ = app.emit(EVENT_NAME, payload);
 }
@@ -277,6 +285,7 @@ fn handle_event(
             Axis::DPadY => dpad_y(app, gid, value, dpad),
             other => {
                 if let Some(axis) = map_axis(other) {
+                    let value = frontend_axis_value(axis, value);
                     emit_input(
                         app,
                         GamepadEventPayload::Axis {
@@ -341,4 +350,17 @@ pub fn gamepad_set_background_input(allowed: bool) {
 
 pub fn set_window_focused(focused: bool) {
     WINDOW_FOCUSED.store(focused, Ordering::SeqCst);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::frontend_axis_value;
+
+    #[test]
+    fn normalizes_native_stick_y_to_frontend_coordinates() {
+        assert_eq!(frontend_axis_value("ly", 0.75), -0.75);
+        assert_eq!(frontend_axis_value("ry", -0.5), 0.5);
+        assert_eq!(frontend_axis_value("lx", 0.75), 0.75);
+        assert_eq!(frontend_axis_value("rx", -0.5), -0.5);
+    }
 }
