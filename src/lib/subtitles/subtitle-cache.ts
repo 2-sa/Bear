@@ -8,11 +8,7 @@ import {
   type OsSub,
 } from "@/lib/subtitles/autosync/opensubtitles";
 
-// Persistent, on-disk subtitle-search cache. The source and OpenSubtitles
-// modules already keep an in-memory Map and expose configure*Cache() hooks, but
-// nothing wired a durable store, so every restart threw the cache away. This
-// backs those hooks with a single JSON file in appDataDir so a large number of
-// searches stay cached across restarts (Stremio-style: fast and a lot cached).
+
 
 type StoredEntry = { expires: number; value: unknown };
 type Entry<T> = { expires: number; value: T };
