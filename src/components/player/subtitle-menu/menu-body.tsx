@@ -1,7 +1,7 @@
 import { Check, FolderOpen, Languages, Loader2, Search as SearchIcon, SlidersHorizontal, Timer, Wand2, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Flag } from "@/components/flag";
-import { markImportedSub } from "@/lib/player/imported-subs";
+import { hasImportedSubTitle, markImportedSub, useImportedSubs } from "@/lib/player/imported-subs";
 import { useT } from "@/lib/i18n";
 import { openSyncBar } from "@/lib/player/sub-sync";
 import { useAutoSyncHandle } from "@/components/player/autosync/autosync-store";
@@ -21,10 +21,17 @@ export function MenuBody(props: SubtitleMenuProps & { onClose: () => void }) {
   const { tracks, selectedId, onSelect, onClose, delaySec, metaReleaseDate, onOpenStyleBar } =
     props;
   const preferredLanguages = props.preferredLanguages ?? [];
-  const languageTracks = useMemo(
-    () => filterTracksByPreferredLanguage(tracks, preferredLanguages),
-    [tracks, preferredLanguages],
-  );
+  const importedTitles = useImportedSubs();
+  const languageTracks = useMemo(() => {
+    const filtered = filterTracksByPreferredLanguage(tracks, preferredLanguages);
+
+    const keep = new Set(filtered);
+    for (const t of tracks) {
+      const isImported = hasImportedSubTitle(t.title) || importedTitles.has(t.title ?? "");
+      if (isImported || t.id === props.selectedId || t.secondary) keep.add(t);
+    }
+    return tracks.filter((t) => keep.has(t));
+  }, [tracks, preferredLanguages, importedTitles, props.selectedId]);
   const groups = useMemo(() => groupByLang(languageTracks), [languageTracks]);
   const [searchSettled, setSearchSettled] = useState(false);
   const [activeLang, setActiveLang] = useState<string | null>(null);

@@ -150,6 +150,7 @@ export async function fetchSubtitlesIntoPlayer(p: SubFetchParams): Promise<SubFe
     release: releaseOf(r),
     provider: providerLabel(r),
     matchScore: streamMatchScore(r, hints),
+    subId: r.id,
   });
 
   let selected: SubResult | null = null;

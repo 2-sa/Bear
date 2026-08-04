@@ -150,7 +150,7 @@ export function createMpvBridge(mpvOptions?: MpvOptions): PlayerBridge {
   let svpFilterFailed = false;
   const urlByExternalFilename = new Map<
     string,
-    { url: string; release?: string; provider?: string; matchScore?: number }
+    { url: string; release?: string; provider?: string; matchScore?: number; subId?: string }
   >();
 
   const handleSvpFilterFailure = () => {
@@ -249,6 +249,7 @@ export function createMpvBridge(mpvOptions?: MpvOptions): PlayerBridge {
             release: extMeta?.release,
             provider: extMeta?.provider,
             matchScore: extMeta?.matchScore,
+            subId: extMeta?.subId,
           };
           if (type === "audio") audio.push(info);
           else if (type === "sub") subs.push(info);
@@ -575,6 +576,7 @@ export function createMpvBridge(mpvOptions?: MpvOptions): PlayerBridge {
         release: metadata?.release,
         provider: metadata?.provider,
         matchScore: metadata?.matchScore,
+        subId: metadata?.subId,
       });
       try {
         await invoke("mpv_sub_add", {

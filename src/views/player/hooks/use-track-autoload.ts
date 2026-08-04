@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type RefObject } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import type { PlayerBridge, PlayerSnapshot } from "@/lib/player/bridge";
-import { langScore, pickBestTrack } from "@/lib/subtitles/language";
+import { langScore, normalizeLang, pickBestTrack } from "@/lib/subtitles/language";
 import { searchSubtitles, streamMatchScore } from "@/lib/subtitles/search";
 import { providerLabel, releaseOf } from "@/lib/subtitles/provider-label";
 import { publishSubtitleContext } from "@/components/player/subtitle-menu/subtitle-context-store";
@@ -18,6 +18,9 @@ import {
   subtitleSearchImdbId,
 } from "@/lib/subtitles/autoload";
 import { pickDesiredSubtitleTrack } from "@/lib/subtitles/track-selection";
+import { markAddedSub } from "@/lib/subtitles/added-subs";
+import { markImportedSub } from "@/lib/player/imported-subs";
+import { readRememberedSub, subtitleMediaKey } from "@/lib/subtitles/subtitle-memory";
 
 const EXTRA_AUTOLOAD_TRACKS = 8;
 
@@ -197,6 +200,7 @@ export function useTrackAutoload(params: {
           release: releaseOf(r),
           provider: providerLabel(r),
           matchScore: streamMatchScore(r, streamHints),
+          subId: r.id,
         });
         return ok === true;
       });
@@ -234,6 +238,7 @@ export function useTrackAutoload(params: {
           release: releaseOf(r),
           provider: providerLabel(r),
           matchScore: streamMatchScore(r, streamHints),
+          subId: r.id,
         });
         if (ok === true) added++;
       }
@@ -272,9 +277,154 @@ export function useTrackAutoload(params: {
       return;
     }
     if (choice.url) {
-      void bridgeRef.current?.addSubtitle(choice.url, choice.lang, choice.title, true);
+      const url = choice.url;
+      void bridgeRef.current?.addSubtitle(url, choice.lang, choice.title, true)?.then((ok) => {
+        if (ok) markAddedSub(url);
+      });
     }
   }, [src.url, src.subtitlePreselect, snap.audioTracks.length, snap.subtitleTracks, snap.durationSec, bridgeRef]);
+  const subRestoreRef = useRef<string | null>(null);
+  const subRestoreWaitRef = useRef<number | null>(null);
+  const subRestoreLogRef = useRef<string | null>(null);
+  useEffect(() => {
+    subRestoreRef.current = null;
+    subRestoreWaitRef.current = null;
+    subRestoreLogRef.current = null;
+  }, [src.url]);
+  useEffect(() => {
+    if (src.subtitlePreselect) return;
+    if (subRestoreRef.current === src.url) return;
+    const remembered = readRememberedSub(
+      subtitleMediaKey(src.meta.id, src.episode?.season, src.episode?.episode),
+    );
+    if (!remembered) return;
+    const mediaReady =
+      snap.audioTracks.length > 0 || snap.subtitleTracks.length > 0 || snap.durationSec > 0;
+    if (!mediaReady) return;
+    const bridge = bridgeRef.current;
+    if (!bridge) return;
+    const sameLang = (a?: string | null, b?: string | null) =>
+      normalizeLang(a ?? "") === normalizeLang(b ?? "");
+
+    if (remembered.off) {
+      subRestoreRef.current = src.url;
+      if (snap.subtitleTracks.some((t) => t.selected)) bridge.setSubtitleTrack(null);
+      autoSubIdRef.current = null;
+      return;
+    }
+
+    if (remembered.source) {
+      const source = remembered.source;
+      const norm = (v?: string | null) => normalizeLang(v ?? "");
+      const bySubId = () =>
+        remembered.subId
+          ? snap.subtitleTracks.find((t) => t.subId != null && t.subId === remembered.subId)
+          : undefined;
+      const sameSource = (t: (typeof snap.subtitleTracks)[number]) =>
+        (t.url != null && t.url === source) ||
+        (t.externalFilename != null && t.externalFilename === source);
+      const byRelease = () => {
+        if (!remembered.release) return undefined;
+        const cands = snap.subtitleTracks.filter(
+          (t) =>
+            t.external &&
+            norm(t.lang) === norm(remembered.lang) &&
+            t.release === remembered.release,
+        );
+        if (cands.length === 0) return undefined;
+        return (
+          cands.find((t) => !remembered.provider || t.provider === remembered.provider) ??
+          cands[0]
+        );
+      };
+      const existing = bySubId() ?? snap.subtitleTracks.find(sameSource) ?? byRelease();
+      if (!existing && subRestoreLogRef.current !== src.url) {
+        subRestoreLogRef.current = src.url;
+        console.info("[subs/restore] no match yet", {
+          remembered,
+          externalCandidates: snap.subtitleTracks
+            .filter((t) => t.external)
+            .map((t) => ({
+              id: t.id,
+              subId: t.subId,
+              lang: t.lang,
+              url: t.url,
+              externalFilename: t.externalFilename,
+              provider: t.provider,
+              release: t.release,
+              title: t.title,
+              matchScore: t.matchScore,
+            })),
+        });
+      }
+      if (existing) {
+        console.info("[subs/restore] selecting remembered track", {
+          id: existing.id,
+          subId: existing.subId,
+          via: bySubId()
+            ? "subId"
+            : snap.subtitleTracks.find(sameSource)
+              ? "source"
+              : "release",
+          url: existing.url,
+          release: existing.release,
+          title: existing.title,
+        });
+        subRestoreRef.current = src.url;
+        if (!existing.selected) bridge.setSubtitleTrack(existing.id);
+        autoSubIdRef.current = existing.id;
+        if (remembered.imported && remembered.title) markImportedSub(remembered.title);
+        else markAddedSub(source);
+        return;
+      }
+      if (subRestoreWaitRef.current == null) subRestoreWaitRef.current = Date.now();
+      const waited = Date.now() - (subRestoreWaitRef.current ?? Date.now());
+      const addNow = remembered.imported === true || waited > 12_000;
+      if (!addNow) return;
+      subRestoreRef.current = src.url;
+      console.info("[subs/restore] re-adding remembered sub from source", {
+        source,
+        imported: remembered.imported === true,
+      });
+      void bridge
+        .addSubtitle(source, remembered.lang, remembered.title, true, {
+          format: remembered.format,
+          encoding: remembered.encoding,
+          release: remembered.release,
+          provider: remembered.provider,
+          matchScore: remembered.matchScore,
+        })
+        .then((ok) => {
+          if (!ok) return;
+          if (remembered.imported && remembered.title) markImportedSub(remembered.title);
+          else markAddedSub(source);
+        });
+      return;
+    }
+
+    if (snap.subtitleTracks.length === 0) return;
+    const want =
+      snap.subtitleTracks.find(
+        (t) =>
+          !t.external &&
+          sameLang(t.lang, remembered.lang) &&
+          (!remembered.title || t.title === remembered.title),
+      ) ?? snap.subtitleTracks.find((t) => !t.external && sameLang(t.lang, remembered.lang));
+    if (want) {
+      subRestoreRef.current = src.url;
+      if (!want.selected) bridge.setSubtitleTrack(want.id);
+      autoSubIdRef.current = want.id;
+    }
+  }, [
+    src.url,
+    src.meta.id,
+    src.episode,
+    src.subtitlePreselect,
+    snap.audioTracks.length,
+    snap.subtitleTracks,
+    snap.durationSec,
+    bridgeRef,
+  ]);
   useEffect(() => {
     if (engine !== "mpv") return;
     bridgeRef.current?.setAudioDevice?.(settings.audioDevice);
@@ -338,7 +488,14 @@ export function useTrackAutoload(params: {
     const subsOff = subsOffFor(prefs, settings);
     if (subsOff) {
       if (snap.subtitleTracks.some((t) => t.selected)) bridgeRef.current?.setSubtitleTrack(null);
-    } else if (!src.subtitlePreselect && snap.subtitleTracks.length > 0 && subLangs.length > 0) {
+    } else if (
+      !readRememberedSub(
+        subtitleMediaKey(src.meta.id, src.episode?.season, src.episode?.episode),
+      ) &&
+      !src.subtitlePreselect &&
+      snap.subtitleTracks.length > 0 &&
+      subLangs.length > 0
+    ) {
       const current = snap.subtitleTracks.find((t) => t.selected) ?? null;
       const userPicked =
         current != null && autoSubIdRef.current != null && current.id !== autoSubIdRef.current;

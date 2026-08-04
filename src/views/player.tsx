@@ -613,6 +613,7 @@ export function PlayerView({ src }: { src: PlayerSrc }) {
     bridgeRef,
     snapRef,
     metaId: src.meta.id,
+    mediaKey: `${src.meta.id}|${src.episode?.season ?? ""}|${src.episode?.episode ?? ""}`,
     inRoom,
     isHost,
     hasStarted,
