@@ -1,6 +1,5 @@
 import { safeFetch } from "@/lib/safe-fetch";
 import { createRequestScheduler } from "@/lib/request-scheduler";
-import { imageRequestLang } from "./tmdb-image-lang";
 
 export const TMDB = "https://api.themoviedb.org/3";
 export const IMG = "https://image.tmdb.org/t/p";
@@ -98,7 +97,7 @@ export async function get<T>(
   if (!key) return null;
   const url = new URL(`${TMDB}/${path}`);
   url.searchParams.set("api_key", key);
-  const lang = effectiveTmdbLanguage() || imageRequestLang();
+  const lang = effectiveTmdbLanguage();
   if (lang && !params.language) url.searchParams.set("language", lang);
   for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
   const target = url.toString();
