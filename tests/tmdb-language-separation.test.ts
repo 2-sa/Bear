@@ -17,10 +17,7 @@ const imagesSource = readFileSync(
   new URL("../src/lib/providers/tmdb/tmdb-images.ts", import.meta.url),
   "utf8",
 );
-const posterSource = readFileSync(
-  new URL("../src/components/poster.tsx", import.meta.url),
-  "utf8",
-);
+const posterSource = readFileSync(new URL("../src/components/poster.tsx", import.meta.url), "utf8");
 test("TMDB metadata requests never fall back to the artwork language", () => {
   assert.match(clientSource, /const lang = effectiveTmdbLanguage\(\);/);
   assert.doesNotMatch(clientSource, /imageRequestLang/);
