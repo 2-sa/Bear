@@ -21,11 +21,17 @@ export function useLocalizedPoster(metaId: string): string | undefined {
   const [url, setUrl] = useState<string | undefined>(undefined);
   useEffect(() => {
     setUrl(undefined);
-    if (!settings.tmdbKey || !metaId.startsWith("tmdb:") || !shouldLocalizePosters()) return;
+    const canResolve = metaId.startsWith("tmdb:") || metaId.startsWith("tt");
+    if (!settings.tmdbKey || !canResolve || !shouldLocalizePosters()) return;
     let alive = true;
-    void tmdbLocalizedPoster(settings.tmdbKey, metaId).then((u) => {
-      if (alive && u) setUrl(u);
-    });
+    void (async () => {
+      const tmdbId = metaId.startsWith("tmdb:")
+        ? metaId
+        : await tmdbIdFromImdb(settings.tmdbKey, metaId);
+      if (!tmdbId) return;
+      const localized = await tmdbLocalizedPoster(settings.tmdbKey, tmdbId);
+      if (alive && localized) setUrl(localized);
+    })();
     return () => {
       alive = false;
     };

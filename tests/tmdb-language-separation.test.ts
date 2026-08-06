@@ -17,6 +17,10 @@ const imagesSource = readFileSync(
   new URL("../src/lib/providers/tmdb/tmdb-images.ts", import.meta.url),
   "utf8",
 );
+const posterSource = readFileSync(
+  new URL("../src/components/poster.tsx", import.meta.url),
+  "utf8",
+);
 test("TMDB metadata requests never fall back to the artwork language", () => {
   assert.match(clientSource, /const lang = effectiveTmdbLanguage\(\);/);
   assert.doesNotMatch(clientSource, /imageRequestLang/);
@@ -26,4 +30,10 @@ test("TMDB metadata requests never fall back to the artwork language", () => {
 test("TMDB artwork requests keep their independent language preference", () => {
   assert.match(detailsSource, /include_image_language: imageLangParam\(\)/);
   assert.match(imagesSource, /include_image_language: imageLangParam\(originalLang\)/);
+});
+
+test("IMDb-based catalogs resolve through TMDB before selecting localized posters", () => {
+  assert.match(posterSource, /metaId\.startsWith\("tmdb:"\) \|\| metaId\.startsWith\("tt"\)/);
+  assert.match(posterSource, /await tmdbIdFromImdb\(settings\.tmdbKey, metaId\)/);
+  assert.match(posterSource, /tmdbLocalizedPoster\(settings\.tmdbKey, tmdbId\)/);
 });
