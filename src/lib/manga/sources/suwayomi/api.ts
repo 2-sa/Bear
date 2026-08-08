@@ -3,6 +3,7 @@ import { imageUrl, mapManga, type SuwayomiExtension, type SuwayomiSource } from 
 import {
   configClient,
   configServer,
+  clearLoadedSources,
   loadSources,
   pickTransport,
   withTransportFallback,
@@ -133,9 +134,9 @@ export async function sourceSearch(
 
 export async function listExtensions(config: ServerConfig): Promise<SuwayomiExtension[]> {
   const client = configClient(config);
-  return (await pickTransport(client)) === "rest"
-    ? restExtensions(client)
-    : gqlExtensions(client);
+  return withTransportFallback(client, (transport) =>
+    transport === "rest" ? restExtensions(client) : gqlExtensions(client),
+  );
 }
 
 async function mutateExtension(
@@ -145,11 +146,11 @@ async function mutateExtension(
   graphql: (c: ReturnType<typeof configClient>, p: string) => Promise<boolean>,
 ): Promise<void> {
   const client = configClient(config);
-  const ok =
-    (await pickTransport(client)) === "rest"
-      ? await rest(client, pkgName)
-      : await graphql(client, pkgName);
-  if (!ok) throw new Error("suwayomi extension action failed");
+  await withTransportFallback(client, async (transport) => {
+    const ok = transport === "rest" ? await rest(client, pkgName) : await graphql(client, pkgName);
+    if (!ok) throw new Error("suwayomi extension action failed");
+  });
+  clearLoadedSources(client.server.base);
 }
 
 export function installExtension(config: ServerConfig, pkgName: string): Promise<void> {

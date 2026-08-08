@@ -179,6 +179,21 @@ export async function gqlLibrary(client: SuwayomiClient): Promise<any[]> {
   return Array.isArray(nodes) ? nodes : [];
 }
 
+export async function gqlSetMangaInLibrary(
+  client: SuwayomiClient,
+  mangaId: string,
+  inLibrary: boolean,
+): Promise<boolean> {
+  if (!isDigits(mangaId)) return false;
+  const q = `mutation($id: Int!, $inLibrary: Boolean!) {
+    updateManga(input: { id: $id, patch: { inLibrary: $inLibrary } }) {
+      manga { id }
+    }
+  }`;
+  const data = await gql(client, q, { id: Number(mangaId), inLibrary });
+  return data?.updateManga?.manga?.id != null;
+}
+
 export async function gqlExtensions(client: SuwayomiClient): Promise<SuwayomiExtension[]> {
   const data = await gql(
     client,
@@ -186,6 +201,7 @@ export async function gqlExtensions(client: SuwayomiClient): Promise<SuwayomiExt
       pkgName apkName name lang iconUrl versionName isInstalled hasUpdate isObsolete isNsfw repo
     } } }`,
   );
+  if (data == null) throw new Error("suwayomi_graphql_error");
   const nodes = data?.extensions?.nodes;
   if (!Array.isArray(nodes)) return [];
   return nodes
@@ -221,7 +237,9 @@ async function updateExtension(
     }
   }`;
   const data = await gql(client, q, { id: pkgName });
-  return !!data?.updateExtension?.extension;
+  const extension = data?.updateExtension?.extension;
+  if (!extension) return false;
+  return patch === "uninstall" ? extension.isInstalled === false : extension.isInstalled === true;
 }
 
 export function gqlInstallExtension(client: SuwayomiClient, pkgName: string): Promise<boolean> {

@@ -120,6 +120,15 @@ export async function restLibrary(client: SuwayomiClient): Promise<any[]> {
   return merged;
 }
 
+export function restSetMangaInLibrary(
+  client: SuwayomiClient,
+  mangaId: string,
+  inLibrary: boolean,
+): Promise<boolean> {
+  const path = `/api/v1/manga/${mangaId}/library`;
+  return inLibrary ? client.getOk(path) : client.deleteOk(path);
+}
+
 export async function restMangaFull(client: SuwayomiClient, mangaId: string): Promise<any | null> {
   const full = await client.getJson(`/api/v1/manga/${mangaId}/full`);
   if (full) return full;
@@ -166,6 +175,7 @@ export async function restPageUrls(
 
 export async function restExtensions(client: SuwayomiClient): Promise<SuwayomiExtension[]> {
   const res = await client.getJson("/api/v1/extension/list");
+  if (res == null) throw new Error("suwayomi_rest_error");
   if (!Array.isArray(res)) return [];
   return res
     .filter((e) => e?.pkgName)
@@ -185,13 +195,13 @@ export async function restExtensions(client: SuwayomiClient): Promise<SuwayomiEx
 }
 
 export function restInstallExtension(client: SuwayomiClient, pkgName: string): Promise<boolean> {
-  return client.getOk(`/api/v1/extension/install/${pkgName}`);
+  return client.getOk(`/api/v1/extension/install/${encodeURIComponent(pkgName)}`);
 }
 
 export function restUninstallExtension(client: SuwayomiClient, pkgName: string): Promise<boolean> {
-  return client.getOk(`/api/v1/extension/uninstall/${pkgName}`);
+  return client.getOk(`/api/v1/extension/uninstall/${encodeURIComponent(pkgName)}`);
 }
 
 export function restUpdateExtension(client: SuwayomiClient, pkgName: string): Promise<boolean> {
-  return client.getOk(`/api/v1/extension/update/${pkgName}`);
+  return client.getOk(`/api/v1/extension/update/${encodeURIComponent(pkgName)}`);
 }
