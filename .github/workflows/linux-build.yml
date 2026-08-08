@@ -45,6 +45,7 @@ jobs:
             pkg-config \
             rpm \
             wget \
+            xdg-utils \
             xz-utils
 
       - name: Setup Rust
