@@ -1,7 +1,6 @@
 import {
   Check,
   Download,
-  FlaskConical,
   Link2,
   Loader2,
   Lock,
@@ -32,7 +31,6 @@ import type { LibraryItem } from "@/lib/stremio";
 import { openUrl } from "@/lib/window";
 import {
   checkForUpdate,
-  clearStagedUpdate,
   openUpdatePanel,
   updateAvailable,
   useUpdate,
@@ -43,7 +41,6 @@ import { isLinuxDesktop } from "@/lib/platform";
 import { BackupRow } from "./backup-row";
 import { SettingsRecoverRow } from "./settings-recover-row";
 import { BuildFeedback } from "./build-feedback";
-import { RollbackRow } from "./rollback-row";
 import { PrivacyRow } from "./privacy-row";
 import { TrayRow } from "./tray-row";
 import { Section } from "./shared";
@@ -71,8 +68,6 @@ export function AdvancedPanel() {
         >
           <div className="flex flex-col gap-2.5">
             <UpdatesRow />
-            <BetaChannelRow />
-            <RollbackRow />
             <BuildFeedback />
           </div>
         </Section>
@@ -251,49 +246,6 @@ function WebBuildBanner() {
         </div>
       </div>
     </section>
-  );
-}
-
-function BetaChannelRow() {
-  const t = useT();
-  const { settings, update } = useSettings();
-  const on = settings.betaUpdates;
-  return (
-    <div className="flex items-start gap-3 rounded-xl border border-edge-soft bg-canvas/40 px-4 py-3.5">
-      <span
-        className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
-          on ? "bg-accent/15 text-accent" : "bg-raised text-ink-subtle"
-        }`}
-      >
-        <FlaskConical size={15} strokeWidth={2.2} />
-      </span>
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <span className="text-[14px] font-medium text-ink">{t("Get beta updates")}</span>
-        <p className="text-[12.5px] leading-relaxed text-ink-subtle">
-          {t(
-            "Receive early builds with the newest fixes before they reach the stable release. Betas can be rough around the edges; switch this off to return to stable at the next update.",
-          )}
-        </p>
-      </div>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={on}
-        onClick={() => {
-          if (on) clearStagedUpdate();
-          update({ betaUpdates: !on });
-        }}
-        className={`mt-1 flex h-6 w-11 shrink-0 items-center rounded-full px-0.5 transition-colors ${
-          on ? "bg-accent" : "bg-raised"
-        }`}
-      >
-        <span
-          className={`h-5 w-5 rounded-full bg-canvas shadow-sm transition-transform ${
-            on ? "translate-x-5 rtl:-translate-x-5" : "translate-x-0"
-          }`}
-        />
-      </button>
-    </div>
   );
 }
 
