@@ -1,4 +1,12 @@
-import { Check, Download, Github, Link2, Loader2, Lock, RotateCw, Wrench } from "lucide-react";
+import {
+  Check,
+  Download,
+  Link2,
+  Loader2,
+  Lock,
+  RotateCw,
+  Wrench,
+} from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import cornerSvg from "@/assets/corner.svg";
 import harborDiscord from "@/assets/harbor-discord.svg";
