@@ -6,6 +6,7 @@ import {
   portabilityViolations,
   releaseTargetPaths,
   resolveTargetTriple,
+  shouldVerifyBundleSignature,
 } from "../scripts/macos-runtime-libs.mjs";
 import { readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
@@ -92,5 +93,14 @@ test("macOS bundle verification never falls back from an explicit target", () =>
   assert.deepEqual(
     releaseTargetPaths(targetDir, "", "bundle", "macos", "Bear.app"),
     [join(targetDir, "release", "bundle", "macos", "Bear.app")],
+  );
+});
+
+test("macOS bundle signature verification requires an explicit signing identity", () => {
+  assert.equal(shouldVerifyBundleSignature({}), false);
+  assert.equal(shouldVerifyBundleSignature({ APPLE_SIGNING_IDENTITY: "-" }), false);
+  assert.equal(
+    shouldVerifyBundleSignature({ APPLE_SIGNING_IDENTITY: "Developer ID Application: Bear" }),
+    true,
   );
 });

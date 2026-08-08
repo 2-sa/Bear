@@ -236,6 +236,11 @@ export function releaseTargetPaths(targetDir, target, ...parts) {
   return [join(releaseDir, ...parts)];
 }
 
+export function shouldVerifyBundleSignature(env = process.env) {
+  const identity = env.APPLE_SIGNING_IDENTITY?.trim();
+  return Boolean(identity && identity !== "-");
+}
+
 function findBuiltExecutable() {
   const target = targetTriple();
   const candidates = releaseTargetPaths(targetDirectory(), target, "bear");
@@ -357,7 +362,11 @@ function verifyBundle() {
   if (!inspected) throw new Error("no Mach-O files were found inside Bear.app");
   if (violations.length) throw new Error(violations.join("\n"));
 
-  run("codesign", ["--verify", "--deep", "--strict", app]);
+  if (shouldVerifyBundleSignature()) {
+    run("codesign", ["--verify", "--deep", "--strict", app]);
+  } else {
+    console.log("Skipping app-bundle signature verification because no Apple signing identity is configured.");
+  }
   console.log(`Verified portable Bear.app with ${bundledNames.size} bundled libraries.`);
 }
 
