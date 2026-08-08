@@ -64,7 +64,9 @@ export const Hero = memo(function Hero({
   const inWatchlist = useInWatchlist(meta.id, [resolvedImdb]);
   const [bgUrl, setBgUrl] = useState<string | undefined>(meta.background);
   const [bgResolved, setBgResolved] = useState<boolean>(!!meta.background);
-  const bg = bgUrl ? upsizeTmdb(bgUrl, fullQuality) : bgResolved ? meta.poster : undefined;
+  const bg = bgUrl
+    ? upsizeTmdb(bgUrl, fullQuality)
+    : (meta.background ?? (bgResolved ? meta.poster : undefined));
   const [trailerCandidates, setTrailerCandidates] = useState<string[]>([]);
   const [trailerInfo, setTrailerInfo] = useState<TrailerInfo | null>(null);
   const [videoReady, setVideoReady] = useState(false);

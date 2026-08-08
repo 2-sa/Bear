@@ -903,7 +903,7 @@ export function PlayerView({ src }: { src: PlayerSrc }) {
   const onVolumeWheel = useCallback((deltaY: number) => {
     const dir = deltaY < 0 ? 1 : -1;
     const boost = !isKid && bridgeRef.current?.capabilities().engine === "mpv";
-    const max = boost ? 6 : 1;
+    const max = boost ? Math.max(1, Math.min(6, settings.volumeBoostMax || 2)) : 1;
     const next = Math.min(max, Math.max(0, volumeRef.current + dir * 0.05));
     volumeRef.current = next;
     bridgeRef.current?.setVolume(next);
@@ -912,7 +912,7 @@ export function PlayerView({ src }: { src: PlayerSrc }) {
 
     if (settings.playerVolumeSfx) SFX.volumeChange(dir > 0);
     showVolumeFeedback(next, false);
-  }, [showVolumeFeedback, isKid, settings.playerVolumeSfx]);
+  }, [showVolumeFeedback, isKid, settings.playerVolumeSfx, settings.volumeBoostMax]);
 
   const onLoaderRetry = useCallback(() => {
     const b = bridgeRef.current;

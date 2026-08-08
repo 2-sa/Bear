@@ -234,7 +234,7 @@ export function useKeyboardShortcuts(params: {
       if (match("playerVolumeUp")) {
         e.preventDefault();
         const step = e.shiftKey ? 0.5 : 0.05;
-        const max = bridgeRef.current?.capabilities().engine === "mpv" ? 6 : 1;
+        const max = bridgeRef.current?.capabilities().engine === "mpv" ? Math.max(1, Math.min(6, settings.volumeBoostMax || 2)) : 1;
         const next = Math.min(max, Math.max(0, snap.volume + step));
         bridgeRef.current?.setVolume(next);
         bridgeRef.current?.setMuted(false);
@@ -246,7 +246,7 @@ export function useKeyboardShortcuts(params: {
       if (match("playerVolumeDown")) {
         e.preventDefault();
         const step = e.shiftKey ? 0.5 : 0.05;
-        const max = bridgeRef.current?.capabilities().engine === "mpv" ? 6 : 1;
+        const max = bridgeRef.current?.capabilities().engine === "mpv" ? Math.max(1, Math.min(6, settings.volumeBoostMax || 2)) : 1;
         const next = Math.min(max, Math.max(0, snap.volume - step));
         bridgeRef.current?.setVolume(next);
         bridgeRef.current?.setMuted(false);

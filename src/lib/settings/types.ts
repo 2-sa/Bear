@@ -361,6 +361,7 @@ export type Settings = {
   mpvHwdec: "auto" | "on" | "off";
   mpvBufferBoost: boolean;
   mpvDownmixStereo: boolean;
+  volumeBoostMax: number;
   mpvTweaks: Record<string, string>;
   playerSvp: boolean;
   svpVpyPath: string;
@@ -570,6 +571,7 @@ export type Settings = {
   iptvEpgOffsetHours: number;
   sidebarCollapsed: boolean;
   wrappedButton: boolean;
+  libraryHero: boolean;
   mangaEnabled: boolean;
   feedLocaleBias: boolean;
   uiLanguage: "en" | "ar" | "pt" | "ru";

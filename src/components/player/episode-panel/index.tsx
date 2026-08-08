@@ -224,9 +224,9 @@ export function EpisodePanel({
           style={
             isMpv
               ? {
-                  background: settings.liquidGlass
-                    ? "linear-gradient(145deg, rgba(8,12,18,0.36), rgba(8,12,18,0.30) 48%, rgba(8,12,18,0.34))"
-                    : "linear-gradient(145deg, rgba(8,12,18,0.93), rgba(8,12,18,0.9) 48%, rgba(8,12,18,0.92))",
+                  backgroundColor: settings.liquidGlass
+                    ? "color-mix(in srgb, var(--color-canvas) 42%, transparent)"
+                    : "var(--color-canvas)",
                   boxShadow:
                     corner === "top-left" || corner === "bottom-left"
                       ? "inset -1px 0 0 rgba(255,255,255,0.13), inset 0 1px 0 rgba(255,255,255,0.07), inset 0 -1px 0 rgba(0,0,0,0.08)"
