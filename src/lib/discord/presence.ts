@@ -2,6 +2,7 @@ const IS_TAURI = typeof window !== "undefined" && "__TAURI_INTERNALS__" in windo
 
 const BEAR_LOGO = "bear_logo";
 export const DISCORD_PARTY_JOIN_ENABLED = false;
+const STATIC_BUTTONS = [{ label: "Bear on GitHub", url: "https://github.com/2-sa/Bear" }];
 
 type DiscordConfig = {
   enabled: boolean;
@@ -136,10 +137,10 @@ function compute(): Computed {
     const people = headcount === 1 ? "1 👤" : `${headcount} 👥`;
     payload.details = `Watch Party · ${people}`;
     payload.state = context ?? "In the lobby";
-    if (DISCORD_PARTY_JOIN_ENABLED && party.joinUrl && config.showPartyJoin) {
-      payload.buttonLabel = "Join the Watch Party";
-      payload.buttonUrl = party.joinUrl;
-    }
+    payload.buttons =
+      DISCORD_PARTY_JOIN_ENABLED && party.joinUrl && config.showPartyJoin
+        ? [{ label: "Join the Watch Party", url: party.joinUrl }, ...STATIC_BUTTONS]
+        : STATIC_BUTTONS;
     const live = typeof payload.startTs === "number";
     return {
       payload,
@@ -147,7 +148,7 @@ function compute(): Computed {
     };
   }
   if (!base) return { payload: null, key: "clear" };
-  return base;
+  return { payload: { ...base.payload, buttons: STATIC_BUTTONS }, key: base.key };
 }
 
 function flush(): void {

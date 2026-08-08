@@ -185,11 +185,34 @@ export function normalizeName(name: string, type: string): string {
   return `${n}::${type ?? ""}`;
 }
 
+function addonAcceptLanguage(): string | null {
+  try {
+    const raw = typeof localStorage !== "undefined" ? localStorage.getItem("harbor.settings") : null;
+    const settings = raw ? (JSON.parse(raw) as Record<string, unknown>) : {};
+    const region = String(settings.region ?? "US").trim().toUpperCase();
+    const language = String(settings.tmdbLanguage || settings.uiLanguage || "en")
+      .trim()
+      .toLowerCase()
+      .split("-")[0];
+    if (!/^[a-z]{2,3}$/.test(language)) return null;
+    if (!/^[A-Z]{2}$/.test(region)) return `${language},en;q=0.8`;
+    return language === "en"
+      ? `en-${region},en;q=0.8`
+      : `${language}-${region},${language};q=0.9,en;q=0.8`;
+  } catch {
+    return null;
+  }
+}
+
 async function fetchWithTimeout(url: string, timeoutMs = 8000): Promise<Response | null> {
   const ac = new AbortController();
   const t = setTimeout(() => ac.abort(), timeoutMs);
   try {
-    return await fetch(url, { signal: ac.signal });
+    const acceptLanguage = addonAcceptLanguage();
+    return await fetch(url, {
+      signal: ac.signal,
+      headers: acceptLanguage ? { "Accept-Language": acceptLanguage } : undefined,
+    });
   } catch {
     return null;
   } finally {
