@@ -4,27 +4,49 @@ import { XrayRailCard, type XrayPerson } from "./xray-actor-card";
 
 type Props = {
   people: XrayPerson[];
+  castPeople?: XrayPerson[];
   ready: boolean;
   galleryReady: boolean;
   progress: { done: number; total: number };
   error: string | null;
+  needsTmdbKey?: boolean;
   onViewAll: () => void;
   onClose: () => void;
 };
 
-export function XrayRail({ people, ready, galleryReady, progress, error, onViewAll, onClose }: Props) {
+export function XrayRail({
+  people,
+  castPeople,
+  ready,
+  galleryReady,
+  progress,
+  error,
+  needsTmdbKey,
+  onViewAll,
+  onClose,
+}: Props) {
   const t = useT();
+  // An empty gallery can never match anyone, so saying "Looking for who is on
+  // screen" forever is misleading. Show the available cast list instead.
+  const emptyGallery = galleryReady && progress.total === 0;
+  const canMatch = !error && !emptyGallery;
+  const fallback = people.length === 0 && !canMatch && (castPeople?.length ?? 0) > 0;
+  const list = people.length > 0 ? people : fallback ? (castPeople ?? []) : [];
   const status = error
-    ? t("X-Ray unavailable")
+    ? `${t("X-Ray unavailable")} — ${error}`
     : !ready
       ? t("Warming up")
       : !galleryReady
         ? progress.total > 0
           ? `${t("Reading the cast")} ${progress.done}/${progress.total}`
           : t("Reading the cast")
-        : people.length === 0
-          ? t("Looking for who is on screen")
-          : null;
+        : emptyGallery
+          ? needsTmdbKey
+            ? t("Add a TMDB key in Settings to identify the cast.")
+            : t("No cast photos are available for this title.")
+          : people.length === 0
+            ? t("Looking for who is on screen")
+            : null;
 
   return (
     <div className="pointer-events-auto absolute left-0 top-24 z-40 max-h-[68%] w-[300px] animate-in fade-in slide-in-from-left-3 duration-200 motion-reduce:animate-none">
@@ -53,7 +75,7 @@ export function XrayRail({ people, ready, galleryReady, progress, error, onViewA
             </button>
           </header>
 
-          {status ? (
+          {status && (
             <div className="flex items-center gap-2 py-1.5 text-[12.5px] text-white/70">
               {!error && !ready ? (
                 <Loader2 size={13} className="shrink-0 animate-spin motion-reduce:animate-none" />
@@ -62,10 +84,11 @@ export function XrayRail({ people, ready, galleryReady, progress, error, onViewA
               ) : null}
               <span className="min-w-0 flex-1">{status}</span>
             </div>
-          ) : (
+          )}
+          {list.length > 0 && (
             <div className="flex min-h-0 flex-col gap-0.5 overflow-y-auto pe-0.5 [scrollbar-width:thin]">
-              {people.map((p) => (
-                <XrayRailCard key={p.id} person={p} />
+              {list.map((p) => (
+                <XrayRailCard key={`${p.id}:${p.sub ?? ""}`} person={p} />
               ))}
             </div>
           )}

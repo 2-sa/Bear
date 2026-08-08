@@ -3,10 +3,11 @@ import type { CastEntry } from "@/lib/providers/tmdb";
 import { embedLargestFace } from "./face-engine";
 import type { GalleryEntry } from "./match";
 
-const MODEL_VERSION = "sface-int8-v1";
+
+const MODEL_VERSION = "sface-int8-v2";
 const CACHE_DIR = "xray/face-gallery";
 const TMDB_IMG = "https://image.tmdb.org/t/p/w185";
-const MAX_CAST = 20;
+const MAX_CAST = 40;
 const CONCURRENCY = 6;
 
 type CacheShape = {
@@ -14,6 +15,12 @@ type CacheShape = {
   entries: { id: number; name: string; character: string; profilePath: string; emb: number[] }[];
 };
 
+// TMDB gives a bare path; the TVDB fallback gives an absolute URL. Prefixing the
+// latter produced a broken URL, so every face silently failed to load and X-Ray
+// matched nobody.
+function castImageUrl(profilePath: string): string {
+  return profilePath.startsWith("http") ? profilePath : TMDB_IMG + profilePath;
+}
 function cachePath(key: string): string {
   return `${CACHE_DIR}/${key.replace(/[^a-z0-9_-]/gi, "_")}.json`;
 }
@@ -71,7 +78,7 @@ export async function buildGallery(
   const entries: GalleryEntry[] = [];
   await runPool(pool, CONCURRENCY, async (c) => {
     try {
-      const bmp = await loadBitmap(TMDB_IMG + c.profilePath);
+      const bmp = await loadBitmap(castImageUrl(c.profilePath as string));
       let emb: number[] | null;
       try {
         emb = await embedLargestFace(bmp);

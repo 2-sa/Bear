@@ -2,6 +2,7 @@ import { useRef, useState, type RefObject } from "react";
 import { ScanFace } from "lucide-react";
 import type { Meta } from "@/lib/cinemeta";
 import type { PlayerBridge } from "@/lib/player/bridge";
+import type { CastEntry } from "@/lib/providers/tmdb";
 import { useSettings } from "@/lib/settings";
 import { useT } from "@/lib/i18n";
 import { fetch as tauriHttpFetch } from "@tauri-apps/plugin-http";
@@ -14,6 +15,7 @@ import { XrayBrowser } from "./xray-browser";
 import type { XrayPerson } from "./xray-actor-card";
 
 const IS_TAURI = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
+const NO_CAST: CastEntry[] = [];
 
 async function loadBitmap(url: string): Promise<ImageBitmap> {
   const doFetch = IS_TAURI ? tauriHttpFetch : fetch;
@@ -43,8 +45,8 @@ export function XrayOverlay({
   const { cast, details } = useXrayCast(meta, active);
   const { people, ready, galleryReady, progress, error } = useFaceId({
     metaKey: meta.id,
-    cast: cast ?? [],
-    liveScan: active,
+    cast: cast ?? NO_CAST,
+    liveScan: active && settings.xrayLiveScan,
     isPaused,
     loadBitmap,
   });
@@ -56,6 +58,13 @@ export function XrayOverlay({
     name: p.name,
     sub: p.character,
     profilePath: p.profilePath,
+  }));
+
+  const castFallback: XrayPerson[] = (cast ?? []).map((c) => ({
+    id: c.id,
+    name: c.name,
+    sub: c.character,
+    profilePath: c.profilePath,
   }));
 
   const playVideo = (ytId: string, name: string) => {
@@ -84,10 +93,12 @@ export function XrayOverlay({
       {view === "rail" && (
         <XrayRail
           people={scenePeople}
+          castPeople={castFallback}
           ready={ready}
           galleryReady={galleryReady}
           progress={progress}
           error={error}
+          needsTmdbKey={!settings.tmdbKey}
           onViewAll={() => setView("browser")}
           onClose={() => setView("closed")}
         />

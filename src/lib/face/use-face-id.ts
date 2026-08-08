@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { captureMpvFrame } from "@/lib/snapshots";
 import { buildGallery, galleryPoolSize } from "./cast-embeddings";
+import { captureFaceFrame } from "./face-capture";
 import { ensureFaceEngine, scanFrame } from "./face-engine";
 import { classify } from "./match";
 import type { CastEntry } from "@/lib/providers/tmdb";
 import type { GalleryEntry, WireFace } from "./match";
 
-const SCAN_MS = 1600;
-const SEEN_WINDOW_MS = 5000;
+const SCAN_MS = 800;
+const SEEN_WINDOW_MS = 6000;
 
 export type OnScreenPerson = {
   id: number;
@@ -26,11 +26,6 @@ type Args = {
   isPaused: boolean;
   loadBitmap: (url: string) => Promise<ImageBitmap>;
 };
-
-async function dataUrlToBitmap(dataUrl: string): Promise<ImageBitmap> {
-  const blob = await (await fetch(dataUrl)).blob();
-  return createImageBitmap(blob);
-}
 
 export function useFaceId({ metaKey, cast, liveScan, isPaused, loadBitmap }: Args): {
   people: OnScreenPerson[];
@@ -70,9 +65,8 @@ export function useFaceId({ metaKey, cast, liveScan, isPaused, loadBitmap }: Arg
       if (inFlightRef.current || galleryRef.current.length === 0) return;
       inFlightRef.current = true;
       try {
-        const dataUrl = await captureMpvFrame(true);
-        if (!dataUrl) return;
-        const bmp = await dataUrlToBitmap(dataUrl);
+        const bmp = await captureFaceFrame();
+        if (!bmp) return;
         let faces: WireFace[];
         try {
           faces = await scanFrame(bmp, bmp.width, bmp.height);
