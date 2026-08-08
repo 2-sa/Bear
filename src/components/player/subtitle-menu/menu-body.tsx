@@ -28,7 +28,7 @@ export function MenuBody(props: SubtitleMenuProps & { onClose: () => void }) {
     const keep = new Set(filtered);
     for (const t of tracks) {
       const isImported = hasImportedSubTitle(t.title) || importedTitles.has(t.title ?? "");
-      if (isImported || t.id === props.selectedId || t.secondary) keep.add(t);
+      if (isImported || t.id === props.selectedId) keep.add(t);
     }
     return tracks.filter((t) => keep.has(t));
   }, [tracks, preferredLanguages, importedTitles, props.selectedId]);

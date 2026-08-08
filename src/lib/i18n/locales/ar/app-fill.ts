@@ -1114,9 +1114,6 @@ const appFill: Record<string, string> = {
   "Added {count} more subtitles.": "تمت إضافة {count} ترجمة إضافية.",
   "No new subtitles found beyond what is already listed.": "لم يتم العثور على ترجمات جديدة غير المدرجة بالفعل.",
   "{time} left": "متبقٍ {time}",
-  "Use Cinemeta for title metadata": "استخدام Cinemeta لبيانات العناوين",
-  "Turn this off to take Cinemeta out entirely and use only your own metadata addons, such as AIOMetadata or AIOStreams. Cinemeta can go stale and show already released episodes as TBA. Leave it on unless you have a metadata addon installed, or titles will have no details.":
-    "عطّل هذا لإزالة Cinemeta تمامًا واستخدام إضافات البيانات الخاصة بك فقط، مثل AIOMetadata أو AIOStreams. قد تصبح بيانات Cinemeta قديمة وتعرض حلقات صدرت بالفعل على أنها قريبًا. اتركه مفعّلًا ما لم تكن لديك إضافة بيانات مثبتة، وإلا فلن تظهر تفاصيل العناوين.",
   "Join Bear": "انضم إلى Bear",
   "One free account for your handle, themes, and sync.": "حساب مجاني واحد لاسم المستخدم، والسمات، والمزامنة.",
   "Sign in to pick up where you left off.": "سجّل الدخول لاستكمال ما بدأته.",
