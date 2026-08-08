@@ -6,6 +6,7 @@ import { searchAddons } from "./providers/addons";
 import { searchOpenSubtitlesV3 } from "./providers/opensubtitles-v3";
 import { searchExtraSubSources, toSubResult, type ProviderCtx } from "./autosync/sub-sources";
 import { langScore, normalizeLang } from "./language";
+import { detectSource, parseRelease, type ReleaseTags } from "./release-match";
 import { SUBTITLE_PROVIDER_TIMEOUT_MS, withSubtitleTimeout } from "./autoload";
 
 export type SearchOptions = {
@@ -24,6 +25,23 @@ export type StreamHints = {
   resolution?: string | null;
   preferHearingImpaired?: boolean;
 };
+
+export function streamTagsOf(hints: StreamHints): ReleaseTags {
+  const parsed = parseRelease(hints.release);
+  return {
+    ...parsed,
+    source: detectSource(hints.source) ?? parsed.source,
+    resolution: normalizeResolution(hints.resolution) ?? parsed.resolution,
+  };
+}
+
+function normalizeResolution(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const value = raw.toLowerCase();
+  if (value === "4k" || value === "uhd" || value.includes("2160")) return "2160p";
+  const match = value.match(/(2160|1080|720|576|480)/);
+  return match ? match[1] + "p" : null;
+}
 
 export async function searchSubtitles(
   q: SubSearchQuery,

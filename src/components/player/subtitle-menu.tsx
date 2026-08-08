@@ -36,7 +36,10 @@ export function SubtitleMenu(props: Props) {
     if (useOverlay) return;
     if (!open) return;
     const close = (e: MouseEvent) => {
-      if (!wrap.current?.contains(e.target as Node)) setOpen(false);
+      const target = e.target as HTMLElement | null;
+      if (wrap.current?.contains(target)) return;
+      if (target?.closest("[data-title-suggest-dropdown]")) return;
+      setOpen(false);
     };
     window.addEventListener("mousedown", close);
     return () => window.removeEventListener("mousedown", close);

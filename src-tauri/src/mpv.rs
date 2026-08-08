@@ -759,7 +759,8 @@ pub async fn mpv_start(
 
     if let Some(subs) = &args.subtitles {
         for s in subs {
-            let _ = mpv_argv_command(&mpv, &["sub-add", &s.url, "auto"]);
+            let url = s.url.replace('\\', "/");
+            let _ = mpv_argv_command(&mpv, &["sub-add", &url, "auto"]);
         }
     }
 
@@ -1445,7 +1446,7 @@ pub async fn mpv_save_screenshot(
     }
     let _ = mpv.set_property("screenshot-format", "png");
     let _ = mpv.set_property("screenshot-png-compression", "3");
-    let _ = mpv.set_property("screenshot-sw", "yes");
+    let _ = mpv.set_property("screenshot-sw", "no");
     mpv_argv_command(&mpv, &["screenshot-to-file", path.as_str(), "video"])
         .map_err(|e| format!("screenshot-to-file: {}", e))?;
     let target = std::path::Path::new(&path).to_path_buf();
@@ -1513,7 +1514,7 @@ pub async fn mpv_gif_start(state: State<'_, MpvState>) -> Result<(), String> {
         let started = std::time::Instant::now();
         let _ = mpv.set_property("screenshot-format", "jpg");
         let _ = mpv.set_property("screenshot-jpeg-quality", "92");
-        let _ = mpv.set_property("screenshot-sw", "yes");
+        let _ = mpv.set_property("screenshot-sw", "no");
         let mut frame: u32 = 0;
         while !stop_task.load(std::sync::atomic::Ordering::Relaxed) && frame < GIF_MAX_FRAMES {
             let path = dir_task.join(format!("f{:05}.jpg", frame));
@@ -1816,7 +1817,7 @@ pub async fn mpv_screenshot_data_url(state: State<'_, MpvState>) -> Result<Strin
     let path_str = temp.to_string_lossy().to_string();
     let _ = mpv.set_property("screenshot-format", "jpg");
     let _ = mpv.set_property("screenshot-jpeg-quality", "72");
-    let _ = mpv.set_property("screenshot-sw", "yes");
+    let _ = mpv.set_property("screenshot-sw", "no");
     mpv_argv_command(&mpv, &["screenshot-to-file", path_str.as_str(), "video"])
         .map_err(|e| format!("screenshot-to-file: {}", e))?;
     let mut waited = 0u64;
@@ -1875,6 +1876,7 @@ pub async fn mpv_sub_add(
             .map(|s| s.mpv.clone())
             .ok_or_else(|| "mpv not started".to_string())?
     };
+    let url = url.replace('\\', "/");
     let flag = if select.unwrap_or(true) {
         "select"
     } else {

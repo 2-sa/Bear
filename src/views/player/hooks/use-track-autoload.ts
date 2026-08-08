@@ -2,8 +2,8 @@ import { useEffect, useRef, useState, type RefObject } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import type { PlayerBridge, PlayerSnapshot } from "@/lib/player/bridge";
 import { langScore, normalizeLang, pickBestTrack } from "@/lib/subtitles/language";
-import { searchSubtitles, streamMatchScore } from "@/lib/subtitles/search";
-import { providerLabel, releaseOf } from "@/lib/subtitles/provider-label";
+import { fetchSubtitlesIntoPlayer, streamHintsOf } from "@/lib/subtitles/fetch-into-player";
+import { publishSubtitleSearch } from "@/components/player/subtitle-menu/subtitle-search-store";
 import { publishSubtitleContext } from "@/components/player/subtitle-menu/subtitle-context-store";
 import { readPlayerPrefs, type PerShowPrefs } from "@/lib/player-prefs";
 import { tmdbImdbId } from "@/lib/providers/tmdb";
@@ -12,17 +12,11 @@ import { gatherSubtitleAddons } from "@/lib/subtitles/addon-source";
 import { buildStreamIds } from "@/lib/streams/stream-ids";
 import type { PlayerSrc } from "@/lib/view";
 import type { Settings } from "@/lib/settings";
-import {
-  canStartSubtitleAutoload,
-  loadFirstWorkingSubtitle,
-  subtitleSearchImdbId,
-} from "@/lib/subtitles/autoload";
+import { canStartSubtitleAutoload, subtitleSearchImdbId } from "@/lib/subtitles/autoload";
 import { pickDesiredSubtitleTrack } from "@/lib/subtitles/track-selection";
 import { markAddedSub } from "@/lib/subtitles/added-subs";
 import { markImportedSub } from "@/lib/player/imported-subs";
 import { readRememberedSub, subtitleMediaKey } from "@/lib/subtitles/subtitle-memory";
-
-const EXTRA_AUTOLOAD_TRACKS = 8;
 
 export function useTrackAutoload(params: {
   bridgeRef: RefObject<PlayerBridge | null>;
@@ -95,6 +89,55 @@ export function useTrackAutoload(params: {
     };
   }, [authKey]);
 
+  const refetchRef = useRef<(() => Promise<number>) | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshReady, setRefreshReady] = useState(false);
+  const [lastAdded, setLastAdded] = useState<number | null>(null);
+  const lastAddedTimer = useRef<number | null>(null);
+  const clearLastAddedTimer = () => {
+    if (lastAddedTimer.current != null) {
+      window.clearTimeout(lastAddedTimer.current);
+      lastAddedTimer.current = null;
+    }
+  };
+  useEffect(() => {
+    refetchRef.current = null;
+    setRefreshReady(false);
+    setLastAdded(null);
+    setRefreshing(false);
+    clearLastAddedTimer();
+  }, [src.url]);
+
+  useEffect(() => {
+    if (!refreshReady) {
+      publishSubtitleSearch(null);
+      return;
+    }
+    publishSubtitleSearch({
+      status: refreshing ? "searching" : "idle",
+      lastAdded,
+      hints: streamHintsOf(src),
+      refresh: () => {
+        if (!refetchRef.current || refreshing) return;
+        setRefreshing(true);
+        setLastAdded(null);
+        clearLastAddedTimer();
+        void refetchRef.current()
+          .then((n) => setLastAdded(n))
+          .catch(() => setLastAdded(0))
+          .finally(() => {
+            setRefreshing(false);
+            clearLastAddedTimer();
+            lastAddedTimer.current = window.setTimeout(() => setLastAdded(null), 5000);
+          });
+      },
+      dismiss: () => {
+        clearLastAddedTimer();
+        setLastAdded(null);
+      },
+    });
+    return () => publishSubtitleSearch(null);
+  }, [refreshReady, refreshing, lastAdded, src]);
   const autoSubLoadKeyRef = useRef<string | null>(null);
   useEffect(() => {
     if (!resolutionSettled) return;
@@ -142,107 +185,46 @@ export function useTrackAutoload(params: {
         ? await resolveVideoHash(src)
         : {};
       if (videoHash) console.info(`[subs/autoload] moviehash ${videoHash} (${videoSize})`);
-      const streamHints = {
-        release: src.streamRef?.title ?? src.streamRef?.parsedTitle ?? null,
-        source: src.streamRef?.source ?? null,
-        resolution: src.streamRef?.resolution ?? null,
-      };
-      const subExtra =
-        (enabled.subdl === true && settings.subdlApiKey) ||
-        (enabled.subsource === true && settings.subsourceApiKey)
-          ? {
-              userAgent: "Bear",
-              netAllowed: true,
-              subdlApiKey: settings.subdlApiKey || null,
-              subsourceApiKey: settings.subsourceApiKey || null,
-              enabled: { subdl: enabled.subdl === true, subsource: enabled.subsource === true },
-            }
-          : undefined;
-      const results = await searchSubtitles(
-        {
-          imdbId: searchImdbId,
-          stremioId: src.meta.id,
-          candidateIds,
-          type: src.meta.type === "series" ? "series" : "movie",
-          season: searchSeason,
-          episode: searchEpisode,
-          langs,
-          videoHash,
-          videoSize,
-          filename: src.streamRef?.parsedTitle ?? src.streamRef?.title ?? undefined,
-        },
-        {
-          timeoutMs: 7_000,
-          providers: {
-            wyzie: enabled.wyzie ?? true,
-            addons: enabled.addons ?? true,
-            opensubtitles: enabled.opensubtitles ?? true,
-          },
-          addons: readyAddons ?? [],
-          preferredLangs: langs,
-          streamHints,
-          extra: subExtra,
-        },
-      );
-      console.info(`[subs/autoload] search returned ${results.length} subs`);
       const b = bridgeRef.current;
       if (!b || autoSubLoadKeyRef.current !== key) {
         console.warn("[subs/autoload] no bridge ready, skipping");
         return;
       }
-      const matches = results.filter((r) => langScore(r.lang ?? "", langs) >= 0);
-      console.info(`[subs/autoload] ${matches.length} match preferred langs`);
-      const loaded = await loadFirstWorkingSubtitle(matches, async (r) => {
-        if (autoSubLoadKeyRef.current !== key) return false;
-        const ok = await b.addSubtitle(r.url, r.lang, providerLabel(r), false, {
-          format: r.format,
-          encoding: r.encoding,
-          release: releaseOf(r),
-          provider: providerLabel(r),
-          matchScore: streamMatchScore(r, streamHints),
-          subId: r.id,
+      const base = {
+        src,
+        settings,
+        addons: readyAddons ?? [],
+        langs,
+        searchImdbId,
+        candidateIds,
+        season: searchSeason,
+        episode: searchEpisode,
+        videoHash,
+        videoSize,
+      };
+      refetchRef.current = async () => {
+        const bridge = bridgeRef.current;
+        if (!bridge || autoSubLoadKeyRef.current !== key) return 0;
+        const skipUrls = new Set(
+          (snapRef.current.subtitleTracks ?? []).map((track) => track.url ?? "").filter(Boolean),
+        );
+        const result = await fetchSubtitlesIntoPlayer({
+          ...base,
+          bridge,
+          deep: true,
+          skipUrls,
+          isActive: () => autoSubLoadKeyRef.current === key,
         });
-        return ok === true;
+        console.info(`[subs/refresh] found ${result.found}, added ${result.added} new tracks`);
+        return result.added;
+      };
+      setRefreshReady(true);
+      const result = await fetchSubtitlesIntoPlayer({
+        ...base,
+        bridge: b,
+        isActive: () => autoSubLoadKeyRef.current === key,
       });
-      console.info(
-        `[subs/autoload] ${loaded ? "loaded best available subtitle" : "no subtitle loaded"}`,
-      );
-      const diversityKey = (r: { source: string; title?: string }) =>
-        r.source === "addon" ? `addon:${r.title ?? ""}` : r.source;
-      const pool = new Map<string, typeof matches>();
-      for (const r of matches) {
-        if (r === loaded) continue;
-        const k = diversityKey(r);
-        const arr = pool.get(k) ?? [];
-        arr.push(r);
-        pool.set(k, arr);
-      }
-      const extras: typeof matches = [];
-      for (let depth = 0; extras.length < EXTRA_AUTOLOAD_TRACKS; depth++) {
-        let progressed = false;
-        for (const arr of pool.values()) {
-          const item = arr[depth];
-          if (!item) continue;
-          progressed = true;
-          extras.push(item);
-          if (extras.length >= EXTRA_AUTOLOAD_TRACKS) break;
-        }
-        if (!progressed) break;
-      }
-      let added = 0;
-      for (const r of extras) {
-        if (autoSubLoadKeyRef.current !== key) return;
-        const ok = await b.addSubtitle(r.url, r.lang, providerLabel(r), false, {
-          format: r.format,
-          encoding: r.encoding,
-          release: releaseOf(r),
-          provider: providerLabel(r),
-          matchScore: streamMatchScore(r, streamHints),
-          subId: r.id,
-        });
-        if (ok === true) added++;
-      }
-      if (extras.length > 0) console.info(`[subs/autoload] added ${added} extra subtitle tracks`);
+      console.info(`[subs/autoload] found ${result.found}, added ${result.added} tracks`);
     })();
   }, [
     resolvedImdbId,

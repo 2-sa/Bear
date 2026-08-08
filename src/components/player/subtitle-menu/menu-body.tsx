@@ -7,11 +7,14 @@ import { openSyncBar } from "@/lib/player/sub-sync";
 import { useAutoSyncHandle } from "@/components/player/autosync/autosync-store";
 import { Tooltip } from "../transport/tooltip";
 import { filterTracksByPreferredLanguage } from "@/lib/subtitles/language";
+import { HoverTooltip } from "@/components/hover-tooltip";
 import { SearchSection } from "./search-section";
 import { VariantRow } from "./variant-row";
+import { pickBestMatch } from "./best-match";
+import { useSubtitleSearch } from "./subtitle-search-store";
 import { Count, EmptyState, ImportBanner, Tab, ToggleChip } from "./menu-body-parts";
 import type { SubtitleMenuProps } from "./types";
-import { groupByLang, isVeryNewRelease } from "./utils";
+import { groupByLang, isVeryNewRelease, variantTitle } from "./utils";
 
 type SourceFilter = "all" | "embedded" | "external";
 const ALL_LANGS = "__all__";
@@ -89,6 +92,15 @@ export function MenuBody(props: SubtitleMenuProps & { onClose: () => void }) {
   const autoSyncApplied = autoSync?.status === "synced" || autoSync?.status === "best-effort";
   const autoSyncOn = autoSyncBusy || autoSyncApplied;
   const canAutoSync = selectedTrack?.external === true || autoSyncOn;
+  const search = useSubtitleSearch();
+  const best = useMemo(
+    () => pickBestMatch(visibleVariants, search?.hints ?? null),
+    [visibleVariants, search],
+  );
+  const betterMatch = best && best.track.id !== selectedId ? best : null;
+  const applyBestMatch = () => {
+    if (betterMatch) onSelect(betterMatch.track.id);
+  };
 
   const loadLocal = async () => {
     setLocalError(null);
@@ -251,7 +263,10 @@ export function MenuBody(props: SubtitleMenuProps & { onClose: () => void }) {
           )}
           {groups.length > 1 && (
             <button
-              onClick={() => setActiveLang(ALL_LANGS)}
+              onClick={() => {
+                setActiveLang(ALL_LANGS);
+                setSearchOpen(false);
+              }}
               className={`flex items-center gap-2 rounded-md px-2.5 py-2 text-start text-[12.5px] font-medium transition-colors ${
                 allLangs
                   ? "bg-elevated text-ink ring-1 ring-edge"
@@ -271,7 +286,10 @@ export function MenuBody(props: SubtitleMenuProps & { onClose: () => void }) {
             return (
               <button
                 key={g.langKey}
-                onClick={() => setActiveLang(g.langKey)}
+                onClick={() => {
+                  setActiveLang(g.langKey);
+                  setSearchOpen(false);
+                }}
                 className={`group flex items-center gap-2 rounded-md px-2.5 py-2 text-start text-[12.5px] transition-colors ${
                   isActive
                     ? "bg-elevated text-ink ring-1 ring-edge"
@@ -326,6 +344,46 @@ export function MenuBody(props: SubtitleMenuProps & { onClose: () => void }) {
             </div>
           )}
 
+          {!searchOpen && betterMatch && (
+            <div className="flex shrink-0 items-center gap-3 border-b border-edge-soft bg-accent/[0.07] px-3 py-2">
+              <span className="min-w-0 flex-1 truncate text-[12px] text-ink-muted">
+                <span className="font-semibold text-ink">{tr("Better match")}</span>
+                <span className="text-ink-subtle"> · </span>
+                {variantTitle(betterMatch.track)}
+              </span>
+              <button
+                type="button"
+                onClick={applyBestMatch}
+                className="shrink-0 rounded-full bg-accent px-2.5 py-1 text-[11.5px] font-semibold text-canvas transition-[filter] hover:brightness-110"
+              >
+                {tr("Use it")}
+              </button>
+            </div>
+          )}
+
+          {search?.status === "searching" && (
+            <p className="flex shrink-0 items-center gap-2 border-b border-edge-soft px-3 py-1.5 text-[11.5px] text-ink-subtle">
+              <Loader2 size={12} className="animate-spin motion-reduce:animate-none" />
+              {tr("Searching every source for more subtitles…")}
+            </p>
+          )}
+          {search?.status === "idle" && search.lastAdded != null && (
+            <p className="flex shrink-0 items-center gap-2 border-b border-edge-soft px-3 py-1.5 text-[11.5px] text-ink-subtle">
+              <span className="flex-1">
+                {search.lastAdded > 0
+                  ? tr("Added {count} more subtitles.", { count: search.lastAdded })
+                  : tr("No new subtitles found beyond what is already listed.")}
+              </span>
+              <button
+                type="button"
+                onClick={() => search.dismiss()}
+                aria-label={tr("Dismiss")}
+                className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-ink-subtle transition-colors hover:bg-raised hover:text-ink"
+              >
+                <X size={11} strokeWidth={2.6} />
+              </button>
+            </p>
+          )}
           {searchOpen ? (
             <div className="flex min-h-0 flex-1 flex-col">
               <SearchSection {...props} />
@@ -371,7 +429,7 @@ export function MenuBody(props: SubtitleMenuProps & { onClose: () => void }) {
               {searchOpen ? tr("Hide search") : tr("Find more subtitles")}
             </button>
             {isTauri && (
-              <Tooltip label={tr("Load a .srt or .ass from your computer")} align="end">
+              <HoverTooltip label={tr("Load a .srt or .ass from your computer")} align="end">
                 <button
                   onClick={() => void loadLocal()}
                   className="flex h-full shrink-0 items-center gap-2 border-s border-edge-soft px-3 py-2 text-[12px] font-semibold text-ink-muted transition-colors hover:bg-canvas/40 hover:text-ink"
@@ -379,7 +437,7 @@ export function MenuBody(props: SubtitleMenuProps & { onClose: () => void }) {
                   <FolderOpen size={12} strokeWidth={2.2} />
                   {tr("Load file")}
                 </button>
-              </Tooltip>
+              </HoverTooltip>
             )}
           </div>
         </section>

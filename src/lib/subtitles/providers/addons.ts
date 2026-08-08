@@ -171,6 +171,7 @@ export async function searchAddons(
         [],
       );
       dlog(`[addons] ${addon.manifest.name}: ${result.length} subtitles`);
+      if (result.length > 0) dlog(`[addons] ${addon.manifest.name} raw sample`, result[0]);
       return result;
     }),
   );
@@ -192,6 +193,7 @@ export async function searchAddons(
         title: addonName,
         source: "addon",
         format: (s.SubFormat?.toLowerCase() as SubResult["format"]) || undefined,
+        release: s.m || undefined,
       });
     }
   });

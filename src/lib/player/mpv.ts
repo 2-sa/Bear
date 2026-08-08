@@ -1,5 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { subtitleDownloadArgs } from "./subtitle-load";
+import { markLimitReached } from "@/lib/subtitles/limit-signal";
 import { mpvFailureSnapshot } from "./mpv-failure";
 import { isLinuxDesktop, isMacDesktop, isWindowsDesktop } from "@/lib/platform";
 import { makeSafeTauriUnlisten } from "@/lib/tauri-unlisten";
@@ -568,9 +569,15 @@ export function createMpvBridge(mpvOptions?: MpvOptions): PlayerBridge {
             subtitleDownloadArgs(url, { ...metadata, lang }),
           );
         } catch (e) {
+          const message = e instanceof Error ? e.message : String(e);
           console.warn("[mpv] sub_download failed, falling back to URL", e);
+          if (/status 429/.test(message)) {
+            markLimitReached(url);
+            return false;
+          }
         }
       }
+      mpvUrl = mpvUrl.replace(/\\/g, "/");
       urlByExternalFilename.set(mpvUrl, {
         url,
         release: metadata?.release,

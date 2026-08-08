@@ -17,11 +17,12 @@ export function useSubDrop(
 
   useEffect(() => {
     if (typeof window === "undefined" || !("__TAURI_INTERNALS__" in window)) return;
+    let cancelled = false;
     let un: (() => void) | null = null;
     void (async () => {
       try {
         const { getCurrentWebview } = await import("@tauri-apps/api/webview");
-        un = await getCurrentWebview().onDragDropEvent((e) => {
+        const unlisten = await getCurrentWebview().onDragDropEvent((e) => {
           if (e.payload.type !== "drop") return;
           const path = e.payload.paths.find((p) => SUB_EXT.test(p));
           if (!path) return;
@@ -40,9 +41,15 @@ export function useSubDrop(
               timer.current = window.setTimeout(() => setToast(null), 2200);
             });
         });
+        if (cancelled) {
+          unlisten();
+        } else {
+          un = unlisten;
+        }
       } catch {}
     })();
     return () => {
+      cancelled = true;
       un?.();
       if (timer.current) window.clearTimeout(timer.current);
     };
