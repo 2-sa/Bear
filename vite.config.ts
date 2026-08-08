@@ -22,8 +22,21 @@ function silenceMediapipeSourcemap() {
   };
 }
 
+function normalizeCssLineEndings() {
+  return {
+    name: "normalize-css-line-endings",
+    enforce: "pre" as const,
+    transform(code: string, id: string) {
+      if (id.split("?")[0].endsWith(".css")) {
+        return { code: code.replace(/\r+\n/g, "\n"), map: null };
+      }
+      return null;
+    },
+  };
+}
+
 export default defineConfig({
-  plugins: [react(), tailwindcss(), silenceMediapipeSourcemap()],
+  plugins: [react(), normalizeCssLineEndings(), tailwindcss(), silenceMediapipeSourcemap()],
   clearScreen: false,
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
