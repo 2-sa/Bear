@@ -112,8 +112,8 @@ function readLegacyParental(): { hiddenTabs: HiddenTabs | null; hadPin: boolean 
   }
 }
 
-function generateGuestName(): string {
-  return `Guest ${1000 + Math.floor(Math.random() * 9000)}`;
+function defaultBearName(): string {
+  return "Bear";
 }
 
 const PLACEHOLDER_NAMES = new Set(["Me", "You", "Profile"]);
@@ -131,9 +131,9 @@ function defaultPrimaryName(): string {
     const existing = localStorage.getItem(TOGETHER_NAME_KEY)?.trim();
     if (existing && !isPlaceholderName(existing)) return existing;
   } catch {
-    return generateGuestName();
+    return defaultBearName();
   }
-  return generateGuestName();
+  return defaultBearName();
 }
 
 function readSettingsIdentity(): { color: string | null; avatar: string | null } {

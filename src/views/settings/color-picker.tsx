@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useT } from "@/lib/i18n";
 
 export const HARBOR_COLOR_SWATCHES = [
   "#7dd3fc",
@@ -21,11 +22,12 @@ export function ColorPicker({
   value: string;
   onChange: (hex: string) => void;
 }) {
+  const t = useT();
   const isPreset = HARBOR_COLOR_SWATCHES.includes(value.toLowerCase());
   return (
     <div className="flex flex-col gap-2 pt-1">
       <span className="text-[10.5px] font-semibold uppercase tracking-[0.16em] text-ink-subtle">
-        Your color
+        {t("Your color")}
       </span>
       <div className="flex flex-wrap items-center gap-2">
         {HARBOR_COLOR_SWATCHES.map((hex) => {
@@ -46,12 +48,12 @@ export function ColorPicker({
         <ColorPopoverTrigger
           value={value}
           onChange={onChange}
-          label={!isPreset ? value.toUpperCase() : "Custom"}
+          label={!isPreset ? value.toUpperCase() : t("Custom")}
           highlighted={!isPreset}
         />
       </div>
       <span className="text-[11.5px] text-ink-subtle">
-        Used for your cursor in Watch Together, your draw color, and your name pill in chat.
+        {t("Used for your cursor in Watch Together, your draw color, and your name pill in chat.")}
       </span>
     </div>
   );
