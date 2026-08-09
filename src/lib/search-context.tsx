@@ -14,7 +14,7 @@ import { gatherCatalogAddons, type Addon } from "@/lib/addons";
 import { useAuth } from "@/lib/auth";
 import { useSettings } from "@/lib/settings";
 import { isMagnetInput, isDirectVideoUrl } from "@/lib/torrent/magnet";
-import { useView } from "@/lib/view";
+import { useView, type Frame } from "@/lib/view";
 
 type SearchState = {
   open: boolean;
@@ -450,15 +450,17 @@ export function SearchProvider({ children }: { children: ReactNode }) {
     saveRecent([]);
   }, []);
 
-  const { navDepth } = useView();
+  const { navDepth, rootFrame } = useView();
   const restoreDepth = useRef<number | null>(null);
+  const restoreRoot = useRef<Frame | null>(null);
   const armed = useRef(false);
 
   const closeForNavigation = useCallback(() => {
     restoreDepth.current = navDepth;
+    restoreRoot.current = rootFrame;
     armed.current = false;
     setOpen(false);
-  }, [navDepth]);
+  }, [navDepth, rootFrame]);
 
   useEffect(() => {
     const mark = restoreDepth.current;
@@ -470,13 +472,15 @@ export function SearchProvider({ children }: { children: ReactNode }) {
     if (armed.current && navDepth <= mark) {
       restoreDepth.current = null;
       armed.current = false;
-      setOpen(true);
+      if (rootFrame === restoreRoot.current) setOpen(true);
+      restoreRoot.current = null;
     }
-  }, [navDepth]);
+  }, [navDepth, rootFrame]);
 
   useEffect(() => {
     if (!open) return;
     restoreDepth.current = null;
+    restoreRoot.current = null;
     armed.current = false;
   }, [open]);
 

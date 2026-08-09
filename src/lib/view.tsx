@@ -197,6 +197,7 @@ type ViewValue = {
   settingsSectionRequest: { section: SettingsSection | null; nonce: number };
   topKind: Frame["kind"];
   topPath: string;
+  rootFrame: Frame;
   service: StreamingService | null;
   openService: (s: StreamingService | null) => void;
   meta: Meta | null;
@@ -453,6 +454,7 @@ export function ViewProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const top = stack[stack.length - 1];
+  const rootFrame = stack[0];
 
   const view: View = (() => {
     for (let i = stack.length - 1; i >= 0; i--) {
@@ -1152,6 +1154,7 @@ export function ViewProvider({ children }: { children: ReactNode }) {
       settingsSectionRequest: sectionReq,
       topKind: top.kind,
       topPath,
+      rootFrame,
       service,
       openService,
       meta,
@@ -1226,6 +1229,7 @@ export function ViewProvider({ children }: { children: ReactNode }) {
       view,
       top.kind,
       topPath,
+      rootFrame,
       service,
       meta,
       metaLiveContext,
