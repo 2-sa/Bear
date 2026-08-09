@@ -59,6 +59,10 @@ function interpolate(template: string, vars?: Vars): string {
   return out;
 }
 
+function applyDisplayBrand(text: string): string {
+  return text.replace(/\bHarbor\b/g, "Bear").replace(/\bHARBOR\b/g, "BEAR");
+}
+
 function resolve(lang: UiLanguage, key: string, vars?: Vars): string {
   const catalog = catalogs[lang];
   if (catalog) {
@@ -79,7 +83,7 @@ function resolve(lang: UiLanguage, key: string, vars?: Vars): string {
 }
 
 export function t(key: string, vars?: Vars): string {
-  return interpolate(resolve(getUiLanguage(), key, vars), vars);
+  return applyDisplayBrand(interpolate(resolve(getUiLanguage(), key, vars), vars));
 }
 
 export function sourceTranslationKey(value: string): string {
@@ -88,7 +92,8 @@ export function sourceTranslationKey(value: string): string {
 
 export function useT(): (key: string, vars?: Vars) => string {
   const lang = useUiLanguage();
-  return (key: string, vars?: Vars) => interpolate(resolve(lang, key, vars), vars);
+  return (key: string, vars?: Vars) =>
+    applyDisplayBrand(interpolate(resolve(lang, key, vars), vars));
 }
 
 export { useUiLanguage, isRtl, LANGUAGES };

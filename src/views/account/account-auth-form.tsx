@@ -152,25 +152,23 @@ export function AccountAuthForm({ onRecovery }: { onRecovery?: (code: string) =>
       <div className="flex flex-col gap-5 p-6">
         {!discordPending && mode === "register" && <AccountValueProps />}
 
-        {!discordPending && (
-          <div className="flex items-center gap-1 rounded-[11px] border border-edge-soft bg-elevated/40 p-1">
-            {MODES.map((m) => (
-              <button
-                key={m.id}
-                type="button"
-                onClick={() => {
-                  setMode(m.id);
-                  setError(null);
-                }}
-                className={`h-9 flex-1 rounded-[8px] text-[12.5px] font-semibold transition-colors duration-150 ${
-                  mode === m.id ? "bg-ink text-canvas" : "text-ink-muted hover:text-ink"
-                }`}
-              >
-                {m.label}
-              </button>
-            ))}
-          </div>
-        )}
+        <div className="flex items-center gap-1 rounded-[11px] border border-edge-soft bg-elevated/40 p-1">
+          {MODES.map((m) => (
+            <button
+              key={m.id}
+              type="button"
+              onClick={() => {
+                setMode(m.id);
+                setError(null);
+              }}
+              className={`h-9 flex-1 rounded-[8px] text-[12.5px] font-semibold transition-colors duration-150 ${
+                mode === m.id ? "bg-ink text-canvas" : "text-ink-muted hover:text-ink"
+              }`}
+            >
+              {t(m.label)}
+            </button>
+          ))}
+        </div>
 
         <form
           onSubmit={(e) => {
@@ -222,7 +220,7 @@ export function AccountAuthForm({ onRecovery }: { onRecovery?: (code: string) =>
             className="flex h-11 items-center justify-center gap-2 rounded-[11px] bg-ink text-[14px] font-semibold text-canvas transition-all duration-150 hover:opacity-90 active:scale-[0.99] disabled:opacity-40 disabled:active:scale-100"
           >
             {busy && <Loader2 size={16} className="animate-spin" />}
-            {discordPending ? t("Finish creating my account") : active.action}
+            {t(active.action)}
           </button>
 
           {discordPending && (

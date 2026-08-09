@@ -227,7 +227,7 @@ jobs:
         shell: bash
         run: |
           gh release upload "$VERSION_TAG" update-channel/latest.json --clobber
-          gh release edit "$VERSION_TAG" --draft=false --prerelease
+          gh release edit "$VERSION_TAG" --draft=false --prerelease=false --latest
           if gh release view beta-channel >/dev/null 2>&1; then
             gh release edit beta-channel --prerelease --title "Bear update channel"
           else

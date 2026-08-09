@@ -991,7 +991,8 @@ const appFill: Record<string, string> = {
   "Season {n} has started": "بدأ الموسم {n}",
   "S{s} E{e} is out now": "الموسم {s} الحلقة {e} متاحة الآن",
   "{n} new episodes are out": "{n} حلقات جديدة متاحة",
-  "Bear account": "حساب Bear",
+  "Bear account": "حساب بير",
+  "Your handle across Bear.": "معرّفك العام في بير.",
   "Your handle across Bear, and your verified status.": "معرّفك عبر Bear، وحالة توثيقك.",
   "Titles": "العناوين",
   "No titles found in this collection.": "لم يتم العثور على عناوين في هذه المجموعة.",
@@ -1225,16 +1226,10 @@ const appFill: Record<string, string> = {
   "No new subtitles found beyond what is already listed.":
     "لا توجد ترجمات جديدة غير المدرجة بالفعل.",
   "{time} left": "متبقٍ {time}",
-  "Loading your library…": "جارٍ تحميل مكتبتك…",
-  "Keep controlling Harbor in the background": "مواصلة التحكم في هاربر في الخلفية",
-  "Off by default, so your controller only drives Harbor while it is the focused window. Leave it off if you play games with the same controller.":
-    "معطّل افتراضيًا، ليتحكم ذراع التحكم في هاربر فقط عندما تكون نافذته نشطة. اتركه معطّلًا إذا كنت تلعب بنفس ذراع التحكم.",
-  "Use Cinemeta for title metadata": "استخدام Cinemeta لبيانات العناوين",
-  "Turn this off to take Cinemeta out entirely and use only your own metadata addons, such as AIOMetadata or AIOStreams. Cinemeta can go stale and show already released episodes as TBA. Leave it on unless you have a metadata addon installed, or titles will have no details.":
-    "عطّل هذا لإزالة Cinemeta تمامًا واستخدام إضافات البيانات الخاصة بك فقط، مثل AIOMetadata أو AIOStreams. قد تصبح بيانات Cinemeta قديمة وتعرض حلقات صدرت بالفعل على أنها قريبًا. اتركه مفعّلًا ما لم تكن لديك إضافة بيانات مثبتة، وإلا فلن تظهر تفاصيل العناوين.",
-  "Join Harbor": "انضم Harbor",
-  "One free account for your handle, themes, and sync.":
-    "حساب مجاني واحد لاسم المستخدم، والسمات، والمزامنة.",
+  "Join Bear": "انضم إلى بير",
+  "Welcome back": "مرحبًا بعودتك",
+  "Create my account": "إنشاء حسابي",
+  "One free account for your handle, themes, and sync.": "حساب مجاني واحد لاسم المستخدم، والسمات، والمزامنة.",
   "Sign in to pick up where you left off.": "سجّل الدخول لاستكمال ما بدأته.",
   "At least 8 characters": "8 حروف على الاقل",
   "Your password": "كلمة المرور الخاصة بك",
