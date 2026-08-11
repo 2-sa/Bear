@@ -157,6 +157,17 @@ async fn stream_file(
     let Some(handle) = session.get(id) else {
         return (StatusCode::NOT_FOUND, "no torrent").into_response();
     };
+    // Torrent selection resolves metadata only. Peer transfer starts when a
+    // player or an intentional download actually asks for stream bytes.
+    if handle.is_paused() {
+        if let Err(error) = session.unpause(&handle).await {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("could not start torrent: {error:#}"),
+            )
+                .into_response();
+        }
+    }
     let ct = handle
         .with_metadata(|m| m.file_infos.get(file_id).map(|fi| ct_for(&fi.relative_filename)))
         .ok()

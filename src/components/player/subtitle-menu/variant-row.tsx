@@ -3,6 +3,7 @@ import type { TrackInfo } from "@/lib/player/bridge";
 import { HoverTooltip } from "@/components/hover-tooltip";
 import { useContextMenu } from "@/lib/context-menu";
 import { isImageSubTrack } from "@/lib/player/sub-format";
+import { subtitleReleaseLabel } from "@/lib/subtitles/release-label";
 import { subtitleTrackLanguageLabel, subtitleTrackTitle } from "@/lib/subtitles/track-label";
 import { saveSubtitleToDisk } from "@/lib/subtitles/save-to-disk";
 import { useImportedSubs } from "@/lib/player/imported-subs";
@@ -19,12 +20,14 @@ function subExt(track: TrackInfo): string {
 
 export function VariantRow({
   track,
+  rank,
   selected,
   onPick,
   isSecondary,
   onPickSecondary,
 }: {
   track: TrackInfo;
+  rank: number;
   selected: boolean;
   onPick: () => void;
   isSecondary?: boolean;
@@ -39,19 +42,22 @@ export function VariantRow({
   if (track.hearingImpaired) tags.push({ label: tr("HI/SDH"), tone: "warn" });
   if (track.default) tags.push({ label: tr("Default"), tone: "default" });
   if (isImageSubTrack(track)) tags.push({ label: tr("Position and size only"), tone: "warn" });
-  const sourceLabel = isImported ? tr("Imported") : track.external ? tr("External") : tr("Embedded");
+  const sourceLabel = isImported
+    ? tr("Imported")
+    : track.external
+      ? tr("External")
+      : tr("Embedded");
   const codec = track.codec?.toUpperCase();
-  const titleText = subtitleTrackTitle(track);
-  const langName = subtitleTrackLanguageLabel(track);
   const realRelease = track.release?.trim();
-  const releaseHint = pickReleaseHint(track);
-  const release =
-    realRelease && realRelease !== titleText
-      ? realRelease
-      : releaseHint && releaseHint !== titleText
-        ? releaseHint
-        : null;
-  const isBestMatch = (track.matchScore ?? 0) >= 120;
+  const releaseLabel = subtitleReleaseLabel(realRelease);
+  const titleText = releaseLabel || realRelease || subtitleTrackTitle(track);
+  const provider = track.provider?.trim();
+  const detailSource = provider && provider !== titleText ? provider : sourceLabel;
+  const langName = subtitleTrackLanguageLabel(track);
+  const isBestMatch =
+    track.matchConfidence === "exact" ||
+    track.matchConfidence === "high" ||
+    (track.matchConfidence == null && (track.matchScore ?? 0) >= 120);
 
   return (
     <div
@@ -94,7 +100,12 @@ export function VariantRow({
         </span>
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <div className="flex min-w-0 items-center gap-1.5">
-            <p className="truncate text-[12.5px] font-medium leading-snug text-ink">{titleText}</p>
+            <p
+              className="truncate text-[12.5px] font-medium leading-snug text-ink"
+              title={realRelease && releaseLabel ? realRelease : undefined}
+            >
+              {titleText}
+            </p>
             {isImported && (
               <span className="flex shrink-0 items-center gap-1 rounded-full bg-accent/15 px-1.5 py-px text-[9px] font-bold uppercase tracking-[0.12em] text-accent ring-1 ring-accent/30">
                 <Sparkles size={9} strokeWidth={2.6} />
@@ -108,13 +119,10 @@ export function VariantRow({
               </span>
             )}
           </div>
-          {release && (
-            <p className="truncate font-mono text-[10.5px] leading-snug text-ink-muted">{release}</p>
-          )}
           <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[10.5px] text-ink-subtle">
             <span className="font-semibold uppercase tracking-[0.1em]">{langName}</span>
             <span aria-hidden>·</span>
-            <span className={isImported ? "font-semibold text-accent" : ""}>{sourceLabel}</span>
+            <span className={isImported ? "font-semibold text-accent" : ""}>{detailSource}</span>
             {codec && (
               <>
                 <span aria-hidden>·</span>
@@ -140,7 +148,9 @@ export function VariantRow({
       </button>
       {onPickSecondary && !selected && (
         <HoverTooltip
-          label={isSecondary ? tr("Stop showing as second subtitle") : tr("Show as second subtitle")}
+          label={
+            isSecondary ? tr("Stop showing as second subtitle") : tr("Show as second subtitle")
+          }
           align="end"
         >
           <button
@@ -158,17 +168,14 @@ export function VariantRow({
           </button>
         </HoverTooltip>
       )}
+      <span
+        aria-hidden
+        className={`flex w-7 shrink-0 items-center justify-center pe-1 text-[11px] font-medium tabular-nums ${
+          selected ? "text-accent" : "text-ink-muted"
+        }`}
+      >
+        {rank}
+      </span>
     </div>
   );
-}
-
-function pickReleaseHint(track: TrackInfo): string | null {
-  const t = track.title;
-  if (!t) return null;
-  const trimmed = t.trim();
-  if (!trimmed) return null;
-  if (/\.(srt|vtt|ass|ssa|sub)$/i.test(trimmed)) return trimmed;
-  if (/[-.][A-Z0-9]{2,}/.test(trimmed)) return trimmed;
-  if (trimmed.length > 24) return trimmed;
-  return null;
 }

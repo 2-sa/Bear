@@ -6,7 +6,7 @@ import { gatherSubtitleAddons } from "@/lib/subtitles/addon-source";
 import { languageName } from "@/lib/subtitles/language";
 import { HoverTooltip } from "@/components/hover-tooltip";
 import { searchSubtitles, type SearchOptions } from "@/lib/subtitles/search";
-import { providerLabel, releaseOf } from "@/lib/subtitles/provider-label";
+import { providerLabel, releaseOf, subtitleTitleOf } from "@/lib/subtitles/provider-label";
 import type { SubResult } from "@/lib/subtitles/types";
 import {
   bestCandidate,
@@ -37,10 +37,7 @@ function labelOf(t: TitleTarget): string {
 
 function isPlayingTarget(a: TitleTarget, b: TitleTarget): boolean {
   return (
-    a.imdbId === b.imdbId &&
-    a.title === b.title &&
-    a.season === b.season &&
-    a.episode === b.episode
+    a.imdbId === b.imdbId && a.title === b.title && a.season === b.season && a.episode === b.episode
   );
 }
 
@@ -92,7 +89,9 @@ export function SearchSection(props: SubtitleMenuProps) {
   );
 
   const playingKey = playingKeyOf(metaImdbId, metaTitle, season, episode);
-  const restorableRef = useRef(savedState && savedState.playingKey === playingKey ? savedState : null);
+  const restorableRef = useRef(
+    savedState && savedState.playingKey === playingKey ? savedState : null,
+  );
   const restorable = restorableRef.current;
 
   const [target, setTarget] = useState<TitleTarget>(restorable?.target ?? playingTarget);
@@ -410,7 +409,11 @@ export function SearchSection(props: SubtitleMenuProps) {
           {loading ? <Loader2 size={13} className="animate-spin" /> : t("Search")}
         </button>
         {hasTargetBar && (
-          <HoverTooltip label={filtersOpen ? t("Hide filters") : t("Show filters")} side="bottom" align="end">
+          <HoverTooltip
+            label={filtersOpen ? t("Hide filters") : t("Show filters")}
+            side="bottom"
+            align="end"
+          >
             <button
               type="button"
               onClick={() => setFiltersOpen((v) => !v)}
@@ -494,7 +497,7 @@ export function SearchSection(props: SubtitleMenuProps) {
             items={items}
             defaultOpen={i === 0}
             onAdd={(r) =>
-              onAddSubtitle(r.url, r.lang, providerLabel(r), {
+              onAddSubtitle(r.url, r.lang, subtitleTitleOf(r), {
                 format: r.format,
                 encoding: r.encoding,
                 release: releaseOf(r),

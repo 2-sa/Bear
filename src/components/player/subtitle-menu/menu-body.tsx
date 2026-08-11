@@ -341,10 +341,11 @@ export function MenuBody(props: SubtitleMenuProps & { onClose: () => void }) {
                 </p>
               ) : (
                 <div className="flex flex-col gap-0.5 p-2">
-                  {visibleVariants.map((t) => (
+                  {visibleVariants.map((t, index) => (
                     <VariantRow
                       key={t.id}
                       track={t}
+                      rank={index + 1}
                       selected={t.id === selectedId}
                       isSecondary={t.id === secondaryTrack?.id}
                       onPick={() => {

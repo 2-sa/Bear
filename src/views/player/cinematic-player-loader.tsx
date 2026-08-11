@@ -47,7 +47,11 @@ export function CinematicPlayerLoader({
   const isInfoHash =
     (isBundledEngineUrl(src.url) || isLocalEngineUrl(src.url)) && !src.url.includes("/hlsv2/");
   const isLocalEngine = isLocalEngineUrl(src.url) && !!src.streamRef?.infoHash;
-  const enginePeers = engineStats ? (engineStats.unchoked > 0 ? engineStats.unchoked : engineStats.peers) : 0;
+  const enginePeers = engineStats
+    ? engineStats.unchoked > 0
+      ? engineStats.unchoked
+      : engineStats.peers
+    : 0;
   const engineSpeed = engineStats?.downloadSpeed ?? 0;
   const showEngineActivity = isInfoHash && !!engineStats && (enginePeers > 0 || engineSpeed > 0);
   const streamBytes = src.streamRef?.size ?? engineStats?.streamLen ?? null;
@@ -55,7 +59,10 @@ export function CinematicPlayerLoader({
   const heavyForP2p = isInfoHash && streamBytes != null && streamBytes > 20 * 1024 ** 3;
   const everPlayedRef = useRef(false);
   const hasProgress = usePlaybackFlag(() => getPlaybackPosition() > 0.3);
-  if (hasProgress && (snap.durationSec > 0 || snap.status === "playing")) {
+  if (
+    snap.firstFrameReady ||
+    (hasProgress && (snap.durationSec > 0 || snap.status === "playing"))
+  ) {
     everPlayedRef.current = true;
   }
   const sessionKey = `${src.meta.id}::${src.episode?.season ?? ""}:${src.episode?.episode ?? ""}`;
@@ -229,7 +236,9 @@ export function CinematicPlayerLoader({
         )}
         {!kid && heavyForP2p && (
           <p className="max-w-md text-[12.5px] leading-relaxed text-amber-300/85">
-            {t("Heads up: this is a large file for peer-to-peer streaming, so it can take a while to start. A 1080p source or a debrid service will load faster.")}
+            {t(
+              "Heads up: this is a large file for peer-to-peer streaming, so it can take a while to start. A 1080p source or a debrid service will load faster.",
+            )}
           </p>
         )}
       </div>

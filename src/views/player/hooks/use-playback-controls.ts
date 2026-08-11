@@ -18,6 +18,7 @@ export function usePlaybackControls(params: {
   snapRef: RefObject<PlayerSnapshot>;
   metaId: string;
   mediaKey: string;
+  subtitleStreamKey?: string;
   inRoom: boolean;
   isHost: boolean;
   hasStarted: boolean;
@@ -33,6 +34,7 @@ export function usePlaybackControls(params: {
     snapRef,
     metaId,
     mediaKey,
+    subtitleStreamKey,
     inRoom,
     isHost,
     hasStarted,
@@ -52,13 +54,16 @@ export function usePlaybackControls(params: {
           choice.lang ? { subLang: choice.lang, subsOff: false } : { subsOff: false },
         );
         const imported = choice.imported === true || hasImportedSubTitle(choice.title);
-        writeRememberedSub(mediaKey, rememberedFromChoice({ ...choice, imported }));
+        writeRememberedSub(
+          mediaKey,
+          rememberedFromChoice({ ...choice, imported, streamKey: subtitleStreamKey }),
+        );
       } else {
         writePlayerPrefs(metaId, { subsOff: true });
         writeRememberedSub(mediaKey, { off: true });
       }
     },
-    [metaId, mediaKey],
+    [metaId, mediaKey, subtitleStreamKey],
   );
 
   const cycleSubtitles = () => {

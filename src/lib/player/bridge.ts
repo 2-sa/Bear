@@ -1,5 +1,6 @@
 import type { SubCue } from "@/lib/subtitles/parser";
 import type { SubtitleLoadMetadata } from "@/lib/subtitles/types";
+import type { SubtitleMatchConfidence } from "@/lib/subtitles/release-match";
 
 export type TrackInfo = {
   id: string;
@@ -21,6 +22,7 @@ export type TrackInfo = {
   release?: string;
   provider?: string;
   matchScore?: number;
+  matchConfidence?: SubtitleMatchConfidence;
   subId?: string;
 };
 
@@ -37,6 +39,7 @@ export type PlayerSnapshot = {
   durationSec: number;
   bufferedSec: number;
   buffering: boolean;
+  firstFrameReady: boolean;
   volume: number;
   muted: boolean;
   rate: number;
@@ -130,6 +133,7 @@ export const emptySnapshot: PlayerSnapshot = {
   durationSec: 0,
   bufferedSec: 0,
   buffering: false,
+  firstFrameReady: false,
   volume: 1,
   muted: false,
   rate: 1,
