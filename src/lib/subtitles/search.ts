@@ -71,12 +71,13 @@ export async function searchSubtitles(
       p: searchAddons(opts.addons, q, tmo),
     });
   if (opts.extra) {
+    const extraTimeout = opts.extra.timeoutMs ?? tmo;
     for (const source of pickSources(q, opts.extra)) {
       tasks.push({
         name: `extra:${source.id}`,
         p: withSubtitleTimeout(
           searchExtraSubSources(q, opts.extra, [source]).then((a) => a.all.map(toSubResult)),
-          tmo,
+          extraTimeout + 500,
           [],
         ),
       });

@@ -3,6 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import type { PlayerBridge, PlayerSnapshot } from "@/lib/player/bridge";
 import { langScore, pickBestTrack, normalizeLang } from "@/lib/subtitles/language";
 import { fetchSubtitlesIntoPlayer, streamHintsOf } from "@/lib/subtitles/fetch-into-player";
+import { subtitleStreamDescriptor } from "@/lib/subtitles/provider-label";
 import { publishSubtitleSearch } from "@/components/player/subtitle-menu/subtitle-search-store";
 import { publishSubtitleContext } from "@/components/player/subtitle-menu/subtitle-context-store";
 import { readPlayerPrefs, type PerShowPrefs } from "@/lib/player-prefs";
@@ -144,6 +145,22 @@ export function useTrackAutoload(params: {
     return () => publishSubtitleSearch(null);
   }, [refreshReady, refreshing, lastAdded, src]);
 
+  useEffect(() => {
+    if (!resolutionSettled) return;
+    const searchImdbId = subtitleSearchImdbId(resolvedImdbId, resolvedImdbVerified);
+    publishSubtitleContext({
+      candidateIds: buildStreamIds(
+        src.meta.id,
+        src.episode,
+        searchImdbId ?? null,
+        src.meta.behaviorHints?.defaultVideoId ?? null,
+      ),
+      stremioId: src.meta.id ?? null,
+      filename: subtitleStreamDescriptor(src.streamRef) ?? null,
+    });
+    return () => publishSubtitleContext(null);
+  }, [resolutionSettled, resolvedImdbId, resolvedImdbVerified, src]);
+
   const autoSubLoadKeyRef = useRef<string | null>(null);
   useEffect(() => {
     if (!resolutionSettled) return;
@@ -168,7 +185,6 @@ export function useTrackAutoload(params: {
       searchImdbId ?? null,
       src.meta.behaviorHints?.defaultVideoId ?? null,
     );
-    publishSubtitleContext({ candidateIds, stremioId: src.meta.id ?? null });
     const animeIds = candidateIds.some((i) => i.startsWith("kitsu:") || i.startsWith("mal:"));
     const imdbEpAligned =
       !animeIds ||

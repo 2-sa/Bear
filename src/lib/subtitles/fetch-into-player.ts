@@ -4,7 +4,12 @@ import type { Settings } from "@/lib/settings";
 import type { PlayerSrc } from "@/lib/view";
 import { markAddedSub } from "./added-subs";
 import { langScore, normalizeLang } from "./language";
-import { providerLabel, releaseOf, subtitleTitleOf } from "./provider-label";
+import {
+  providerLabel,
+  releaseOf,
+  subtitleStreamDescriptor,
+  subtitleTitleOf,
+} from "./provider-label";
 import {
   compareSubtitleMatch,
   searchSubtitles,
@@ -17,6 +22,14 @@ import type { SubResult } from "./types";
 const EXTRA_TRACKS_PER_LANGUAGE = 40;
 const DEEP_EXTRA_TRACKS = 60;
 const DEEP_TIMEOUT_MS = 20_000;
+const BUILT_IN_TIMEOUT_MS = 12_000;
+const BUILT_IN_EAGER_LIMIT_PER_LANGUAGE = 1;
+const ON_DEMAND_SOURCES = new Set<SubResult["source"]>([
+  "podnapisi",
+  "subdl",
+  "gestdown",
+  "subsource",
+]);
 
 export type SubFetchParams = {
   bridge: PlayerBridge;
@@ -64,8 +77,26 @@ function extraCtx(settings: Settings, deep: boolean) {
     subsourceApiKey: settings.subsourceApiKey || null,
     enabled: { subdl: wantSubdl, subsource: wantSubsource },
     bypassCache: deep,
-    timeoutMs: deep ? DEEP_TIMEOUT_MS : undefined,
+    timeoutMs: deep ? DEEP_TIMEOUT_MS : BUILT_IN_TIMEOUT_MS,
   };
+}
+
+function limitEagerProviderDownloads(list: SubResult[], consumed: Set<SubResult>): SubResult[] {
+  const counts = new Map<string, number>();
+  const keyOf = (result: SubResult) => `${result.source}:${normalizeLang(result.lang) || "und"}`;
+  for (const result of consumed) {
+    if (!ON_DEMAND_SOURCES.has(result.source)) continue;
+    const key = keyOf(result);
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return list.filter((result) => {
+    if (!ON_DEMAND_SOURCES.has(result.source)) return true;
+    const key = keyOf(result);
+    const count = counts.get(key) ?? 0;
+    if (count >= BUILT_IN_EAGER_LIMIT_PER_LANGUAGE) return false;
+    counts.set(key, count + 1);
+    return true;
+  });
 }
 
 function spreadBySource(list: SubResult[], skip: Set<SubResult>, limit: number): SubResult[] {
@@ -124,12 +155,13 @@ export async function fetchSubtitlesIntoPlayer(p: SubFetchParams): Promise<SubFe
       stremioId: p.src.meta.id,
       candidateIds: p.candidateIds,
       type: p.src.meta.type === "series" ? "series" : "movie",
+      title: p.src.meta.name,
       season: p.season,
       episode: p.episode,
       langs: p.langs,
       videoHash: p.videoHash,
       videoSize: p.videoSize,
-      filename: p.src.streamRef?.parsedTitle ?? p.src.streamRef?.title ?? undefined,
+      filename: subtitleStreamDescriptor(p.src.streamRef),
     },
     {
       timeoutMs: deep ? DEEP_TIMEOUT_MS : 7_000,
@@ -187,9 +219,10 @@ export async function fetchSubtitlesIntoPlayer(p: SubFetchParams): Promise<SubFe
   const byPreferredLang = [...fresh].sort(
     (a, b) => langScore(b.lang ?? "", p.langs) - langScore(a.lang ?? "", p.langs),
   );
+  const eagerPool = limitEagerProviderDownloads(byPreferredLang, consumed);
   const extras = deep
-    ? spreadBySource(byPreferredLang, consumed, DEEP_EXTRA_TRACKS)
-    : spreadBySourcePerLanguage(byPreferredLang, consumed, EXTRA_TRACKS_PER_LANGUAGE);
+    ? spreadBySource(eagerPool, consumed, DEEP_EXTRA_TRACKS)
+    : spreadBySourcePerLanguage(eagerPool, consumed, EXTRA_TRACKS_PER_LANGUAGE);
   let added = selected ? 1 : 0;
   for (const r of extras) {
     if (!p.isActive()) break;

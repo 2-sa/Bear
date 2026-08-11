@@ -4,6 +4,7 @@ import { dlog } from "@/lib/debug";
 import type { SubResult, SubSearchQuery } from "../types";
 import { isPlausibleLang, normalizeLang } from "../language";
 import { withSubtitleTimeout } from "../autoload";
+import { subtitleContextTitle } from "../provider-label";
 
 type RawAddonSub = {
   id?: string;
@@ -177,6 +178,7 @@ export async function searchAddons(
   );
 
   const out: SubResult[] = [];
+  const displayTitle = subtitleContextTitle(q);
   settled.forEach((subs, i) => {
     const addonName = targets[i].addon.manifest.name;
     for (let idx = 0; idx < subs.length; idx++) {
@@ -191,6 +193,7 @@ export async function searchAddons(
         url: s.url,
         lang: normalizeLang(s.lang),
         title: addonName,
+        displayTitle,
         source: "addon",
         format: (s.SubFormat?.toLowerCase() as SubResult["format"]) || undefined,
         release: s.m || undefined,

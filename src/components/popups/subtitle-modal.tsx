@@ -1,4 +1,9 @@
+import { useEffect } from "react";
 import { SubtitleMenuBody } from "@/components/player/subtitle-menu";
+import {
+  publishSubtitleContext,
+  type SubtitleContentContext,
+} from "@/components/player/subtitle-menu/subtitle-context-store";
 import type { TrackInfo } from "@/lib/player/bridge";
 import type { SubtitleAddHandler } from "@/lib/player/subtitle-load";
 
@@ -12,6 +17,7 @@ export type SubtitleModalState = {
   season: number | null;
   episode: number | null;
   preferredLanguages: string[];
+  subtitleContext: SubtitleContentContext | null;
 };
 
 type Props = {
@@ -31,6 +37,11 @@ export function SubtitleModal({
   onAddSubtitle,
   onClose,
 }: Props) {
+  useEffect(() => {
+    publishSubtitleContext(state.subtitleContext);
+    return () => publishSubtitleContext(null);
+  }, [state.subtitleContext]);
+
   return (
     <div
       className="fixed inset-0 flex items-end justify-end"

@@ -89,6 +89,10 @@ const subtitleModal = readFileSync(
   new URL("../src/components/popups/subtitle-modal.tsx", import.meta.url),
   "utf8",
 );
+const modalOverlayApp = readFileSync(
+  new URL("../src/views/modal-overlay-app.tsx", import.meta.url),
+  "utf8",
+);
 
 test("one slow subtitle addon cannot discard faster addon results", () => {
   assert.match(
@@ -123,8 +127,28 @@ test("automatic subtitle loading limits each preferred language independently", 
   assert.match(fetchIntoPlayer, /spreadBySourcePerLanguage\(/);
   assert.match(
     fetchIntoPlayer,
-    /spreadBySourcePerLanguage\(byPreferredLang, consumed, EXTRA_TRACKS_PER_LANGUAGE\)/,
+    /spreadBySourcePerLanguage\(eagerPool, consumed, EXTRA_TRACKS_PER_LANGUAGE\)/,
   );
+});
+
+test("automatic subtitle loading protects rate-limited built-in providers", () => {
+  assert.match(fetchIntoPlayer, /const BUILT_IN_EAGER_LIMIT_PER_LANGUAGE = 1/);
+  assert.match(fetchIntoPlayer, /function limitEagerProviderDownloads/);
+  assert.match(fetchIntoPlayer, /const eagerPool = limitEagerProviderDownloads/);
+  assert.match(fetchIntoPlayer, /spreadBySourcePerLanguage\(eagerPool, consumed/);
+});
+
+test("built-in providers keep their longer timeout budget", () => {
+  assert.match(fetchIntoPlayer, /const BUILT_IN_TIMEOUT_MS = 12_000/);
+  assert.match(search, /const extraTimeout = opts\.extra\.timeoutMs \?\? tmo/);
+  assert.match(search, /extraTimeout \+ 500/);
+});
+
+test("the detached subtitle popup waits for the real add result", () => {
+  assert.match(modalOverlayApp, /modalOverlayRequestAction<"ok" \| "failed" \| "limited">/);
+  assert.match(modalOverlayApp, /if \(result === "limited"\) markLimitReached\(url\)/);
+  assert.match(subtitleMenu, /modalOverlayEmitResult\("modal:\/\/subtitle\/add-result"/);
+  assert.match(subtitleMenu, /wasLimitReached\(e\.payload\.url\)/);
 });
 
 test("the subtitle menu only keeps configured languages", () => {
