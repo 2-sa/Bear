@@ -6,17 +6,85 @@ export type ReleaseTags = {
   resolution: string | null;
   hdr: string[];
   edition: string[];
+  season: number | null;
+  episode: number | null;
+  episodeEnd: number | null;
   proper: boolean;
   repack: boolean;
 };
 
+export type SubtitleMatchConfidence = "exact" | "high" | "medium" | "low" | "incompatible";
+
+export function subtitleConfidenceRank(confidence: SubtitleMatchConfidence): number {
+  switch (confidence) {
+    case "exact":
+      return 5;
+    case "high":
+      return 4;
+    case "medium":
+      return 3;
+    case "low":
+      return 2;
+    case "incompatible":
+      return 0;
+  }
+}
+
 const KNOWN_GROUPS = [
-  "EVO", "RARBG", "YTS", "YIFY", "FGT", "PSA", "TBS", "GALAXYRG", "GALAXYTV", "MEGUSTA",
-  "ION10", "EZTV", "NTB", "FLUX", "TEPES", "KOGI", "SMURF", "RZEROX", "D3G", "TGX",
-  "SPARKS", "AMIABLE", "GECKOS", "DRONES", "CMRG", "PAHE", "QXR", "TIGOLE", "JOY",
-  "FRAMESTOR", "HDMANIACS", "WIKI", "DON", "EBP", "BLURANIUM", "3L", "BMF", "TRUFFLE",
-  "SICFOI", "PMTP", "KINGS", "CAKES", "SUCCESSFULCRAB", "ELITE", "TOMMY", "MZABI",
-  "PLAYWEB", "XEBEC", "SEV", "NOSIVID", "TVSMASH", "MINX", "EDITH", "TEAMHD",
+  "EVO",
+  "RARBG",
+  "YTS",
+  "YIFY",
+  "FGT",
+  "PSA",
+  "TBS",
+  "GALAXYRG",
+  "GALAXYTV",
+  "MEGUSTA",
+  "ION10",
+  "EZTV",
+  "NTB",
+  "FLUX",
+  "TEPES",
+  "KOGI",
+  "SMURF",
+  "RZEROX",
+  "D3G",
+  "TGX",
+  "SPARKS",
+  "AMIABLE",
+  "GECKOS",
+  "DRONES",
+  "CMRG",
+  "PAHE",
+  "QXR",
+  "TIGOLE",
+  "JOY",
+  "FRAMESTOR",
+  "HDMANIACS",
+  "WIKI",
+  "DON",
+  "EBP",
+  "BLURANIUM",
+  "3L",
+  "BMF",
+  "TRUFFLE",
+  "SICFOI",
+  "PMTP",
+  "KINGS",
+  "CAKES",
+  "SUCCESSFULCRAB",
+  "ELITE",
+  "TOMMY",
+  "MZABI",
+  "PLAYWEB",
+  "XEBEC",
+  "SEV",
+  "NOSIVID",
+  "TVSMASH",
+  "MINX",
+  "EDITH",
+  "TEAMHD",
 ];
 
 const SOURCE_PATTERNS: Array<[SourceClass, RegExp]> = [
@@ -26,7 +94,7 @@ const SOURCE_PATTERNS: Array<[SourceClass, RegExp]> = [
   ["webdl", /\b(web-?dl|webdl|web|amzn|dsnp|hmax|atvp|nflx|pcok|itunes)\b/i],
   ["hdtv", /\b(hdtv|pdtv|dsr)\b/i],
   ["dvd", /\b(dvd-?rip|dvd-?r|dvd5|dvd9)\b/i],
-  ["cam", /\b(hd-?cam|hd-?ts|telesync|telecine|screener|\bcamrip\b)/i],
+  ["cam", /\b(hd-?cam|hd-?ts|telesync|telecine|screener|\bcamrip\b)\b/i],
 ];
 
 const EDITIONS: Array<[string, RegExp]> = [
@@ -62,18 +130,18 @@ const COMPAT: Partial<Record<SourceClass, Partial<Record<SourceClass, number>>>>
 export function detectGroup(text: string | null | undefined): string | null {
   if (!text) return null;
   const upper = text.toUpperCase();
-  for (const group of KNOWN_GROUPS) {
-    if (new RegExp("(^|[^A-Z0-9])" + group + "([^A-Z0-9]|$)").test(upper)) return group;
+  for (const g of KNOWN_GROUPS) {
+    if (new RegExp(`(^|[^A-Z0-9])${g}([^A-Z0-9]|$)`).test(upper)) return g;
   }
   const trailing = text.match(/[-.]([A-Za-z0-9]{3,20})(?:\.[a-z0-9]{2,4})?\s*$/);
   if (trailing) {
-    const candidate = trailing[1].toUpperCase();
+    const cand = trailing[1].toUpperCase();
     if (
       !/^(MKV|MP4|AVI|SRT|ASS|SSA|VTT|1080P|720P|2160P|X264|X265|H264|H265|HEVC|AAC|DTS|DDP5|WEB)$/.test(
-        candidate,
+        cand,
       )
     ) {
-      return candidate;
+      return cand;
     }
   }
   return null;
@@ -81,100 +149,178 @@ export function detectGroup(text: string | null | undefined): string | null {
 
 export function detectSource(text: string | null | undefined): SourceClass | null {
   if (!text) return null;
-  for (const [source, pattern] of SOURCE_PATTERNS) if (pattern.test(text)) return source;
+  for (const [cls, rx] of SOURCE_PATTERNS) if (rx.test(text)) return cls;
   return null;
 }
 
 export function parseRelease(text: string | null | undefined): ReleaseTags {
-  const value = text ?? "";
-  const resolution = value.match(/\b(2160p|1080p|720p|576p|480p)\b/i);
-  const fourK = /\b(4k|uhd)\b/i.test(value) && !resolution;
+  const s = text ?? "";
+  const res = s.match(/\b(2160p|1080p|720p|576p|480p)\b/i);
+  const fourK = /\b(4k|uhd)\b/i.test(s) && !res;
+  const episode = parseEpisodeRange(s);
   return {
-    group: detectGroup(value),
-    source: detectSource(value),
-    resolution: resolution ? resolution[1].toLowerCase() : fourK ? "2160p" : null,
-    hdr: HDR_TAGS.filter(([, pattern]) => pattern.test(value)).map(([tag]) => tag),
-    edition: EDITIONS.filter(([, pattern]) => pattern.test(value)).map(([edition]) => edition),
-    proper: /\bproper\b/i.test(value),
-    repack: /\brepack\b/i.test(value),
+    group: detectGroup(s),
+    source: detectSource(s),
+    resolution: res ? res[1].toLowerCase() : fourK ? "2160p" : null,
+    hdr: HDR_TAGS.filter(([, rx]) => rx.test(s)).map(([k]) => k),
+    edition: EDITIONS.filter(([, rx]) => rx.test(s)).map(([k]) => k),
+    season: episode?.season ?? null,
+    episode: episode?.episode ?? null,
+    episodeEnd: episode?.episodeEnd ?? null,
+    proper: /\bproper\b/i.test(s),
+    repack: /\brepack\b/i.test(s),
   };
 }
 
-export function sourceAffinity(wanted: SourceClass | null, actual: SourceClass | null): number {
-  if (!wanted || !actual) return 0;
-  if (wanted === actual) return 1;
-  return COMPAT[wanted]?.[actual] ?? 0;
+function parseEpisodeRange(
+  text: string,
+): { season: number; episode: number; episodeEnd: number } | null {
+  const standard = text.match(
+    /(?:^|[^a-z0-9])s(\d{1,2})[ ._-]*e(\d{1,3})(?:(?:[ ._-]*-?[ ._-]*e?)(\d{1,3}))?(?:[^a-z0-9]|$)/i,
+  );
+  const alternate = text.match(
+    /(?:^|[^a-z0-9])(\d{1,2})x(\d{1,3})(?:[ ._-]*-?[ ._-]*(\d{1,3}))?(?:[^a-z0-9]|$)/i,
+  );
+  const match = standard ?? alternate;
+  if (!match) return null;
+  const season = Number.parseInt(match[1], 10);
+  const episode = Number.parseInt(match[2], 10);
+  const parsedEnd = match[3] ? Number.parseInt(match[3], 10) : episode;
+  if (![season, episode, parsedEnd].every(Number.isSafeInteger)) return null;
+  return { season, episode, episodeEnd: Math.max(episode, parsedEnd) };
 }
 
-export type AffinityResult = { score: number; reasons: string[] };
+export function sourceAffinity(want: SourceClass | null, got: SourceClass | null): number {
+  if (!want || !got) return 0;
+  if (want === got) return 1;
+  return COMPAT[want]?.[got] ?? 0;
+}
 
-export function releaseAffinity(stream: ReleaseTags, subtitleText: string): AffinityResult {
-  const subtitle = parseRelease(subtitleText);
+export type AffinityResult = {
+  score: number;
+  reasons: string[];
+  /**
+   * Source family is a stronger timing signal than a release-group label.
+   * Keep fallbacks at rank 1 so a WEB-DL subtitle is still usable when no
+   * BluRay/REMUX candidate exists.
+   */
+  sourceRank: 1 | 2 | 3;
+  confidence: Exclude<SubtitleMatchConfidence, "exact">;
+};
+
+function sourceRank(want: SourceClass | null, got: SourceClass | null): 1 | 2 | 3 {
+  if (!want || !got) return 1;
+  const affinity = sourceAffinity(want, got);
+  if (affinity >= 1) return 3;
+  if (affinity >= 0.75) return 2;
+  return 1;
+}
+
+export function releaseAffinity(stream: ReleaseTags, subText: string): AffinityResult {
+  const sub = parseRelease(subText);
   const reasons: string[] = [];
   let score = 0;
+  const matchSourceRank = sourceRank(stream.source, sub.source);
+  let incompatible = false;
 
-  if (stream.group && subtitle.group && stream.group === subtitle.group) {
-    score += 120;
-    reasons.push("same release group " + subtitle.group);
+  if (
+    stream.season != null &&
+    stream.episode != null &&
+    sub.season != null &&
+    sub.episode != null
+  ) {
+    const subEnd = sub.episodeEnd ?? sub.episode;
+    const sameEpisode =
+      stream.season === sub.season && stream.episode >= sub.episode && stream.episode <= subEnd;
+    if (sameEpisode) {
+      score += 80;
+      reasons.push(`S${stream.season}E${stream.episode} matches`);
+    } else {
+      score -= 300;
+      incompatible = true;
+      reasons.push(`subtitle is for S${sub.season}E${sub.episode}`);
+    }
   }
 
-  if (stream.source && subtitle.source) {
-    const affinity = sourceAffinity(stream.source, subtitle.source);
-    if (affinity >= 1) {
+  if (stream.group && sub.group && stream.group === sub.group) {
+    score += 120;
+    reasons.push(`same release group ${sub.group}`);
+  }
+
+  if (stream.source && sub.source) {
+    const aff = sourceAffinity(stream.source, sub.source);
+    if (aff >= 1) {
       score += 45;
-      reasons.push(subtitle.source + " matches the stream");
-    } else if (affinity > 0) {
-      score += Math.round(45 * affinity);
-      reasons.push(subtitle.source + " is close to " + stream.source);
+      reasons.push(`${sub.source} matches the stream`);
+    } else if (aff >= 0.75) {
+      score += Math.round(45 * aff);
+      reasons.push(`${sub.source} is close to ${stream.source}`);
     } else {
       score -= 30;
-      reasons.push(subtitle.source + " timing differs from " + stream.source);
+      incompatible = true;
+      reasons.push(`${sub.source} timing differs from ${stream.source}`);
     }
-  } else if (stream.source && !subtitle.source) {
+  } else if (stream.source && !sub.source) {
     score += 2;
   }
 
-  if (stream.resolution && subtitle.resolution) {
-    if (stream.resolution === subtitle.resolution) {
+  if (stream.resolution && sub.resolution) {
+    if (stream.resolution === sub.resolution) {
       score += 8;
-      reasons.push(subtitle.resolution);
+      reasons.push(`${sub.resolution}`);
     } else {
       score -= 4;
     }
   }
 
-  if (stream.hdr.length && subtitle.hdr.length) {
-    const shared = subtitle.hdr.filter((tag) => stream.hdr.includes(tag));
+  if (stream.hdr.length && sub.hdr.length) {
+    const shared = sub.hdr.filter((h) => stream.hdr.includes(h));
     if (shared.length) {
       score += 10;
       reasons.push(shared.join(" "));
     }
   }
 
-  const streamEditions = stream.edition.filter((edition) => edition !== "remastered");
-  const subtitleEditions = subtitle.edition.filter((edition) => edition !== "remastered");
-  if (streamEditions.length && subtitleEditions.length) {
-    const shared = subtitleEditions.filter((edition) => streamEditions.includes(edition));
+  const streamEd = stream.edition.filter((e) => e !== "remastered");
+  const subEd = sub.edition.filter((e) => e !== "remastered");
+  if (streamEd.length && subEd.length) {
+    const shared = subEd.filter((e) => streamEd.includes(e));
     if (shared.length) {
       score += 25;
-      reasons.push(shared[0] + " edition");
+      reasons.push(`${shared[0]} edition`);
     } else {
       score -= 25;
-      reasons.push("different edition (" + subtitleEditions[0] + ")");
+      incompatible = true;
+      reasons.push(`different edition (${subEd[0]})`);
     }
-  } else if (streamEditions.length && !subtitleEditions.length) {
+  } else if (streamEd.length && !subEd.length) {
     score -= 10;
-  } else if (!streamEditions.length && subtitleEditions.length) {
+  } else if (!streamEd.length && subEd.length) {
     score -= 15;
-    reasons.push(subtitleEditions[0] + " cut, stream is not");
+    reasons.push(`${subEd[0]} cut, stream is not`);
   }
 
-  if (stream.proper === subtitle.proper && stream.proper) {
+  if (stream.proper === sub.proper && stream.proper) {
     score += 6;
-  } else if (subtitle.proper !== stream.proper) {
+  } else if (sub.proper !== stream.proper) {
     score -= 3;
   }
-  if (stream.repack === subtitle.repack && stream.repack) score += 4;
+  if (stream.repack === sub.repack && stream.repack) score += 4;
 
-  return { score, reasons };
+  const groupMatch = !!stream.group && !!sub.group && stream.group === sub.group;
+  const confidence: Exclude<SubtitleMatchConfidence, "exact"> = incompatible
+    ? "incompatible"
+    : groupMatch || matchSourceRank === 3
+      ? "high"
+      : matchSourceRank === 2
+        ? "medium"
+        : "low";
+
+  return { score, reasons, sourceRank: matchSourceRank, confidence };
+}
+
+export function describeTags(t: ReleaseTags): string {
+  const episode = t.season != null && t.episode != null ? `S${t.season}E${t.episode}` : null;
+  const parts = [episode, t.source, t.resolution, ...t.hdr, ...t.edition, t.group].filter(Boolean);
+  return parts.join(" ") || "unknown release";
 }

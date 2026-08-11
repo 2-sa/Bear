@@ -16,7 +16,11 @@ import { canStartSubtitleAutoload, subtitleSearchImdbId } from "@/lib/subtitles/
 import { pickDesiredSubtitleTrack } from "@/lib/subtitles/track-selection";
 import { markAddedSub } from "@/lib/subtitles/added-subs";
 import { markImportedSub } from "@/lib/player/imported-subs";
-import { readRememberedSub, subtitleMediaKey } from "@/lib/subtitles/subtitle-memory";
+import {
+  readRememberedSub,
+  rememberedSubAppliesToStream,
+  subtitleMediaKey,
+} from "@/lib/subtitles/subtitle-memory";
 
 export function useTrackAutoload(params: {
   bridgeRef: RefObject<PlayerBridge | null>;
@@ -122,7 +126,8 @@ export function useTrackAutoload(params: {
         setRefreshing(true);
         setLastAdded(null);
         clearLastAddedTimer();
-        void refetchRef.current()
+        void refetchRef
+          .current()
           .then((n) => setLastAdded(n))
           .catch(() => setLastAdded(0))
           .finally(() => {
@@ -165,12 +170,14 @@ export function useTrackAutoload(params: {
     publishSubtitleContext({ candidateIds, stremioId: src.meta.id ?? null });
     const animeIds = candidateIds.some((i) => i.startsWith("kitsu:") || i.startsWith("mal:"));
     const imdbEpAligned =
-      !animeIds || src.episode?.imdbEpisode == null || src.episode.episode === src.episode.imdbEpisode;
+      !animeIds ||
+      src.episode?.imdbEpisode == null ||
+      src.episode.episode === src.episode.imdbEpisode;
     const searchSeason = imdbEpAligned
-      ? src.episode?.imdbSeason ?? src.episode?.season
+      ? (src.episode?.imdbSeason ?? src.episode?.season)
       : src.episode?.season;
     const searchEpisode = imdbEpAligned
-      ? src.episode?.imdbEpisode ?? src.episode?.episode
+      ? (src.episode?.imdbEpisode ?? src.episode?.episode)
       : src.episode?.episode;
     autoSubLoadKeyRef.current = key;
     void (async () => {
@@ -181,10 +188,8 @@ export function useTrackAutoload(params: {
         episode: searchEpisode,
         langs,
       });
-      const { videoHash, videoSize } = settings.subtitleAutoSync
-        ? await resolveVideoHash(src)
-        : {};
-      if (videoHash) console.info(`[subs/autoload] moviehash ${videoHash} (${videoSize})`);
+      const { videoHash, videoSize } = settings.subtitleAutoSync ? await resolveVideoHash(src) : {};
+      if (videoHash) console.info("[subs/autoload] moviehash ready", { videoSize });
       const b = bridgeRef.current;
       if (!b || autoSubLoadKeyRef.current !== key) {
         console.warn("[subs/autoload] no bridge ready, skipping");
@@ -251,7 +256,8 @@ export function useTrackAutoload(params: {
   useEffect(() => {
     const choice = src.subtitlePreselect;
     if (!choice) return;
-    if (snap.audioTracks.length === 0 && snap.subtitleTracks.length === 0 && snap.durationSec === 0) return;
+    if (snap.audioTracks.length === 0 && snap.subtitleTracks.length === 0 && snap.durationSec === 0)
+      return;
     if (preselectAppliedRef.current === src.url) return;
     preselectAppliedRef.current = src.url;
     if (choice.off) {
@@ -264,7 +270,14 @@ export function useTrackAutoload(params: {
         if (ok) markAddedSub(url);
       });
     }
-  }, [src.url, src.subtitlePreselect, snap.audioTracks.length, snap.subtitleTracks, snap.durationSec, bridgeRef]);
+  }, [
+    src.url,
+    src.subtitlePreselect,
+    snap.audioTracks.length,
+    snap.subtitleTracks,
+    snap.durationSec,
+    bridgeRef,
+  ]);
   const subRestoreRef = useRef<string | null>(null);
   const subRestoreWaitRef = useRef<number | null>(null);
   const subRestoreLogRef = useRef<string | null>(null);
@@ -280,6 +293,10 @@ export function useTrackAutoload(params: {
       subtitleMediaKey(src.meta.id, src.episode?.season, src.episode?.episode),
     );
     if (!remembered) return;
+    if (!rememberedSubAppliesToStream(remembered, src.streamRef)) {
+      subRestoreRef.current = src.url;
+      return;
+    }
     const mediaReady =
       snap.audioTracks.length > 0 || snap.subtitleTracks.length > 0 || snap.durationSec > 0;
     if (!mediaReady) return;
@@ -315,27 +332,32 @@ export function useTrackAutoload(params: {
         );
         if (cands.length === 0) return undefined;
         return (
-          cands.find((t) => !remembered.provider || t.provider === remembered.provider) ??
-          cands[0]
+          cands.find((t) => !remembered.provider || t.provider === remembered.provider) ?? cands[0]
         );
       };
       const existing = bySubId() ?? snap.subtitleTracks.find(sameSource) ?? byRelease();
       if (!existing && subRestoreLogRef.current !== src.url) {
         subRestoreLogRef.current = src.url;
         console.info("[subs/restore] no match yet", {
-          remembered,
+          remembered: {
+            lang: remembered.lang,
+            subId: remembered.subId,
+            provider: remembered.provider,
+            release: remembered.release,
+            title: remembered.title,
+            matchConfidence: remembered.matchConfidence,
+          },
           externalCandidates: snap.subtitleTracks
             .filter((t) => t.external)
             .map((t) => ({
               id: t.id,
               subId: t.subId,
               lang: t.lang,
-              url: t.url,
-              externalFilename: t.externalFilename,
               provider: t.provider,
               release: t.release,
               title: t.title,
               matchScore: t.matchScore,
+              matchConfidence: t.matchConfidence,
             })),
         });
       }
@@ -343,14 +365,10 @@ export function useTrackAutoload(params: {
         console.info("[subs/restore] selecting remembered track", {
           id: existing.id,
           subId: existing.subId,
-          via: bySubId()
-            ? "subId"
-            : snap.subtitleTracks.find(sameSource)
-              ? "source"
-              : "release",
-          url: existing.url,
+          via: bySubId() ? "subId" : snap.subtitleTracks.find(sameSource) ? "source" : "release",
           release: existing.release,
           title: existing.title,
+          matchConfidence: existing.matchConfidence,
         });
         subRestoreRef.current = src.url;
         if (!existing.selected) bridge.setSubtitleTrack(existing.id);
@@ -365,7 +383,9 @@ export function useTrackAutoload(params: {
       if (!addNow) return;
       subRestoreRef.current = src.url;
       console.info("[subs/restore] re-adding remembered sub from source", {
-        source,
+        lang: remembered.lang,
+        provider: remembered.provider,
+        release: remembered.release,
         imported: remembered.imported === true,
       });
       void bridge
@@ -375,6 +395,7 @@ export function useTrackAutoload(params: {
           release: remembered.release,
           provider: remembered.provider,
           matchScore: remembered.matchScore,
+          matchConfidence: remembered.matchConfidence,
         })
         .then((ok) => {
           if (!ok) return;
@@ -471,8 +492,9 @@ export function useTrackAutoload(params: {
     if (subsOff) {
       if (snap.subtitleTracks.some((t) => t.selected)) bridgeRef.current?.setSubtitleTrack(null);
     } else if (
-      !readRememberedSub(
-        subtitleMediaKey(src.meta.id, src.episode?.season, src.episode?.episode),
+      !rememberedSubAppliesToStream(
+        readRememberedSub(subtitleMediaKey(src.meta.id, src.episode?.season, src.episode?.episode)),
+        src.streamRef,
       ) &&
       !src.subtitlePreselect &&
       snap.subtitleTracks.length > 0 &&
@@ -490,10 +512,10 @@ export function useTrackAutoload(params: {
           langScore(effAudio.lang ?? "", subLangs) >= 0;
         const want = nativeAudio
           ? (snap.subtitleTracks
-            .filter(isForcedTrack)
-            .sort(
-              (a, b) => langScore(b.lang ?? "", subLangs) - langScore(a.lang ?? "", subLangs),
-            )[0] ?? null)
+              .filter(isForcedTrack)
+              .sort(
+                (a, b) => langScore(b.lang ?? "", subLangs) - langScore(a.lang ?? "", subLangs),
+              )[0] ?? null)
           : pickDesiredSubtitleTrack(
               allow(snap.subtitleTracks),
               subLangs,
@@ -568,10 +590,7 @@ function isLoopback(url: string): boolean {
 }
 
 function raceTimeout<T>(p: Promise<T>, ms: number): Promise<T | null> {
-  return Promise.race([
-    p,
-    new Promise<null>((resolve) => setTimeout(() => resolve(null), ms)),
-  ]);
+  return Promise.race([p, new Promise<null>((resolve) => setTimeout(() => resolve(null), ms))]);
 }
 
 async function resolveVideoHash(

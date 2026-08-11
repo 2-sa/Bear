@@ -181,6 +181,8 @@ const OBSERVED_PROPS: &[(&str, u64, PropertyKind)] = &[
     ("video-params/gamma", 16, PropertyKind::String),
     ("demuxer-cache-duration", 17, PropertyKind::Double),
     ("paused-for-cache", 18, PropertyKind::Flag),
+    ("secondary-sub-text", 19, PropertyKind::String),
+    ("path", 20, PropertyKind::String),
 ];
 
 #[derive(Clone, Copy)]
@@ -526,6 +528,20 @@ fn validate_mpv_media_target(app: &AppHandle, target: &str) -> Result<(), String
     }
 }
 
+fn source_kind(url: &str) -> &'static str {
+    if is_local_network_url(url) {
+        "local-http"
+    } else if url.starts_with("https://") {
+        "https"
+    } else if url.starts_with("http://") {
+        "http"
+    } else if url.starts_with("file://") || !url.contains("://") {
+        "local-file"
+    } else {
+        "other"
+    }
+}
+
 #[tauri::command]
 pub async fn mpv_start(
     app: AppHandle,
@@ -576,8 +592,10 @@ pub async fn mpv_start(
         None
     };
     eprintln!(
-        "[harbor::mpv] start url={} want_embed={} embed_hwnd={:?}",
-        args.url, want_embed, embed_hwnd
+        "[harbor::mpv] start source_kind={} want_embed={} embed_hwnd={:?}",
+        source_kind(&args.url),
+        want_embed,
+        embed_hwnd
     );
     let embed_hwnd_for_init = embed_hwnd.clone();
     let args_for_init = args.clone();
@@ -797,7 +815,10 @@ pub async fn mpv_start(
         args.mac_edr.unwrap_or(false),
     );
 
-    eprintln!("[harbor::mpv] loadfile {}", args.url);
+    eprintln!(
+        "[harbor::mpv] loadfile source_kind={}",
+        source_kind(&args.url)
+    );
     mpv_argv_command(&*mpv_arc, &["loadfile", &args.url, "replace"]).map_err(|e| {
         eprintln!("[harbor::mpv] loadfile FAILED: {}", e);
         format!("loadfile: {}", e)

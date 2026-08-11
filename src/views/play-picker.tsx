@@ -71,6 +71,7 @@ import { findLocalEpisodeVersions, findLocalMovieVersions } from "@/lib/local-li
 import { localPlayerSrc } from "@/lib/local-library/player-src";
 import { LocalStreamList } from "./play-picker/local-stream-card";
 import { SubtitleSelectStep } from "./play-picker/subtitle-select-step";
+import { prefetchResumeStart } from "@/lib/player/resume-start";
 
 const TIER_ORDER: Tier[] = ["4K_DV", "4K_HDR", "4K", "1080p_HDR", "1080p", "720p", "SD", "ROUGH"];
 
@@ -119,6 +120,22 @@ export function PlayPicker({
     prefetchSegments(meta, episode);
   }, [meta, episode]);
   const imdbId = resolvedImdb.id;
+  useEffect(() => {
+    if (!authKey || (!settings.resumePlayback && !settings.resumePrompt)) return;
+    prefetchResumeStart({
+      metaId: meta.id,
+      authKey,
+      imdbId,
+      imdbVerified: resolvedImdb.verified,
+    });
+  }, [
+    authKey,
+    imdbId,
+    meta.id,
+    resolvedImdb.verified,
+    settings.resumePlayback,
+    settings.resumePrompt,
+  ]);
   const streamIds = useStreamIds(meta, episode, imdbId);
   const localMatches = useMemo(() => {
     const m = meta.id.match(/^tmdb:(?:movie|tv):(\d+)$/);

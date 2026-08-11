@@ -4,8 +4,13 @@ import type { Settings } from "@/lib/settings";
 import type { PlayerSrc } from "@/lib/view";
 import { markAddedSub } from "./added-subs";
 import { langScore, normalizeLang } from "./language";
-import { providerLabel, releaseOf } from "./provider-label";
-import { searchSubtitles, streamMatchScore, type StreamHints } from "./search";
+import { providerLabel, releaseOf, subtitleTitleOf } from "./provider-label";
+import {
+  compareSubtitleMatch,
+  searchSubtitles,
+  streamMatchDetail,
+  type StreamHints,
+} from "./search";
 import { loadFirstWorkingSubtitle } from "./autoload";
 import type { SubResult } from "./types";
 
@@ -42,6 +47,8 @@ export function streamHintsOf(src: PlayerSrc): StreamHints {
     release: src.streamRef?.title ?? src.streamRef?.parsedTitle ?? null,
     source: src.streamRef?.source ?? null,
     resolution: src.streamRef?.resolution ?? null,
+    season: src.episode?.imdbSeason ?? src.episode?.season ?? null,
+    episode: src.episode?.imdbEpisode ?? src.episode?.episode ?? null,
   };
 }
 
@@ -142,23 +149,35 @@ export async function fetchSubtitlesIntoPlayer(p: SubFetchParams): Promise<SubFe
 
   const matches = results.filter((r) => langScore(r.lang ?? "", p.langs) >= 0);
   const skipUrls = p.skipUrls ?? new Set<string>();
-  const fresh = matches.filter((r) => !skipUrls.has(r.url));
+  const fresh = matches
+    .filter((r) => !skipUrls.has(r.url))
+    .sort((a, b) => {
+      const language = langScore(b.lang ?? "", p.langs) - langScore(a.lang ?? "", p.langs);
+      return language !== 0 ? language : compareSubtitleMatch(a, b, hints);
+    });
 
-  const meta = (r: SubResult) => ({
-    format: r.format,
-    encoding: r.encoding,
-    release: releaseOf(r),
-    provider: providerLabel(r),
-    matchScore: streamMatchScore(r, hints),
-    subId: r.id,
-  });
+  const meta = (r: SubResult) => {
+    const match = streamMatchDetail(r, hints);
+    return {
+      format: r.format,
+      encoding: r.encoding,
+      release: releaseOf(r),
+      provider: providerLabel(r),
+      matchScore: match.score,
+      matchConfidence: match.confidence,
+      subId: r.id,
+    };
+  };
 
   let selected: SubResult | null = null;
   const consumed = new Set<SubResult>();
   if (!deep) {
-    selected = await loadFirstWorkingSubtitle(fresh, async (r) => {
+    const autoCandidates = fresh.filter(
+      (result) => streamMatchDetail(result, hints).confidence !== "incompatible",
+    );
+    selected = await loadFirstWorkingSubtitle(autoCandidates, async (r) => {
       if (!p.isActive()) return false;
-      const ok = await p.bridge.addSubtitle(r.url, r.lang, providerLabel(r), false, meta(r));
+      const ok = await p.bridge.addSubtitle(r.url, r.lang, subtitleTitleOf(r), false, meta(r));
       if (ok === true) markAddedSub(r.url);
       return ok === true;
     });
@@ -174,7 +193,7 @@ export async function fetchSubtitlesIntoPlayer(p: SubFetchParams): Promise<SubFe
   let added = selected ? 1 : 0;
   for (const r of extras) {
     if (!p.isActive()) break;
-    const ok = await p.bridge.addSubtitle(r.url, r.lang, providerLabel(r), false, meta(r));
+    const ok = await p.bridge.addSubtitle(r.url, r.lang, subtitleTitleOf(r), false, meta(r));
     if (ok === true) {
       markAddedSub(r.url);
       added++;

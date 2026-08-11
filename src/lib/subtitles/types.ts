@@ -1,10 +1,20 @@
+import type { SubtitleMatchConfidence } from "./release-match";
+
 export type SubResult = {
   id: string;
   url: string;
   lang: string;
   langName?: string;
   title?: string;
-  source: "wyzie" | "addon" | "opensubtitles" | "jimaku" | "podnapisi" | "subdl" | "gestdown" | "subsource";
+  source:
+    | "wyzie"
+    | "addon"
+    | "opensubtitles"
+    | "jimaku"
+    | "podnapisi"
+    | "subdl"
+    | "gestdown"
+    | "subsource";
   format?: "srt" | "vtt" | "ass" | "ssa" | "sub";
   encoding?: string;
   fps?: number;
@@ -21,6 +31,7 @@ export type SubtitleLoadMetadata = {
   release?: string;
   provider?: string;
   matchScore?: number;
+  matchConfidence?: SubtitleMatchConfidence;
   subId?: string;
 };
 

@@ -15,8 +15,8 @@ use std::time::Duration;
 use librqbit::api::TorrentIdOrHash;
 use librqbit::dht::{Dht, PersistentDhtConfig};
 use librqbit::{
-    AddTorrent, AddTorrentOptions, PeerConnectionOptions, Session, SessionOptions,
-    SessionPersistenceConfig,
+    AddTorrent, AddTorrentOptions, AddTorrentResponse, PeerConnectionOptions, Session,
+    SessionOptions, SessionPersistenceConfig,
 };
 use serde::Serialize;
 use tauri::{AppHandle, Manager};
@@ -236,6 +236,7 @@ pub struct AddResult {
     info_hash: String,
     files: Vec<EngineFile>,
     stream_base: String,
+    already_managed: bool,
 }
 
 #[derive(Serialize)]
@@ -284,6 +285,57 @@ async fn new_session(
     .map_err(|e| format!("{e:#}"))
 }
 
+async fn pause_all_torrents(session: &Arc<Session>) {
+    let handles = session.with_torrents(|torrents| {
+        torrents
+            .map(|(_id, handle)| handle.clone())
+            .collect::<Vec<_>>()
+    });
+    for handle in handles {
+        if handle.is_paused() {
+            continue;
+        }
+        if let Err(error) = session.pause(&handle).await {
+            eprintln!("[torrent-engine] could not pause restored torrent: {error:#}");
+        }
+    }
+}
+
+fn mark_persisted_torrents_paused(dir: &std::path::Path) -> Result<usize, String> {
+    let path = dir.join("session.json");
+    let raw = match std::fs::read(&path) {
+        Ok(raw) => raw,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(0),
+        Err(error) => return Err(error.to_string()),
+    };
+    let mut value = serde_json::from_slice::<serde_json::Value>(&raw).map_err(|e| e.to_string())?;
+    let Some(torrents) = value.get_mut("torrents").and_then(|v| v.as_object_mut()) else {
+        return Ok(0);
+    };
+    let mut changed = 0usize;
+    for torrent in torrents.values_mut() {
+        let Some(record) = torrent.as_object_mut() else {
+            continue;
+        };
+        if record.get("is_paused").and_then(|v| v.as_bool()) == Some(true) {
+            continue;
+        }
+        record.insert("is_paused".to_string(), serde_json::Value::Bool(true));
+        changed += 1;
+    }
+    if changed == 0 {
+        return Ok(0);
+    }
+    let bytes = serde_json::to_vec(&value).map_err(|e| e.to_string())?;
+    let tmp = path.with_extension("json.harbor-pause.tmp");
+    std::fs::write(&tmp, bytes).map_err(|e| e.to_string())?;
+    if let Err(error) = std::fs::rename(&tmp, &path) {
+        let _ = std::fs::remove_file(&tmp);
+        return Err(error.to_string());
+    }
+    Ok(changed)
+}
+
 #[derive(serde::Serialize, serde::Deserialize, Default)]
 struct EngineConfig {
     dir: Option<String>,
@@ -317,6 +369,15 @@ async fn init(app: AppHandle) -> Result<(), String> {
     let cfg = read_config(&app);
     let dir = engine_dir(&app, &cfg)?;
     std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    match mark_persisted_torrents_paused(&dir) {
+        Ok(0) => {}
+        Ok(changed) => {
+            eprintln!("[torrent-engine] paused {changed} persisted torrent(s) before restore")
+        }
+        Err(error) => {
+            eprintln!("[torrent-engine] could not pre-pause persisted torrents: {error}")
+        }
+    }
     let (session, dht_tier) = match new_session(&dir, true, true, true).await {
         Ok(s) => (s, 1u8),
         Err(e1) => {
@@ -338,6 +399,9 @@ async fn init(app: AppHandle) -> Result<(), String> {
             }
         }
     };
+    // Persisted stream-cache torrents must never resume peer traffic merely
+    // because Harbor started. A real HTTP stream request resumes them on demand.
+    pause_all_torrents(&session).await;
     let side_dht = dht_boot::build().await;
     let listener = TcpListener::bind(SocketAddr::from(([127, 0, 0, 1], 0)))
         .await
@@ -403,7 +467,7 @@ pub fn ensure_started_on_setup(app: &AppHandle) {
     });
 }
 
-pub fn stop() {
+fn take_session_for_stop() -> Option<Arc<Session>> {
     let mut st = engine().lock().unwrap();
     if let Some(server) = st.server.take() {
         server.abort();
@@ -411,11 +475,29 @@ pub fn stop() {
     if let Some(sweeper) = st.sweeper.take() {
         sweeper.cancel();
     }
-    st.session = None;
+    let session = st.session.take();
     st.side_dht = None;
     st.port = None;
     st.dht_tier = 0;
     st.ready = false;
+    session
+}
+
+async fn finish_session_stop(session: Arc<Session>) {
+    pause_all_torrents(&session).await;
+    session.stop().await;
+}
+
+pub async fn stop_async() {
+    if let Some(session) = take_session_for_stop() {
+        finish_session_stop(session).await;
+    }
+}
+
+pub fn stop() {
+    if let Some(session) = take_session_for_stop() {
+        tauri::async_runtime::block_on(finish_session_stop(session));
+    }
 }
 
 #[tauri::command]
@@ -480,9 +562,13 @@ pub async fn torrent_engine_add(
     .await
     .map_err(|_| "metadata timed out: no peers reached in 60s".to_string())?
     .map_err(|e| format!("{e:#}"))?;
-    let handle = added
-        .into_handle()
-        .ok_or_else(|| "torrent added as list-only".to_string())?;
+    let (handle, already_managed) = match added {
+        AddTorrentResponse::AlreadyManaged(_, handle) => (handle, true),
+        AddTorrentResponse::Added(_, handle) => (handle, false),
+        AddTorrentResponse::ListOnly(_) => {
+            return Err("torrent added as list-only".to_string());
+        }
+    };
     let info_hash = format!("{:?}", handle.info_hash());
     let files = handle
         .with_metadata(|m| {
@@ -519,6 +605,7 @@ pub async fn torrent_engine_add(
         info_hash,
         files,
         stream_base: format!("http://127.0.0.1:{port}/stream"),
+        already_managed,
     })
 }
 
@@ -548,7 +635,7 @@ pub(crate) async fn ensure_added(
             };
             let opts = AddTorrentOptions {
                 overwrite: true,
-                paused: file_idx.is_none(),
+                paused: true,
                 only_files: file_idx.map(|i| vec![i]),
                 trackers: Some(merge_trackers(trackers)),
                 initial_peers: (!seed.is_empty()).then_some(seed),
@@ -598,7 +685,6 @@ pub(crate) async fn ensure_added(
     if let Some(idx) = file_idx.filter(|&i| i < files.len()) {
         let only: HashSet<usize> = HashSet::from([idx]);
         let _ = session.update_only_files(&handle, &only).await;
-        let _ = session.unpause(&handle).await;
     }
     Ok((info_hash, files))
 }
@@ -649,10 +735,6 @@ pub async fn torrent_engine_select(info_hash: String, file_idx: usize) -> Result
     let only: HashSet<usize> = HashSet::from([file_idx]);
     session
         .update_only_files(&handle, &only)
-        .await
-        .map_err(|e| format!("{e:#}"))?;
-    session
-        .unpause(&handle)
         .await
         .map_err(|e| format!("{e:#}"))?;
     Ok(())
@@ -713,7 +795,7 @@ pub async fn torrent_engine_remove(info_hash: String, delete_files: bool) -> Res
 
 #[tauri::command]
 pub async fn torrent_engine_restart(app: AppHandle) -> Result<EngineStatusDto, String> {
-    stop();
+    stop_async().await;
     tokio::time::sleep(Duration::from_millis(600)).await;
     init(app).await?;
     Ok(torrent_engine_status())
@@ -721,7 +803,7 @@ pub async fn torrent_engine_restart(app: AppHandle) -> Result<EngineStatusDto, S
 
 #[tauri::command]
 pub async fn torrent_engine_hard_reset(app: AppHandle) -> Result<EngineStatusDto, String> {
-    stop();
+    stop_async().await;
     tokio::time::sleep(Duration::from_millis(800)).await;
     let cfg = read_config(&app);
     if let Ok(dir) = engine_dir(&app, &cfg) {
@@ -754,7 +836,7 @@ pub async fn torrent_engine_set_options(
             .map_err(|e| e.to_string())?;
     }
     if restart {
-        stop();
+        stop_async().await;
         tokio::time::sleep(Duration::from_millis(600)).await;
         init(app).await?;
     }

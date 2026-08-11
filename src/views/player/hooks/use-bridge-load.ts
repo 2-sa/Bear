@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type RefObject } from "react";
 import type { PlayerBridge } from "@/lib/player/bridge";
-import { readResumeEntry, saveResumeBatch } from "@/lib/resume";
-import { cloudWriteId, episodeFromVideoId, libraryGetOne } from "@/lib/stremio";
+import { cloudWriteId } from "@/lib/stremio";
+import { resolveStartMs } from "@/lib/player/resume-start";
 import type { PlayerSrc } from "@/lib/view";
 import { videoIdFor } from "./use-stremio-sync";
 import { useSettings } from "@/lib/settings";
@@ -64,24 +64,26 @@ export function useBridgeLoad(params: {
     const isAutoRetry = (src.attempt ?? 0) > 0;
     const isLive =
       !!src.meta.id?.startsWith("iptv:") ||
-      (!!src.meta.type && !["movie", "series", "anime"].includes(String(src.meta.type).toLowerCase()));
+      (!!src.meta.type &&
+        !["movie", "series", "anime"].includes(String(src.meta.type).toLowerCase()));
     let cancelled = false;
     (async () => {
       const openingVid = videoIdFor(
         src,
         cloudWriteId(src.meta.id, src.imdbId ?? null, src.imdbIdVerified === true),
       );
-      const resolved = isLive || src.startFromZero
-        ? { ms: 0, fromRemote: false, finished: false }
-        : await resolveStartMs(
-            src.meta.id,
-            season,
-            episode,
-            authKey,
-            src.imdbId ?? null,
-            src.imdbIdVerified === true,
-            openingVid,
-          );
+      const resolved =
+        isLive || src.startFromZero
+          ? { ms: 0, fromRemote: false, finished: false }
+          : await resolveStartMs({
+              metaId: src.meta.id,
+              season,
+              episode,
+              authKey,
+              imdbId: src.imdbId ?? null,
+              imdbVerified: src.imdbIdVerified === true,
+              openingVid,
+            });
       const startMs = resolved.ms;
       const runtimeMin = src.episode?.runtime ?? null;
       const durationMs = runtimeMin && runtimeMin > 0 ? runtimeMin * 60_000 : 0;
@@ -139,7 +141,18 @@ export function useBridgeLoad(params: {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bridgeReady, bridgeKey, src.url, src.notWebReady, src.meta.id, src.subtitles, season, episode, transcodedUrl, authKey]);
+  }, [
+    bridgeReady,
+    bridgeKey,
+    src.url,
+    src.notWebReady,
+    src.meta.id,
+    src.subtitles,
+    season,
+    episode,
+    transcodedUrl,
+    authKey,
+  ]);
 
   useEffect(() => {
     lastLoadedUrlRef.current = null;
@@ -152,63 +165,4 @@ export function useBridgeLoad(params: {
   const clearPendingSeek = () => setPendingSeekSec(null);
 
   return { pendingResumeSec, acknowledgeResume, pendingSeekSec, clearPendingSeek };
-}
-
-async function resolveStartMs(
-  metaId: string,
-  season: number | undefined,
-  episode: number | undefined,
-  authKey: string | null,
-  imdbId: string | null,
-  imdbVerified: boolean,
-  openingVid: string | null,
-): Promise<{ ms: number; fromRemote: boolean; finished: boolean }> {
-  const localEntry = readResumeEntry(metaId, season, episode);
-  const local = localEntry?.ms ?? 0;
-  const isEpisode = typeof season === "number" && typeof episode === "number";
-  if (!authKey) return { ms: local, fromRemote: false, finished: false };
-  const matchesEpisode = (
-    item: { state?: { season?: number; episode?: number; video_id?: string } } | null,
-  ) => {
-    if (!item) return false;
-    if (typeof season !== "number" || typeof episode !== "number") return true;
-    const vid = item.state?.video_id;
-    if (openingVid && vid && vid === openingVid) return true;
-    const fromVid = episodeFromVideoId(vid);
-    const se = item.state?.season ?? fromVid?.season;
-    const ep = item.state?.episode ?? fromVid?.episode;
-    return se === season && ep === episode;
-  };
-  const lookups: string[] = [];
-  if (metaId.startsWith("tt")) lookups.push(metaId);
-  else if (imdbVerified && imdbId?.startsWith("tt")) lookups.push(imdbId, metaId);
-  else lookups.push(metaId);
-  for (const lookupId of lookups) {
-    const remote = await libraryGetOne(authKey, lookupId).catch(() => null);
-    if (!remote || !matchesEpisode(remote)) continue;
-    const remoteMs = remote.state?.timeOffset ?? 0;
-    if (remoteMs <= 0) continue;
-    const remoteDuration = remote.state?.duration ?? 0;
-    const flaggedWatched = (remote.state as { flaggedWatched?: number })?.flaggedWatched === 1;
-    const finished =
-      isEpisode &&
-      (flaggedWatched || (remoteDuration > 0 && remoteMs / remoteDuration >= RESTART_THRESHOLD));
-    const rawMt = (remote as { _mtime?: unknown })._mtime;
-    const remoteMtime = typeof rawMt === "number" ? rawMt : Date.parse(String(rawMt ?? ""));
-    const remoteIsNewer = Number.isFinite(remoteMtime) && (!localEntry || remoteMtime > localEntry.t);
-    if (remoteIsNewer || remoteMs >= local) {
-      saveResumeBatch([
-        {
-          id: metaId,
-          ms: remoteMs,
-          season,
-          episode,
-          t: Number.isFinite(remoteMtime) ? remoteMtime : undefined,
-        },
-      ]);
-      return { ms: remoteMs, fromRemote: true, finished };
-    }
-    return { ms: local, fromRemote: false, finished };
-  }
-  return { ms: local, fromRemote: false, finished: false };
 }

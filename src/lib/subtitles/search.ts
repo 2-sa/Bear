@@ -4,9 +4,21 @@ import type { SubResult, SubSearchQuery } from "./types";
 import { searchWyzie } from "./providers/wyzie";
 import { searchAddons } from "./providers/addons";
 import { searchOpenSubtitlesV3 } from "./providers/opensubtitles-v3";
-import { searchExtraSubSources, toSubResult, type ProviderCtx } from "./autosync/sub-sources";
+import {
+  pickSources,
+  searchExtraSubSources,
+  toSubResult,
+  type ProviderCtx,
+} from "./autosync/sub-sources";
 import { langScore, normalizeLang } from "./language";
-import { detectSource, parseRelease, type ReleaseTags } from "./release-match";
+import {
+  detectSource,
+  parseRelease,
+  releaseAffinity,
+  subtitleConfidenceRank,
+  type ReleaseTags,
+  type SubtitleMatchConfidence,
+} from "./release-match";
 import { SUBTITLE_PROVIDER_TIMEOUT_MS, withSubtitleTimeout } from "./autoload";
 
 export type SearchOptions = {
@@ -23,25 +35,10 @@ export type StreamHints = {
   release?: string | null;
   source?: string | null;
   resolution?: string | null;
+  season?: number | null;
+  episode?: number | null;
   preferHearingImpaired?: boolean;
 };
-
-export function streamTagsOf(hints: StreamHints): ReleaseTags {
-  const parsed = parseRelease(hints.release);
-  return {
-    ...parsed,
-    source: detectSource(hints.source) ?? parsed.source,
-    resolution: normalizeResolution(hints.resolution) ?? parsed.resolution,
-  };
-}
-
-function normalizeResolution(raw: string | null | undefined): string | null {
-  if (!raw) return null;
-  const value = raw.toLowerCase();
-  if (value === "4k" || value === "uhd" || value.includes("2160")) return "2160p";
-  const match = value.match(/(2160|1080|720|576|480)/);
-  return match ? match[1] + "p" : null;
-}
 
 export async function searchSubtitles(
   q: SubSearchQuery,
@@ -73,15 +70,18 @@ export async function searchSubtitles(
       name: "addons",
       p: searchAddons(opts.addons, q, tmo),
     });
-  if (opts.extra)
-    tasks.push({
-      name: "extra-sources",
-      p: withSubtitleTimeout(
-        searchExtraSubSources(q, opts.extra).then((a) => a.all.map(toSubResult)),
-        tmo,
-        [],
-      ),
-    });
+  if (opts.extra) {
+    for (const source of pickSources(q, opts.extra)) {
+      tasks.push({
+        name: `extra:${source.id}`,
+        p: withSubtitleTimeout(
+          searchExtraSubSources(q, opts.extra, [source]).then((a) => a.all.map(toSubResult)),
+          tmo,
+          [],
+        ),
+      });
+    }
+  }
   const all: SubResult[] = [];
   let pending = tasks.length;
   const emit = () => {
@@ -110,45 +110,84 @@ export async function searchSubtitles(
   return ranked;
 }
 
-const RELEASE_GROUP_RX = /[-.][A-Z0-9]{2,}$|\b(EVO|RARBG|YTS|YIFY|FGT|PSA|TBS|GalaxyRG|GalaxyTV|MeGusta|ION10|EZTV|NTb|FLUX|TEPES|KOGi|SMURF|RZeroX|d3g|TGx)\b/gi;
-
-function extractReleaseGroup(text: string | null | undefined): string | null {
-  if (!text) return null;
-  const matches = text.match(RELEASE_GROUP_RX);
-  if (!matches || matches.length === 0) return null;
-  const last = matches[matches.length - 1].replace(/^[-.]/, "").toUpperCase();
-  return last.length >= 2 ? last : null;
+export function streamTagsOf(hints: StreamHints): ReleaseTags {
+  const parsed = parseRelease(hints.release);
+  return {
+    ...parsed,
+    source: detectSource(hints.source) ?? parsed.source,
+    resolution: normalizeResolution(hints.resolution) ?? parsed.resolution,
+    season: hints.season ?? parsed.season,
+    episode: hints.episode ?? parsed.episode,
+    episodeEnd: hints.episode ?? parsed.episodeEnd,
+  };
 }
 
-function sourceTokens(source: string | null | undefined): string[] {
-  if (!source) return [];
-  const s = source.toLowerCase();
-  if (s.includes("bluray") || s === "remux" || s.includes("bdrip")) return ["bluray", "bdrip", "remux"];
-  if (s.includes("web-dl") || s === "webdl" || s.includes("webrip")) return ["web-dl", "webdl", "webrip", "web"];
-  if (s.includes("hdtv")) return ["hdtv"];
-  if (s.includes("dvd")) return ["dvd", "dvdrip"];
-  return [s];
+function normalizeResolution(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const s = raw.toLowerCase();
+  if (s === "4k" || s === "uhd" || s.includes("2160")) return "2160p";
+  const m = s.match(/(2160|1080|720|576|480)/);
+  return m ? `${m[1]}p` : null;
+}
+
+export function subtitleText(r: SubResult): string {
+  return `${r.release ?? ""} ${r.title ?? ""} ${r.url ?? ""}`;
+}
+
+export function streamMatchDetail(
+  r: SubResult,
+  hints: StreamHints | undefined,
+): {
+  score: number;
+  reasons: string[];
+  sourceRank: 1 | 2 | 3;
+  exactHash: boolean;
+  confidence: SubtitleMatchConfidence;
+} {
+  if (!hints) {
+    return { score: 0, reasons: [], sourceRank: 1, exactHash: false, confidence: "low" };
+  }
+  const { score, reasons, sourceRank, confidence } = releaseAffinity(
+    streamTagsOf(hints),
+    subtitleText(r),
+  );
+  let total = score;
+  const out = [...reasons];
+  const exactHash = r.hash === "moviehash";
+  if (exactHash) {
+    total += 200;
+    out.unshift("exact file match");
+  }
+  if (r.hearingImpaired && !hints.preferHearingImpaired) total -= 25;
+  return {
+    score: total,
+    reasons: out,
+    sourceRank,
+    exactHash,
+    confidence: exactHash ? "exact" : confidence,
+  };
 }
 
 export function streamMatchScore(r: SubResult, hints: StreamHints | undefined): number {
-  if (!hints) return 0;
-  const release = extractReleaseGroup(hints.release);
-  const subText = `${r.release ?? ""} ${r.title ?? ""} ${r.url ?? ""}`.toLowerCase();
-  let score = 0;
-  if (release && subText.includes(release.toLowerCase())) score += 120;
-  const wantSrc = sourceTokens(hints.source);
-  for (const src of wantSrc) {
-    if (subText.includes(src)) {
-      score += 40;
-      break;
-    }
-  }
-  if (hints.resolution) {
-    const res = hints.resolution.toLowerCase();
-    if (subText.includes(res) || (res === "4k" && subText.includes("2160p"))) score += 8;
-  }
-  if (r.hearingImpaired && !hints.preferHearingImpaired) score -= 25;
-  return score;
+  return streamMatchDetail(r, hints).score;
+}
+
+export function compareSubtitleMatch(
+  a: SubResult,
+  b: SubResult,
+  hints: StreamHints | undefined,
+): number {
+  const aMatch = streamMatchDetail(a, hints);
+  const bMatch = streamMatchDetail(b, hints);
+  if (aMatch.exactHash !== bMatch.exactHash) return aMatch.exactHash ? -1 : 1;
+  const confidence =
+    subtitleConfidenceRank(bMatch.confidence) - subtitleConfidenceRank(aMatch.confidence);
+  if (confidence !== 0) return confidence;
+  if (aMatch.sourceRank !== bMatch.sourceRank) return bMatch.sourceRank - aMatch.sourceRank;
+  if (aMatch.score !== bMatch.score) return bMatch.score - aMatch.score;
+  const downloads = (b.downloads ?? 0) - (a.downloads ?? 0);
+  if (downloads !== 0) return downloads;
+  return (a.title || "").localeCompare(b.title || "");
 }
 
 function sourcePriority(source: SubResult["source"]): number {
@@ -205,13 +244,7 @@ function interleaveBySource(
       const la = langScore(a.lang, preferred);
       const lb = langScore(b.lang, preferred);
       if (la !== lb) return lb - la;
-      const sa = streamMatchScore(a, hints);
-      const sb = streamMatchScore(b, hints);
-      if (sa !== sb) return sb - sa;
-      const da = a.downloads ?? 0;
-      const db = b.downloads ?? 0;
-      if (da !== db) return db - da;
-      return (a.title || "").localeCompare(b.title || "");
+      return compareSubtitleMatch(a, b, hints);
     });
   }
   const sourceOrder = [...buckets.keys()].sort(
@@ -219,6 +252,18 @@ function interleaveBySource(
   );
   const out: SubResult[] = [];
   const seen = new Set<SubResult>();
+  const compare = (a: SubResult, b: SubResult) => {
+    const la = langScore(a.lang, preferred);
+    const lb = langScore(b.lang, preferred);
+    if (la !== lb) return lb - la;
+    return compareSubtitleMatch(a, b, hints);
+  };
+  const preferredResults = list.filter((r) => langScore(r.lang, preferred) > 0);
+  const best = [...(preferredResults.length > 0 ? preferredResults : list)].sort(compare)[0];
+  if (best) {
+    seen.add(best);
+    out.push(best);
+  }
   const drain = (predicate: (r: SubResult) => boolean) => {
     let depth = 0;
     let more = true;
