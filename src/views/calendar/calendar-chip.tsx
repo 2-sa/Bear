@@ -9,9 +9,11 @@ import { formatDateLong } from "./utils";
 export function CalendarChip({
   item,
   onOpen,
+  hideTypeTag,
 }: {
   item: CalendarItem;
   onOpen: (item: CalendarItem) => void;
+  hideTypeTag: boolean;
 }) {
   const t = useT();
   const { settings } = useSettings();
@@ -52,12 +54,14 @@ export function CalendarChip({
         ) : null}
       </div>
       <span className="flex-1 truncate text-[11.5px] font-medium text-ink">{item.name}</span>
-      <span
-        className={`hidden shrink-0 rounded-sm px-1 py-px text-[9px] font-bold uppercase tracking-[0.12em] xl:inline ${tagClass}`}
-      >
-        {tag}
-      </span>
-      {hovered && <ChipTooltip item={item} anchorRef={ref} />}
+      {!hideTypeTag && (
+        <span
+          className={`hidden shrink-0 rounded-sm px-1 py-px text-[9px] font-bold uppercase tracking-[0.12em] xl:inline ${tagClass}`}
+        >
+          {tag}
+        </span>
+      )}
+      {hovered && <ChipTooltip item={item} anchorRef={ref} hideTypeTag={hideTypeTag} />}
     </button>
   );
 }
@@ -65,9 +69,11 @@ export function CalendarChip({
 function ChipTooltip({
   item,
   anchorRef,
+  hideTypeTag,
 }: {
   item: CalendarItem;
   anchorRef: React.RefObject<HTMLElement | null>;
+  hideTypeTag: boolean;
 }) {
   const t = useT();
   const { settings } = useSettings();
@@ -123,11 +129,16 @@ function ChipTooltip({
           ) : null}
         </div>
         <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <span className="text-[10.5px] font-bold uppercase tracking-[0.18em] text-ink-subtle">
-            {tag}
-          </span>
+          {!hideTypeTag && (
+            <span className="text-[10.5px] font-bold uppercase tracking-[0.18em] text-ink-subtle">
+              {tag}
+            </span>
+          )}
           <p className="text-[14px] font-semibold leading-tight text-ink">{item.name}</p>
-          <p className="text-[12px] text-ink-muted">{dateLabel}</p>
+          <p className="text-[12px] text-ink-muted">
+            {dateLabel}
+            {item.releaseTime ? ` · ${item.releaseTime}` : ""}
+          </p>
           {item.voteAverage > 0 && (
             <p className="text-[11.5px] text-ink-muted">
               <span className="text-amber-300">★</span> {item.voteAverage.toFixed(1)}

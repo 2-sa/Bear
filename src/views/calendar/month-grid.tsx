@@ -11,6 +11,7 @@ export function MonthGrid({
   weekStartsMonday,
   onOpenItem,
   onOpenDay,
+  hideTypeTag,
 }: {
   cells: Cell[];
   grouped: Map<string, CalendarItem[]>;
@@ -18,6 +19,7 @@ export function MonthGrid({
   weekStartsMonday: boolean;
   onOpenItem: (item: CalendarItem) => void;
   onOpenDay: (iso: string) => void;
+  hideTypeTag: boolean;
 }) {
   const t = useT();
   const weekdays = orderedWeekdayNames(weekStartsMonday);
@@ -64,7 +66,12 @@ export function MonthGrid({
               </div>
               <div className="flex min-h-0 flex-col gap-1.5">
                 {events.slice(0, 3).map((item) => (
-                  <CalendarChip key={item.id} item={item} onOpen={onOpenItem} />
+                  <CalendarChip
+                    key={item.id}
+                    item={item}
+                    onOpen={onOpenItem}
+                    hideTypeTag={hideTypeTag}
+                  />
                 ))}
                 {events.length > 3 && (
                   <button

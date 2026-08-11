@@ -243,6 +243,15 @@ const used: Record<string, string> = {
   "{wins} wins": "{wins} فوز",
   "{w} wins, {n} nominations": "{w} فوز، {n} ترشيح",
   "× breadth/recency {mod} = {score}": "× الاتساع/الحداثة {mod} = {score}",
+  "Sub": "مترجم",
+  "Dub": "مدبلج",
+  "No dubbed episodes this month": "لا توجد حلقات مدبلجة هذا الشهر",
+  "Nothing airing this month": "لا توجد حلقات معروضة هذا الشهر",
+  "The dub schedule has no episodes releasing this month. Try a different month.":
+    "لا يتضمن جدول الدبلجة حلقات تصدر هذا الشهر. جرّب شهرًا آخر.",
+  "AniList has no anime episodes scheduled to air this month. Try a different month.":
+    "لا يتضمن جدول AniList حلقات أنمي ستُعرض هذا الشهر. جرّب شهرًا آخر.",
+  "Loading settings": "جارٍ تحميل الإعدادات",
 };
 
 export default used;

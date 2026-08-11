@@ -46,6 +46,7 @@ export function CalendarView() {
   const [month, setMonth] = useState(today.getMonth());
   const [filter, setFilter] = useState<CalendarFilter>("all");
   const [watchlistOnly, setWatchlistOnly] = useState(false);
+  const [animeDub, setAnimeDub] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   useScrollMemory("calendar", scrollRef);
   const [libraryItems, setLibraryItems] = useState<LibraryItem[]>([]);
@@ -97,6 +98,7 @@ export function CalendarView() {
     settings,
     year,
     month,
+    animeDub,
   });
 
   useEffect(() => {
@@ -121,7 +123,10 @@ export function CalendarView() {
     const hideAnime = (list: CalendarItem[]) =>
       settings.hideContent.anime ? list.filter((i) => !i.isAnime) : list;
     if (source !== "all" && source !== "simkl-anticipated") return hideAnime(items);
-    let out = hideAnime(applyCalendarFilter(items, filter));
+    // All upcoming is exclusively movies and TV; anime has its own source.
+    const activeFilter: CalendarFilter = source === "all" && filter === "anime" ? "all" : filter;
+    let out = hideAnime(applyCalendarFilter(items, activeFilter));
+    if (source === "all") out = out.filter((item) => !item.isAnime);
     if (source === "all" && watchlistOnly) {
       out = out.filter((i) => {
         const t = i.type === "tv" ? "tv" : "movie";
@@ -170,8 +175,11 @@ export function CalendarView() {
 
   const showAllControls = source === "all";
   const showPremiereFilters = source === "simkl-anticipated";
+  const hideTypeTag = source === "anime";
   const filtersActiveCount = buildActiveCount(settings.customCalendar);
-  const filters = settings.hideContent.anime ? FILTERS.filter((f) => f.id !== "anime") : FILTERS;
+  const filters = settings.hideContent.anime || source === "all"
+    ? FILTERS.filter((f) => f.id !== "anime")
+    : FILTERS;
 
   let body: React.ReactNode;
   if (source === "library" && !authKey) {
@@ -183,7 +191,14 @@ export function CalendarView() {
   } else if (loading && filtered.length === 0) {
     body = <CalendarSkeleton />;
   } else if (filtered.length === 0) {
-    body = <EmptyState source={source} filter={filter} watchlistOnly={watchlistOnly} />;
+    body = (
+      <EmptyState
+        source={source}
+        filter={filter}
+        watchlistOnly={watchlistOnly}
+        animeDub={animeDub}
+      />
+    );
   } else {
     body = (
       <MonthGrid
@@ -193,6 +208,7 @@ export function CalendarView() {
         weekStartsMonday={settings.weekStartsMonday}
         onOpenItem={openItem}
         onOpenDay={(iso) => setDayModal(iso)}
+        hideTypeTag={hideTypeTag}
       />
     );
   }
@@ -249,6 +265,28 @@ export function CalendarView() {
             traktConnected={traktConnected}
             simklConnected={simklConnected}
           />
+          {source === "anime" && (
+            <div className="flex items-center gap-1 rounded-full border border-edge-soft bg-elevated/30 p-1">
+              {(["sub", "dub"] as const).map((mode) => {
+                const activeMode = animeDub === (mode === "dub");
+                return (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => setAnimeDub(mode === "dub")}
+                    aria-pressed={activeMode}
+                    className={`rounded-full px-4 py-1.5 text-[12.5px] font-semibold transition-colors ${
+                      activeMode
+                        ? "bg-ink text-canvas"
+                        : "text-ink-muted hover:bg-raised/60 hover:text-ink"
+                    }`}
+                  >
+                    {t(mode === "sub" ? "Sub" : "Dub")}
+                  </button>
+                );
+              })}
+            </div>
+          )}
           <button
             onClick={() => update({ weekStartsMonday: !settings.weekStartsMonday })}
             className={`rounded-full px-4 py-1.5 text-[12.5px] font-semibold transition-colors ${
@@ -397,6 +435,7 @@ export function CalendarView() {
             setDayModal(null);
             openItem(it);
           }}
+          hideTypeTag={hideTypeTag}
         />
       )}
 

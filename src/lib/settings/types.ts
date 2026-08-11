@@ -523,7 +523,8 @@ export type Settings = {
     | "anticipated"
     | "custom"
     | "simkl"
-    | "simkl-anticipated";
+    | "simkl-anticipated"
+    | "anime";
   simklHomeRailsEnabled: boolean;
   simklUpNextRailEnabled: boolean;
   simklTrendingRailEnabled: boolean;

@@ -1991,6 +1991,31 @@ fn normalize_subtitle_bytes(
     text.trim_start_matches('\u{feff}').as_bytes().to_vec()
 }
 
+fn extract_subtitle_from_zip(bytes: &[u8]) -> Option<Vec<u8>> {
+    const SUB_EXTS: &[&str] = &["srt", "ass", "ssa", "vtt", "sub"];
+    let mut archive = zip::ZipArchive::new(std::io::Cursor::new(bytes)).ok()?;
+    let mut best: Option<(usize, u64)> = None;
+    for i in 0..archive.len() {
+        let entry = archive.by_index(i).ok()?;
+        if entry.is_dir() {
+            continue;
+        }
+        let name = entry.name().to_ascii_lowercase();
+        let ext = name.rsplit('.').next().unwrap_or("");
+        if SUB_EXTS.contains(&ext) {
+            let size = entry.size();
+            if best.is_none_or(|(_, best_size)| size > best_size) {
+                best = Some((i, size));
+            }
+        }
+    }
+    let (idx, _) = best?;
+    let mut file = archive.by_index(idx).ok()?;
+    let mut out = Vec::with_capacity(file.size() as usize);
+    std::io::Read::read_to_end(&mut file, &mut out).ok()?;
+    Some(out)
+}
+
 fn prepare_subtitle_download(
     url: &str,
     content_type: Option<&str>,
@@ -2161,6 +2186,11 @@ pub async fn sub_download(
         decoded
     } else {
         raw.to_vec()
+    };
+    let unpacked = if unpacked.len() >= 4 && &unpacked[..4] == b"PK\x03\x04" {
+        extract_subtitle_from_zip(&unpacked).unwrap_or(unpacked)
+    } else {
+        unpacked
     };
     let (ext, bytes) = prepare_subtitle_download(
         &url,

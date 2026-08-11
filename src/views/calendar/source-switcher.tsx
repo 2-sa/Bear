@@ -1,4 +1,4 @@
-import { Library, Globe, Star } from "lucide-react";
+import { Library, Globe, Sparkles, Star } from "lucide-react";
 import type { ReactNode } from "react";
 import traktLogo from "@/assets/trakt.svg";
 import simklLogo from "@/assets/simkl.png";
@@ -58,6 +58,12 @@ const OPTIONS: Option[] = [
     label: "Simkl premieres",
     icon: SimklGlyph,
     hint: "New shows and anime premiering this month, from Simkl",
+  },
+  {
+    id: "anime",
+    label: "Anime",
+    icon: () => <Sparkles size={13} strokeWidth={2.2} />,
+    hint: "Anime episodes airing this month, sub or dub",
   },
   {
     id: "custom",

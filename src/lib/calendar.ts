@@ -14,6 +14,7 @@ export type CalendarItem = {
   poster: string | null;
   background: string | null;
   releaseDate: string;
+  releaseTime?: string;
   isAnime: boolean;
   overview: string;
   voteAverage: number;
