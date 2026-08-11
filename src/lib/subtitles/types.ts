@@ -6,6 +6,7 @@ export type SubResult = {
   lang: string;
   langName?: string;
   title?: string;
+  displayTitle?: string;
   source:
     | "wyzie"
     | "addon"

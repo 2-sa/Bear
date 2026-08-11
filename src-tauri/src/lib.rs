@@ -754,6 +754,7 @@ pub fn run() {
             modal_overlay::modal_overlay_close,
             modal_overlay::modal_overlay_emit_state,
             modal_overlay::modal_overlay_emit_action,
+            modal_overlay::modal_overlay_emit_result,
             modal_overlay::modal_overlay_sync,
             modal_overlay::modal_overlay_get_pending,
             hdr_overlay::hdr_overlay_open,

@@ -3,6 +3,7 @@ import { useAuth } from "@/lib/auth";
 import type { Addon } from "@/lib/addons";
 import { gatherSubtitleAddons } from "@/lib/subtitles/addon-source";
 import { languageName } from "@/lib/subtitles/language";
+import { subtitleStreamDescriptor } from "@/lib/subtitles/provider-label";
 import { searchSubtitles } from "@/lib/subtitles/search";
 import type { SubResult } from "@/lib/subtitles/types";
 import { useSettings } from "@/lib/settings";
@@ -34,7 +35,7 @@ export function useSubtitleChoices(src: PlayerSrc) {
   const preferredLangs = useMemo(() => {
     const primary = settings.preferredSubLangs?.length
       ? settings.preferredSubLangs
-      : settings.preferredLanguages ?? [];
+      : (settings.preferredLanguages ?? []);
     const base = primary.length > 0 ? primary : ["English"];
     return isAnimeSrc(src) ? base : base.filter((l) => !isJapanese(l));
   }, [settings.preferredSubLangs, settings.preferredLanguages, src.meta.id]);
@@ -60,7 +61,9 @@ export function useSubtitleChoices(src: PlayerSrc) {
       );
       const animeIds = candidateIds.some((i) => i.startsWith("kitsu:") || i.startsWith("mal:"));
       const imdbEpAligned =
-        !animeIds || src.episode?.imdbEpisode == null || src.episode.episode === src.episode.imdbEpisode;
+        !animeIds ||
+        src.episode?.imdbEpisode == null ||
+        src.episode.episode === src.episode.imdbEpisode;
       try {
         const r = await searchSubtitles(
           {
@@ -69,13 +72,13 @@ export function useSubtitleChoices(src: PlayerSrc) {
             candidateIds,
             type: src.meta.type === "series" ? "series" : "movie",
             season: imdbEpAligned
-              ? src.episode?.imdbSeason ?? src.episode?.season
+              ? (src.episode?.imdbSeason ?? src.episode?.season)
               : src.episode?.season,
             episode: imdbEpAligned
-              ? src.episode?.imdbEpisode ?? src.episode?.episode
+              ? (src.episode?.imdbEpisode ?? src.episode?.episode)
               : src.episode?.episode,
             langs: preferredLangs,
-            filename: src.streamRef?.parsedTitle ?? src.streamRef?.title ?? undefined,
+            filename: subtitleStreamDescriptor(src.streamRef),
           },
           {
             timeoutMs: 7_000,

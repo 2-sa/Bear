@@ -43,8 +43,8 @@ function isPlayingTarget(a: TitleTarget, b: TitleTarget): boolean {
 
 const searchCache = new Map<string, SubResult[]>();
 
-function cacheKey(tgt: TitleTarget): string {
-  return `${tgt.imdbId}|${tgt.type}|${tgt.title}|${tgt.season ?? ""}|${tgt.episode ?? ""}`;
+function cacheKey(tgt: TitleTarget, filename?: string | null): string {
+  return `${tgt.imdbId}|${tgt.type}|${tgt.title}|${tgt.season ?? ""}|${tgt.episode ?? ""}|${filename ?? ""}`;
 }
 
 type SavedSearchState = {
@@ -110,7 +110,14 @@ export function SearchSection(props: SubtitleMenuProps) {
   const scrollTopRef = useRef(restorable?.scrollTop ?? 0);
   const scrollRestored = useRef(false);
   const [results, setResults] = useState<SubResult[] | null>(() =>
-    restorable ? (searchCache.get(cacheKey(restorable.target)) ?? null) : null,
+    restorable
+      ? (searchCache.get(
+          cacheKey(
+            restorable.target,
+            isPlayingTarget(restorable.target, playingTarget) ? playbackContext?.filename : null,
+          ),
+        ) ?? null)
+      : null,
   );
   const [loading, setLoading] = useState(false);
   const [hideHI, setHideHI] = useState(restorable?.hideHI ?? false);
@@ -119,7 +126,7 @@ export function SearchSection(props: SubtitleMenuProps) {
   const [filtersOpen, setFiltersOpen] = useState(restorable?.filtersOpen ?? true);
   const [addons, setAddons] = useState<Addon[] | null>(null);
   const [addonsLoading, setAddonsLoading] = useState(true);
-  const initialSearchDone = useRef(false);
+  const lastAutoSearchKey = useRef<string | null>(null);
   const searchSeq = useRef(0);
   const [pendingSources, setPendingSources] = useState(0);
 
@@ -180,13 +187,14 @@ export function SearchSection(props: SubtitleMenuProps) {
       const playing = isPlayingTarget(tgt, playingTarget) ? playbackContext : null;
       const searchQuery = {
         imdbId: tgt.imdbId || undefined,
-        title: tgt.imdbId ? undefined : tgt.title || undefined,
+        title: tgt.title || undefined,
         type: tgt.type,
         season: tgt.season ?? undefined,
         episode: tgt.episode ?? undefined,
         langs: settings.preferredSubLangs ?? [],
         candidateIds: playing?.candidateIds,
         stremioId: playing?.stremioId ?? undefined,
+        filename: playing?.filename ?? undefined,
       };
       const searchOpts: SearchOptions = {
         providers: {
@@ -214,7 +222,7 @@ export function SearchSection(props: SubtitleMenuProps) {
       const r = await searchSubtitles(searchQuery, searchOpts);
       if (seq !== searchSeq.current) return;
       setResults(r);
-      searchCache.set(cacheKey(tgt), r);
+      searchCache.set(cacheKey(tgt, playing?.filename), r);
       setPendingSources(0);
     } finally {
       setLoading(false);
@@ -222,16 +230,19 @@ export function SearchSection(props: SubtitleMenuProps) {
   };
 
   useEffect(() => {
-    if (addons === null || addonsLoading || initialSearchDone.current) return;
+    if (addons === null || addonsLoading) return;
     if (!target.imdbId && !target.title) return;
-    initialSearchDone.current = true;
-    const cached = searchCache.get(cacheKey(target));
+    const playing = isPlayingTarget(target, playingTarget) ? playbackContext : null;
+    const key = cacheKey(target, playing?.filename);
+    if (lastAutoSearchKey.current === key) return;
+    lastAutoSearchKey.current = key;
+    const cached = searchCache.get(key);
     if (cached) {
       setResults(cached);
       return;
     }
     void run(target);
-  }, [addons, addonsLoading]);
+  }, [addons, addonsLoading, target, playingTarget, playbackContext]);
 
   useEffect(() => {
     if (!suggestOpen) return;

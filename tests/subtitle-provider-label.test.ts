@@ -2,7 +2,11 @@
 import assert from "node:assert/strict";
 // @ts-expect-error Node test types are intentionally outside the browser-only tsconfig.
 import test from "node:test";
-import { subtitleTitleOf } from "../src/lib/subtitles/provider-label.ts";
+import {
+  subtitleContextTitle,
+  subtitleStreamDescriptor,
+  subtitleTitleOf,
+} from "../src/lib/subtitles/provider-label.ts";
 
 test("loaded addon subtitles use their release as the visible track title", () => {
   assert.equal(
@@ -35,6 +39,45 @@ test("the provider name remains the safe fallback when no release details exist"
       url: "https://example.invalid/subtitles",
     }),
     "AIOStreams | ElfHosted",
+  );
+});
+
+test("an opaque addon subtitle uses playback details without replacing its provider", () => {
+  const displayTitle = subtitleContextTitle({
+    title: "The Sopranos",
+    season: 2,
+    episode: 2,
+    filename: "The.Sopranos.S02E02.1080p.BluRay.x264-OFT.mkv",
+  });
+
+  assert.equal(displayTitle, "The Sopranos · S02E02 · BluRay · 1080p · x264");
+  assert.equal(
+    subtitleTitleOf({
+      source: "addon",
+      title: "AIOStreams | ElfHosted",
+      displayTitle,
+      url: "https://example.invalid/i",
+    }),
+    displayTitle,
+  );
+});
+
+test("preserves selected stream quality when the parsed title only contains the movie name", () => {
+  const descriptor = subtitleStreamDescriptor({
+    title: "The Lord of the Rings: The Return of the King",
+    parsedTitle: "The Lord of the Rings: The Return of the King",
+    source: "REMUX",
+    resolution: "4K",
+    quality: "4K · Dolby Vision · TrueHD 7.1",
+    releaseGroup: "FRAMESTOR",
+  });
+
+  assert.equal(
+    subtitleContextTitle({
+      title: "The Lord of the Rings: The Return of the King",
+      filename: descriptor,
+    }),
+    "The Lord of the Rings: The Return of the King · REMUX · 2160p · Dolby Vision · TrueHD",
   );
 });
 

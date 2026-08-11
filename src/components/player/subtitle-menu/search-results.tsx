@@ -1,4 +1,13 @@
-import { Check, ChevronDown, ChevronLeft, ChevronRight, Loader2, Plus, Save, X } from "lucide-react";
+import {
+  Check,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+  Plus,
+  Save,
+  X,
+} from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Flag } from "@/components/flag";
 import { useContextMenu } from "@/lib/context-menu";
@@ -21,7 +30,10 @@ function isMeaningful(s: string | undefined | null): s is string {
 function filenameFromUrl(url: string): string | null {
   try {
     const last = decodeURIComponent(url.split(/[?#]/)[0].split("/").pop() ?? "");
-    const withoutExt = last.replace(/\.(srt|vtt|ass|ssa|sub|zip)$/i, "").replace(/[._]+/g, " ").trim();
+    const withoutExt = last
+      .replace(/\.(srt|vtt|ass|ssa|sub|zip)$/i, "")
+      .replace(/[._]+/g, " ")
+      .trim();
     return isMeaningful(withoutExt) ? withoutExt : null;
   } catch {
     return null;
@@ -65,7 +77,9 @@ export function LangGroup({
         className="flex w-full select-none items-center gap-2 bg-canvas/40 px-4 py-2 text-start transition-colors hover:bg-canvas/60"
       >
         <Flag language={lang} size="sm" showLabel={false} />
-        <span className="text-[11.5px] font-bold uppercase tracking-[0.16em] text-ink-muted">{lang}</span>
+        <span className="text-[11.5px] font-bold uppercase tracking-[0.16em] text-ink-muted">
+          {lang}
+        </span>
         <span className="text-[11px] tabular-nums text-ink-subtle">{items.length}</span>
         {open && pageCount > 1 && (
           <span className="ms-1 flex items-center gap-0.5">
@@ -106,7 +120,12 @@ export function LangGroup({
       </div>
       {open &&
         pageItems.map((r) => (
-          <ResultRow key={`${r.source}:${r.id}:${r.url}`} result={r} lang={lang} onAdd={() => onAdd(r)} />
+          <ResultRow
+            key={`${r.source}:${r.id}:${r.url}`}
+            result={r}
+            lang={lang}
+            onAdd={() => onAdd(r)}
+          />
         ))}
     </div>
   );
@@ -205,6 +224,7 @@ function ResultRow({
   const primaryName =
     (isMeaningful(result.release) ? result.release : null) ||
     filenameFromUrl(result.url) ||
+    result.displayTitle ||
     result.title ||
     lang;
   const sourceLabel = result.title && result.title !== primaryName ? result.title : null;
@@ -223,7 +243,11 @@ function ResultRow({
       >
         <span
           className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${
-            added ? "bg-emerald-400/20 text-emerald-300" : addStatus ? "bg-red-400/20 text-red-300" : ""
+            added
+              ? "bg-emerald-400/20 text-emerald-300"
+              : addStatus
+                ? "bg-red-400/20 text-red-300"
+                : ""
           }`}
         >
           {adding ? (
@@ -233,7 +257,11 @@ function ResultRow({
           ) : addStatus ? (
             <X size={12} strokeWidth={3} className="animate-in zoom-in-50 duration-200" />
           ) : (
-            <Plus size={14} strokeWidth={2.4} className="text-ink-subtle transition-colors group-hover:text-ink" />
+            <Plus
+              size={14}
+              strokeWidth={2.4}
+              className="text-ink-subtle transition-colors group-hover:text-ink"
+            />
           )}
         </span>
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
@@ -310,7 +338,11 @@ function ResultRow({
           }
         }}
         className={`mt-0.5 inline-flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-md transition-colors ${
-          saved ? "text-accent" : downloadStatus ? "text-red-400" : "text-ink-subtle hover:bg-elevated hover:text-ink"
+          saved
+            ? "text-accent"
+            : downloadStatus
+              ? "text-red-400"
+              : "text-ink-subtle hover:bg-elevated hover:text-ink"
         }`}
       >
         {busy ? (
@@ -327,12 +359,22 @@ function ResultRow({
   );
 }
 
-export function FilterChip({ active, onClick, children }: { active: boolean; onClick: () => void; children: ReactNode }) {
+export function FilterChip({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: ReactNode;
+}) {
   return (
     <button
       onClick={onClick}
       className={`flex h-7 items-center rounded-full px-2.5 text-[11.5px] font-semibold transition-colors ${
-        active ? "bg-elevated text-ink ring-1 ring-edge" : "bg-raised text-ink-muted hover:bg-elevated/80"
+        active
+          ? "bg-elevated text-ink ring-1 ring-edge"
+          : "bg-raised text-ink-muted hover:bg-elevated/80"
       }`}
     >
       {children}
