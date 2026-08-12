@@ -188,9 +188,7 @@ export function Settings() {
   const [savedKey, setSavedKey] = useState<SavedKey | null>(null);
   const { settingsSectionRequest } = useView();
   const [active, setActive] = useState<SectionId>(
-    settingsSectionRequest.section === "support"
-      ? "account"
-      : (settingsSectionRequest.section as SectionId | null) ?? "account",
+    (settingsSectionRequest.section as SectionId | null) ?? "account",
   );
   const [relayMode, setRelayMode] = useState<RelayMode>("panel");
   const [pendingAnchor, setPendingAnchor] = useState<string | null>(null);
@@ -205,7 +203,7 @@ export function Settings() {
 
   useEffect(() => {
     if (settingsSectionRequest.section) {
-      setActive(settingsSectionRequest.section === "support" ? "account" : settingsSectionRequest.section as SectionId);
+      setActive(settingsSectionRequest.section as SectionId);
     }
   }, [settingsSectionRequest]);
 
