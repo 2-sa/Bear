@@ -252,6 +252,22 @@ const used: Record<string, string> = {
   "AniList has no anime episodes scheduled to air this month. Try a different month.":
     "لا يتضمن جدول AniList حلقات أنمي ستُعرض هذا الشهر. جرّب شهرًا آخر.",
   "Loading settings": "جارٍ تحميل الإعدادات",
+  "GPU shaders that reshape the picture as it plays: Anime4K upscaling, HDR tone-mapping, neural upscalers, and sharpeners. Download the ones you want and Bear applies them in the mpv engine.":
+    "مظللات تعمل عبر معالج الرسوم لتحسين الصورة أثناء التشغيل، مثل Anime4K وتحويل HDR وأدوات رفع الدقة والحدة. نزّل ما تريده وسيطبقه Bear عبر محرك mpv.",
+  "Anime4K presets": "إعدادات Anime4K المسبقة",
+  "GPU shaders that sharpen lines and clean up gradients on anime as it plays. Pick a mode, Bear handles the shaders.":
+    "مظللات تحسّن حدة الخطوط وتنعّم تدرجات الألوان أثناء تشغيل الأنمي. اختر الوضع وسيتولى Bear تطبيقها.",
+  "One-time setup downloads the shader pack (about 1 MB) into Bear. No files to hunt down.":
+    "إعداد لمرة واحدة ينزّل حزمة المظللات (نحو 1 م.ب) داخل Bear دون الحاجة للبحث عن الملفات يدويًا.",
+  "Downloading shaders…": "جارٍ تنزيل المظللات…",
+  "Set up Anime4K": "إعداد Anime4K",
+  "Performance": "الأداء",
+  "Shaders installed": "تم تثبيت المظللات",
+  "Updating…": "جارٍ التحديث…",
+  "Updated": "تم التحديث",
+  "Re-download": "إعادة التنزيل",
+  "Download failed. Check your connection and try again.": "فشل التنزيل. تحقق من اتصالك وحاول مرة أخرى.",
+  "remote shader downloads are disabled by security policy": "تنزيل المظللات البعيدة معطّل وفق سياسة الأمان.",
 };
 
 export default used;

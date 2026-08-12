@@ -113,14 +113,14 @@ pub async fn shader_download(
     id: String,
     force: bool,
 ) -> Result<String, String> {
-    if !crate::security_policy::remote_native_assets_enabled() {
+    if !crate::security_policy::known_shader_downloads_enabled() {
         return Err("remote shader downloads are disabled by security policy".into());
     }
     let pack = find_pack(&id).ok_or_else(|| format!("unknown shader pack: {}", id))?;
     let dir = pack_dir(&app, &id)?;
     std::fs::create_dir_all(&dir).map_err(|e| format!("create dir: {}", e))?;
     let client = reqwest::Client::builder()
-        .user_agent("Harbor")
+        .user_agent("Bear")
         .build()
         .map_err(|e| e.to_string())?;
     for (remote, local) in pack.files {

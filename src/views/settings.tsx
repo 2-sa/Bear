@@ -41,7 +41,6 @@ const StreamBadgesPanel = lazy(() => import("./settings/stream-badges-panel").th
 const AwardIconsPanel = lazy(() => import("./settings/award-icons-panel").then((m) => ({ default: m.AwardIconsPanel })));
 const WebhooksPanel = lazy(() => import("./settings/webhooks-panel").then((m) => ({ default: m.WebhooksPanel })));
 const BugReportPanel = lazy(() => import("./settings/bug-report-panel").then((m) => ({ default: m.BugReportPanel })));
-const SupportPanel = lazy(() => import("./settings/support-panel").then((m) => ({ default: m.SupportPanel })));
 const RemotesPanel = lazy(() => import("./settings/remotes-panel").then((m) => ({ default: m.RemotesPanel })));
 const StoragePanel = lazy(() => import("./settings/storage-panel").then((m) => ({ default: m.StoragePanel })));
 const AdvancedPanel = lazy(() => import("./settings/advanced-panel").then((m) => ({ default: m.AdvancedPanel })));
@@ -157,10 +156,6 @@ const SECTION_META: Record<SectionId, { label: string; sub: string }> = {
     label: "Report a bug",
     sub: "Send a bug report straight to the Bear team. Screenshots and screen recordings welcome.",
   },
-  support: {
-    label: "Support Harbor",
-    sub: "Who keeps the lights on, what Harbor is built on, and where to put money if you want to.",
-  },
   remotes: {
     label: "Remotes",
     sub: "Bear on your other devices: the web app, the phone remote, and the manga reader remote.",
@@ -193,7 +188,9 @@ export function Settings() {
   const [savedKey, setSavedKey] = useState<SavedKey | null>(null);
   const { settingsSectionRequest } = useView();
   const [active, setActive] = useState<SectionId>(
-    (settingsSectionRequest.section as SectionId | null) ?? "account",
+    settingsSectionRequest.section === "support"
+      ? "account"
+      : (settingsSectionRequest.section as SectionId | null) ?? "account",
   );
   const [relayMode, setRelayMode] = useState<RelayMode>("panel");
   const [pendingAnchor, setPendingAnchor] = useState<string | null>(null);
@@ -207,7 +204,9 @@ export function Settings() {
   };
 
   useEffect(() => {
-    if (settingsSectionRequest.section) setActive(settingsSectionRequest.section as SectionId);
+    if (settingsSectionRequest.section) {
+      setActive(settingsSectionRequest.section === "support" ? "account" : settingsSectionRequest.section as SectionId);
+    }
   }, [settingsSectionRequest]);
 
   useEffect(() => {
@@ -407,7 +406,6 @@ export function Settings() {
           {active === "webhooks" && <WebhooksPanel />}
 
           {active === "bug" && <BugReportPanel />}
-          {active === "support" && <SupportPanel />}
 
           {active === "remotes" && <RemotesPanel />}
 

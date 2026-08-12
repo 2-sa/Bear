@@ -72,13 +72,13 @@ pub fn anime4k_dir(app: tauri::AppHandle) -> Result<Option<String>, String> {
 
 #[tauri::command]
 pub async fn anime4k_download(app: tauri::AppHandle, force: bool) -> Result<String, String> {
-    if !crate::security_policy::remote_native_assets_enabled() {
+    if !crate::security_policy::known_shader_downloads_enabled() {
         return Err("remote shader downloads are disabled by security policy".into());
     }
     let dir = shaders_dir(&app)?;
     std::fs::create_dir_all(&dir).map_err(|e| format!("create dir: {}", e))?;
     let client = reqwest::Client::builder()
-        .user_agent("Harbor")
+        .user_agent("Bear")
         .build()
         .map_err(|e| e.to_string())?;
     for (remote, local) in FILES {

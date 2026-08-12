@@ -10,6 +10,10 @@ pub(crate) fn remote_native_assets_enabled() -> bool {
     false
 }
 
+pub(crate) fn known_shader_downloads_enabled() -> bool {
+    true
+}
+
 #[cfg(test)]
 mod tests {
     #[test]
@@ -25,5 +29,10 @@ mod tests {
     #[test]
     fn remote_native_assets_are_disabled_by_default() {
         assert!(!super::remote_native_assets_enabled());
+    }
+
+    #[test]
+    fn known_shader_downloads_are_enabled() {
+        assert!(super::known_shader_downloads_enabled());
     }
 }
