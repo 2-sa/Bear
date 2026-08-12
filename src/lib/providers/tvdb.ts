@@ -356,7 +356,8 @@ const ISO1_TO_TVDB: Record<string, string> = {
 };
 
 export function tvdbLangFromIso1(iso1: string | null | undefined): string {
-  return ISO1_TO_TVDB[(iso1 ?? "").toLowerCase()] ?? "eng";
+  const short = (iso1 ?? "").split("-")[0].toLowerCase();
+  return ISO1_TO_TVDB[short] ?? "eng";
 }
 
 export async function tvdbEpisodesByType(
@@ -414,11 +415,13 @@ export async function tvdbOrderTypeHasEpisodes(
 export async function tvdbEpisodesAbsolute(
   apiKey: string,
   seriesId: number,
+  lang?: string,
 ): Promise<TvdbEpisode[]> {
   if (!seriesId) return [];
   const out: TvdbEpisode[] = [];
+  const langSeg = lang ? `/${lang}` : "";
   for (let page = 0; page < 12; page++) {
-    const data = await getJson<any>(apiKey, `/series/${seriesId}/episodes/absolute?page=${page}`);
+    const data = await getJson<any>(apiKey, `/series/${seriesId}/episodes/absolute${langSeg}?page=${page}`);
     const arr = (data?.episodes ?? []) as any[];
     if (arr.length === 0) break;
     for (const e of arr) {

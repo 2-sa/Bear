@@ -1,6 +1,7 @@
 import { pickEpisodeTitle, type AniZipMapping } from "@/lib/providers/anizip";
 import type { AnimeKitsuMeta } from "@/lib/providers/anime-kitsu-addon";
 import type { KitsuEpisode } from "@/lib/providers/kitsu";
+import type { TvdbEpisode } from "@/lib/providers/tvdb";
 
 export function buildKitsuEpisodes(
   addonMeta: AnimeKitsuMeta | null,
@@ -58,6 +59,46 @@ export function mergeAniZipEpisodes(episodes: KitsuEpisode[], aniZip: AniZipMapp
       if (azImdb) ep.imdbId = azImdb;
       if (ep.imdbSeason == null) ep.imdbSeason = az.seasonNumber;
       if (ep.imdbEpisode == null) ep.imdbEpisode = az.episodeNumber;
+    }
+  }
+}
+
+export function mergeTvdbEpisodes(episodes: KitsuEpisode[], tvdbEps: TvdbEpisode[] | null): void {
+  if (!tvdbEps || tvdbEps.length === 0) return;
+  const tvdbById = new Map<number, TvdbEpisode>();
+  const tvdbByAbsolute = new Map<number, TvdbEpisode>();
+  const tvdbBySeasonAndEpisode = new Map<string, TvdbEpisode>();
+
+  for (const e of tvdbEps) {
+    tvdbById.set(e.id, e);
+    if (e.absoluteNumber != null) tvdbByAbsolute.set(e.absoluteNumber, e);
+    tvdbBySeasonAndEpisode.set(`${e.seasonNumber}:${e.number}`, e);
+  }
+
+  for (const ep of episodes) {
+    let tvdbEp: TvdbEpisode | undefined;
+
+    if (ep.tvdbEpisodeId) tvdbEp = tvdbById.get(ep.tvdbEpisodeId);
+    if (!tvdbEp && ep.absoluteNumber) tvdbEp = tvdbByAbsolute.get(ep.absoluteNumber);
+    if (!tvdbEp && ep.imdbSeason != null && ep.imdbEpisode != null) {
+      tvdbEp = tvdbBySeasonAndEpisode.get(`${ep.imdbSeason}:${ep.imdbEpisode}`);
+    }
+    if (!tvdbEp) tvdbEp = tvdbBySeasonAndEpisode.get(`${ep.seasonNumber}:${ep.number}`);
+    if (!tvdbEp) tvdbEp = tvdbByAbsolute.get(ep.number);
+
+    if (tvdbEp) {
+      if (tvdbEp.name && (!ep.title || ep.title === `Episode ${ep.number}`)) {
+        ep.title = tvdbEp.name;
+      }
+      if (tvdbEp.aired) ep.airdate = tvdbEp.aired;
+      if (tvdbEp.overview && !ep.synopsis) ep.synopsis = tvdbEp.overview;
+      if (tvdbEp.image) {
+        if (ep.thumbnail && ep.thumbnail !== tvdbEp.image && !ep.thumbnailFallback) {
+          ep.thumbnailFallback = ep.thumbnail;
+        }
+        ep.thumbnail = tvdbEp.image;
+      }
+      if (tvdbEp.runtime && !ep.length) ep.length = tvdbEp.runtime;
     }
   }
 }

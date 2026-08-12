@@ -1,6 +1,6 @@
 import type { Meta } from "@/lib/cinemeta";
 import { aniZipByKitsu } from "@/lib/providers/anizip";
-import { buildKitsuEpisodes, mergeAniZipEpisodes } from "@/lib/providers/anime-episode-build";
+import { buildKitsuEpisodes, mergeAniZipEpisodes, mergeTvdbEpisodes } from "@/lib/providers/anime-episode-build";
 import { animeKitsuMeta } from "@/lib/providers/anime-kitsu-addon";
 import { kitsuToTvdb, kitsuToImdb, externalToKitsu, kitsuToAnilist } from "@/lib/providers/anime-mapping";
 import { anilistFranchise, type AnilistFranchiseNode } from "@/lib/anilist/relations";
@@ -8,6 +8,7 @@ import { anilistArtById, anilistRecommendations } from "@/lib/anilist/browse";
 import { enrichEpisodes } from "@/lib/providers/anime-episode-enrich";
 import { fanartMovie, fanartTv } from "@/lib/providers/fanart";
 import { fetchTvdbArtwork } from "@/lib/providers/tvdb-proxy";
+import { tvdbEpisodesByType, tvdbEpisodesAbsolute, tvdbLangFromIso1 } from "@/lib/providers/tvdb";
 import {
   kitsuAnime,
   kitsuCharacters,
@@ -356,7 +357,7 @@ export async function animeDetails(
   const effectiveSlugs =
     anime.genreSlugs.length > 0 ? anime.genreSlugs : anime.genres.map(slugify).filter(Boolean);
 
-  const [kitsuRawEpisodes, characters, related, studios, streamers, genreSimilar, aniZip, anilistRecs] =
+  const [kitsuRawEpisodes, characters, related, studios, streamers, genreSimilar, aniZip, anilistRecs, tvdbEpsRaw] =
     await Promise.all([
       kitsuEpisodes(kitsuId, 100),
       kitsuCharacters(kitsuId, 30),
@@ -370,10 +371,25 @@ export async function animeDetails(
       kitsuToAnilist(kitsuId)
         .then((aid) => (aid ? anilistRecommendations(aid) : []))
         .catch(() => [] as Meta[]),
+      kitsuToTvdb(kitsuId)
+        .then((tid) => {
+          if (!tid) return null;
+          const lang = tvdbLangFromIso1(settings.tmdbLanguage || settings.uiLanguage);
+          return Promise.all([
+            tvdbEpisodesByType(settings.tvdbKey ?? "", tid, "default", lang),
+            tvdbEpisodesAbsolute(settings.tvdbKey ?? "", tid, lang)
+          ]).then(([def, abs]) => {
+            const all = [...def, ...abs];
+            const unique = new Map(all.map(e => [e.id, e]));
+            return Array.from(unique.values());
+          });
+        })
+        .catch(() => null),
     ]);
 
   const episodes = buildKitsuEpisodes(addonMeta, kitsuRawEpisodes);
   mergeAniZipEpisodes(episodes, aniZip);
+  mergeTvdbEpisodes(episodes, tvdbEpsRaw);
 
   let seriesImdb = aniZip?.mappings?.imdb_id ?? episodes.find((e) => e.imdbId)?.imdbId ?? null;
   if (!seriesImdb) seriesImdb = await kitsuToImdb(kitsuId).catch(() => null);
