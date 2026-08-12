@@ -389,7 +389,7 @@ checksum = "2af50177e190e07a26ab74f8b1efbfe2ef87da2116221318cb1c2e82baf7de06"
 
 [[package]]
 name = "bear"
-version = "0.9.132"
+version = "0.9.133"
 dependencies = [
  "axum",
  "base64 0.22.1",
