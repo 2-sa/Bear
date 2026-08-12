@@ -338,11 +338,6 @@ export const Hero = memo(function Hero({
           {ended ? <RotateCcw size={18} /> : muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
         </button>
       )}
-      <div
-        className="absolute inset-0 bg-gradient-to-r from-canvas via-canvas/85 via-50% to-transparent rtl:bg-gradient-to-l"
-        style={{ opacity: settings.heroShadow / 100 }}
-      />
-      <div className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-canvas via-canvas/70 via-50% to-transparent" />
       <MetaAwardsCorner meta={meta} imdbId={resolvedImdb} />
 
       <div
