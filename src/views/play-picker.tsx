@@ -585,6 +585,8 @@ export function PlayPicker({
     isTorrentioStream,
     expectHostSource,
     hostSource: hostSourceForMedia,
+    preferredSourceEntry: lastSeriesSource,
+    preferredSourceMatched: sameSourceMatch != null || previousMatch != null,
     season: !isAnimeMetaId ? (episode?.season ?? null) : null,
     episode: !isAnimeMetaId ? (episode?.episode ?? null) : null,
     addonQuorum,

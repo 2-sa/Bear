@@ -139,7 +139,8 @@ export function EpisodePanel({
           return;
         }
       }
-      const skipPreflight = r.via === "p2p" || r.via === "direct";
+      const skipPreflight =
+        r.via === "p2p" || r.via === "direct" || r.via === "local-download";
       const preflight = skipPreflight
         ? ({ ok: true } as const)
         : await preflightCheck(playUrl).catch(() => ({ ok: true }) as const);

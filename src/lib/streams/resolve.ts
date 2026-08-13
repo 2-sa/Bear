@@ -1,5 +1,6 @@
 import { safeFetch as fetch } from "@/lib/safe-fetch";
 import { dwarn } from "@/lib/debug";
+import { completedTorrentDownloadFor } from "@/lib/download/downloads-store";
 import { hasUncachedMarker } from "./cached";
 import {
   magnetFromHash,
@@ -9,7 +10,7 @@ import {
 } from "@/lib/debrid/types";
 import {
   lastEngineAddError,
-  scheduleTorrentRemoval,
+  scheduleAbandonedTorrentRemoval,
   torrentEngineAdd,
   torrentEngineSelect,
   type AddResult,
@@ -67,9 +68,27 @@ export async function resolveStream(
   forceP2p = false,
   hint?: EpisodeHint,
   allowP2pFallback = true,
+  allowCompletedDownload = true,
 ): Promise<ResolveResult> {
   const expectedSize = stream.size ?? null;
   const tried: Array<{ slug: string; code: string }> = [];
+  if (allowCompletedDownload && stream.infoHash) {
+    const completed = await completedTorrentDownloadFor(stream.infoHash, stream.fileIdx, hint);
+    if (completed) {
+      return {
+        ok: true,
+        via: "local-download",
+        data: {
+          url: completed.path,
+          fileIdx: completed.torrentFileIdx ?? stream.fileIdx,
+          filesize: completed.totalBytes ?? completed.receivedBytes,
+          notWebReady: true,
+          filename: completed.streamLabel ?? undefined,
+          subtitles: stream.subtitles?.map((s) => ({ url: s.url, lang: s.lang, id: s.id })),
+        },
+      };
+    }
+  }
 
   if (forceP2p && stream.infoHash && engineP2pEligible(stream)) {
     const direct = await tryTorrentEngine(stream, signal, hint);
@@ -295,29 +314,34 @@ async function tryLocalEngine(
     addIdx,
   );
   if (!added) return null;
-  registerAbortCleanup(added, signal);
-  if (added.files.length === 0) {
-    if (added.already_managed !== true) scheduleTorrentRemoval(added.info_hash, false, 0);
-    return null;
+  const releaseAbortCleanup = registerAbortCleanup(added, signal);
+  let handedOff = false;
+  try {
+    if (added.files.length === 0 || signal.aborted) return null;
+    const filename = stream.behaviorHints?.filename ?? stream.behaviorHints?.fileName ?? null;
+    let chosenIdx = stream.fileIdx;
+    if (chosenIdx == null || chosenIdx < 0) {
+      const season = hint?.season ?? stream.season;
+      const episode = hint?.episode ?? stream.episode;
+      chosenIdx = selectEngineFileIdx(added.files, season, episode);
+    }
+    await torrentEngineSelect(added.info_hash, chosenIdx);
+    if (signal.aborted) return null;
+    const engineUrl = `${added.stream_base}/${added.info_hash.toLowerCase()}/${chosenIdx}`;
+    handedOff = true;
+    return {
+      url: engineUrl,
+      fileIdx: chosenIdx,
+      filename: filename ?? undefined,
+      notWebReady: stream.behaviorHints?.notWebReady,
+      subtitles: stream.subtitles?.map((s) => ({ url: s.url, lang: s.lang, id: s.id })),
+    };
+  } finally {
+    releaseAbortCleanup();
+    if (added.already_managed !== true) {
+      scheduleAbandonedTorrentRemoval(added.info_hash, handedOff ? 5000 : 0);
+    }
   }
-  if (signal.aborted) return null;
-  const filename = stream.behaviorHints?.filename ?? stream.behaviorHints?.fileName ?? null;
-  let chosenIdx = stream.fileIdx;
-  if (chosenIdx == null || chosenIdx < 0) {
-    const season = hint?.season ?? stream.season;
-    const episode = hint?.episode ?? stream.episode;
-    chosenIdx = selectEngineFileIdx(added.files, season, episode);
-  }
-  await torrentEngineSelect(added.info_hash, chosenIdx);
-  if (signal.aborted) return null;
-  const engineUrl = `${added.stream_base}/${added.info_hash.toLowerCase()}/${chosenIdx}`;
-  return {
-    url: engineUrl,
-    fileIdx: chosenIdx,
-    filename: filename ?? undefined,
-    notWebReady: stream.behaviorHints?.notWebReady,
-    subtitles: stream.subtitles?.map((s) => ({ url: s.url, lang: s.lang, id: s.id })),
-  };
 }
 
 async function tryTorrentEngine(
@@ -328,11 +352,12 @@ async function tryTorrentEngine(
   return tryLocalEngine(stream, signal, hint);
 }
 
-function registerAbortCleanup(added: AddResult, signal: AbortSignal): void {
-  if (added.already_managed === true) return;
-  const cleanup = () => scheduleTorrentRemoval(added.info_hash, false);
+function registerAbortCleanup(added: AddResult, signal: AbortSignal): () => void {
+  if (added.already_managed === true) return () => {};
+  const cleanup = () => scheduleAbandonedTorrentRemoval(added.info_hash);
   if (signal.aborted) cleanup();
   else signal.addEventListener("abort", cleanup, { once: true });
+  return () => signal.removeEventListener("abort", cleanup);
 }
 
 function engineFailureCode(): string {

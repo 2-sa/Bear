@@ -87,7 +87,7 @@ export async function resolveBestDownload(
   const cached = candidates.filter((s) => isCached(s, opts.debrids)).slice(0, MAX_CACHED_TRIES);
   for (const pick of cached) {
     if (opts.signal.aborted) return null;
-    const r = await resolveStream(pick, opts.debrids, opts.signal, false, false, hint, false);
+    const r = await resolveStream(pick, opts.debrids, opts.signal, false, false, hint, false, false);
     if (r.ok && r.data.url) return { url: r.data.url, headers: r.data.headers, label: labelFor(pick) };
   }
 
@@ -98,7 +98,7 @@ export async function resolveBestDownload(
     .slice(0, MAX_P2P_TRIES);
   for (const pick of p2p) {
     if (opts.signal.aborted) return null;
-    const r = await resolveStream(pick, opts.debrids, opts.signal, true, false, hint);
+    const r = await resolveStream(pick, opts.debrids, opts.signal, true, false, hint, true, false);
     if (r.ok && r.data.url) return { url: r.data.url, headers: r.data.headers, label: labelFor(pick) };
   }
   return null;

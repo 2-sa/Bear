@@ -71,6 +71,7 @@ export async function downloadSeasonFromPack({
           false,
           { season: ep.season ?? null, episode: ep.episode ?? null },
           true,
+          false,
         ).catch(() => null);
         if (!resolved?.ok || signal.aborted) {
           if (!signal.aborted) result.failed += 1;

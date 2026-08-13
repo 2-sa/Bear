@@ -194,6 +194,7 @@ export function usePickHandler({
         forceP2p,
         hint,
         allowP2pFallback,
+        intent !== "download",
       );
       if (ac.signal.aborted) return;
       if (!r.ok) {
@@ -237,7 +238,10 @@ export function usePickHandler({
         }
       }
       const preflight =
-        intent === "download" || r.via === "p2p" || r.via === "direct"
+        intent === "download" ||
+        r.via === "p2p" ||
+        r.via === "direct" ||
+        r.via === "local-download"
           ? ({ ok: true } as const)
           : await preflightCheck(playUrl, ac.signal);
       if (ac.signal.aborted) return;

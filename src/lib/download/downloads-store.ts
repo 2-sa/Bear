@@ -24,6 +24,8 @@ export type DownloadItem = {
   episode: number | null;
   streamLabel: string | null;
   url: string;
+  torrentInfoHash?: string | null;
+  torrentFileIdx?: number | null;
   path: string;
   status: "downloading" | "paused" | "done" | "error" | "canceled" | "interrupted";
   receivedBytes: number;
@@ -146,16 +148,54 @@ function torrentOwnerId(id: string): string {
 }
 
 function retainDownloadTorrent(item: DownloadItem): void {
-  const engine = localEngineStreamRef(item.url);
+  const engine = downloadTorrentRef(item);
   if (engine) retainTorrentUsage(engine.infoHash, torrentOwnerId(item.id));
 }
 
 function releaseDownloadTorrent(item: DownloadItem): void {
-  const engine = localEngineStreamRef(item.url);
+  const engine = downloadTorrentRef(item);
   if (!engine) return;
   // The destination file is now authoritative. Remove the temporary engine
   // copy once no player or other intentional download is still using it.
   releaseTorrentUsage(engine.infoHash, torrentOwnerId(item.id), { deleteFiles: true });
+}
+
+function downloadTorrentRef(item: DownloadItem) {
+  if (item.torrentInfoHash && item.torrentFileIdx != null) {
+    return { infoHash: item.torrentInfoHash.toLowerCase(), fileIdx: item.torrentFileIdx };
+  }
+  return localEngineStreamRef(item.url);
+}
+
+export async function completedTorrentDownloadFor(
+  infoHash: string,
+  fileIdx?: number,
+  hint?: { season?: number | null; episode?: number | null },
+): Promise<DownloadItem | null> {
+  const key = infoHash.trim().toLowerCase();
+  const candidates = [...items.values()]
+    .filter((item) => {
+      if (item.status !== "done") return false;
+      const ref = downloadTorrentRef(item);
+      return ref?.infoHash === key && (fileIdx == null || ref.fileIdx === fileIdx);
+    })
+    .sort((a, b) => b.startedAt - a.startedAt);
+  const episodeMatch =
+    hint?.season != null && hint.episode != null
+      ? candidates.find(
+          (item) => item.season === hint.season && item.episode === hint.episode,
+        )
+      : null;
+  const match =
+    fileIdx != null
+      ? (candidates[0] ?? null)
+      : hint?.season != null && hint.episode != null
+        ? (episodeMatch ?? null)
+        : candidates.length === 1
+          ? candidates[0]
+          : null;
+  if (!match) return null;
+  return (await exists(match.path).catch(() => false)) ? match : null;
 }
 
 export function activeDownloadFor(
@@ -177,6 +217,7 @@ export function activeDownloadFor(
 
 export async function enqueueDownload(args: EnqueueArgs): Promise<string> {
   const { meta, episode, streamLabel, url, headers } = args;
+  const torrentRef = localEngineStreamRef(url);
   let dir = await resolveDir();
   try {
     const raw = localStorage.getItem("harbor.settings");
@@ -204,6 +245,8 @@ export async function enqueueDownload(args: EnqueueArgs): Promise<string> {
     episode: episode?.episode ?? null,
     streamLabel: streamLabel ?? null,
     url,
+    torrentInfoHash: torrentRef?.infoHash ?? null,
+    torrentFileIdx: torrentRef?.fileIdx ?? null,
     path,
     status: "downloading",
     receivedBytes: 0,
@@ -291,7 +334,7 @@ export function pauseDownload(id: string): void {
   if (!item || item.status !== "downloading" || !handle) return;
   patch(id, { status: "paused", bytesPerSec: 0 });
   handle.abort();
-  const engine = localEngineStreamRef(item.url);
+  const engine = downloadTorrentRef(item);
   if (engine) pauseTorrentUsage(engine.infoHash, torrentOwnerId(id));
 }
 

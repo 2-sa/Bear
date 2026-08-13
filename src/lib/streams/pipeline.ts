@@ -1,7 +1,7 @@
 import type { Addon } from "@/lib/addons";
 import { dlog } from "@/lib/debug";
 import type { DebridStore } from "@/lib/debrid/types";
-import { fetchAddonStreams, type StreamRequest } from "./addons";
+import { fetchAddonStreams, type AddonProgress, type StreamRequest } from "./addons";
 import type { AddonRankFn } from "./addon-priority";
 import { applyStreamPriority } from "./priority-partition";
 import { enhanceAnimeStreams } from "./anitomy";
@@ -89,7 +89,7 @@ export async function runPipeline(
   input: PipelineInput,
   signal: AbortSignal,
   onProgress?: (partial: PipelineResult) => void,
-  onAddonProgress?: (settled: number, total: number) => void,
+  onAddonProgress?: (progress: AddonProgress) => void,
 ): Promise<PipelineResult> {
   let library: Stream[] = [];
   let lastPartialAt = 0;
