@@ -312,13 +312,11 @@ export function loadStoredSettings(rawKey: string = STORAGE_KEY): Settings {
           ? parsed.fullscreenClockShowEndTime
           : DEFAULT.fullscreenClockShowEndTime,
       fullscreenClockSizePx: sanitizeFullscreenClockSize(parsed.fullscreenClockSizePx),
-      streaming: { ...DEFAULT.streaming, ...parsed.streaming },
-      subOffsetIndicatorEnabled:
-        typeof parsed.subOffsetIndicatorEnabled === "boolean"
-          ? parsed.subOffsetIndicatorEnabled
-          : DEFAULT.subOffsetIndicatorEnabled,
-      subOffsetIndicatorPosition: sanitizeSubtitleOffsetPosition(parsed.subOffsetIndicatorPosition),
-      subOffsetIndicatorSize: sanitizeSubtitleOffsetSize(parsed.subOffsetIndicatorSize),
+      streaming: { ...DEFAULT.streaming, ...(parsed.streaming ?? {}) },
+      streamingRegions: {
+        ...DEFAULT.streamingRegions,
+        ...(parsed.streamingRegions ?? {}),
+      },
       subProvidersEnabled: {
         ...DEFAULT.subProvidersEnabled,
         ...parsed.subProvidersEnabled,

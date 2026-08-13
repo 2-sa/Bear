@@ -6,7 +6,7 @@ import { Row } from "@/components/row";
 import { ServiceLogo } from "@/components/service-logo";
 import { TopRankCard } from "@/components/top-rank-card";
 import type { Meta } from "@/lib/cinemeta";
-import { SERVICES, providerIdsFor } from "@/lib/providers/streaming";
+import { SERVICES, providerIdsFor, serviceRegionFor } from "@/lib/providers/streaming";
 import { safeFetch } from "@/lib/safe-fetch";
 import { useSettings, type StreamingService } from "@/lib/settings";
 import { useScrollMemory } from "@/lib/view";
@@ -46,6 +46,7 @@ export function ServiceView({ service }: { service: StreamingService }) {
   const t = useT();
   const { settings } = useSettings();
   const meta = SERVICES[service];
+  const region = serviceRegionFor(service, settings.region, settings.streamingRegions);
   const [category, setCategory] = useState<Category>(CATEGORIES[0]);
   const [bucket, setBucket] = useState<Bucket>({ movies: [], series: [] });
   const [loading, setLoading] = useState(true);
@@ -60,7 +61,7 @@ export function ServiceView({ service }: { service: StreamingService }) {
     setBatch(0);
     setLoading(true);
     setHasMore(true);
-  }, [service, category.id, settings.tmdbKey, settings.region]);
+  }, [service, category.id, settings.tmdbKey, region]);
 
   useEffect(() => {
     if (bucket.movies.length >= MAX_PER_BUCKET && bucket.series.length >= MAX_PER_BUCKET) {
@@ -71,7 +72,7 @@ export function ServiceView({ service }: { service: StreamingService }) {
   useEffect(() => {
     let cancelled = false;
     setFetching(true);
-    fetchCategoryBatch(settings.tmdbKey, providerIdsFor(meta), settings.region, category, batch)
+    fetchCategoryBatch(settings.tmdbKey, providerIdsFor(meta), region, category, batch)
       .then((b) => {
         if (cancelled) return;
         if (b.movies.length === 0 && b.series.length === 0) setHasMore(false);
@@ -95,7 +96,7 @@ export function ServiceView({ service }: { service: StreamingService }) {
     return () => {
       cancelled = true;
     };
-  }, [batch, service, category.id, settings.tmdbKey, settings.region, meta]);
+  }, [batch, service, category.id, settings.tmdbKey, region, meta]);
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -135,7 +136,7 @@ export function ServiceView({ service }: { service: StreamingService }) {
               <ServiceLogo service={service} height={56} />
             </div>
             <p className="max-w-xl text-[14.5px] leading-relaxed text-ink-muted">
-              {t("The most-watched movies and series on {name} right now in {region}.", { name: meta.name, region: settings.region })}
+              {t("The most-watched movies and series on {name} right now in {region}.", { name: meta.name, region })}
             </p>
           </div>
         </div>

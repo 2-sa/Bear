@@ -1073,8 +1073,9 @@ const settings: Record<string, string> = {
   "Premiumize API key": "مفتاح API لـ Premiumize",
   "Debrid-Link API key": "مفتاح API لـ Debrid-Link",
   "Streaming catalogs": "كتالوجات البث",
-  "Top titles per service. Toggle off the ones you don't pay for.":
-    "أفضل العناوين لكل خدمة. أوقف الخدمات التي لا تدفع اشتراكها.",
+  "Top titles per service. Toggle off the ones you don't pay for.": "أفضل العناوين لكل خدمة. أوقف الخدمات التي لا تدفع اشتراكها.",
+  "Catalog region by service": "منطقة الكتالوج لكل خدمة",
+  "Choose which country's catalog Bear shows for services with limited regional availability. This changes TMDB listings only, not Bear's language or connection.": "اختر كتالوج الدولة الذي يعرضه بير للخدمات محدودة التوفر إقليميًا. يؤثر هذا على قوائم TMDB فقط، ولا يغيّر لغة بير أو اتصالك.",
   "Stream safety filter": "فلتر أمان البث",
   "Result order": "ترتيب النتائج",
   "Condensed shows a top pick, quality tiles, and a drawer. Stremio is a flat list grouped by addon, no scoring.":

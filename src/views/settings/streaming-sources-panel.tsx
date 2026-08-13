@@ -22,9 +22,18 @@ import { StreamFilterPreview } from "./stream-filter-preview";
 import { PickerLayoutPreview, StreamDescriptionPreview, TorrentNamePreview } from "./picker-previews";
 import { AdSkipShowcase } from "./ad-skip-showcase";
 import { StreamPriorityCard } from "./stream-priority-card";
+import { RegionPicker } from "./region-picker";
 import { useT } from "@/lib/i18n";
 
 export type DebridKey = "rd" | "tb" | "ad" | "pm" | "dl";
+
+const REGION_CONFIGURABLE_SERVICES: StreamingService[] = [
+  "hulu",
+  "disney",
+  "peacock",
+  "max",
+  "crunchyroll",
+];
 
 export function StreamingSourcesPanel({
   rdDraft,
@@ -304,6 +313,34 @@ export function StreamingSourcesPanel({
               onToggle={() => toggleStreaming(svc)}
             />
           ))}
+        </div>
+        <div className="mt-5 rounded-2xl border border-edge-soft bg-canvas/30 p-4">
+          <div className="mb-4">
+            <h3 className="text-[15px] font-semibold text-ink">{t("Catalog region by service")}</h3>
+            <p className="mt-1 text-[12.5px] leading-relaxed text-ink-muted">
+              {t("Choose which country's catalog Bear shows for services with limited regional availability. This changes TMDB listings only, not Bear's language or connection.")}
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-3 max-lg:grid-cols-1">
+            {REGION_CONFIGURABLE_SERVICES.map((svc) => (
+              <div key={svc} className="rounded-xl border border-edge-soft bg-elevated/35 p-3">
+                <div className="mb-2 flex h-7 items-center">
+                  <ServiceLogo service={svc} height={22} />
+                </div>
+                <RegionPicker
+                  value={settings.streamingRegions[svc] || settings.region}
+                  onChange={(region) =>
+                    update({
+                      streamingRegions: {
+                        ...settings.streamingRegions,
+                        [svc]: region,
+                      },
+                    })
+                  }
+                />
+              </div>
+            ))}
+          </div>
         </div>
         {!settings.tmdbKey && (
           <p className="mt-3 text-[13px] text-ink-subtle">

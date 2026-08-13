@@ -1,37 +1,24 @@
 import { useEffect, useRef, useState } from "react";
 
-function Layer({ url, first, onReady }: { url: string; first: boolean; onReady: () => void }) {
-  const lowUrl = url.replace(/\/t\/p\/(w\d+|original)\//, "/t/p/w300/");
+function Layer({ url, onReady }: { url: string; onReady: () => void }) {
   const highUrl = url.replace(/\/t\/p\/(w\d+|original)\//, "/t/p/original/");
-  const canBlurUp = first && lowUrl !== highUrl;
   const [ready, setReady] = useState(false);
   const done = () => {
     setReady(true);
     onReady();
   };
   return (
-    <>
-      {canBlurUp && (
-        <img
-          src={lowUrl}
-          alt=""
-          aria-hidden="true"
-          decoding="async"
-          className="absolute inset-0 h-full w-full scale-105 object-cover blur-2xl"
-        />
-      )}
-      <img
-        src={highUrl}
-        alt=""
-        decoding="async"
-        fetchPriority="high"
-        ref={(el) => {
-          if (el?.complete && el.naturalWidth > 0) done();
-        }}
-        onLoad={done}
-        className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${ready ? "opacity-100" : "opacity-0"}`}
-      />
-    </>
+    <img
+      src={highUrl}
+      alt=""
+      decoding="async"
+      fetchPriority="high"
+      ref={(el) => {
+        if (el?.complete && el.naturalWidth > 0) done();
+      }}
+      onLoad={done}
+      className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${ready ? "opacity-100" : "opacity-0"}`}
+    />
   );
 }
 
@@ -52,7 +39,7 @@ export function HeroBackdrop({ url }: { url: string }) {
   return (
     <>
       {layers.map((l) => (
-        <Layer key={l.id} url={l.url} first={l.id === 0} onReady={() => settle(l.id)} />
+        <Layer key={l.id} url={l.url} onReady={() => settle(l.id)} />
       ))}
     </>
   );
