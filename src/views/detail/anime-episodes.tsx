@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { Meta } from "@/lib/cinemeta";
 import { scrollToDataEp } from "@/lib/episode-scroll";
 import { type FranchiseEntry } from "@/lib/providers/anime-detail";
@@ -31,7 +31,7 @@ import { useAnimeAiSearch } from "./anime-episodes/use-anime-ai-search";
 import { useAnimeProgressMap } from "./anime-episodes/use-anime-progress-map";
 import { useAnimePreferredSeason } from "./anime-episodes/use-anime-preferred-season";
 import { useAnimeTvdbPanel } from "./anime-episodes/use-anime-tvdb-panel";
-import { useAnimePanelExtras } from "./anime-episodes/use-anime-panel-extras";
+
 import { useFranchiseEpisodes } from "./anime-episodes/use-franchise-episodes";
 import { useAnimeWatchedRouting } from "./anime-episodes/use-anime-watched-routing";
 import { useAnimeFranchiseNav } from "./anime-episodes/use-anime-franchise-nav";
@@ -184,7 +184,7 @@ export function AnimeEpisodes({
     preferredSeasonKey ?? undefined,
     intentSeasonKey ?? undefined,
   );
-  const panelExtras = useAnimePanelExtras(tvdbPanel.panel, franchise, currentId, openMeta);
+
   const onSeasonArtRef = useRef(onSeasonArt);
   onSeasonArtRef.current = onSeasonArt;
   const tvdbActiveSeason = tvdbPanel.panel
@@ -434,13 +434,13 @@ export function AnimeEpisodes({
                 onSelectEntry={onSelectEntry}
               />
             ) : null
-          ) : panelExtras ? (
+          ) : tvdbPanel.panel ? (
             <TvdbOrderPanel
-              items={panelExtras.items}
-              activeKey={panelExtras.activeKey}
-              onSelect={panelExtras.onSelect}
-              orderTypes={panelExtras.orderTypes}
-              activeType={panelExtras.activeType}
+              items={tvdbPanel.panel.items}
+              activeKey={tvdbPanel.panel.activeKey}
+              onSelect={tvdbPanel.panel.onSelect}
+              orderTypes={tvdbPanel.panel.orderTypes}
+              activeType={tvdbPanel.panel.activeType}
               onSelectType={(v) => update({ tvdbSeasonType: v as typeof settings.tvdbSeasonType })}
             />
           ) : tvdbPanel.active ? (
