@@ -279,6 +279,10 @@ export function loadStoredSettings(rawKey: string = STORAGE_KEY): Settings {
           : DEFAULT.fullscreenClockShowEndTime,
       fullscreenClockSizePx: sanitizeFullscreenClockSize(parsed.fullscreenClockSizePx),
       streaming: { ...DEFAULT.streaming, ...(parsed.streaming ?? {}) },
+      streamingRegions: {
+        ...DEFAULT.streamingRegions,
+        ...(parsed.streamingRegions ?? {}),
+      },
       subProvidersEnabled: {
         ...DEFAULT.subProvidersEnabled,
         ...(parsed.subProvidersEnabled ?? {}),

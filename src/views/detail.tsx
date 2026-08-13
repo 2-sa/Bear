@@ -1312,9 +1312,6 @@ export function DetailView({
           {settings.detailTrailerAutoplay && trailerCandidate && (
             <DetailHeroTrailer candidateId={trailerCandidate} paused={trailerOpen} />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-canvas via-canvas/55 via-45% to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-r rtl:bg-gradient-to-l from-canvas/85 via-canvas/35 to-transparent" />
-
           <div className="absolute inset-x-0 bottom-0 px-12 pb-14">
             <div className={awardsInDescription ? "max-w-3xl" : undefined}>
               {tagline && !loading && !detectingAnime && (

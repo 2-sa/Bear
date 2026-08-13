@@ -7,6 +7,7 @@ const IMG = "https://image.tmdb.org/t/p";
 type Service = {
   id: number;
   providerIds?: number[];
+  region?: string;
   name: string;
   logo: string;
   tint: string;
@@ -20,16 +21,17 @@ export const SERVICES: Record<StreamingService, Service> = {
   netflix: { id: 8, name: "Netflix", logo: "/services/netflix.svg", tint: "#E50914" },
   disney: {
     id: 337,
+    region: "US",
     name: "Disney+",
     logo: "/services/disney.svg",
     tint: "#0E47A1",
     logoHeight: 46,
     logoFilter: FORCE_WHITE,
   },
-  hulu: { id: 15, name: "Hulu", logo: "/services/hulu.svg", tint: "#1CE783" },
+  hulu: { id: 15, region: "US", name: "Hulu", logo: "/services/hulu.svg", tint: "#1CE783" },
   prime: { id: 9, providerIds: [9, 119], name: "Prime Video", logo: "/services/prime.svg", tint: "#00A8E1" },
   apple: { id: 350, name: "Apple TV+", logo: "/services/apple.svg", tint: "#FFFFFF" },
-  max: { id: 1899, providerIds: [1899, 384], name: "Max", logo: "/services/max.svg", tint: "#9B6CFF" },
+  max: { id: 1899, providerIds: [1899, 384], region: "US", name: "Max", logo: "/services/max.svg", tint: "#9B6CFF" },
   paramount: {
     id: 531,
     providerIds: [531, 582, 1715, 1854],
@@ -37,8 +39,8 @@ export const SERVICES: Record<StreamingService, Service> = {
     logo: "/services/paramount.svg",
     tint: "#0064FF",
   },
-  peacock: { id: 386, providerIds: [386, 387], name: "Peacock", logo: "/services/peacock.svg", tint: "#FF7112" },
-  crunchyroll: { id: 283, name: "Crunchyroll", logo: "/services/crunchyroll.svg", tint: "#F47521" },
+  peacock: { id: 386, providerIds: [386, 387], region: "US", name: "Peacock", logo: "/services/peacock.svg", tint: "#FF7112" },
+  crunchyroll: { id: 283, region: "US", name: "Crunchyroll", logo: "/services/crunchyroll.svg", tint: "#F47521" },
   amcplus: { id: 526, name: "AMC+", logo: "/services/amcplus.svg", tint: "#0A9BD8" },
   starz: { id: 43, name: "STARZ", logo: "/services/starz.svg", tint: "#FFFFFF" },
   shudder: { id: 99, name: "Shudder", logo: "/services/shudder.svg", tint: "#E4181C" },
@@ -47,6 +49,14 @@ export const SERVICES: Record<StreamingService, Service> = {
 export function providerIdsFor(svc: Service): string {
   const ids = svc.providerIds ?? [svc.id];
   return ids.join("|");
+}
+
+export function serviceRegionFor(
+  service: StreamingService,
+  fallbackRegion: string,
+  regions?: Partial<Record<StreamingService, string>>,
+): string {
+  return regions?.[service] || SERVICES[service].region || fallbackRegion;
 }
 
 export function serviceBadge(svc: StreamingService): { name: string; logo: string; tint: string } {
@@ -103,9 +113,10 @@ export async function streamingRows(settings: Settings): Promise<ServiceRow[]> {
   const tasks = enabled.map(async (svc): Promise<ServiceRow> => {
     const { name } = SERVICES[svc];
     const providers = providerIdsFor(SERVICES[svc]);
+    const region = serviceRegionFor(svc, settings.region, settings.streamingRegions);
     const [movies, series] = await Promise.all([
-      discover<RawMovie>(settings.tmdbKey, "movie", providers, settings.region),
-      discover<RawSeries>(settings.tmdbKey, "tv", providers, settings.region),
+      discover<RawMovie>(settings.tmdbKey, "movie", providers, region),
+      discover<RawSeries>(settings.tmdbKey, "tv", providers, region),
     ]);
     const movieMetas: Meta[] = movies.slice(0, 12).map((m) => ({
       id: `tmdb:movie:${m.id}`,

@@ -208,6 +208,7 @@ export type Settings = {
   traktExpiresAt: number;
   traktUsername: string | null;
   streaming: Record<StreamingService, boolean>;
+  streamingRegions: Record<StreamingService, string>;
   showAdultAddons: boolean;
   togetherRelayUrl: string;
   togetherCfToken: string;
