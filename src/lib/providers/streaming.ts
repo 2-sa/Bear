@@ -18,7 +18,7 @@ type Service = {
 const FORCE_WHITE = "brightness(0) invert(1)";
 
 export const SERVICES: Record<StreamingService, Service> = {
-  netflix: { id: 8, name: "Netflix", logo: "/services/netflix.svg", tint: "#E50914" },
+  netflix: { id: 8, region: "US", name: "Netflix", logo: "/services/netflix.svg", tint: "#E50914" },
   disney: {
     id: 337,
     region: "US",
@@ -29,21 +29,22 @@ export const SERVICES: Record<StreamingService, Service> = {
     logoFilter: FORCE_WHITE,
   },
   hulu: { id: 15, region: "US", name: "Hulu", logo: "/services/hulu.svg", tint: "#1CE783" },
-  prime: { id: 9, providerIds: [9, 119], name: "Prime Video", logo: "/services/prime.svg", tint: "#00A8E1" },
-  apple: { id: 350, name: "Apple TV+", logo: "/services/apple.svg", tint: "#FFFFFF" },
+  prime: { id: 9, providerIds: [9, 119], region: "US", name: "Prime Video", logo: "/services/prime.svg", tint: "#00A8E1" },
+  apple: { id: 350, region: "US", name: "Apple TV+", logo: "/services/apple.svg", tint: "#FFFFFF" },
   max: { id: 1899, providerIds: [1899, 384], region: "US", name: "Max", logo: "/services/max.svg", tint: "#9B6CFF" },
   paramount: {
     id: 531,
     providerIds: [531, 582, 1715, 1854],
+    region: "US",
     name: "Paramount+",
     logo: "/services/paramount.svg",
     tint: "#0064FF",
   },
   peacock: { id: 386, providerIds: [386, 387], region: "US", name: "Peacock", logo: "/services/peacock.svg", tint: "#FF7112" },
   crunchyroll: { id: 283, region: "US", name: "Crunchyroll", logo: "/services/crunchyroll.svg", tint: "#F47521" },
-  amcplus: { id: 526, name: "AMC+", logo: "/services/amcplus.svg", tint: "#0A9BD8" },
-  starz: { id: 43, name: "STARZ", logo: "/services/starz.svg", tint: "#FFFFFF" },
-  shudder: { id: 99, name: "Shudder", logo: "/services/shudder.svg", tint: "#E4181C" },
+  amcplus: { id: 526, region: "US", name: "AMC+", logo: "/services/amcplus.svg", tint: "#0A9BD8" },
+  starz: { id: 43, region: "US", name: "STARZ", logo: "/services/starz.svg", tint: "#FFFFFF" },
+  shudder: { id: 99, region: "US", name: "Shudder", logo: "/services/shudder.svg", tint: "#E4181C" },
 };
 
 export function providerIdsFor(svc: Service): string {

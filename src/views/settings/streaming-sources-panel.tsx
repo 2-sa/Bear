@@ -8,7 +8,7 @@ import realDebridLogo from "@/assets/addon-logos/realdebrid.png";
 import torboxLogo from "@/assets/addon-logos/torbox.png";
 import { useAuth } from "@/lib/auth";
 import { userAddons, type Addon } from "@/lib/addons";
-import { SERVICES } from "@/lib/providers/streaming";
+import { SERVICES, serviceRegionFor } from "@/lib/providers/streaming";
 import { useSettings, type StreamingService } from "@/lib/settings";
 import {
   fetchAioStatusHealth,
@@ -28,13 +28,7 @@ import { useT } from "@/lib/i18n";
 
 export type DebridKey = "rd" | "tb" | "ad" | "pm" | "dl";
 
-const REGION_CONFIGURABLE_SERVICES: StreamingService[] = [
-  "hulu",
-  "disney",
-  "peacock",
-  "max",
-  "crunchyroll",
-];
+const REGION_CONFIGURABLE_SERVICES = Object.keys(SERVICES) as StreamingService[];
 
 export function StreamingSourcesPanel({
   rdDraft,
@@ -329,7 +323,7 @@ export function StreamingSourcesPanel({
                   <ServiceLogo service={svc} height={22} />
                 </div>
                 <RegionPicker
-                  value={settings.streamingRegions[svc] || settings.region}
+                  value={serviceRegionFor(svc, settings.region, settings.streamingRegions)}
                   onChange={(region) =>
                     update({
                       streamingRegions: {
