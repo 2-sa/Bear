@@ -121,6 +121,22 @@ const common: Record<string, string> = {
     "تحقّق سريع من العمر قبل فتح إضافات الكبار. أجب عن ثلاثة أسئلة يوميّة يعرفها أي بالغ، وستدخل.",
   "You're verified": "تم التحقّق",
   "That's not it. Try a fresh round in a moment.": "إجابة غير صحيحة. ستظهر جولة جديدة بعد لحظات.",
+  "Update ready to install": "التحديث جاهز للتثبيت",
+  "Installing update": "جارٍ تثبيت التحديث",
+  "Downloading update": "جارٍ تنزيل التحديث",
+  "Finish updating Bear": "أكمل تحديث بير",
+  "Update failed": "فشل التحديث",
+  "Update available": "يتوفر تحديث جديد",
+  "Download complete": "اكتمل التنزيل",
+  "Fetching the latest build": "جارٍ جلب أحدث إصدار",
+  "Something went wrong reaching the update server.": "تعذر الاتصال بخادم التحديث.",
+  "Download and run the installer to finish updating. If it keeps failing, run it as administrator once.":
+    "نزّل ملف التثبيت وشغّله لإكمال التحديث. إذا استمرت المشكلة، شغّله كمسؤول مرة واحدة.",
+  Later: "لاحقًا",
+  "Install & restart": "تثبيت وإعادة التشغيل",
+  "Bear will restart automatically.": "سيُعاد تشغيل بير تلقائيًا.",
+  "Download installer": "تنزيل ملف التثبيت",
+  "Keep using Bear while it downloads": "يمكنك متابعة استخدام بير أثناء التنزيل",
 };
 
 export default common;
