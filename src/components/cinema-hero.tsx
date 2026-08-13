@@ -10,7 +10,7 @@ import { useTitleLogo } from "@/lib/title-logo";
 import { useLocalizedOverview } from "@/lib/use-localized-overview";
 import { smartPlayEpisode } from "@/lib/smart-play";
 import { fetchTrailer, prefetchTrailer, trailerSrc, type TrailerInfo } from "@/lib/trailer";
-import { useT } from "@/lib/i18n";
+import { isRtl, useT, useUiLanguage } from "@/lib/i18n";
 import { useView } from "@/lib/view";
 import { observe, usePageVisible } from "@/lib/visibility";
 
@@ -32,6 +32,7 @@ export function CinemaHero({
   eyebrow?: string;
 }) {
   const t = useT();
+  const rtl = isRtl(useUiLanguage());
   const [active, setActive] = useState(0);
   const [paused, setPaused] = useState(false);
   const [dragging, setDragging] = useState(false);
@@ -142,6 +143,7 @@ export function CinemaHero({
     >
       <div
         ref={viewportRef}
+        dir="ltr"
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
@@ -154,6 +156,7 @@ export function CinemaHero({
       >
         <div
           className="flex h-full w-full"
+          dir="ltr"
           style={{
             transform: trackTransform,
             transition: dragging ? "none" : `transform 700ms ${EASE_OUT}`,
@@ -164,7 +167,11 @@ export function CinemaHero({
             const distance = Math.abs(i - active);
             const shouldMount = distance <= 1 || dragging;
             return (
-              <div key={m.id} className="relative h-full w-full shrink-0">
+              <div
+                key={m.id}
+                dir={rtl ? "rtl" : "ltr"}
+                className="relative h-full w-full shrink-0"
+              >
                 {shouldMount ? (
                   <CinemaSlide
                     meta={m}
