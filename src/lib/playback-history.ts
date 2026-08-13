@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from "react";
+import type { AddonProgress } from "./streams/addons";
 
 export type PlaybackEntry = {
   infoHash?: string | null;
@@ -216,4 +217,16 @@ export function streamMatchesSource(
   return (
     !!e.addonId && s.addonId === e.addonId && e.resolution === s.resolution && e.source === s.source
   );
+}
+
+export function preferredSourceAddonPending(
+  entry: PlaybackEntry | null,
+  sourceMatched: boolean,
+  pipelineDone: boolean,
+  progress: AddonProgress,
+): boolean {
+  const addonId = entry?.addonId;
+  if (!addonId || sourceMatched || pipelineDone) return false;
+  if (!progress.queriedAddonIds.includes(addonId)) return false;
+  return !progress.settledAddonIds.includes(addonId);
 }

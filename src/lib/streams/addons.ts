@@ -33,16 +33,23 @@ export type StreamRequest = {
   ids: string[];
 };
 
+export type AddonProgress = {
+  settled: number;
+  total: number;
+  queriedAddonIds: string[];
+  settledAddonIds: string[];
+};
+
 export async function fetchAddonStreams(
   addons: Addon[],
   req: StreamRequest,
   signal: AbortSignal,
   onPartial?: (current: Stream[]) => void,
-  onProgress?: (settled: number, total: number) => void,
+  onProgress?: (progress: AddonProgress) => void,
   timeoutMs = TIMEOUT_MS_SLOW,
   ranks?: AddonRankFn | null,
 ): Promise<Stream[]> {
-  const namedTasks: Array<{ name: string; p: Promise<Stream[]> }> = [];
+  const namedTasks: Array<{ addonId: string; name: string; p: Promise<Stream[]> }> = [];
   const skipped: string[] = [];
   for (let i = 0; i < addons.length; i++) {
     const addon = addons[i];
@@ -59,6 +66,7 @@ export async function fetchAddonStreams(
     for (const id of ids) {
       const name = ids.length > 1 ? `${addon.manifest.name}[${idScheme(id)}]` : addon.manifest.name;
       namedTasks.push({
+        addonId: addon.manifest.id,
         name,
         p: fetchOne(addon, req.type, id, signal, timeoutMs).then((ss) =>
           ss.map((s, idx) => ({ ...s, addonPriority: priority, addonReturnIdx: idx })),
@@ -70,10 +78,23 @@ export async function fetchAddonStreams(
   console.info(`[addons] querying ${namedTasks.length}: ${namedTasks.map((t) => t.name).join(", ")}`);
 
   const total = namedTasks.length;
-  onProgress?.(0, total);
+  const pendingByAddon = new Map<string, number>();
+  for (const task of namedTasks) {
+    pendingByAddon.set(task.addonId, (pendingByAddon.get(task.addonId) ?? 0) + 1);
+  }
+  const queriedAddonIds = [...pendingByAddon.keys()];
+  const settledAddonIds = new Set<string>();
   let settled = 0;
+  const reportProgress = () =>
+    onProgress?.({
+      settled,
+      total,
+      queriedAddonIds,
+      settledAddonIds: [...settledAddonIds],
+    });
+  reportProgress();
   const accumulated: Stream[] = [];
-  const wrapped = namedTasks.map(({ name, p }) =>
+  const wrapped = namedTasks.map(({ addonId, name, p }) =>
     p
       .then((streams) => {
         console.info(`[addons] ${name}: ${streams.length} streams`);
@@ -83,7 +104,17 @@ export async function fetchAddonStreams(
       .catch((e) => {
         if (!signal.aborted) dwarn(`[addons] ${name} failed`, e);
       })
-      .finally(() => onProgress?.(++settled, total)),
+      .finally(() => {
+        settled += 1;
+        const remaining = (pendingByAddon.get(addonId) ?? 1) - 1;
+        if (remaining <= 0) {
+          pendingByAddon.delete(addonId);
+          settledAddonIds.add(addonId);
+        } else {
+          pendingByAddon.set(addonId, remaining);
+        }
+        reportProgress();
+      }),
   );
 
   await Promise.allSettled(wrapped);

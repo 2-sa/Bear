@@ -248,6 +248,19 @@ export function scheduleTorrentRemoval(
   pendingRemovals.set(key, id);
 }
 
+export function scheduleAbandonedTorrentRemoval(infoHash: string, delayMs = 1200): void {
+  if (!isTauri) return;
+  const key = normalizeInfoHash(infoHash);
+  if ((torrentUsage.get(key)?.owners.size ?? 0) > 0) return;
+  cancelTorrentRemoval(key);
+  const id = window.setTimeout(() => {
+    pendingRemovals.delete(key);
+    if ((torrentUsage.get(key)?.owners.size ?? 0) > 0) return;
+    void torrentEngineRemove(key, true);
+  }, delayMs);
+  pendingRemovals.set(key, id);
+}
+
 export function cancelTorrentRemoval(infoHash: string): void {
   const key = normalizeInfoHash(infoHash);
   const id = pendingRemovals.get(key);

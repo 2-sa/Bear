@@ -11,7 +11,7 @@ import {
 } from "@/lib/torrent/stremio-stream";
 import {
   lastEngineAddError,
-  scheduleTorrentRemoval,
+  scheduleAbandonedTorrentRemoval,
   torrentEngineAdd,
   torrentEngineSelect,
   torrentEngineStatus,
@@ -49,7 +49,7 @@ export function MagnetCard({ raw, onClose }: { raw: string; onClose: () => void 
   useEffect(
     () => () => {
       const infoHash = pendingEngineRef.current;
-      if (infoHash) scheduleTorrentRemoval(infoHash, false, 0);
+      if (infoHash) scheduleAbandonedTorrentRemoval(infoHash, 0);
     },
     [],
   );
@@ -177,7 +177,7 @@ export function MagnetCard({ raw, onClose }: { raw: string; onClose: () => void 
     const videos = added.files.filter(isVideoFile).sort((a, b) => b.length - a.length);
     if (videos.length === 0) {
       if (pendingEngineRef.current) {
-        scheduleTorrentRemoval(pendingEngineRef.current, false, 0);
+        scheduleAbandonedTorrentRemoval(pendingEngineRef.current, 0);
         pendingEngineRef.current = null;
       }
       setMode("error");

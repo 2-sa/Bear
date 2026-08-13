@@ -13,6 +13,11 @@ const streamRoute = read("src-tauri/src/torrent_engine/stream_route.rs");
 const resolve = read("src/lib/streams/resolve.ts");
 const usage = read("src/lib/torrent/local-engine.ts");
 const playerMedia = read("src/views/player/hooks/use-player-media.ts");
+const pickHandler = read("src/views/play-picker/use-pick-handler.ts");
+const episodePanel = read("src/components/player/episode-panel/index.tsx");
+const autoDownload = read("src/lib/auto-download/resolve.ts");
+const seasonDownload = read("src/lib/download/season-download.ts");
+const castResolve = read("src/views/player/cast-resolve.ts");
 const downloads = read("src/lib/download/downloads-store.ts");
 const magnetCard = read("src/components/search/magnet-card.tsx");
 
@@ -49,8 +54,17 @@ test("persisted torrents are paused at startup and before a clean shutdown", () 
 
 test("a canceled P2P resolve cleans up only a torrent created by that resolve", () => {
   assert.match(resolve, /registerAbortCleanup\(added, signal\)/);
-  assert.match(resolve, /if \(added\.already_managed === true\) return;/);
+  assert.match(resolve, /if \(added\.already_managed === true\) return \(\) => \{\};/);
+  assert.match(
+    resolve,
+    /scheduleAbandonedTorrentRemoval\(added\.info_hash, handedOff \? 5000 : 0\)/,
+  );
   assert.match(resolve, /signal\.addEventListener\("abort", cleanup, \{ once: true \}\)/);
+  assert.match(resolve, /signal\.removeEventListener\("abort", cleanup\)/);
+  assert.match(resolve, /if \(added\.already_managed !== true\)/);
+  assert.match(usage, /export function scheduleAbandonedTorrentRemoval/);
+  assert.match(usage, /if \(\(torrentUsage\.get\(key\)\?\.owners\.size \?\? 0\) > 0\) return;/);
+  assert.match(usage, /void torrentEngineRemove\(key, true\)/);
   assert.doesNotMatch(resolve, /startFullDownload/);
 });
 
@@ -68,6 +82,30 @@ test("players and downloads explicitly own local-engine torrents", () => {
   );
 });
 
+test("completed P2P downloads are reused by exact torrent identity", () => {
+  assert.match(downloads, /torrentInfoHash\?: string \| null/);
+  assert.match(downloads, /torrentFileIdx\?: number \| null/);
+  assert.match(downloads, /export async function completedTorrentDownloadFor/);
+  assert.match(downloads, /ref\?\.infoHash === key/);
+  assert.match(downloads, /fileIdx == null \|\| ref\.fileIdx === fileIdx/);
+  assert.match(downloads, /fileIdx != null\s+\? \(candidates\[0\] \?\? null\)/);
+  assert.match(downloads, /hint\?\.season != null && hint\.episode != null/);
+  assert.match(downloads, /await exists\(match\.path\)/);
+  assert.match(resolve, /allowCompletedDownload = true/);
+  assert.match(resolve, /if \(allowCompletedDownload && stream\.infoHash\)/);
+  const lookup = resolve.indexOf("completedTorrentDownloadFor(stream.infoHash");
+  const add = resolve.indexOf("torrentEngineAdd(");
+  assert.ok(lookup >= 0 && add > lookup, "completed download lookup must run before torrent add");
+  assert.match(resolve, /via: "local-download"/);
+  assert.match(resolve, /subtitles: stream\.subtitles\?\.map/);
+  assert.match(pickHandler, /r\.via === "local-download"/);
+  assert.match(pickHandler, /intent !== "download"/);
+  assert.match(episodePanel, /r\.via === "local-download"/);
+  assert.match(autoDownload, /hint, true, false\)/);
+  assert.match(seasonDownload, /true,\s+false,\s+\)\.catch/);
+  assert.match(castResolve, /undefined, true, false\)/);
+});
+
 test("full-file P2P downloading starts only after the player owns the torrent", () => {
   const retain = playerMedia.indexOf("retainTorrentUsage(hash, ownerId)");
   const full = playerMedia.indexOf("startFullDownload(hash, src.url)");
@@ -76,7 +114,7 @@ test("full-file P2P downloading starts only after the player owns the torrent", 
 
 test("closing magnet setup removes a newly-created torrent before player handoff", () => {
   assert.match(magnetCard, /pendingEngineRef/);
-  assert.match(magnetCard, /scheduleTorrentRemoval\(infoHash, false, 0\)/);
+  assert.match(magnetCard, /scheduleAbandonedTorrentRemoval\(infoHash, 0\)/);
   assert.match(magnetCard, /if \(added\.already_managed !== true\)/);
   assert.match(magnetCard, /startPlay\(videos\[0\]\.idx, videos\[0\]\.name, added\)/);
 });
