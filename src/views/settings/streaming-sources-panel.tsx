@@ -1,5 +1,6 @@
 import { ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
+import { ServiceLogo } from "@/components/service-logo";
 import allDebridLogo from "@/assets/addon-logos/alldebrid.webp";
 import debridLinkLogo from "@/assets/addon-logos/debridlink.png";
 import premiumizeLogo from "@/assets/addon-logos/premiumize.png";
