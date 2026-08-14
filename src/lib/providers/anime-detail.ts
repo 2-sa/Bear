@@ -444,7 +444,7 @@ export async function animeDetails(
   const detail: TmdbDetail = {
     ...emptyDetail(kind),
     id: anime.id,
-    imdbId: addonMeta?.imdb_id ?? null,
+    imdbId: seriesImdb ?? addonMeta?.imdb_id ?? null,
     title: anime.title,
     originalTitle: anime.title,
     overview: anime.synopsis,
@@ -540,7 +540,7 @@ export async function animeDetails(
       logo,
       backdrop,
       poster,
-      imdbId: addonMeta?.imdb_id ?? tmdbFull?.imdbId ?? null,
+      imdbId: seriesImdb ?? addonMeta?.imdb_id ?? tmdbFull?.imdbId ?? null,
       extraVideos: tmdbFull?.extraVideos ?? [],
       gallery: {
         backdrops: Array.from(new Set([...backdrops, ...(tmdbFull?.gallery.backdrops ?? [])])),
@@ -580,7 +580,7 @@ export async function animeDetails(
     episodes,
     streamers,
     backdrops: anime.backdrop ? [anime.backdrop] : [],
-    imdbId: addonMeta?.imdb_id,
+    imdbId: seriesImdb ?? addonMeta?.imdb_id,
     franchisePromise,
     enrichPromise,
     extrasPromise,

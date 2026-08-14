@@ -33,8 +33,7 @@ export function buildStreamIds(
   if (episode?.kitsuStreamId) {
     push(episode.kitsuStreamId);
   } else if (/^(kitsu|mal|anilist|anidb):/.test(metaId) && episode) {
-    const isSpecialWithImdb = episode.imdbSeason === 0 && mappedImdb && mappedImdb.startsWith("tt");
-    if (!isSpecialWithImdb) {
+    if (episode.imdbSeason !== 0) {
       push(`${metaId.split(":")[0]}:${metaId.split(":")[1]}:${episode.episode}`);
     }
   } else if ((metaId.startsWith("kitsu:") || metaId.startsWith("mal:")) && !episode) {

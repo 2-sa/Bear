@@ -149,9 +149,12 @@ export function useAnimeTvdbPanel(
       for (const e of bucket) {
         const abs = ordering.absByEpId.get(e.id);
         const img = e.stillUrl ?? e.stillPath ?? (abs != null ? ordering.imageByAbs.get(abs) : undefined);
-        let match = byTvdbId.get(e.id) ?? byPair.get(`${e.seasonNumber}:${e.episodeNumber}`);
-        if (!match && abs != null) match = byAbs.get(abs);
-        if (match && claimed.has(match.id)) match = undefined;
+        let match: KitsuEpisode | undefined;
+        if (e.seasonNumber > 0) {
+          match = byTvdbId.get(e.id) ?? byPair.get(`${e.seasonNumber}:${e.episodeNumber}`);
+          if (!match && abs != null) match = byAbs.get(abs);
+          if (match && claimed.has(match.id)) match = undefined;
+        }
 
         let streamId: string | undefined;
         if (!match && franchise) {
