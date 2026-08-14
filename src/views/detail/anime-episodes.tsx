@@ -183,6 +183,7 @@ export function AnimeEpisodes({
     panelPool,
     preferredSeasonKey ?? undefined,
     intentSeasonKey ?? undefined,
+    franchise,
   );
 
   const onSeasonArtRef = useRef(onSeasonArt);

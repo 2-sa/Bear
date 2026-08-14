@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useT } from "@/lib/i18n";
 import type { KitsuEpisode } from "@/lib/providers/kitsu";
 import { kitsuToTvdb } from "@/lib/providers/anime-mapping";
+import { isFranchiseExtra, type FranchiseEntry } from "@/lib/providers/anime-detail";
 import {
   tvdbLangFromIso1,
   tvdbOrderTypeHasEpisodes,
@@ -38,6 +39,7 @@ export function useAnimeTvdbPanel(
   franchiseEpisodes?: KitsuEpisode[],
   preferredSeasonKey?: string,
   intentSeasonKey?: string,
+  franchise?: FranchiseEntry[],
 ): AnimeTvdbPanelState {
   const t = useT();
   const [seriesId, setSeriesId] = useState<number | null>(null);
@@ -137,6 +139,7 @@ export function useAnimeTvdbPanel(
     const items: PickerItem[] = [];
     const subset = new Map<string, KitsuEpisode[]>();
     const claimed = new Set<number>();
+    const claimedExtras = new Set<string>();
     for (const s of ordering.seasons) {
       if (s.seasonNumber < 0) continue;
       const bucket = ordering.bySeason.get(s.seasonNumber) ?? [];
@@ -149,6 +152,29 @@ export function useAnimeTvdbPanel(
         let match = byTvdbId.get(e.id) ?? byPair.get(`${e.seasonNumber}:${e.episodeNumber}`);
         if (!match && abs != null) match = byAbs.get(abs);
         if (match && claimed.has(match.id)) match = undefined;
+
+        let streamId: string | undefined;
+        if (!match && franchise) {
+          let extra = franchise.find((f) => 
+            isFranchiseExtra(f) && 
+            !claimedExtras.has(f.meta.id) &&
+            f.meta.name && e.name && f.meta.name.toLowerCase() === e.name.toLowerCase()
+          );
+
+          if (!extra) {
+            extra = franchise.find((f) => 
+              isFranchiseExtra(f) && 
+              !claimedExtras.has(f.meta.id) &&
+              f.startDate && e.airDate && f.startDate === e.airDate
+            );
+          }
+
+          if (extra) {
+            streamId = `${extra.meta.id}:1`;
+            claimedExtras.add(extra.meta.id);
+          }
+        }
+
         const ep: KitsuEpisode = match
           ? !match.thumbnail && img
             ? { ...match, thumbnail: img }
@@ -166,6 +192,7 @@ export function useAnimeTvdbPanel(
               imdbEpisode: e.episodeNumber,
               absoluteNumber: abs ?? undefined,
               tvdbEpisodeId: e.id > 0 ? e.id : undefined,
+              streamId,
             };
         if (seenId.has(ep.id)) continue;
         seenId.add(ep.id);
