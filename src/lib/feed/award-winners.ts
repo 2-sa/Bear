@@ -3,7 +3,7 @@ import type { AwardCategory } from "@/lib/awards-catalog";
 import { readAwardHistory } from "@/lib/awards-history";
 import { tmdbSearchMovie } from "@/lib/providers/tmdb";
 import type { AwardType } from "@/lib/providers/wikidata";
-import { HARBOR_API_BASE } from "@/lib/config/endpoints";
+import { BEAR_PUBLIC_CONTENT_BASE } from "@/lib/config/endpoints";
 
 const CACHE_KEY = "harbor.discover.awards.v1";
 const MAX_TITLES = 150;
@@ -101,7 +101,7 @@ async function resolveAll(tmdbKey: string): Promise<Meta[]> {
   }
 }
 
-const HOSTED_URL = `${HARBOR_API_BASE}/feed/award-winners.json`;
+const HOSTED_URL = `${BEAR_PUBLIC_CONTENT_BASE}/feed/award-winners.json`;
 let hostedMemo: Meta[] | null = null;
 let hostedTried = false;
 

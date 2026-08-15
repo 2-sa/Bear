@@ -1,7 +1,22 @@
 const ANILIST_TOKEN_URL = "https://anilist.co/api/v2/oauth/token";
 const TOKEN_PATH = "/v1/anilist/token";
+const PUBLIC_CONTENT_ORIGIN = "https://harbor.site";
 const MAX_REQUEST_BYTES = 4096;
 const MAX_RESPONSE_BYTES = 16384;
+const MAX_PUBLIC_JSON_BYTES = 2 * 1024 * 1024;
+const MAX_PUBLIC_IMAGE_BYTES = 8 * 1024 * 1024;
+const PUBLIC_JSON_PATHS = new Set([
+  "/announcements.json",
+  "/api/hero/anime.json",
+  "/anime-awards.json",
+  "/curated-logos.json",
+  "/feed/hero-pool.json",
+  "/feed/award-winners.json",
+  "/updates/ad-segments.json",
+  "/anime-hero-art.json",
+]);
+const PUBLIC_BADGE_PATH = /^\/badges\/(?:minimal|abstract|harbor-light|harbor-color)(?:\.json|\/[a-z0-9][a-z0-9._-]*\.webp)$/i;
+const PUBLIC_SHADER_PATH = /^\/shaders\/[a-z0-9][a-z0-9._-]{0,80}\/(?:before|after)\.webp$/i;
 const ALLOWED_ORIGINS = new Set([
   "http://localhost:1420",
   "http://127.0.0.1:1420",
@@ -33,8 +48,8 @@ function jsonResponse(request, status, body, extraHeaders) {
   return new Response(JSON.stringify(body), { status, headers });
 }
 
-async function readLimitedText(stream, limit) {
-  if (!stream) return "";
+async function readLimitedBytes(stream, limit) {
+  if (!stream) return new Uint8Array();
   const reader = stream.getReader();
   const chunks = [];
   let total = 0;
@@ -59,7 +74,11 @@ async function readLimitedText(stream, limit) {
     bytes.set(chunk, offset);
     offset += chunk.byteLength;
   }
-  return new TextDecoder().decode(bytes);
+  return bytes;
+}
+
+async function readLimitedText(stream, limit) {
+  return new TextDecoder().decode(await readLimitedBytes(stream, limit));
 }
 
 async function readJson(stream, limit) {
@@ -80,6 +99,70 @@ function hasExactKeys(body, expected) {
 function isAllowedOrigin(request) {
   const origin = request.headers.get("Origin");
   return !origin || ALLOWED_ORIGINS.has(origin);
+}
+
+function publicContentSpec(pathname) {
+  if (PUBLIC_JSON_PATHS.has(pathname) || (PUBLIC_BADGE_PATH.test(pathname) && pathname.endsWith(".json"))) {
+    return { kind: "json", limit: MAX_PUBLIC_JSON_BYTES };
+  }
+  if (PUBLIC_BADGE_PATH.test(pathname) || PUBLIC_SHADER_PATH.test(pathname)) {
+    return { kind: "image", limit: MAX_PUBLIC_IMAGE_BYTES };
+  }
+  return null;
+}
+
+function validPublicContentType(value, kind) {
+  const type = value?.split(";", 1)[0].trim().toLowerCase();
+  return kind === "json" ? type === "application/json" : type === "image/webp";
+}
+
+async function proxyPublicContent(request, spec, upstreamFetch) {
+  if (request.method !== "GET" && request.method !== "HEAD") {
+    return jsonResponse(request, 405, { error: "Method Not Allowed" }, { Allow: "GET, HEAD" });
+  }
+  if (!isAllowedOrigin(request)) {
+    return jsonResponse(request, 403, { error: "Origin not allowed" });
+  }
+
+  const requestUrl = new URL(request.url);
+  const upstreamUrl = new URL(requestUrl.pathname, PUBLIC_CONTENT_ORIGIN);
+  let upstream;
+  try {
+    upstream = await upstreamFetch(upstreamUrl, {
+      method: request.method,
+      headers: { Accept: spec.kind === "json" ? "application/json" : "image/webp" },
+      redirect: "error",
+    });
+  } catch {
+    return jsonResponse(request, 502, { error: "Public content is temporarily unavailable" });
+  }
+
+  if (!upstream.ok || !validPublicContentType(upstream.headers.get("Content-Type"), spec.kind)) {
+    return jsonResponse(request, 502, { error: "Public content returned an invalid response" });
+  }
+  const declaredLength = Number(upstream.headers.get("Content-Length") ?? "0");
+  if (Number.isFinite(declaredLength) && declaredLength > spec.limit) {
+    return jsonResponse(request, 502, { error: "Public content response is too large" });
+  }
+
+  const headers = securityHeaders(request);
+  headers.set("Cache-Control", "public, max-age=3600, stale-while-revalidate=86400");
+  headers.set("Content-Type", upstream.headers.get("Content-Type") ?? "application/octet-stream");
+  headers.set("Cross-Origin-Resource-Policy", "cross-origin");
+  if (request.method === "HEAD") return new Response(null, { status: 200, headers });
+
+  try {
+    if (spec.kind === "json") {
+      const text = await readLimitedText(upstream.body, spec.limit);
+      const rewritten = text.replaceAll(`${PUBLIC_CONTENT_ORIGIN}/`, `${requestUrl.origin}/`);
+      JSON.parse(rewritten);
+      return new Response(rewritten, { status: 200, headers });
+    }
+    const bytes = await readLimitedBytes(upstream.body, spec.limit);
+    return new Response(bytes, { status: 200, headers });
+  } catch {
+    return jsonResponse(request, 502, { error: "Public content returned an invalid response" });
+  }
 }
 
 async function exchangeAniListCode(request, env, body, upstreamFetch) {
@@ -133,6 +216,8 @@ async function exchangeAniListCode(request, env, body, upstreamFetch) {
 
 export async function handleRequest(request, env, upstreamFetch = fetch) {
   const url = new URL(request.url);
+  const contentSpec = publicContentSpec(url.pathname);
+  if (contentSpec) return proxyPublicContent(request, contentSpec, upstreamFetch);
   if (url.pathname !== TOKEN_PATH) {
     return jsonResponse(request, 404, { error: "Not Found" });
   }

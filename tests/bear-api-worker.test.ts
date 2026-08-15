@@ -86,3 +86,56 @@ test("Bear API exchanges only an AniList code and returns only the access token"
   assert.equal(response.headers.get("Cache-Control"), "no-store");
   assert.equal(response.headers.get("Access-Control-Allow-Origin"), "http://localhost:1420");
 });
+
+test("Bear API proxies only allowlisted public content without forwarding request data", async () => {
+  let upstreamUrl = "";
+  let upstreamInit: RequestInit | undefined;
+  const upstreamFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+    upstreamUrl = String(input);
+    upstreamInit = init;
+    return new Response(
+      JSON.stringify({ image: "https://harbor.site/badges/minimal/res-4k.webp" }),
+      { status: 200, headers: { "Content-Type": "application/json" } },
+    );
+  };
+
+  const response = await handleRequest(
+    new Request("https://api.7mood.net/badges/minimal.json?ignored=1", {
+      headers: { Authorization: "must-not-be-forwarded", Origin: "http://localhost:1420" },
+    }),
+    environment(),
+    upstreamFetch,
+  );
+
+  assert.equal(response.status, 200);
+  assert.equal(upstreamUrl, "https://harbor.site/badges/minimal.json");
+  assert.deepEqual(upstreamInit?.headers, { Accept: "application/json" });
+  assert.deepEqual(await response.json(), {
+    image: "https://api.7mood.net/badges/minimal/res-4k.webp",
+  });
+  assert.equal(response.headers.get("Access-Control-Allow-Origin"), "http://localhost:1420");
+  assert.equal(
+    (await handleRequest(new Request("https://api.7mood.net/api/tvdb/v4"), environment(), upstreamFetch)).status,
+    404,
+  );
+});
+
+test("Bear API rejects invalid public-content responses", async () => {
+  const wrongType = async () => new Response("<html></html>", {
+    status: 200,
+    headers: { "Content-Type": "text/html" },
+  });
+  assert.equal(
+    (await handleRequest(new Request("https://api.7mood.net/announcements.json"), environment(), wrongType)).status,
+    502,
+  );
+
+  const oversized = async () => new Response("{}", {
+    status: 200,
+    headers: { "Content-Type": "application/json", "Content-Length": "3000000" },
+  });
+  assert.equal(
+    (await handleRequest(new Request("https://api.7mood.net/announcements.json"), environment(), oversized)).status,
+    502,
+  );
+});

@@ -4,7 +4,7 @@ import test from "node:test";
 
 import { createServer } from "vite";
 
-const EXPECTED_RELAY = "wss://harbor-together-relay.xyz7.workers.dev";
+const EXPECTED_RELAY = "wss://relay.7mood.net";
 
 test("Bear-owned defaults survive upstream syncs", async (context) => {
   const server = await createServer({
@@ -73,6 +73,7 @@ test("Bear-owned defaults survive upstream syncs", async (context) => {
     /ANILIST_TOKEN_EXCHANGE_URL = `\$\{HARBOR_BUGS_BASE\}\/v1\/anilist\/token`/,
   );
   const endpointConfig = readFileSync(new URL("../src/lib/config/endpoints.ts", import.meta.url), "utf8");
+  assert.match(endpointConfig, /BEAR_PUBLIC_CONTENT_BASE[\s\S]*https:\/\/api\.7mood\.net/);
   assert.match(endpointConfig, /HARBOR_BUGS_BASE[\s\S]*https:\/\/bugs\.harbor\.site/);
   assert.doesNotMatch(anilistConfig, /43455|api\.7mood\.net/);
 

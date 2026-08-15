@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from "react";
 import { setItemWithRecovery } from "@/lib/storage-recovery";
 import type { BadgeKind } from "@/components/format-badge";
-import { HARBOR_API_BASE } from "@/lib/config/endpoints";
+import { BEAR_PUBLIC_CONTENT_BASE } from "@/lib/config/endpoints";
 
 const KEY = "harbor.streamBadges.v1";
 
@@ -475,10 +475,10 @@ const ELITE = "https://raw.githubusercontent.com/leonevz/Elite-Badges/main/Badge
 const NSVG =
   "https://raw.githubusercontent.com/dwivedisankalp97/nuvio-svg-badges/main/dist/v17/svg";
 const NARD = "https://raw.githubusercontent.com/vowl313/NardBadges/refs/heads/main";
-const MINIMAL = `${HARBOR_API_BASE}/badges/minimal`;
-const ABSTRACT = `${HARBOR_API_BASE}/badges/abstract`;
-const HARBORLIGHT = `${HARBOR_API_BASE}/badges/harbor-light`;
-const HARBORCOLOR = `${HARBOR_API_BASE}/badges/harbor-color`;
+const MINIMAL = `${BEAR_PUBLIC_CONTENT_BASE}/badges/minimal`;
+const ABSTRACT = `${BEAR_PUBLIC_CONTENT_BASE}/badges/abstract`;
+const HARBORLIGHT = `${BEAR_PUBLIC_CONTENT_BASE}/badges/harbor-light`;
+const HARBORCOLOR = `${BEAR_PUBLIC_CONTENT_BASE}/badges/harbor-color`;
 
 export const COMMUNITY_PACKS: CommunityPack[] = [
   {

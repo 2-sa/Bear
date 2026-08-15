@@ -8,6 +8,11 @@ export const HARBOR_API_BASE = resolveBase(
   "https://harbor.site",
 );
 
+export const BEAR_PUBLIC_CONTENT_BASE = resolveBase(
+  import.meta.env.VITE_BEAR_PUBLIC_CONTENT_BASE,
+  "https://api.7mood.net",
+);
+
 export const HARBOR_TRAKT_BASE = resolveBase(
   import.meta.env.VITE_HARBOR_TRAKT_BASE,
   HARBOR_API_BASE,
