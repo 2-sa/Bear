@@ -1,9 +1,10 @@
 import { Check, ChevronDown } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useT } from "@/lib/i18n";
 import { regionFlagSrc } from "@/lib/region-flags";
 
 const REGIONS: Array<{ code: string; label: string }> = [
+  { code: "SA", label: "Saudi Arabia" },
   { code: "US", label: "United States" },
   { code: "CA", label: "Canada" },
   { code: "GB", label: "United Kingdom" },
@@ -38,7 +39,6 @@ const REGIONS: Array<{ code: string; label: string }> = [
   { code: "HK", label: "Hong Kong" },
   { code: "TR", label: "Türkiye" },
   { code: "AE", label: "United Arab Emirates" },
-  { code: "SA", label: "Saudi Arabia" },
   { code: "ZA", label: "South Africa" },
 ];
 
@@ -78,6 +78,8 @@ export function RegionPicker({
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [dropUp, setDropUp] = useState(false);
+  const [menuMaxHeight, setMenuMaxHeight] = useState(420);
   const t = useT();
   const wrapRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -99,6 +101,20 @@ export function RegionPicker({
     };
   }, [open]);
 
+  useLayoutEffect(() => {
+    if (!open) return;
+    const rect = wrapRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+    const edgeGap = 12;
+    const spaceAbove = Math.max(0, rect.top - edgeGap);
+    const spaceBelow = Math.max(0, viewportHeight - rect.bottom - edgeGap);
+    const shouldDropUp = spaceBelow < 420 && spaceAbove > spaceBelow;
+    setDropUp(shouldDropUp);
+    setMenuMaxHeight(Math.max(180, Math.min(420, (shouldDropUp ? spaceAbove : spaceBelow) - 8)));
+  }, [open]);
+
   useEffect(() => {
     if (open) {
       const t = setTimeout(() => inputRef.current?.focus(), 50);
@@ -112,9 +128,12 @@ export function RegionPicker({
     const q = query.trim().toLowerCase();
     if (!q) return REGIONS;
     return REGIONS.filter(
-      (r) => r.label.toLowerCase().includes(q) || r.code.toLowerCase().includes(q),
+      (r) =>
+        r.label.toLowerCase().includes(q) ||
+        t(r.label).toLowerCase().includes(q) ||
+        r.code.toLowerCase().includes(q),
     );
-  }, [query]);
+  }, [query, t]);
 
   return (
     <div ref={wrapRef} className="relative">
@@ -132,7 +151,7 @@ export function RegionPicker({
           <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-subtle">
             {t("Region")}
           </span>
-          <span className="truncate text-[15px] font-medium text-ink">{current.label}</span>
+          <span className="truncate text-[15px] font-medium text-ink">{t(current.label)}</span>
         </span>
         <ChevronDown
           size={16}
@@ -150,8 +169,13 @@ export function RegionPicker({
             }}
           />
         <div
-          className="absolute left-0 right-0 z-30 mt-2 flex max-h-[420px] flex-col overflow-hidden rounded-2xl border border-edge bg-elevated shadow-[0_24px_60px_rgba(0,0,0,0.55)]"
-          style={{ animation: "harbor-fade-in 140ms ease-out both" }}
+          className={`absolute left-0 right-0 z-50 flex flex-col overflow-hidden rounded-2xl border border-edge bg-elevated shadow-[0_24px_60px_rgba(0,0,0,0.55)] ${
+            dropUp ? "bottom-[calc(100%+8px)]" : "top-[calc(100%+8px)]"
+          }`}
+          style={{
+            animation: "harbor-fade-in 140ms ease-out both",
+            maxHeight: menuMaxHeight,
+          }}
         >
           <div className="flex items-center gap-2 border-b border-edge-soft px-4 py-3">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
@@ -184,7 +208,7 @@ export function RegionPicker({
                     }`}
                   >
                     <FlagChip code={r.code} size={30} />
-                    <span className="flex-1 truncate text-[14px] font-medium">{r.label}</span>
+                    <span className="flex-1 truncate text-[14px] font-medium">{t(r.label)}</span>
                     <span className="shrink-0 font-mono text-[10.5px] tracking-wider text-ink-subtle">
                       {r.code}
                     </span>
