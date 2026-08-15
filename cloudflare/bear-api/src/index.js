@@ -1,6 +1,12 @@
 const ANILIST_TOKEN_URL = "https://anilist.co/api/v2/oauth/token";
 const TOKEN_PATH = "/v1/anilist/token";
 const PUBLIC_CONTENT_ORIGIN = "https://harbor.site";
+const PUBLIC_CONTENT_FALLBACK_ORIGIN = "https://harbor.elfhosted.com";
+const PUBLIC_CONTENT_PUBLIC_ORIGIN = "https://api.7mood.net";
+const ALLOWED_PUBLIC_CONTENT_ORIGINS = new Set([
+  PUBLIC_CONTENT_ORIGIN,
+  PUBLIC_CONTENT_FALLBACK_ORIGIN,
+]);
 const MAX_REQUEST_BYTES = 4096;
 const MAX_RESPONSE_BYTES = 16384;
 const MAX_PUBLIC_JSON_BYTES = 2 * 1024 * 1024;
@@ -17,6 +23,13 @@ const PUBLIC_JSON_PATHS = new Set([
 ]);
 const PUBLIC_BADGE_PATH = /^\/badges\/(?:minimal|abstract|harbor-light|harbor-color)(?:\.json|\/[a-z0-9][a-z0-9._-]*\.webp)$/i;
 const PUBLIC_SHADER_PATH = /^\/shaders\/[a-z0-9][a-z0-9._-]{0,80}\/(?:before|after)\.webp$/i;
+const PUBLIC_SYNC_PATHS = [
+  ...PUBLIC_JSON_PATHS,
+  "/badges/minimal.json",
+  "/badges/abstract.json",
+  "/badges/harbor-light.json",
+  "/badges/harbor-color.json",
+];
 const ALLOWED_ORIGINS = new Set([
   "http://localhost:1420",
   "http://127.0.0.1:1420",
@@ -116,7 +129,76 @@ function validPublicContentType(value, kind) {
   return kind === "json" ? type === "application/json" : type === "image/webp";
 }
 
-async function proxyPublicContent(request, spec, upstreamFetch) {
+function publicContentHeaders(request, contentType) {
+  const headers = securityHeaders(request);
+  headers.set("Cache-Control", "public, max-age=3600, stale-while-revalidate=86400");
+  headers.set("Content-Type", contentType);
+  headers.set("Cross-Origin-Resource-Policy", "cross-origin");
+  return headers;
+}
+
+function publicContentKey(pathname) {
+  return pathname.slice(1);
+}
+
+async function fetchPublicContent(pathname, spec, upstreamFetch) {
+  let upstream;
+  let lastError = "public content is unavailable";
+  for (const origin of [PUBLIC_CONTENT_ORIGIN, PUBLIC_CONTENT_FALLBACK_ORIGIN]) {
+    try {
+      upstream = await upstreamFetch(new URL(pathname, origin), {
+        method: "GET",
+        headers: { Accept: spec.kind === "json" ? "application/json" : "image/webp" },
+        redirect: "follow",
+      });
+    } catch (error) {
+      lastError = error instanceof Error ? error.message : "public content fetch failed";
+      upstream = undefined;
+      continue;
+    }
+    const finalOrigin = upstream.url ? new URL(upstream.url).origin : origin;
+    if (!ALLOWED_PUBLIC_CONTENT_ORIGINS.has(finalOrigin)) {
+      throw new Error(`public content redirected to ${finalOrigin}`);
+    }
+    if (upstream.ok && validPublicContentType(upstream.headers.get("Content-Type"), spec.kind)) break;
+    lastError = `public content returned status ${upstream.status} as ${upstream.headers.get("Content-Type") ?? "unknown"}`;
+    upstream = undefined;
+  }
+  if (!upstream) throw new Error(lastError);
+  const declaredLength = Number(upstream.headers.get("Content-Length") ?? "0");
+  if (Number.isFinite(declaredLength) && declaredLength > spec.limit) {
+    throw new Error("public content response is too large");
+  }
+
+  const contentType = upstream.headers.get("Content-Type") ?? "application/octet-stream";
+  if (spec.kind === "json") {
+    const text = await readLimitedText(upstream.body, spec.limit);
+    const rewritten = text
+      .replaceAll(`${PUBLIC_CONTENT_ORIGIN}/`, `${PUBLIC_CONTENT_PUBLIC_ORIGIN}/`)
+      .replaceAll(`${PUBLIC_CONTENT_FALLBACK_ORIGIN}/`, `${PUBLIC_CONTENT_PUBLIC_ORIGIN}/`);
+    JSON.parse(rewritten);
+    return { body: new TextEncoder().encode(rewritten), contentType };
+  }
+  return { body: await readLimitedBytes(upstream.body, spec.limit), contentType };
+}
+
+async function storePublicContent(bucket, pathname, content) {
+  if (!bucket) return;
+  await bucket.put(publicContentKey(pathname), content.body, {
+    httpMetadata: { contentType: content.contentType },
+    customMetadata: { syncedAt: new Date().toISOString() },
+  });
+}
+
+async function serveStoredPublicContent(request, spec, object) {
+  const contentType = object.httpMetadata?.contentType
+    ?? (spec.kind === "json" ? "application/json; charset=utf-8" : "image/webp");
+  const headers = publicContentHeaders(request, contentType);
+  if (object.httpEtag) headers.set("ETag", object.httpEtag);
+  return new Response(request.method === "HEAD" ? null : object.body, { status: 200, headers });
+}
+
+async function proxyPublicContent(request, env, spec, upstreamFetch) {
   if (request.method !== "GET" && request.method !== "HEAD") {
     return jsonResponse(request, 405, { error: "Method Not Allowed" }, { Allow: "GET, HEAD" });
   }
@@ -124,45 +206,51 @@ async function proxyPublicContent(request, spec, upstreamFetch) {
     return jsonResponse(request, 403, { error: "Origin not allowed" });
   }
 
-  const requestUrl = new URL(request.url);
-  const upstreamUrl = new URL(requestUrl.pathname, PUBLIC_CONTENT_ORIGIN);
-  let upstream;
+  const pathname = new URL(request.url).pathname;
+  let stored;
   try {
-    upstream = await upstreamFetch(upstreamUrl, {
-      method: request.method,
-      headers: { Accept: spec.kind === "json" ? "application/json" : "image/webp" },
-      redirect: "error",
+    stored = await env.PUBLIC_CONTENT_BUCKET?.get(publicContentKey(pathname));
+  } catch {}
+  if (stored) return serveStoredPublicContent(request, spec, stored);
+
+  try {
+    const content = await fetchPublicContent(pathname, spec, upstreamFetch);
+    await storePublicContent(env.PUBLIC_CONTENT_BUCKET, pathname, content);
+    return new Response(request.method === "HEAD" ? null : content.body, {
+      status: 200,
+      headers: publicContentHeaders(request, content.contentType),
     });
   } catch {
     return jsonResponse(request, 502, { error: "Public content is temporarily unavailable" });
   }
+}
 
-  if (!upstream.ok || !validPublicContentType(upstream.headers.get("Content-Type"), spec.kind)) {
-    return jsonResponse(request, 502, { error: "Public content returned an invalid response" });
-  }
-  const declaredLength = Number(upstream.headers.get("Content-Length") ?? "0");
-  if (Number.isFinite(declaredLength) && declaredLength > spec.limit) {
-    return jsonResponse(request, 502, { error: "Public content response is too large" });
-  }
-
-  const headers = securityHeaders(request);
-  headers.set("Cache-Control", "public, max-age=3600, stale-while-revalidate=86400");
-  headers.set("Content-Type", upstream.headers.get("Content-Type") ?? "application/octet-stream");
-  headers.set("Cross-Origin-Resource-Policy", "cross-origin");
-  if (request.method === "HEAD") return new Response(null, { status: 200, headers });
-
-  try {
-    if (spec.kind === "json") {
-      const text = await readLimitedText(upstream.body, spec.limit);
-      const rewritten = text.replaceAll(`${PUBLIC_CONTENT_ORIGIN}/`, `${requestUrl.origin}/`);
-      JSON.parse(rewritten);
-      return new Response(rewritten, { status: 200, headers });
+export async function syncPublicContent(env, upstreamFetch = fetch) {
+  if (!env.PUBLIC_CONTENT_BUCKET) throw new Error("PUBLIC_CONTENT_BUCKET is not configured");
+  const result = { synced: [], failed: [] };
+  for (const pathname of PUBLIC_SYNC_PATHS) {
+    const spec = publicContentSpec(pathname);
+    try {
+      const content = await fetchPublicContent(pathname, spec, upstreamFetch);
+      await storePublicContent(env.PUBLIC_CONTENT_BUCKET, pathname, content);
+      result.synced.push(pathname);
+    } catch (error) {
+      result.failed.push({
+        pathname,
+        error: error instanceof Error ? error.message : "unknown synchronization error",
+      });
     }
-    const bytes = await readLimitedBytes(upstream.body, spec.limit);
-    return new Response(bytes, { status: 200, headers });
-  } catch {
-    return jsonResponse(request, 502, { error: "Public content returned an invalid response" });
   }
+  await env.PUBLIC_CONTENT_BUCKET.put("sync/status.json", JSON.stringify({
+    completedAt: new Date().toISOString(),
+    ...result,
+  }), {
+    httpMetadata: { contentType: "application/json" },
+    customMetadata: {
+      failures: JSON.stringify(result.failed).slice(0, 1900),
+    },
+  });
+  return result;
 }
 
 async function exchangeAniListCode(request, env, body, upstreamFetch) {
@@ -217,7 +305,7 @@ async function exchangeAniListCode(request, env, body, upstreamFetch) {
 export async function handleRequest(request, env, upstreamFetch = fetch) {
   const url = new URL(request.url);
   const contentSpec = publicContentSpec(url.pathname);
-  if (contentSpec) return proxyPublicContent(request, contentSpec, upstreamFetch);
+  if (contentSpec) return proxyPublicContent(request, env, contentSpec, upstreamFetch);
   if (url.pathname !== TOKEN_PATH) {
     return jsonResponse(request, 404, { error: "Not Found" });
   }
@@ -278,5 +366,8 @@ export async function handleRequest(request, env, upstreamFetch = fetch) {
 export default {
   async fetch(request, env) {
     return handleRequest(request, env);
+  },
+  async scheduled(_controller, env, ctx) {
+    ctx.waitUntil(syncPublicContent(env));
   },
 };

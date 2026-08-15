@@ -7,10 +7,13 @@ This Worker hosts Bear-owned server-side integrations:
   announcements, curated artwork, badge packs, shader previews, and signed
   skip-segment corpus
 
-The public-content proxy accepts only fixed read-only paths, strips caller
-headers and query strings, refuses redirects, validates response types, and
-caps response sizes. It is not a general proxy and does not expose services
-that require third-party API keys.
+Public content is stored in the private `bear-public-content` R2 bucket and
+refreshed every six hours. Requests are served from the last known-good R2
+copy. A missing object is fetched once from the fixed upstream origin, checked,
+stored, and then served. The mirror accepts only fixed read-only paths, strips
+caller headers and query strings, validates redirects, response types, and
+response sizes. It is not a general proxy and does not expose services that
+require third-party API keys.
 
 The AniList client secret must exist only as the encrypted Worker secret
 `ANILIST_CLIENT_SECRET`. Never place its value in source, Wrangler variables,
