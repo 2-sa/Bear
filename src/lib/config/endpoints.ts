@@ -27,6 +27,11 @@ export const HARBOR_BUGS_BASE = resolveBase(
   "https://api.7mood.net",
 );
 
+export const HARBOR_ANILIST_BASE = resolveBase(
+  import.meta.env.VITE_HARBOR_ANILIST_BASE,
+  "https://bugs.harbor.site",
+);
+
 export const HARBOR_SYNC_BASE = resolveBase(
   import.meta.env.VITE_HARBOR_SYNC_BASE,
   "https://sync.harbor.site",
