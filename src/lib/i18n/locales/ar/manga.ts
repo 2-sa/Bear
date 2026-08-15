@@ -188,6 +188,7 @@ const manga: Record<string, string> = {
   "Reader settings": "إعدادات القارئ",
   "Readers also recommend": "يوصي القرّاء أيضًا",
   "Reading mode": "وضع القراءة",
+  "Refresh sources": "تحديث المصادر",
   "Related series": "سلاسل ذات صلة",
   "Remove all": "إزالة الكل",
   "Remove favorite": "إزالة من المفضّلة",

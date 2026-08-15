@@ -384,3 +384,14 @@ export async function setMangaInLibrary(id: string, inLibrary: boolean): Promise
   await provider.setLibrary(mangaId, inLibrary);
   return true;
 }
+
+export function refreshMangaTags() {
+  const sid = activeMangaSourceId();
+  cache.delete(`${sid}|tags|`);
+  try {
+    localStorage.removeItem(`${DISK_PREFIX}${sid}|tags`);
+  } catch {
+    /* use the live request even when storage is unavailable */
+  }
+  return mangaTags();
+}

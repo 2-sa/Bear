@@ -1,11 +1,13 @@
-import { BookCheck, ChevronDown, Clock3, Loader2, Search, Sparkles } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { Loader2, RefreshCw, Search, Star } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useT } from "@/lib/i18n";
 import { Row } from "@/components/row";
 import {
+  clearMangaCache,
   MANGA_PAGE,
   popularManga,
   popularMangaStream,
+  refreshMangaTags,
   searchManga,
   searchMangaStream,
   type MangaSummary,
@@ -56,6 +58,7 @@ export function MangaBrowse({
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [reloadTick, setReloadTick] = useState(0);
+  const [refreshingSources, setRefreshingSources] = useState(false);
 
   const offsetRef = useRef(0);
   const seenRef = useRef(new Set<string>());
@@ -83,6 +86,21 @@ export function MangaBrowse({
   );
 
   const reload = useCallback(() => setReloadTick((n) => n + 1), []);
+
+  const refreshSources = useCallback(async () => {
+    if (refreshingSources) return;
+    setRefreshingSources(true);
+    clearMangaCache();
+    setTagId("");
+    try {
+      await refreshMangaTags();
+    } catch {
+      // The browse reload below will show the existing source error state.
+    } finally {
+      reload();
+      setRefreshingSources(false);
+    }
+  }, [refreshingSources, reload]);
 
   const sourceRef = useRef(activeMangaSourceId());
   const activeSource = activeMangaSource();
@@ -315,39 +333,19 @@ export function MangaBrowse({
         </div>
         <SourceDropdown />
         <TagDropdown tagId={tagId} onSelect={setTagId} />
-        {activeSource?.kind === "suwayomi" && <LanguageDropdown />}
-        <ManageServersButton onClick={onManageSources} className="ms-auto me-2" />
-      </div>
-      <div className="-mt-3 flex flex-wrap items-center gap-2 border-b border-edge-soft/60 pb-4">
-        <FilterButton
-          active={sortMode === "latest"}
-          onClick={() => setSortMode("latest")}
-          icon={<Clock3 size={14} />}
-          label={t("Latest")}
-        />
-        <FilterButton
-          active={sortMode === "new"}
-          onClick={() => setSortMode("new")}
-          icon={<Sparkles size={14} />}
-          label={t("New releases")}
-        />
-        <FilterButton
-          active={sortMode === "chapters"}
-          onClick={() => setSortMode("chapters")}
-          icon={<BookCheck size={14} />}
-          label={t("Latest chapters")}
-        />
-        <span className="mx-1 h-5 w-px bg-edge-soft" />
-        <FilterButton
-          active={statusFilter === "completed"}
-          onClick={() => setStatusFilter(statusFilter === "completed" ? "all" : "completed")}
-          label={t("Completed")}
-        />
-        <FilterButton
-          active={statusFilter === "ongoing"}
-          onClick={() => setStatusFilter(statusFilter === "ongoing" ? "all" : "ongoing")}
-          label={t("Ongoing")}
-        />
+        <button
+          type="button"
+          onClick={() => void refreshSources()}
+          disabled={refreshingSources}
+          className="flex h-10 shrink-0 items-center gap-2 rounded-full border border-edge-soft bg-elevated/40 px-3.5 text-[13px] text-ink transition-colors hover:bg-elevated/70 disabled:cursor-wait disabled:opacity-60"
+          title={t("Refresh sources")}
+        >
+          <RefreshCw
+            size={15}
+            className={refreshingSources ? "animate-spin motion-reduce:animate-none" : "text-ink-subtle"}
+          />
+          <span className="font-medium">{t("Refresh sources")}</span>
+        </button>
       </div>
 
       {allExtensionsMode ? (

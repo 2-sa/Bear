@@ -1,7 +1,7 @@
 import { Check, ChevronDown, Globe, Layers, Settings, Star, Tag } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useT } from "@/lib/i18n";
-import { mangaTags, type MangaTag } from "@/lib/manga/api";
+import { mangaTags, refreshMangaTags, type MangaTag } from "@/lib/manga/api";
 import {
   activeMangaSource,
   activeMangaSourceId,
@@ -134,30 +134,33 @@ export function TagDropdown({
   const [open, setOpen] = useState(false);
   const [tags, setTags] = useState<MangaTag[]>([]);
   const [filter, setFilter] = useState("");
+  const tagRequest = useRef(0);
   const ref = useOutsideClose(open, () => setOpen(false));
   const t = useT();
 
+  const loadFreshTags = () => {
+    const request = ++tagRequest.current;
+    setTags([]);
+    refreshMangaTags()
+      .then((list) => {
+        if (request !== tagRequest.current) return;
+        setTags(list);
+        if (tagId && tagId !== FAVORITES && !list.some((tag) => tag.id === tagId)) onSelect("");
+      })
+      .catch(() => {});
+  };
+
   useEffect(() => {
     let alive = true;
-    const load = (opts?: { clear?: boolean }) => {
-      if (opts?.clear && alive) setTags([]);
-      mangaTags()
-        .then((list) => {
-          if (alive) setTags(list);
-        })
-        .catch((err) => {
-          console.warn("[manga] extension list refresh failed", err);
-        });
-    };
-    load();
-    const unsubSources = subscribeSuwayomiSourcesChanged(() => load());
-    const unsubLibrary = subscribeMangaLibraryChanged(() => load());
-    const unsubLang = subscribeMangaLangFilter(() => load({ clear: true }));
+    const request = ++tagRequest.current;
+    mangaTags()
+      .then((list) => {
+        if (alive && request === tagRequest.current) setTags(list);
+      })
+      .catch(() => {});
     return () => {
       alive = false;
-      unsubSources();
-      unsubLibrary();
-      unsubLang();
+      tagRequest.current += 1;
     };
   }, []);
 
@@ -172,12 +175,16 @@ export function TagDropdown({
 
   return (
     <div ref={ref} className="relative">
-      <button type="button" onClick={() => setOpen((v) => !v)} className={TRIGGER}>
-        {sourceMode ? (
-          <Layers size={15} className="text-ink-subtle" />
-        ) : (
-          <Tag size={15} className="text-ink-subtle" />
-        )}
+      <button
+        type="button"
+        onClick={() => {
+          const next = !open;
+          setOpen(next);
+          if (next) loadFreshTags();
+        }}
+        className={TRIGGER}
+      >
+        <Tag size={15} className="text-ink-subtle" />
         <span className="max-w-[140px] truncate font-medium">
           {tagId === FAVORITES ? t("Favorites") : active ? active.name : t(allLabel)}
         </span>
