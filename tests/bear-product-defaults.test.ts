@@ -33,6 +33,7 @@ test("Bear-owned defaults survive upstream syncs", async (context) => {
   assert.equal(DEFAULT.episodeLayout, "grid");
   assert.equal(DEFAULT.contentAdvisoryToast, true);
   assert.equal(DEFAULT.streamFilterLevel, "balanced");
+  assert.equal(DEFAULT.showAdultAddons, false);
   assert.equal(DEFAULT.togetherRelayUrl, EXPECTED_RELAY);
   assert.deepEqual(DEFAULT.iptvPlaylists, [
     {
@@ -49,6 +50,18 @@ test("Bear-owned defaults survive upstream syncs", async (context) => {
     },
   ]);
   assert.equal(DISCORD_PARTY_JOIN_ENABLED, false);
+
+  const addonsView = readFileSync(new URL("../src/views/addons.tsx", import.meta.url), "utf8");
+  assert.match(
+    addonsView,
+    /update\(\{\s*showAdultAddons:\s*!settings\.showAdultAddons\s*\}\)/,
+    "the adult add-ons switch must update the setting directly",
+  );
+  assert.doesNotMatch(
+    addonsView,
+    /AgeGateModal|ageGateOpen|setAgeGateOpen|age-gate-modal/,
+    "the age-verification gate must not be restored",
+  );
 
   const anilistConfig = readFileSync(
     new URL("../src/lib/anilist/config.ts", import.meta.url),
