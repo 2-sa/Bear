@@ -341,3 +341,14 @@ export function mangaTags() {
     disk: { key: "tags", ...TAGS_DISK },
   });
 }
+
+export function refreshMangaTags() {
+  const sid = activeMangaSourceId();
+  cache.delete(`${sid}|tags|`);
+  try {
+    localStorage.removeItem(`${DISK_PREFIX}${sid}|tags`);
+  } catch {
+    /* use the live request even when storage is unavailable */
+  }
+  return mangaTags();
+}

@@ -1,11 +1,13 @@
-import { Loader2, Search, Star } from "lucide-react";
+import { Loader2, RefreshCw, Search, Star } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useT } from "@/lib/i18n";
 import { Poster } from "@/components/poster";
 import {
+  clearMangaCache,
   MANGA_PAGE,
   popularManga,
   popularMangaStream,
+  refreshMangaTags,
   searchManga,
   searchMangaStream,
   type MangaSummary,
@@ -36,6 +38,7 @@ export function MangaBrowse({
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [reloadTick, setReloadTick] = useState(0);
+  const [refreshingSources, setRefreshingSources] = useState(false);
 
   const offsetRef = useRef(0);
   const seenRef = useRef(new Set<string>());
@@ -63,6 +66,21 @@ export function MangaBrowse({
   );
 
   const reload = useCallback(() => setReloadTick((n) => n + 1), []);
+
+  const refreshSources = useCallback(async () => {
+    if (refreshingSources) return;
+    setRefreshingSources(true);
+    clearMangaCache();
+    setTagId("");
+    try {
+      await refreshMangaTags();
+    } catch {
+      // The browse reload below will show the existing source error state.
+    } finally {
+      reload();
+      setRefreshingSources(false);
+    }
+  }, [refreshingSources, reload]);
 
   const sourceRef = useRef(activeMangaSourceId());
   useEffect(
@@ -199,6 +217,19 @@ export function MangaBrowse({
         </div>
         <SourceDropdown onManageSources={onManageSources} />
         <TagDropdown tagId={tagId} onSelect={setTagId} />
+        <button
+          type="button"
+          onClick={() => void refreshSources()}
+          disabled={refreshingSources}
+          className="flex h-10 shrink-0 items-center gap-2 rounded-full border border-edge-soft bg-elevated/40 px-3.5 text-[13px] text-ink transition-colors hover:bg-elevated/70 disabled:cursor-wait disabled:opacity-60"
+          title={t("Refresh sources")}
+        >
+          <RefreshCw
+            size={15}
+            className={refreshingSources ? "animate-spin motion-reduce:animate-none" : "text-ink-subtle"}
+          />
+          <span className="font-medium">{t("Refresh sources")}</span>
+        </button>
       </div>
 
       {status === "loading" ? (
