@@ -20,7 +20,7 @@ test("Bear-owned defaults survive upstream syncs", async (context) => {
     "/src/lib/discord/presence.ts",
   );
 
-  assert.equal(DEFAULT_THEME.preset, "tokyo-night");
+  assert.equal(DEFAULT_THEME.preset, "cool-grey");
   assert.equal(DEFAULT.region, "SA");
   assert.equal(DEFAULT.uiLanguage, "ar");
   assert.equal(DEFAULT.tmdbLanguage, "ar-SA");
