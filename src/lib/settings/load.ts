@@ -147,6 +147,8 @@ export function loadStoredSettings(rawKey: string = STORAGE_KEY): Settings {
       _scrapersV2?: boolean;
       _animeRowsV1?: boolean;
       _tennisWtaV1?: boolean;
+      _bearRelayDefaultV1?: boolean;
+      _bearRelayDefaultV2?: boolean;
       _liquidGlassOptIn?: boolean;
       _navThemeRepairV1?: boolean;
       _playlistsTabV1?: boolean;
@@ -214,6 +216,14 @@ export function loadStoredSettings(rawKey: string = STORAGE_KEY): Settings {
         if (!parsed.sportsLeagues.includes("TENNIS_WTA")) parsed.sportsLeagues.push("TENNIS_WTA");
       }
       parsed._tennisWtaV1 = true;
+    }
+    if (!parsed._bearRelayDefaultV1) {
+      parsed.togetherRelayUrl = migrateRelayDefault(parsed.togetherRelayUrl);
+      parsed._bearRelayDefaultV1 = true;
+    }
+    if (!parsed._bearRelayDefaultV2) {
+      parsed.togetherRelayUrl = migrateRelayDefault(parsed.togetherRelayUrl);
+      parsed._bearRelayDefaultV2 = true;
     }
     if (
       typeof parsed.songIdAiModel === "string" &&

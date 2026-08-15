@@ -181,7 +181,7 @@ export const DEFAULT: Settings = {
     shudder: "US",
   },
   showAdultAddons: false,
-  togetherRelayUrl: "",
+  togetherRelayUrl: "wss://relay.7mood.net",
   togetherCfToken: "",
   togetherCfAccountId: "",
   togetherCfDeployed: false,
