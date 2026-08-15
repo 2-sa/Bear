@@ -179,7 +179,7 @@ export const DEFAULT: Settings = {
     shudder: "US",
   },
   showAdultAddons: false,
-  togetherRelayUrl: "wss://harbor-together-relay.xyz7.workers.dev",
+  togetherRelayUrl: "wss://relay.7mood.net",
   togetherCfToken: "",
   togetherCfAccountId: "",
   togetherCfDeployed: false,

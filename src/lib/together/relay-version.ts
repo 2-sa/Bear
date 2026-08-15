@@ -1,6 +1,9 @@
 export const REQUIRED_RELAY_VERSION = 10;
-export const HARBOR_PUBLIC_RELAY = "wss://harbor-together-relay.xyz7.workers.dev";
-const LEGACY_PUBLIC_RELAY = "pub.harbor.site";
+export const HARBOR_PUBLIC_RELAY = "wss://relay.7mood.net";
+const LEGACY_PUBLIC_RELAYS = new Set([
+  "pub.harbor.site",
+  "harbor-together-relay.xyz7.workers.dev",
+]);
 
 export function relayOutdated(version: number | null | undefined): boolean {
   return version == null || version < REQUIRED_RELAY_VERSION;
@@ -12,7 +15,7 @@ export function isPublicRelay(url: string): boolean {
     .toLowerCase()
     .replace(/^(wss?|https?):\/\//, "")
     .replace(/\/.*$/, "");
-  return host === "harbor-together-relay.xyz7.workers.dev";
+  return host === "relay.7mood.net";
 }
 
 export function migrateRelayDefault(url: string | null | undefined): string {
@@ -23,5 +26,5 @@ export function migrateRelayDefault(url: string | null | undefined): string {
     .toLowerCase()
     .replace(/^(wss?|https?):\/\//, "")
     .replace(/\/.*$/, "");
-  return host === LEGACY_PUBLIC_RELAY ? HARBOR_PUBLIC_RELAY : value;
+  return LEGACY_PUBLIC_RELAYS.has(host) ? HARBOR_PUBLIC_RELAY : value;
 }
