@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { handleRequest, syncPublicContent } from "../cloudflare/bear-api/src/index.js";
 
-const URL = "https://api.7mood.net/v1/anilist/token";
+const TOKEN_URL = "https://api.7mood.net/v1/anilist/token";
 const VALID_CODE = "anilist-code_123456789";
 
 function memoryBucket() {
@@ -46,7 +46,7 @@ function environment({ configured = true, rateAllowed = true, bucket = memoryBuc
 function tokenRequest(
   body: unknown,
   headers: Record<string, string> = {},
-  url = URL,
+  url = TOKEN_URL,
 ) {
   return new Request(url, {
     method: "POST",
@@ -58,7 +58,7 @@ function tokenRequest(
 test("Bear API rejects unrelated routes, methods, origins, and malformed bodies", async () => {
   const env = environment();
   assert.equal((await handleRequest(new Request("https://api.7mood.net/"), env)).status, 404);
-  assert.equal((await handleRequest(new Request(URL), env)).status, 405);
+  assert.equal((await handleRequest(new Request(TOKEN_URL), env)).status, 405);
   assert.equal(
     (await handleRequest(tokenRequest({ code: VALID_CODE }, { Origin: "https://example.com" }), env)).status,
     403,
