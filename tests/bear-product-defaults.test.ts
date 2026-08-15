@@ -26,6 +26,8 @@ test("Bear-owned defaults survive upstream syncs", async (context) => {
   assert.equal(DEFAULT.tmdbLanguage, "ar-SA");
   assert.deepEqual(DEFAULT.preferredLanguages, ["Arabic"]);
   assert.deepEqual(DEFAULT.preferredSubLangs, ["Arabic"]);
+  assert.equal(DEFAULT.subFontFamily, "arabic");
+  assert.equal(DEFAULT.subtitleAutoSync, true);
   assert.deepEqual(DEFAULT.preferredAudioLangs, ["Arabic", "English", "Japanese"]);
   assert.deepEqual(DEFAULT.tmdbImageLangs, ["Arabic", "Original"]);
   assert.equal(DEFAULT.discordRichPresence, false);
@@ -33,6 +35,7 @@ test("Bear-owned defaults survive upstream syncs", async (context) => {
   assert.equal(DEFAULT.episodeLayout, "grid");
   assert.equal(DEFAULT.contentAdvisoryToast, true);
   assert.equal(DEFAULT.streamFilterLevel, "balanced");
+  assert.ok(Object.values(DEFAULT.streamingRegions).every((region) => region === "US"));
   assert.equal(DEFAULT.showAdultAddons, false);
   assert.equal(DEFAULT.togetherRelayUrl, EXPECTED_RELAY);
   assert.deepEqual(DEFAULT.iptvPlaylists, [

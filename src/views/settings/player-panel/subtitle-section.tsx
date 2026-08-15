@@ -33,7 +33,7 @@ export function SubtitleStylePanel() {
 
   const isDefault =
     settings.subStyle === "shadow" &&
-    settings.subFontFamily === "inter" &&
+    settings.subFontFamily === "arabic" &&
     settings.subFontSize === 32 &&
     settings.subFontColor.toUpperCase() === "#FFFFFF" &&
     settings.subBorderColor.toUpperCase() === "#000000" &&
@@ -48,7 +48,7 @@ export function SubtitleStylePanel() {
   const resetDefaults = () => {
     update({
       subStyle: "shadow",
-      subFontFamily: "inter",
+      subFontFamily: "arabic",
       subFontSize: 32,
       subFontColor: "#FFFFFF",
       subBorderColor: "#000000",

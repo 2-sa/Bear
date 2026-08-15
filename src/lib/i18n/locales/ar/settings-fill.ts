@@ -16,7 +16,7 @@ const settingsFill: Record<string, string> = {
   "Subtitle auto-sync": "المزامنة التلقائية للترجمة",
   "Bear times out-of-sync subtitles to the audio for you, on any external subtitle. It works on the mpv player and leaves embedded tracks alone, since those are already in sync.": "يضبط Bear توقيت الترجمات غير المتزامنة لتوافق الصوت نيابةً عنك، مع أي ترجمة خارجية. يعمل مع مشغّل mpv ويترك المسارات المُضمَّنة دون تغيير، لأنها متزامنة بالفعل.",
   "Auto-sync subtitles": "مزامنة الترجمات تلقائيًا",
-  "When a subtitle runs early or late, Bear measures the speech and corrects the timing on its own. Off by default.": "عندما تظهر الترجمة مبكرة أو متأخرة، يقيس Bear الكلام ويصحّح التوقيت من تلقاء نفسه. مُعطَّل افتراضيًا.",
+  "When a subtitle runs early or late, Bear measures the speech and corrects the timing on its own.": "عندما تظهر الترجمة مبكرة أو متأخرة، يقيس Bear الكلام ويصحّح التوقيت من تلقاء نفسه.",
   "Let structural tiers auto-apply": "السماح بالتطبيق التلقائي للمستويات البنيوية",
   "Identity matches from content hashing and the community database always apply on their own. Timing worked out from the audio only offers a fix until it has earned trust. Turn this on to let those audio-derived fixes apply automatically too.":
     "تُطبَّق مطابقات الهوية الناتجة عن تجزئة المحتوى وقاعدة بيانات المجتمع دائمًا من تلقاء نفسها. أما التوقيت المُستنتَج من الصوت فيقترح إصلاحًا فقط إلى أن يكتسب الثقة. فعّل هذا الخيار لتُطبَّق تلك الإصلاحات المستمدة من الصوت تلقائيًا أيضًا.",
