@@ -14,7 +14,7 @@ const settingsFill: Record<string, string> = {
   "Subtitle auto-sync": "Sincronização automática de legendas",
   "Bear times out-of-sync subtitles to the audio for you, on any external subtitle. It works on the mpv player and leaves embedded tracks alone, since those are already in sync.": "O Bear sincroniza para você as legendas fora de sincronia com o áudio, em qualquer legenda externa. Funciona no reprodutor mpv e não mexe nas faixas incorporadas, já que essas já estão sincronizadas.",
   "Auto-sync subtitles": "Sincronizar legendas automaticamente",
-  "When a subtitle runs early or late, Bear measures the speech and corrects the timing on its own. Off by default.": "Quando uma legenda adianta ou atrasa, o Bear mede a fala e corrige o tempo sozinho. Desativado por padrão.",
+  "When a subtitle runs early or late, Bear measures the speech and corrects the timing on its own.": "Quando uma legenda adianta ou atrasa, o Bear mede a fala e corrige o tempo sozinho.",
   "Let structural tiers auto-apply": "Permitir aplicação automática dos níveis estruturais",
   "Identity matches from content hashing and the community database always apply on their own. Timing worked out from the audio only offers a fix until it has earned trust. Turn this on to let those audio-derived fixes apply automatically too.": "Correspondências de identidade obtidas por hashing de conteúdo e pelo banco de dados da comunidade sempre são aplicadas por conta própria. O tempo calculado a partir do áudio apenas sugere uma correção até conquistar confiança. Ative esta opção para que essas correções derivadas do áudio também sejam aplicadas automaticamente.",
   "Drift monitor": "Monitor de desvio",

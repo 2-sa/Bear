@@ -28,7 +28,7 @@ export function AutoSyncPanel() {
         <ToggleRow
           label={t("Auto-sync subtitles")}
           sub={t(
-            "When a subtitle runs early or late, Bear measures the speech and corrects the timing on its own. Off by default.",
+            "When a subtitle runs early or late, Bear measures the speech and corrects the timing on its own.",
           )}
           value={master}
           onChange={(v) => update({ subtitleAutoSync: v })}
