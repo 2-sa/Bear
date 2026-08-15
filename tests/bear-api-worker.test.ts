@@ -22,7 +22,7 @@ function memoryBucket() {
         httpEtag: `\"${key}\"`,
       };
     },
-    async put(key: string, value: BodyInit | Uint8Array, options?: { httpMetadata?: { contentType?: string } }) {
+    async put(key: string, value: BodyInit | Uint8Array | ArrayBuffer, options?: { httpMetadata?: { contentType?: string } }) {
       const body = new Uint8Array(await new Response(value as BodyInit).arrayBuffer());
       objects.set(key, { body, contentType: options?.httpMetadata?.contentType });
     },
@@ -110,6 +110,41 @@ test("Bear API exchanges only an AniList code and returns only the access token"
   assert.equal(response.headers.get("Cache-Control"), "no-store");
   assert.equal(response.headers.get("Access-Control-Allow-Origin"), "http://localhost:1420");
 });
+
+test("Bear API stores feedback and reports in Bear R2 without contacting Harbor", async () => {
+  const bucket = memoryBucket();
+  const env = environment({ bucket });
+  const feedback = await handleRequest(new Request("https://api.7mood.net/v1/feedback", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Origin: "http://localhost:1420" },
+    body: JSON.stringify({ version: "0.9.134", build: "beta", rating: 5, beta: true }),
+  }), env, async () => { throw new Error("submissions must not be forwarded"); });
+  assert.equal(feedback.status, 201);
+
+  const adReport = await handleRequest(new Request("https://api.7mood.net/v1/adreport", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ content: "ih_example", source: "ih_stream", ranges: [{ start: 10, end: 25 }] }),
+  }), env, async () => { throw new Error("submissions must not be forwarded"); });
+  assert.equal(adReport.status, 201);
+
+  const form = new FormData();
+  form.set("summary", "Playback stopped");
+  form.set("severity", "high");
+  form.set("actual", "The player stopped unexpectedly");
+  form.set("diagnostics", JSON.stringify({ recentErrors: [] }));
+  form.append("files", new Blob(["safe diagnostic"]), "diagnostic.txt");
+  const report = await handleRequest(new Request("https://api.7mood.net/v1/reports", {
+    method: "POST",
+    body: form,
+  }), env, async () => { throw new Error("submissions must not be forwarded"); });
+  assert.equal(report.status, 201);
+  assert.ok([...bucket.objects.keys()].some((key) => key.startsWith("submissions/feedback/")));
+  assert.ok([...bucket.objects.keys()].some((key) => key.startsWith("submissions/adreport/")));
+  assert.ok([...bucket.objects.keys()].some((key) => key.endsWith("/report.json")));
+  assert.ok([...bucket.objects.keys()].some((key) => key.includes("/files/1-diagnostic.txt")));
+});
+
 
 test("Bear API proxies only allowlisted public content without forwarding request data", async () => {
   let upstreamUrl = "";

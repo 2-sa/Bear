@@ -1,5 +1,9 @@
 const ANILIST_TOKEN_URL = "https://anilist.co/api/v2/oauth/token";
 const TOKEN_PATH = "/v1/anilist/token";
+const FEEDBACK_PATH = "/v1/feedback";
+const AD_REPORT_PATH = "/v1/adreport";
+const BUG_REPORT_PATH = "/v1/reports";
+const SUBMISSION_PATHS = new Set([FEEDBACK_PATH, AD_REPORT_PATH, BUG_REPORT_PATH]);
 const PUBLIC_CONTENT_ORIGIN = "https://harbor.site";
 const PUBLIC_CONTENT_FALLBACK_ORIGIN = "https://harbor.elfhosted.com";
 const PUBLIC_CONTENT_PUBLIC_ORIGIN = "https://api.7mood.net";
@@ -8,6 +12,8 @@ const ALLOWED_PUBLIC_CONTENT_ORIGINS = new Set([
   PUBLIC_CONTENT_FALLBACK_ORIGIN,
 ]);
 const MAX_REQUEST_BYTES = 4096;
+const MAX_SUBMISSION_JSON_BYTES = 32 * 1024;
+const MAX_BUG_REPORT_BYTES = 6 * 1024 * 1024;
 const MAX_RESPONSE_BYTES = 16384;
 const MAX_PUBLIC_JSON_BYTES = 2 * 1024 * 1024;
 const MAX_PUBLIC_IMAGE_BYTES = 8 * 1024 * 1024;
@@ -107,6 +113,144 @@ function hasExactKeys(body, expected) {
   if (!body || typeof body !== "object" || Array.isArray(body)) return false;
   const keys = Object.keys(body);
   return keys.length === expected.length && expected.every((key) => keys.includes(key));
+}
+
+function boundedString(value, max, { required = false } = {}) {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if ((required && !trimmed) || trimmed.length > max) return null;
+  return trimmed;
+}
+
+function submissionId(kind) {
+  const date = new Date().toISOString().slice(0, 10);
+  return { id: crypto.randomUUID(), date, kind };
+}
+
+async function storeSubmission(env, key, body, contentType = "application/json") {
+  if (!env.PUBLIC_CONTENT_BUCKET) throw new Error("submission storage is unavailable");
+  await env.PUBLIC_CONTENT_BUCKET.put(key, body, {
+    httpMetadata: { contentType },
+    customMetadata: { receivedAt: new Date().toISOString() },
+  });
+}
+
+function validFeedback(body) {
+  return body && typeof body === "object" && !Array.isArray(body)
+    && boundedString(body.version, 64, { required: true }) !== null
+    && boundedString(body.build, 128, { required: true }) !== null
+    && Number.isInteger(body.rating) && body.rating >= 1 && body.rating <= 5
+    && typeof body.beta === "boolean";
+}
+
+function validAdReport(body) {
+  return body && typeof body === "object" && !Array.isArray(body)
+    && boundedString(body.content, 256, { required: true }) !== null
+    && boundedString(body.source, 256, { required: true }) !== null
+    && Array.isArray(body.ranges) && body.ranges.length > 0 && body.ranges.length <= 100
+    && body.ranges.every((range) => range && Number.isFinite(range.start)
+      && Number.isFinite(range.end) && range.start >= 0 && range.end > range.start);
+}
+
+async function handleJsonSubmission(request, env, pathname) {
+  let body;
+  try {
+    body = await readJson(request.body, MAX_SUBMISSION_JSON_BYTES);
+  } catch (error) {
+    return jsonResponse(request, error instanceof PayloadTooLargeError ? 413 : 400, {
+      error: error instanceof PayloadTooLargeError ? "Request too large" : "Invalid JSON body",
+    });
+  }
+  if (pathname === FEEDBACK_PATH && !validFeedback(body)) {
+    return jsonResponse(request, 400, { error: "Invalid feedback" });
+  }
+  if (pathname === AD_REPORT_PATH && !validAdReport(body)) {
+    return jsonResponse(request, 400, { error: "Invalid ad report" });
+  }
+  const submission = submissionId(pathname === FEEDBACK_PATH ? "feedback" : "adreport");
+  try {
+    await storeSubmission(
+      env,
+      `submissions/${submission.kind}/${submission.date}/${submission.id}.json`,
+      JSON.stringify({ receivedAt: new Date().toISOString(), ...body }),
+    );
+  } catch {
+    return jsonResponse(request, 503, { error: "Report storage temporarily unavailable" });
+  }
+  return jsonResponse(request, 201, { id: submission.id });
+}
+
+function formString(form, name, max, options) {
+  const value = form.get(name);
+  return typeof value === "string" ? boundedString(value, max, options) : null;
+}
+
+async function handleBugReport(request, env, rawContentType) {
+  let bytes;
+  try {
+    bytes = await readLimitedBytes(request.body, MAX_BUG_REPORT_BYTES);
+  } catch (error) {
+    return jsonResponse(request, error instanceof PayloadTooLargeError ? 413 : 400, {
+      error: error instanceof PayloadTooLargeError ? "Request too large" : "Invalid report body",
+    });
+  }
+  let form;
+  try {
+    form = await new Request("https://bear.local/", {
+      method: "POST",
+      headers: { "Content-Type": rawContentType },
+      body: bytes,
+    }).formData();
+  } catch {
+    return jsonResponse(request, 400, { error: "Invalid multipart report" });
+  }
+  const summary = formString(form, "summary", 240, { required: true });
+  const severity = formString(form, "severity", 16, { required: true });
+  if (!summary || !["low", "normal", "high", "critical"].includes(severity ?? "")) {
+    return jsonResponse(request, 400, { error: "Invalid bug report" });
+  }
+  const fields = {};
+  for (const [name, max] of Object.entries({
+    steps: 8000,
+    expected: 8000,
+    actual: 8000,
+    reporter_name: 120,
+    reporter_github: 120,
+    reporter_contact: 240,
+    consent_credit: 8,
+    app_version: 64,
+    os: 64,
+    os_version: 64,
+    ua: 1000,
+    viewport: 64,
+    locale: 64,
+    diagnostics: 20000,
+  })) fields[name] = formString(form, name, max) ?? "";
+
+  const submission = submissionId("reports");
+  const prefix = `submissions/reports/${submission.date}/${submission.id}`;
+  const files = form.getAll("files").filter((value) => value instanceof File).slice(0, 5);
+  try {
+    const storedFiles = [];
+    for (let index = 0; index < files.length; index += 1) {
+      const file = files[index];
+      const safeName = file.name.replace(/[^a-z0-9._-]+/gi, "_").slice(0, 100) || `file-${index + 1}`;
+      const key = `${prefix}/files/${index + 1}-${safeName}`;
+      await storeSubmission(env, key, await file.arrayBuffer(), file.type || "application/octet-stream");
+      storedFiles.push({ key, name: file.name.slice(0, 200), type: file.type, size: file.size });
+    }
+    await storeSubmission(env, `${prefix}/report.json`, JSON.stringify({
+      id: submission.id,
+      receivedAt: new Date().toISOString(),
+      summary,
+      severity,
+      ...fields,
+      files: storedFiles,
+    }));
+  } catch {
+    return jsonResponse(request, 503, { error: "Report storage temporarily unavailable" });
+  }
+  return jsonResponse(request, 201, { id: submission.id });
 }
 
 function isAllowedOrigin(request) {
@@ -306,7 +450,7 @@ export async function handleRequest(request, env, upstreamFetch = fetch) {
   const url = new URL(request.url);
   const contentSpec = publicContentSpec(url.pathname);
   if (contentSpec) return proxyPublicContent(request, env, contentSpec, upstreamFetch);
-  if (url.pathname !== TOKEN_PATH) {
+  if (url.pathname !== TOKEN_PATH && !SUBMISSION_PATHS.has(url.pathname)) {
     return jsonResponse(request, 404, { error: "Not Found" });
   }
 
@@ -330,24 +474,36 @@ export async function handleRequest(request, env, upstreamFetch = fetch) {
     return jsonResponse(request, 405, { error: "Method Not Allowed" }, { Allow: "POST, OPTIONS" });
   }
 
-  const contentType = request.headers.get("Content-Type")?.split(";", 1)[0].trim().toLowerCase();
-  if (contentType !== "application/json") {
-    return jsonResponse(request, 415, { error: "Content-Type must be application/json" });
+  const rawContentType = request.headers.get("Content-Type") ?? "";
+  const contentType = rawContentType.split(";", 1)[0].trim().toLowerCase();
+  const expectedType = url.pathname === BUG_REPORT_PATH ? "multipart/form-data" : "application/json";
+  if (contentType !== expectedType) {
+    return jsonResponse(request, 415, { error: `Content-Type must be ${expectedType}` });
   }
 
   const declaredLength = Number(request.headers.get("Content-Length") ?? "0");
-  if (Number.isFinite(declaredLength) && declaredLength > MAX_REQUEST_BYTES) {
+  const requestLimit = url.pathname === TOKEN_PATH
+    ? MAX_REQUEST_BYTES
+    : url.pathname === BUG_REPORT_PATH ? MAX_BUG_REPORT_BYTES : MAX_SUBMISSION_JSON_BYTES;
+  if (Number.isFinite(declaredLength) && declaredLength > requestLimit) {
     return jsonResponse(request, 413, { error: "Request too large" });
   }
 
   let allowed;
   try {
-    allowed = await env.AUTH_RATE_LIMITER.limit({ key: "anilist-token-exchange" });
+    allowed = await env.AUTH_RATE_LIMITER.limit({ key: url.pathname });
   } catch {
     return jsonResponse(request, 503, { error: "Login service temporarily unavailable" });
   }
   if (!allowed.success) {
     return jsonResponse(request, 429, { error: "Too many attempts. Try again shortly." }, { "Retry-After": "60" });
+  }
+
+  if (url.pathname === BUG_REPORT_PATH) {
+    return handleBugReport(request, env, rawContentType);
+  }
+  if (url.pathname === FEEDBACK_PATH || url.pathname === AD_REPORT_PATH) {
+    return handleJsonSubmission(request, env, url.pathname);
   }
 
   let body;

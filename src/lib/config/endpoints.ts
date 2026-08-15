@@ -24,7 +24,7 @@ export const HARBOR_TVDB_BASE = resolveBase(import.meta.env.VITE_HARBOR_TVDB_BAS
 
 export const HARBOR_BUGS_BASE = resolveBase(
   import.meta.env.VITE_HARBOR_BUGS_BASE,
-  "https://bugs.harbor.site",
+  "https://api.7mood.net",
 );
 
 export const HARBOR_SYNC_BASE = resolveBase(
