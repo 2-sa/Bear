@@ -9,6 +9,7 @@ interface ImportMetaEnv {
   readonly VITE_HARBOR_API_BASE?: string;
   readonly VITE_BEAR_PUBLIC_CONTENT_BASE?: string;
   readonly VITE_HARBOR_BUGS_BASE?: string;
+  readonly VITE_HARBOR_ANILIST_BASE?: string;
   readonly VITE_HARBOR_SYNC_BASE?: string;
   readonly VITE_HARBOR_RELAY_BASE?: string;
   readonly VITE_HARBOR_TRAKT_BASE?: string;

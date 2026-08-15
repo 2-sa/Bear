@@ -70,12 +70,12 @@ test("Bear-owned defaults survive upstream syncs", async (context) => {
   assert.match(anilistConfig, /ANILIST_CLIENT_ID = "42941"/);
   assert.match(
     anilistConfig,
-    /ANILIST_TOKEN_EXCHANGE_URL = `\$\{HARBOR_BUGS_BASE\}\/v1\/anilist\/token`/,
+    /ANILIST_TOKEN_EXCHANGE_URL = `\$\{HARBOR_ANILIST_BASE\}\/v1\/anilist\/token`/,
   );
   const endpointConfig = readFileSync(new URL("../src/lib/config/endpoints.ts", import.meta.url), "utf8");
   assert.match(endpointConfig, /BEAR_PUBLIC_CONTENT_BASE[\s\S]*https:\/\/api\.7mood\.net/);
   assert.match(endpointConfig, /HARBOR_BUGS_BASE[\s\S]*https:\/\/api\.7mood\.net/);
-  assert.doesNotMatch(endpointConfig, /bugs\.harbor\.site/);
+  assert.match(endpointConfig, /HARBOR_ANILIST_BASE[\s\S]*https:\/\/bugs\.harbor\.site/);
   assert.doesNotMatch(anilistConfig, /43455|api\.7mood\.net/);
 
   const discordNative = readFileSync(
