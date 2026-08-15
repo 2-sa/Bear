@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from "react";
 import { safeFetch } from "@/lib/safe-fetch";
 import type { AwardSourceId, AwardWin } from "@/lib/anime-awards";
-import { HARBOR_API_BASE } from "@/lib/config/endpoints";
+import { BEAR_PUBLIC_CONTENT_BASE } from "@/lib/config/endpoints";
 
 type MasterIds = {
   imdb?: string;
@@ -23,7 +23,7 @@ type MasterWin = {
 type MasterEntry = { title: string; ids: MasterIds | null; wins: MasterWin[] };
 type Master = { updatedAt?: string; entries?: MasterEntry[] };
 
-const URL = `${HARBOR_API_BASE}/anime-awards.json`;
+const URL = `${BEAR_PUBLIC_CONTENT_BASE}/anime-awards.json`;
 
 let idIndex: Map<string, AwardWin[]> | null = null;
 let loading: Promise<void> | null = null;

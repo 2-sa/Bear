@@ -1,7 +1,7 @@
 import { safeFetch } from "@/lib/safe-fetch";
-import { HARBOR_API_BASE } from "@/lib/config/endpoints";
+import { BEAR_PUBLIC_CONTENT_BASE } from "@/lib/config/endpoints";
 
-const URL = `${HARBOR_API_BASE}/curated-logos.json`;
+const URL = `${BEAR_PUBLIC_CONTENT_BASE}/curated-logos.json`;
 
 let map: Record<string, string> | null = null;
 let loading: Promise<void> | null = null;

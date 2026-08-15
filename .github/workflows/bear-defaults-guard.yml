@@ -36,5 +36,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Verify Bear-owned defaults
-        run: node --test tests/bear-product-defaults.test.ts
+      - name: Verify Bear-owned defaults and services
+        run: >-
+          node --test
+          tests/bear-product-defaults.test.ts
+          tests/bear-api-worker.test.ts
+          tests/together-relay-default.test.ts

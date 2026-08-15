@@ -1,4 +1,4 @@
-import { HARBOR_API_BASE } from "@/lib/config/endpoints";
+import { BEAR_PUBLIC_CONTENT_BASE } from "@/lib/config/endpoints";
 
 export type ShaderStage = "prescale" | "restore" | "chroma" | "sharpen" | "tonemap";
 export type ShaderContent = "all" | "anime" | "hdr" | "live";
@@ -24,8 +24,8 @@ export type ShaderCatalogEntry = {
 
 function demoFor(id: string, credit: string) {
   return {
-    before: `${HARBOR_API_BASE}/shaders/${id}/before.webp`,
-    after: `${HARBOR_API_BASE}/shaders/${id}/after.webp`,
+    before: `${BEAR_PUBLIC_CONTENT_BASE}/shaders/${id}/before.webp`,
+    after: `${BEAR_PUBLIC_CONTENT_BASE}/shaders/${id}/after.webp`,
     credit,
   };
 }
