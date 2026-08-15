@@ -166,7 +166,7 @@ test("Bear API refreshes the fixed public manifest set without API-key routes", 
   };
 
   const result = await syncPublicContent(environment({ bucket }), upstreamFetch);
-  assert.equal(result.failed.length, 0);
+  assert.equal(result.failed.length, 0, JSON.stringify(result.failed));
   assert.equal(result.synced.length, 12);
   assert.equal(bucket.objects.size, 13);
   assert.ok(bucket.objects.has("sync/status.json"));
