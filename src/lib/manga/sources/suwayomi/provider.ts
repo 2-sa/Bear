@@ -33,6 +33,28 @@ import { loadSources, pickTransport, sourceLang, withTransportFallback } from ".
 import { registerServerPageHeaders } from "@/lib/manga/plugins/adapter";
 
 const SEARCH_ALL_CONCURRENCY = 4;
+const BROWSE_ALL_CONCURRENCY = 4;
+const BROWSE_SOURCE_TIMEOUT_MS = 8_000;
+
+type SuwayomiProviderOptions = {
+  sourceTimeoutMs?: number;
+};
+
+function settleWithin<T>(promise: Promise<T>, fallback: T, timeoutMs: number): Promise<T> {
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => resolve(fallback), timeoutMs);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      () => {
+        clearTimeout(timer);
+        resolve(fallback);
+      },
+    );
+  });
+}
 
 function normalizedTitle(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, "");
@@ -71,7 +93,11 @@ function mapChapters(
   return mapped;
 }
 
-export function makeSuwayomiProvider(baseUrl: string, basicAuth?: string): MangaProvider {
+export function makeSuwayomiProvider(
+  baseUrl: string,
+  basicAuth?: string,
+  options: SuwayomiProviderOptions = {},
+): MangaProvider {
   const server = makeServer(baseUrl, basicAuth);
   const client = makeClient(server);
 
@@ -112,8 +138,23 @@ export function makeSuwayomiProvider(baseUrl: string, basicAuth?: string): Manga
   ): Promise<MangaSummary[]> {
     const transport = await pickTransport(client);
     const sources = await loadSources(client, transport);
-    const lists = await Promise.all(
-      sources.map((source) => browse(source.id, kind, offset, query).catch(() => [])),
+    const lists: MangaSummary[][] = Array.from({ length: sources.length }, () => []);
+    let nextSource = 0;
+    const worker = async () => {
+      while (true) {
+        const index = nextSource++;
+        const source = sources[index];
+        if (!source) return;
+        const requestClient = makeClient(server, 0);
+        lists[index] = await settleWithin(
+          browse(source.id, kind, offset, query, requestClient),
+          [] as MangaSummary[],
+          options.sourceTimeoutMs ?? BROWSE_SOURCE_TIMEOUT_MS,
+        );
+      }
+    };
+    await Promise.all(
+      Array.from({ length: Math.min(BROWSE_ALL_CONCURRENCY, sources.length) }, () => worker()),
     );
     const merged: MangaSummary[] = [];
     const longest = Math.max(0, ...lists.map((list) => list.length));

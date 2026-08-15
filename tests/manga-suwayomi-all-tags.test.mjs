@@ -6,6 +6,7 @@ import { createServer as createViteServer } from "vite";
 let httpServer;
 let vite;
 let baseUrl;
+let includeHangingSource = false;
 
 before(async () => {
   httpServer = createHttpServer((req, res) => {
@@ -14,6 +15,7 @@ before(async () => {
       res.end(JSON.stringify([
         { id: "11", name: "First source", lang: "en" },
         { id: "22", name: "Second source", lang: "ar" },
+        ...(includeHangingSource ? [{ id: "33", name: "Broken source", lang: "en" }] : []),
       ]));
       return;
     }
@@ -23,6 +25,9 @@ before(async () => {
     }
     if (req.url === "/api/v1/source/22/popular/1") {
       res.end(JSON.stringify({ mangaList: [{ id: 202, title: "Second manga" }], hasNextPage: false }));
+      return;
+    }
+    if (req.url === "/api/v1/source/33/popular/1") {
       return;
     }
     if (req.url === "/api/v1/library") {
@@ -63,4 +68,23 @@ test("All tags lists popular manga from every Suwayomi source by default", async
     manga.map((item) => item.title).sort(),
     ["First manga", "Second manga"],
   );
+});
+
+test("All tags keeps healthy Suwayomi sources when one source hangs", async () => {
+  includeHangingSource = true;
+  try {
+    const { makeSuwayomiProvider } = await vite.ssrLoadModule(
+      "/src/lib/manga/sources/suwayomi/provider.ts",
+    );
+    const provider = makeSuwayomiProvider(baseUrl, undefined, { sourceTimeoutMs: 300 });
+
+    const manga = await provider.popular(0);
+
+    assert.deepEqual(
+      manga.map((item) => item.title).sort(),
+      ["First manga", "Second manga"],
+    );
+  } finally {
+    includeHangingSource = false;
+  }
 });
