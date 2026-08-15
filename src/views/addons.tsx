@@ -1,6 +1,5 @@
 import { Check, ChevronRight, Library, Sparkles, Star, TrendingUp } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AgeGateModal } from "@/components/age-gate-modal";
 import { HarborLoader } from "@/components/harbor-loader";
 import { useScrollMemory, useView } from "@/lib/view";
 import { useSettings } from "@/lib/settings";
@@ -99,7 +98,6 @@ export function AddonsView() {
     setCategoryFilter(cat);
     setTab("browse");
   };
-  const [ageGateOpen, setAgeGateOpen] = useState(false);
   const [toast, setToast] = useState<ToastInfo | null>(null);
   const toastTimerRef = useRef<number | null>(null);
   const [installModal, setInstallModal] = useState<
@@ -281,11 +279,6 @@ export function AddonsView() {
   return (
     <main data-tv-chrome-offset className="relative flex h-full flex-col overflow-hidden">
       {tab === "discover" && <AddonsMosaicBackdrop />}
-      <AgeGateModal
-        open={ageGateOpen}
-        onClose={() => setAgeGateOpen(false)}
-        onPass={() => update({ showAdultAddons: true })}
-      />
       <header className="shrink-0 px-12 pt-20 pb-3">
         <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
           <nav className="flex flex-wrap items-center gap-1">
@@ -357,13 +350,7 @@ export function AddonsView() {
               />
             </div>
             <button
-              onClick={() => {
-                if (settings.showAdultAddons) {
-                  update({ showAdultAddons: false });
-                } else {
-                  setAgeGateOpen(true);
-                }
-              }}
+              onClick={() => update({ showAdultAddons: !settings.showAdultAddons })}
               title={settings.showAdultAddons ? t("Hide adult addons") : t("Show adult addons")}
               className={`flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3 text-[11.5px] font-semibold uppercase tracking-[0.14em] transition-colors ${
                 settings.showAdultAddons
