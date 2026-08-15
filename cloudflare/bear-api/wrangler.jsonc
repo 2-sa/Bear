@@ -26,6 +26,15 @@
       }
     }
   ],
+  "r2_buckets": [
+    {
+      "binding": "PUBLIC_CONTENT_BUCKET",
+      "bucket_name": "bear-public-content"
+    }
+  ],
+  "triggers": {
+    "crons": ["0 */6 * * *"]
+  },
   "observability": {
     "enabled": true,
     "head_sampling_rate": 1
