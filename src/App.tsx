@@ -104,7 +104,11 @@ import { CharacterFavoritesProvider } from "@/lib/character-favorites";
 import { MangaFavoritesProvider } from "@/lib/manga-favorites";
 import { LocalWatchlistProvider } from "@/lib/local-watchlist";
 import { useSettings } from "@/lib/settings";
-import { torrentEngineSetOptions } from "@/lib/torrent/local-engine";
+import {
+  flushPendingTorrentRemovals,
+  reconcilePendingTorrentRemovals,
+  torrentEngineSetOptions,
+} from "@/lib/torrent/local-engine";
 import { effectiveBinding, eventToBinding, shouldHandleGlobalKeyboardEvent } from "@/lib/hotkeys";
 import { ViewProvider, useView, type Frame, type MetaFilter, type View } from "@/lib/view";
 import { requestOpenProfile, requestEditProfile } from "@/lib/social/open-profile";
@@ -966,11 +970,19 @@ function Shell({ onReady }: { onReady?: () => void }) {
 
   useEffect(() => {
     if (typeof window === "undefined" || !("__TAURI_INTERNALS__" in window)) return;
+    void reconcilePendingTorrentRemovals();
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !("__TAURI_INTERNALS__" in window)) return;
     let unlisten: (() => void) | undefined;
     let cancelled = false;
     void import("@tauri-apps/api/event").then(({ listen }) =>
       listen("harbor://app-closing", async () => {
-        await flushCloudSync().catch(() => {});
+        await Promise.all([
+          flushCloudSync().catch(() => {}),
+          flushPendingTorrentRemovals().catch(() => {}),
+        ]);
         const { invoke } = await import("@tauri-apps/api/core");
         await invoke("harbor_flush_done").catch(() => {});
       }).then((rawUnlisten) => {

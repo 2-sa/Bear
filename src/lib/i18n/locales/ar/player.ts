@@ -438,6 +438,7 @@ const player: Record<string, string> = {
   "Choose the frame rate the subtitle was authored for.":
     "اختر معدل الإطارات الذي أُنشئت الترجمة على أساسه.",
   "No correction (default)": "بلا تصحيح (الافتراضي)",
+  "Auto (match video)": "تلقائي (مطابقة الفيديو)",
   "Custom...": "مخصص...",
   "Custom subtitle FPS": "معدل إطارات مخصص للترجمة",
   "Apply custom subtitle FPS": "تطبيق معدل الإطارات المخصص للترجمة",
@@ -457,6 +458,12 @@ const player: Record<string, string> = {
     "معدل إطارات الترجمة غير متوفر في إصدار libmpv الحالي.",
   "Turn off Auto Sync before changing subtitle FPS.":
     "أوقف المزامنة التلقائية قبل تغيير معدل إطارات الترجمة.",
+  "Resize subtitle menu": "تغيير حجم قائمة الترجمة",
+  "Drag to resize. Use arrow keys to adjust, or Home to reset.":
+    "اسحب لتغيير الحجم. استخدم مفاتيح الأسهم للضبط، أو Home لإعادة التعيين.",
+  "Drag the corner to resize. Left and right change width; up and down change height; Home resets the size.":
+    "اسحب الزاوية لتغيير الحجم. يغيّر السهمان الأيسر والأيمن العرض؛ ويغيّر السهمان الأعلى والأسفل الارتفاع؛ ويعيد Home الحجم إلى الافتراضي.",
+  "Couldn't switch subtitles. Try again.": "تعذّر تبديل الترجمة. حاول مرة أخرى.",
 };
 
 export default player;

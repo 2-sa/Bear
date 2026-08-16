@@ -2,6 +2,8 @@ import { invoke } from "@tauri-apps/api/core";
 import { stopFullDownload } from "./full-download";
 
 const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
+const PENDING_DELETE_KEY = "harbor-internal.torrent.pending-delete.v1";
+const INFO_HASH_RE = /^[a-f0-9]{40}$/;
 
 export type EngineStatus = {
   ready: boolean;
@@ -88,11 +90,13 @@ export async function torrentEngineAdd(
   if (!isTauri) return null;
   try {
     lastAddError = null;
-    return await invoke<AddResult>("torrent_engine_add", {
+    const added = await invoke<AddResult>("torrent_engine_add", {
       magnet,
       trackers,
       fileIdx: typeof fileIdx === "number" && fileIdx >= 0 ? fileIdx : null,
     });
+    schedulePostStartReconciliation();
+    return added;
   } catch (e) {
     lastAddError = String(e);
     console.warn("[engine] add failed", e);
@@ -144,23 +148,73 @@ export async function torrentEngineResume(infoHash: string): Promise<void> {
 
 export async function torrentEngineRemove(infoHash: string, deleteFiles: boolean): Promise<void> {
   const key = normalizeInfoHash(infoHash);
-  cancelTorrentRemoval(key);
+  if (deleteFiles) markPendingDelete(key);
+  cancelTorrentRemoval(key, false);
+  clearTorrentPlaybackHandoff(key);
   torrentUsage.delete(key);
   stopFullDownload(key);
-  if (!isTauri) return;
-  await invoke("torrent_engine_remove", { infoHash: key, deleteFiles }).catch((e) =>
-    console.warn("[engine] remove failed", e),
-  );
+  if (!isTauri) {
+    clearPendingDelete(key);
+    return;
+  }
+  try {
+    await invoke("torrent_engine_remove", { infoHash: key, deleteFiles });
+    clearPendingDelete(key);
+  } catch (e) {
+    console.warn("[engine] remove failed", e);
+  }
 }
 
 const pendingRemovals = new Map<string, number>();
+const pendingPlaybackHandoffs = new Map<string, { ownerId: string; timeoutId: number }>();
 const torrentUsage = new Map<
   string,
   { owners: Set<string>; pausedOwners: Set<string>; deleteFilesRequested: boolean }
 >();
+let playbackHandoffSequence = 0;
 
 function normalizeInfoHash(infoHash: string): string {
   return infoHash.trim().toLowerCase();
+}
+
+function readPendingDeletes(): Set<string> {
+  if (typeof localStorage === "undefined") return new Set();
+  try {
+    const stored = JSON.parse(localStorage.getItem(PENDING_DELETE_KEY) ?? "[]") as unknown;
+    if (!Array.isArray(stored)) return new Set();
+    return new Set(
+      stored
+        .filter((value): value is string => typeof value === "string")
+        .map(normalizeInfoHash)
+        .filter((value) => INFO_HASH_RE.test(value)),
+    );
+  } catch {
+    return new Set();
+  }
+}
+
+function writePendingDeletes(pending: Set<string>): void {
+  if (typeof localStorage === "undefined") return;
+  try {
+    if (pending.size === 0) localStorage.removeItem(PENDING_DELETE_KEY);
+    else localStorage.setItem(PENDING_DELETE_KEY, JSON.stringify([...pending]));
+  } catch {
+    /* cleanup remains best-effort if local storage is unavailable */
+  }
+}
+
+function markPendingDelete(infoHash: string): void {
+  const key = normalizeInfoHash(infoHash);
+  if (!INFO_HASH_RE.test(key)) return;
+  const pending = readPendingDeletes();
+  pending.add(key);
+  writePendingDeletes(pending);
+}
+
+function clearPendingDelete(infoHash: string): void {
+  const pending = readPendingDeletes();
+  if (!pending.delete(normalizeInfoHash(infoHash))) return;
+  writePendingDeletes(pending);
 }
 
 export function localEngineStreamRef(url: string | null | undefined): LocalEngineStreamRef | null {
@@ -179,9 +233,14 @@ export function localEngineStreamRef(url: string | null | undefined): LocalEngin
   }
 }
 
-export function retainTorrentUsage(infoHash: string, ownerId: string): void {
+export function retainTorrentUsage(
+  infoHash: string,
+  ownerId: string,
+  options: { preservePendingDelete?: boolean } = {},
+): void {
   const key = normalizeInfoHash(infoHash);
-  cancelTorrentRemoval(key);
+  if (options.preservePendingDelete !== true) claimTorrentPlaybackHandoff(key);
+  cancelTorrentRemoval(key, options.preservePendingDelete !== true);
   const usage = torrentUsage.get(key) ?? {
     owners: new Set<string>(),
     pausedOwners: new Set<string>(),
@@ -190,6 +249,48 @@ export function retainTorrentUsage(infoHash: string, ownerId: string): void {
   usage.owners.add(ownerId);
   usage.pausedOwners.delete(ownerId);
   torrentUsage.set(key, usage);
+}
+
+export function confirmTorrentUsage(infoHash: string): void {
+  clearPendingDelete(infoHash);
+}
+
+function clearTorrentPlaybackHandoff(infoHash: string): string | null {
+  const key = normalizeInfoHash(infoHash);
+  const handoff = pendingPlaybackHandoffs.get(key);
+  if (!handoff) return null;
+  window.clearTimeout(handoff.timeoutId);
+  pendingPlaybackHandoffs.delete(key);
+  return handoff.ownerId;
+}
+
+export function beginTorrentPlaybackHandoff(infoHash: string, timeoutMs = 60000): void {
+  if (!isTauri) return;
+  const key = normalizeInfoHash(infoHash);
+  const previousOwner = clearTorrentPlaybackHandoff(key);
+  if (previousOwner) {
+    releaseTorrentUsage(key, previousOwner, { removeWhenUnused: false });
+  }
+
+  markPendingDelete(key);
+  const ownerId = `player-handoff:${++playbackHandoffSequence}`;
+  retainTorrentUsage(key, ownerId, { preservePendingDelete: true });
+  const timeoutId = window.setTimeout(
+    () => {
+      pendingPlaybackHandoffs.delete(key);
+      releaseTorrentUsage(key, ownerId, { removeWhenUnused: false });
+      scheduleAbandonedTorrentRemoval(key, 0);
+    },
+    Math.max(1000, timeoutMs),
+  );
+  pendingPlaybackHandoffs.set(key, { ownerId, timeoutId });
+}
+
+export function claimTorrentPlaybackHandoff(infoHash: string): void {
+  const key = normalizeInfoHash(infoHash);
+  const ownerId = clearTorrentPlaybackHandoff(key);
+  if (!ownerId) return;
+  releaseTorrentUsage(key, ownerId, { removeWhenUnused: false });
 }
 
 export function releaseTorrentUsage(
@@ -240,7 +341,8 @@ export function scheduleTorrentRemoval(
   }
   if (usage) usage.deleteFilesRequested ||= deleteFiles;
   const shouldDeleteFiles = usage?.deleteFilesRequested ?? deleteFiles;
-  cancelTorrentRemoval(key);
+  if (shouldDeleteFiles) markPendingDelete(key);
+  cancelTorrentRemoval(key, false);
   const id = window.setTimeout(() => {
     pendingRemovals.delete(key);
     void torrentEngineRemove(key, shouldDeleteFiles);
@@ -252,7 +354,8 @@ export function scheduleAbandonedTorrentRemoval(infoHash: string, delayMs = 1200
   if (!isTauri) return;
   const key = normalizeInfoHash(infoHash);
   if ((torrentUsage.get(key)?.owners.size ?? 0) > 0) return;
-  cancelTorrentRemoval(key);
+  markPendingDelete(key);
+  cancelTorrentRemoval(key, false);
   const id = window.setTimeout(() => {
     pendingRemovals.delete(key);
     if ((torrentUsage.get(key)?.owners.size ?? 0) > 0) return;
@@ -261,13 +364,75 @@ export function scheduleAbandonedTorrentRemoval(infoHash: string, delayMs = 1200
   pendingRemovals.set(key, id);
 }
 
-export function cancelTorrentRemoval(infoHash: string): void {
+export function cancelTorrentRemoval(infoHash: string, clearPersisted = true): void {
   const key = normalizeInfoHash(infoHash);
   const id = pendingRemovals.get(key);
   if (id != null) {
     window.clearTimeout(id);
     pendingRemovals.delete(key);
   }
+  if (clearPersisted) clearPendingDelete(key);
+}
+
+let reconciliation: Promise<void> | null = null;
+let postStartReconciliation: number | null = null;
+
+function schedulePostStartReconciliation(): void {
+  if (!isTauri || postStartReconciliation != null || readPendingDeletes().size === 0) return;
+  postStartReconciliation = window.setTimeout(() => {
+    postStartReconciliation = null;
+    void reconcilePendingTorrentRemovals(0);
+  }, 6000);
+}
+
+async function waitForEngineReady(waitForReadyMs: number): Promise<boolean> {
+  const deadline = Date.now() + Math.max(0, waitForReadyMs);
+  let waiting = true;
+  while (waiting) {
+    const status = await torrentEngineStatus();
+    if (status?.ready) return true;
+    waiting = Date.now() < deadline;
+    if (!waiting) break;
+    await new Promise<void>((resolve) => window.setTimeout(resolve, 250));
+  }
+  return false;
+}
+
+async function runPendingTorrentReconciliation(
+  waitForReadyMs: number,
+  includeOwned: boolean,
+): Promise<void> {
+  if (!isTauri || readPendingDeletes().size === 0) return;
+  if (!(await waitForEngineReady(waitForReadyMs))) return;
+
+  let active: TorrentListItem[];
+  try {
+    active = await invoke<TorrentListItem[]>("torrent_engine_list");
+  } catch {
+    return;
+  }
+  const activeHashes = new Set(active.map((item) => normalizeInfoHash(item.infoHash)));
+  for (const key of readPendingDeletes()) {
+    if (!includeOwned && pendingRemovals.has(key)) continue;
+    if (!includeOwned && (torrentUsage.get(key)?.owners.size ?? 0) > 0) continue;
+    if (!activeHashes.has(key)) {
+      clearPendingDelete(key);
+      continue;
+    }
+    await torrentEngineRemove(key, true);
+  }
+}
+
+export function reconcilePendingTorrentRemovals(waitForReadyMs = 15000): Promise<void> {
+  if (reconciliation) return reconciliation;
+  reconciliation = runPendingTorrentReconciliation(waitForReadyMs, false).finally(() => {
+    reconciliation = null;
+  });
+  return reconciliation;
+}
+
+export function flushPendingTorrentRemovals(): Promise<void> {
+  return runPendingTorrentReconciliation(0, true);
 }
 
 export async function torrentEngineSelfTest(): Promise<SelfTestResult | null> {

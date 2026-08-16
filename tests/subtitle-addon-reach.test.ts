@@ -165,14 +165,15 @@ test("the subtitle menu only keeps configured languages", () => {
 });
 
 test("the configured languages reach the separate subtitle popup", () => {
-  assert.match(subtitleMenu, /buildOverlayState\(propsRef\.current, preferredLanguages\)/);
+  assert.match(
+    subtitleMenu,
+    /buildOverlayState\(\s*propsRef\.current,\s*preferredLanguages,\s*subtitleContext,?\s*\)/,
+  );
   assert.match(subtitleModal, /preferredLanguages=\{state\.preferredLanguages\}/);
 });
 
-test("subtitle popup fills compact players while staying above the controls", () => {
-  assert.match(subtitleMenu, /fixed end-2 bottom-\[84px\]/);
-  assert.match(subtitleModal, /m-2 mb-\[84px\]/);
-  assert.match(subtitleMenu, /w-\[560px\] max-w-\[calc\(100vw-16px\)\]/);
-  assert.match(subtitleModal, /w-\[560px\] max-w-\[calc\(100vw-16px\)\]/);
+test("subtitle popups use the shared resizable panel above the controls", () => {
+  assert.match(subtitleMenu, /ResizableSubtitlePanel className="fixed end-2 bottom-\[84px\]"/);
+  assert.match(subtitleModal, /ResizableSubtitlePanel className="m-2 mb-\[84px\]"/);
   assert.doesNotMatch(subtitleModal, /me-\[120px\]/);
 });

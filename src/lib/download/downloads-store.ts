@@ -42,6 +42,7 @@ type EnqueueArgs = {
   streamLabel?: string | null;
   url: string;
   headers?: Record<string, string> | null;
+  destinationPath?: string | null;
 };
 
 const items = new Map<string, DownloadItem>();
@@ -182,9 +183,7 @@ export async function completedTorrentDownloadFor(
     .sort((a, b) => b.startedAt - a.startedAt);
   const episodeMatch =
     hint?.season != null && hint.episode != null
-      ? candidates.find(
-          (item) => item.season === hint.season && item.episode === hint.episode,
-        )
+      ? candidates.find((item) => item.season === hint.season && item.episode === hint.episode)
       : null;
   const match =
     fileIdx != null
@@ -216,22 +215,34 @@ export function activeDownloadFor(
 }
 
 export async function enqueueDownload(args: EnqueueArgs): Promise<string> {
-  const { meta, episode, streamLabel, url, headers } = args;
-  const torrentRef = localEngineStreamRef(url);
-  let dir = await resolveDir();
-  try {
-    const raw = localStorage.getItem("harbor.settings");
-    const settings = raw ? (JSON.parse(raw) as { downloadCreateFolders?: boolean }) : null;
-    if (settings?.downloadCreateFolders && dir) {
-      const folderName = sanitizeName(meta.name || "download");
-      dir = `${dir}${dir.endsWith(sep()) ? "" : sep()}${folderName}`;
-      await mkdir(dir, { recursive: true }).catch(() => {});
-    }
-  } catch {}
-  const filename = buildDefaultFilename(meta, episode, url, streamLabel);
-  const path = await uniquePath(
-    dir ? `${dir}${dir.endsWith(sep()) ? "" : sep()}${filename}` : filename,
+  const { meta, episode, streamLabel, url, headers, destinationPath } = args;
+  const existing = [...items.values()].find(
+    (item) =>
+      item.metaId === meta.id &&
+      item.url === url &&
+      item.season === (episode?.season ?? null) &&
+      item.episode === (episode?.episode ?? null) &&
+      (item.status === "downloading" || item.status === "paused"),
   );
+  if (existing) return existing.id;
+  const torrentRef = localEngineStreamRef(url);
+  let dir = "";
+  if (!destinationPath) {
+    dir = await resolveDir();
+    try {
+      const raw = localStorage.getItem("harbor.settings");
+      const settings = raw ? (JSON.parse(raw) as { downloadCreateFolders?: boolean }) : null;
+      if (settings?.downloadCreateFolders && dir) {
+        const folderName = sanitizeName(meta.name || "download");
+        dir = `${dir}${dir.endsWith(sep()) ? "" : sep()}${folderName}`;
+        await mkdir(dir, { recursive: true }).catch(() => {});
+      }
+    } catch {}
+  }
+  const filename = buildDefaultFilename(meta, episode, url, streamLabel);
+  const path =
+    destinationPath ??
+    (await uniquePath(dir ? `${dir}${dir.endsWith(sep()) ? "" : sep()}${filename}` : filename));
   const id = randomId();
   const item: DownloadItem = {
     id,

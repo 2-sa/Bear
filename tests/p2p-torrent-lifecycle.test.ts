@@ -19,7 +19,9 @@ const autoDownload = read("src/lib/auto-download/resolve.ts");
 const seasonDownload = read("src/lib/download/season-download.ts");
 const castResolve = read("src/views/player/cast-resolve.ts");
 const downloads = read("src/lib/download/downloads-store.ts");
+const playerDownload = read("src/views/player/hooks/use-video-download.ts");
 const magnetCard = read("src/components/search/magnet-card.tsx");
+const app = read("src/App.tsx");
 
 test("selecting a torrent file does not start peer transfer", () => {
   const start = engine.indexOf("pub async fn torrent_engine_select");
@@ -55,10 +57,8 @@ test("persisted torrents are paused at startup and before a clean shutdown", () 
 test("a canceled P2P resolve cleans up only a torrent created by that resolve", () => {
   assert.match(resolve, /registerAbortCleanup\(added, signal\)/);
   assert.match(resolve, /if \(added\.already_managed === true\) return \(\) => \{\};/);
-  assert.match(
-    resolve,
-    /scheduleAbandonedTorrentRemoval\(added\.info_hash, handedOff \? 5000 : 0\)/,
-  );
+  assert.match(resolve, /if \(handedOff\) beginTorrentPlaybackHandoff\(added\.info_hash\)/);
+  assert.match(resolve, /else scheduleAbandonedTorrentRemoval\(added\.info_hash, 0\)/);
   assert.match(resolve, /signal\.addEventListener\("abort", cleanup, \{ once: true \}\)/);
   assert.match(resolve, /signal\.removeEventListener\("abort", cleanup\)/);
   assert.match(resolve, /if \(added\.already_managed !== true\)/);
@@ -72,13 +72,78 @@ test("players and downloads explicitly own local-engine torrents", () => {
   assert.match(usage, /export function retainTorrentUsage/);
   assert.match(usage, /export function releaseTorrentUsage/);
   assert.match(usage, /pausedOwners/);
-  assert.match(playerMedia, /retainTorrentUsage\(hash, ownerId\)/);
+  assert.match(
+    playerMedia,
+    /retainTorrentUsage\(hash, ownerId, \{ preservePendingDelete: true \}\)/,
+  );
   assert.match(playerMedia, /releaseTorrentUsage\(hash, ownerId/);
   assert.match(downloads, /retainDownloadTorrent\(item\)/);
   assert.match(downloads, /pauseTorrentUsage\(engine\.infoHash, torrentOwnerId\(id\)\)/);
   assert.match(
     downloads,
     /releaseTorrentUsage\(engine\.infoHash, torrentOwnerId\(item\.id\), \{ deleteFiles: true \}\)/,
+  );
+});
+
+test("the player download button uses the persistent Downloads store", () => {
+  assert.match(playerDownload, /enqueueDownload/);
+  assert.match(playerDownload, /useDownloads/);
+  assert.match(playerDownload, /cancelDownload/);
+  assert.match(playerDownload, /revealDownload/);
+  assert.match(playerDownload, /destinationPath: path/);
+  assert.match(playerDownload, /headers,/);
+  assert.doesNotMatch(playerDownload, /startDownload/);
+  assert.doesNotMatch(playerDownload, /handleRef\.current\?\.abort/);
+  assert.match(downloads, /destinationPath\?: string \| null/);
+  assert.match(downloads, /if \(existing\) return existing\.id/);
+});
+
+test("a P2P stream that never reaches a frame deletes its temporary cache", () => {
+  assert.match(playerMedia, /torrentPlaybackStartedRef/);
+  assert.match(playerMedia, /torrentPlaybackArmedRef/);
+  assert.match(playerMedia, /const ready = snap\.firstFrameReady \|\| snap\.positionSec > 0\.3/);
+  assert.match(playerMedia, /if \(!ready\)/);
+  assert.match(
+    playerMedia,
+    /torrentPlaybackArmedRef\.current && !torrentPlaybackStartedRef\.current/,
+  );
+  assert.match(playerMedia, /!torrentPlaybackStartedRef\.current \|\|/);
+  assert.match(playerMedia, /deleteFiles: purge\(\)/);
+  assert.match(playerMedia, /preservePendingDelete: true/);
+  assert.match(playerMedia, /confirmTorrentUsage\(engineRef\.infoHash\)/);
+  assert.match(usage, /PENDING_DELETE_KEY/);
+  assert.match(usage, /markPendingDelete\(key\)/);
+  assert.match(usage, /export function reconcilePendingTorrentRemovals/);
+  assert.match(app, /void reconcilePendingTorrentRemovals\(\)/);
+  assert.match(app, /flushPendingTorrentRemovals\(\)\.catch/);
+});
+
+test("slow player startup keeps explicit ownership of a prepared P2P torrent", () => {
+  assert.match(usage, /export function beginTorrentPlaybackHandoff/);
+  assert.match(usage, /player-handoff:/);
+  assert.match(usage, /export function claimTorrentPlaybackHandoff/);
+  assert.match(resolve, /if \(handedOff\) beginTorrentPlaybackHandoff\(added\.info_hash\)/);
+  assert.doesNotMatch(resolve, /handedOff \? 5000 : 0/);
+  assert.match(
+    playerMedia,
+    /retainTorrentUsage\(hash, ownerId, \{ preservePendingDelete: true \}\)/,
+  );
+  assert.match(playerMedia, /claimTorrentPlaybackHandoff\(hash\)/);
+});
+
+test("failed P2P preparation is discarded and remains retryable", () => {
+  assert.match(engine, /async fn wait_for_torrent_initialization/);
+  assert.match(engine, /discard_on_failure/);
+  assert.match(
+    engine,
+    /session\s+\.delete\(TorrentIdOrHash::Hash\(handle\.info_hash\(\)\), true\)/,
+  );
+  assert.match(engine, /wait_for_torrent_initialization\(&session, &handle, !already_managed\)/);
+  assert.match(engine, /wait_for_torrent_initialization\(&session, &h, !already_managed\)/);
+  assert.match(pickHandler, /RETRYABLE_ENGINE_FAILURES/);
+  assert.match(
+    pickHandler,
+    /if \(!RETRYABLE_ENGINE_FAILURES\.has\(r\.code\)\) \{\s+setFailedStreams/,
   );
 });
 
@@ -107,7 +172,7 @@ test("completed P2P downloads are reused by exact torrent identity", () => {
 });
 
 test("full-file P2P downloading starts only after the player owns the torrent", () => {
-  const retain = playerMedia.indexOf("retainTorrentUsage(hash, ownerId)");
+  const retain = playerMedia.indexOf("retainTorrentUsage(hash, ownerId,");
   const full = playerMedia.indexOf("startFullDownload(hash, src.url)");
   assert.ok(retain >= 0 && full > retain);
 });

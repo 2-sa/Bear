@@ -13,6 +13,8 @@ import { useSettings } from "@/lib/settings";
 import { useSimklScrobble } from "@/lib/simkl/scrobble-hook";
 import { useTraktScrobble } from "@/lib/trakt/scrobble-hook";
 import {
+  claimTorrentPlaybackHandoff,
+  confirmTorrentUsage,
   localEngineStreamRef,
   releaseTorrentUsage,
   retainTorrentUsage,
@@ -74,9 +76,25 @@ export function usePlayerMedia(params: {
 
   useWebviewMemory(engine === "mpv");
   const progressRef = useRef(0);
+  const torrentPlaybackStartedRef = useRef(false);
+  const torrentPlaybackArmedRef = useRef(false);
+  useEffect(() => {
+    torrentPlaybackStartedRef.current = false;
+    torrentPlaybackArmedRef.current = false;
+  }, [src.url]);
   useEffect(() => {
     progressRef.current = snap.durationSec > 0 ? snap.positionSec / snap.durationSec : 0;
-  }, [snap.positionSec, snap.durationSec]);
+    const ready = snap.firstFrameReady || snap.positionSec > 0.3;
+    if (!ready) {
+      torrentPlaybackArmedRef.current = true;
+      return;
+    }
+    if (torrentPlaybackArmedRef.current && !torrentPlaybackStartedRef.current) {
+      const engineRef = localEngineStreamRef(src.url);
+      if (engineRef) confirmTorrentUsage(engineRef.infoHash);
+      torrentPlaybackStartedRef.current = true;
+    }
+  }, [src.url, snap.firstFrameReady, snap.positionSec, snap.durationSec]);
 
   const torrentOwnerRef = useRef(`player:${Math.random().toString(36).slice(2)}`);
   useEffect(() => {
@@ -86,9 +104,11 @@ export function usePlayerMedia(params: {
     const ownerId = torrentOwnerRef.current;
     const keepBg = settings.keepStreamDownloadsInBackground;
     const purge = () =>
+      !torrentPlaybackStartedRef.current ||
       settings.streamCacheRetentionHours === 0 ||
       (settings.deleteWatchedDownloads && progressRef.current >= 0.9);
-    retainTorrentUsage(hash, ownerId);
+    retainTorrentUsage(hash, ownerId, { preservePendingDelete: true });
+    claimTorrentPlaybackHandoff(hash);
     if (settings.torrentFullDownload) startFullDownload(hash, src.url);
     return () => {
       stopFullDownload(hash);
@@ -232,7 +252,12 @@ export function usePlayerMedia(params: {
 
   useTraktScrobble({ src, snap });
   useSimklScrobble({ src, snap });
-  const download = useVideoDownload({ url: src.url, meta: src.meta, episode: src.episode });
+  const download = useVideoDownload({
+    url: src.url,
+    meta: src.meta,
+    episode: src.episode,
+    headers: src.headers,
+  });
 
   const doDownloadSubtitle = useCallback(async () => {
     const b = bridgeRef.current;

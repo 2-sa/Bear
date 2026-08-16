@@ -8,6 +8,7 @@ import { markStreamDead, recordStubEvent } from "@/lib/dead-streams";
 const PREFLIGHT_STUB_TTL_MS = 15 * 60 * 1000;
 const SAME_SOURCE_MAX_RETRIES = 4;
 const SAME_SOURCE_RETRY_DELAY_MS = 1500;
+const RETRYABLE_ENGINE_FAILURES = new Set(["engine-no-peers", "engine-not-ready"]);
 import { engineP2pEligible } from "@/lib/torrent/stremio-stream";
 import { hasUncachedMarker } from "@/lib/streams/cached";
 import { preflightCheck } from "@/lib/streams/preflight";
@@ -204,7 +205,9 @@ export function usePickHandler({
           setResolving(null);
           return;
         }
-        setFailedStreams((prev) => new Set(prev).add(stream));
+        if (!RETRYABLE_ENGINE_FAILURES.has(r.code)) {
+          setFailedStreams((prev) => new Set(prev).add(stream));
+        }
         const isDebridSide = isDebridFailure(r.code, r.tried);
         if (isDebridSide && scheduleSameSourceRetry(stream, userCommitted, forceP2p)) return;
         if (isDebridSide && debrids.length > 0) {

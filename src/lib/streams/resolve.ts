@@ -9,6 +9,7 @@ import {
   type DirectLink,
 } from "@/lib/debrid/types";
 import {
+  beginTorrentPlaybackHandoff,
   lastEngineAddError,
   scheduleAbandonedTorrentRemoval,
   torrentEngineAdd,
@@ -339,7 +340,8 @@ async function tryLocalEngine(
   } finally {
     releaseAbortCleanup();
     if (added.already_managed !== true) {
-      scheduleAbandonedTorrentRemoval(added.info_hash, handedOff ? 5000 : 0);
+      if (handedOff) beginTorrentPlaybackHandoff(added.info_hash);
+      else scheduleAbandonedTorrentRemoval(added.info_hash, 0);
     }
   }
 }

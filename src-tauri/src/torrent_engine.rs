@@ -14,8 +14,8 @@ use std::time::Duration;
 use librqbit::api::TorrentIdOrHash;
 use librqbit::dht::{Dht, PersistentDhtConfig};
 use librqbit::{
-    AddTorrent, AddTorrentOptions, AddTorrentResponse, PeerConnectionOptions, Session,
-    SessionOptions, SessionPersistenceConfig,
+    AddTorrent, AddTorrentOptions, AddTorrentResponse, ManagedTorrent, PeerConnectionOptions,
+    Session, SessionOptions, SessionPersistenceConfig,
 };
 use serde::Serialize;
 use tauri::{AppHandle, Manager};
@@ -525,6 +525,27 @@ fn merge_trackers(trackers: Vec<String>) -> Vec<String> {
     trackers::merge_into(trackers)
 }
 
+async fn wait_for_torrent_initialization(
+    session: &Arc<Session>,
+    handle: &Arc<ManagedTorrent>,
+    discard_on_failure: bool,
+) -> Result<(), String> {
+    let result = match timeout(Duration::from_secs(45), handle.wait_until_initialized()).await {
+        Ok(Ok(())) => Ok(()),
+        Ok(Err(error)) => Err(format!("{error:#}")),
+        Err(_) => Err("torrent init timed out".to_string()),
+    };
+    if result.is_err() && discard_on_failure {
+        if let Err(error) = session
+            .delete(TorrentIdOrHash::Hash(handle.info_hash()), true)
+            .await
+        {
+            eprintln!("[torrent-engine] could not discard incomplete torrent: {error:#}");
+        }
+    }
+    result
+}
+
 #[tauri::command]
 pub async fn torrent_engine_add(
     app: AppHandle,
@@ -569,6 +590,7 @@ pub async fn torrent_engine_add(
         }
     };
     let info_hash = format!("{:?}", handle.info_hash());
+    wait_for_torrent_initialization(&session, &handle, !already_managed).await?;
     let files = handle
         .with_metadata(|m| {
             m.file_infos
@@ -585,10 +607,6 @@ pub async fn torrent_engine_add(
                 })
                 .collect::<Vec<_>>()
         })
-        .map_err(|e| format!("{e:#}"))?;
-    timeout(Duration::from_secs(45), handle.wait_until_initialized())
-        .await
-        .map_err(|_| "torrent init timed out".to_string())?
         .map_err(|e| format!("{e:#}"))?;
     let narrow_idx = file_idx
         .filter(|&i| i < files.len())
@@ -653,13 +671,14 @@ pub(crate) async fn ensure_added(
             .await
             .map_err(|_| "metadata timed out: no peers reached in 60s".to_string())?
             .map_err(|e| format!("{e:#}"))?;
-            let h = added
-                .into_handle()
-                .ok_or_else(|| "torrent added as list-only".to_string())?;
-            timeout(Duration::from_secs(45), h.wait_until_initialized())
-                .await
-                .map_err(|_| "torrent init timed out".to_string())?
-                .map_err(|e| format!("{e:#}"))?;
+            let (h, already_managed) = match added {
+                AddTorrentResponse::AlreadyManaged(_, handle) => (handle, true),
+                AddTorrentResponse::Added(_, handle) => (handle, false),
+                AddTorrentResponse::ListOnly(_) => {
+                    return Err("torrent added as list-only".to_string());
+                }
+            };
+            wait_for_torrent_initialization(&session, &h, !already_managed).await?;
             h
         }
     };
