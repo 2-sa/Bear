@@ -407,6 +407,7 @@ const player: Record<string, string> = {
   "Choose the frame rate the subtitle was authored for.":
     "Выберите частоту кадров, для которой были созданы субтитры.",
   "No correction (default)": "Без коррекции (по умолчанию)",
+  "Auto (match video)": "Авто (как у видео)",
   "Custom...": "Другая...",
   "Custom subtitle FPS": "Другая частота кадров субтитров",
   "Apply custom subtitle FPS": "Применить другую частоту кадров субтитров",
@@ -427,6 +428,13 @@ const player: Record<string, string> = {
     "Настройка частоты кадров субтитров недоступна в этой версии libmpv.",
   "Turn off Auto Sync before changing subtitle FPS.":
     "Отключите автосинхронизацию перед изменением частоты кадров субтитров.",
+  "Resize subtitle menu": "Изменить размер меню субтитров",
+  "Drag to resize. Use arrow keys to adjust, or Home to reset.":
+    "Перетащите для изменения размера. Используйте клавиши со стрелками для настройки, а Home — для сброса.",
+  "Drag the corner to resize. Left and right change width; up and down change height; Home resets the size.":
+    "Перетащите угол для изменения размера. Стрелки влево и вправо меняют ширину, вверх и вниз — высоту, а Home сбрасывает размер.",
+  "Couldn't switch subtitles. Try again.":
+    "Не удалось переключить субтитры. Повторите попытку.",
 };
 
 export default player;

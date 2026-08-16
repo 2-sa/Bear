@@ -13,6 +13,7 @@ import {
   SUBTITLE_FPS_PRESETS,
   formatSubtitleFps,
   matchingSubtitleFpsPreset,
+  subtitleFpsMatchesVideo,
   subtitleFpsAvailability,
   validateSubtitleFps,
   type SubtitleFpsChoice,
@@ -44,6 +45,7 @@ export function SubtitleFpsPanel({
   const [saving, setSaving] = useState(false);
   const [draft, setDraft] = useState("25");
   const [customOpen, setCustomOpen] = useState(false);
+  const [automatic, setAutomatic] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const applyRequestRef = useRef(0);
 
@@ -53,6 +55,7 @@ export function SubtitleFpsPanel({
     setError(null);
     setSaving(false);
     setCustomOpen(false);
+    setAutomatic(false);
     setVideoFps(null);
     setSubtitleFps(null);
 
@@ -65,7 +68,9 @@ export function SubtitleFpsPanel({
       setSubtitleFps(value);
       setNativeSupported(subtitle.supported);
       setDraft(formatSubtitleFps(value ?? video ?? 25, 6));
-      setCustomOpen(value != null && matchingSubtitleFpsPreset(value) == null);
+      const matchesVideo = subtitleFpsMatchesVideo(value, video);
+      setAutomatic(matchesVideo);
+      setCustomOpen(value != null && !matchesVideo && matchingSubtitleFpsPreset(value) == null);
       setLoading(false);
     });
 
@@ -85,10 +90,14 @@ export function SubtitleFpsPanel({
   });
   const disabled = loading || saving || !availability.enabled;
   const selectedPreset = matchingSubtitleFpsPreset(subtitleFps);
-  const selectedValue = subtitleFps == null ? "default" : (selectedPreset ?? "custom");
+  const selectedValue = automatic
+    ? "auto"
+    : subtitleFps == null
+      ? "default"
+      : (selectedPreset ?? "custom");
   const reason = availability.enabled ? null : unavailableMessage(availability.reason, tr);
 
-  const applySourceFps = async (choice: SubtitleFpsChoice) => {
+  const applySourceFps = async (choice: SubtitleFpsChoice, mode: "manual" | "auto" = "manual") => {
     if (!availability.enabled || !track) return;
     const request = ++applyRequestRef.current;
     setSaving(true);
@@ -99,7 +108,10 @@ export function SubtitleFpsPanel({
       if (request !== applyRequestRef.current) return;
       const value = choice === "default" ? null : choice;
       setSubtitleFps(value);
-      setCustomOpen(value != null && matchingSubtitleFpsPreset(value) == null);
+      setAutomatic(mode === "auto");
+      setCustomOpen(
+        mode !== "auto" && value != null && matchingSubtitleFpsPreset(value) == null,
+      );
       if (value != null) setDraft(formatSubtitleFps(value, 6));
     } catch (cause) {
       if (request !== applyRequestRef.current) return;
@@ -113,6 +125,10 @@ export function SubtitleFpsPanel({
   const selectOption = (value: string) => {
     if (value === "default") {
       void applySourceFps("default");
+      return;
+    }
+    if (value === "auto") {
+      if (videoFps != null) void applySourceFps(videoFps, "auto");
       return;
     }
     if (value === "custom") {
@@ -168,6 +184,10 @@ export function SubtitleFpsPanel({
           className="mt-2 h-9 w-full rounded-md border border-edge-soft bg-canvas px-2 text-[12px] font-semibold text-ink outline-none transition-colors hover:bg-raised focus:border-accent disabled:cursor-not-allowed disabled:opacity-45"
         >
           <option value="default">{tr("No correction (default)")}</option>
+          <option value="auto">
+            {tr("Auto (match video)")}
+            {videoFps == null ? "" : ` · ${formatSubtitleFps(videoFps, 6)}`}
+          </option>
           {SUBTITLE_FPS_PRESETS.map((preset) => (
             <option key={preset.label} value={preset.label}>
               {preset.label}

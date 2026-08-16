@@ -10,6 +10,7 @@ import {
   markMpvSubtitleFpsSessionRecreated,
   resetMpvSubtitleFpsForTransition,
 } from "./mpv-properties";
+import { SUBTITLE_FPS_TRANSITION_FAILED_EVENT } from "./subtitle-fps";
 import {
   emptySnapshot,
   type PlayerBridge,
@@ -619,6 +620,7 @@ export function createMpvBridge(mpvOptions?: MpvOptions): PlayerBridge {
           });
         } catch (error) {
           console.warn("[mpv] could not select a subtitle after resetting subtitle FPS", error);
+          window.dispatchEvent(new Event(SUBTITLE_FPS_TRANSITION_FAILED_EVENT));
         }
       })();
     },
@@ -640,6 +642,7 @@ export function createMpvBridge(mpvOptions?: MpvOptions): PlayerBridge {
             "[mpv] could not select a secondary subtitle after resetting subtitle FPS",
             error,
           );
+          window.dispatchEvent(new Event(SUBTITLE_FPS_TRANSITION_FAILED_EVENT));
         }
       })();
     },

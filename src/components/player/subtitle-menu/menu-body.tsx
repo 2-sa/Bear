@@ -135,7 +135,7 @@ export function MenuBody(props: SubtitleMenuProps & { onClose: () => void }) {
   return (
     <div className="flex h-full flex-col overflow-hidden">
       {/* ── Header ── */}
-      <header className="flex items-center justify-between border-b border-edge-soft px-4 py-2.5">
+      <header className="flex items-center justify-between border-b border-edge-soft pe-4 ps-10 py-2.5">
         <div className="flex items-center gap-2.5">
           <span className="text-[13.5px] font-semibold text-ink">{tr("Subtitles")}</span>
           {tracks.length > 0 && (

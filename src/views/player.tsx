@@ -89,6 +89,7 @@ import type { ToastInfo } from "@/views/addons/addons-types";
 import { SFX } from "@/lib/sfx";
 import { useKeyboardNavigation } from "@/lib/keyboard-navigation";
 import { subtitleStreamKey } from "@/lib/subtitles/subtitle-memory";
+import { SUBTITLE_FPS_TRANSITION_FAILED_EVENT } from "@/lib/player/subtitle-fps";
 
 let hdrFallbackNoticeShown = false;
 
@@ -666,6 +667,21 @@ export function PlayerView({ src }: { src: PlayerSrc }) {
       kind === "error" ? 5000 : 3000,
     );
   }, []);
+  useEffect(() => {
+    const onSubtitleFpsTransitionFailed = () => {
+      showSyncToast("error", t("Couldn't switch subtitles. Try again."));
+    };
+    window.addEventListener(
+      SUBTITLE_FPS_TRANSITION_FAILED_EVENT,
+      onSubtitleFpsTransitionFailed,
+    );
+    return () => {
+      window.removeEventListener(
+        SUBTITLE_FPS_TRANSITION_FAILED_EVENT,
+        onSubtitleFpsTransitionFailed,
+      );
+    };
+  }, [showSyncToast, t]);
   const handleEnterSync = useCallback(() => {
     void textSync.enter(src.url, src.headers);
   }, [textSync.enter, src.url, src.headers]);

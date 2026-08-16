@@ -408,6 +408,7 @@ const player: Record<string, string> = {
   "Choose the frame rate the subtitle was authored for.":
     "Escolha a taxa de fotogramas para a qual a legenda foi criada.",
   "No correction (default)": "Sem correção (predefinição)",
+  "Auto (match video)": "Automático (igualar ao vídeo)",
   "Custom...": "Personalizado...",
   "Custom subtitle FPS": "FPS personalizado da legenda",
   "Apply custom subtitle FPS": "Aplicar FPS personalizado da legenda",
@@ -428,6 +429,13 @@ const player: Record<string, string> = {
     "O FPS da legenda não está disponível nesta versão do libmpv.",
   "Turn off Auto Sync before changing subtitle FPS.":
     "Desative a sincronização automática antes de alterar o FPS da legenda.",
+  "Resize subtitle menu": "Redimensionar menu de legendas",
+  "Drag to resize. Use arrow keys to adjust, or Home to reset.":
+    "Arraste para redimensionar. Use as teclas de seta para ajustar ou Home para repor.",
+  "Drag the corner to resize. Left and right change width; up and down change height; Home resets the size.":
+    "Arraste o canto para redimensionar. Esquerda e direita alteram a largura; cima e baixo alteram a altura; Home repõe o tamanho.",
+  "Couldn't switch subtitles. Try again.":
+    "Não foi possível mudar de legenda. Tente novamente.",
 };
 
 export default player;

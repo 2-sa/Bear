@@ -13,6 +13,7 @@ import {
   isAutoSyncScopeCurrent,
   matchingSubtitleFpsPreset,
   runAfterSubtitleFpsReset,
+  subtitleFpsMatchesVideo,
   subtitleFpsAvailability,
   subtitleFpsToMpvValue,
   validateSubtitleFps,
@@ -53,6 +54,13 @@ test("preset matching and formatting keep user-facing rates stable", () => {
   assert.equal(formatSubtitleFps(24_000 / 1_001, 6), "23.976");
   assert.equal(formatSubtitleFps(24.981469, 6), "24.981469");
   assert.equal(formatSubtitleFps(null), "-");
+});
+
+test("Auto recognizes when subtitle FPS matches the current video", () => {
+  assert.equal(subtitleFpsMatchesVideo(24_000 / 1_001, 23.976), true);
+  assert.equal(subtitleFpsMatchesVideo(25, 25), true);
+  assert.equal(subtitleFpsMatchesVideo(25, 24), false);
+  assert.equal(subtitleFpsMatchesVideo(null, 24), false);
 });
 
 test("manual control is available only for a selected text track in the primary mpv player", () => {
@@ -470,6 +478,8 @@ test("the panel refreshes after Auto Sync or secondary subtitles reset the nativ
   assert.match(panel, /resetByPlayer[\s\S]*autoSyncActive[\s\S]*hasSecondary/);
   assert.match(controls, /onBeforeApply=\{autoSync\?\.stop\}/);
   assert.match(panel, /onBeforeApply\?\.\(\)[\s\S]*writeMpvSubtitleFps/);
+  assert.match(panel, /<option value="auto">/);
+  assert.match(panel, /applySourceFps\(videoFps, "auto"\)/);
 });
 
 test("mpv lifecycle and Auto Sync boundaries reset only subtitle FPS", () => {
@@ -479,6 +489,7 @@ test("mpv lifecycle and Auto Sync boundaries reset only subtitle FPS", () => {
   const forwardingBridge = read("src/lib/player/mpv-forward.ts");
   const hdrStageBridge = read("src/views/player/hdr-stage-bridge.tsx");
   const autoSync = read("src/views/player/hooks/use-auto-sync.ts");
+  const player = read("src/views/player.tsx");
 
   assert.doesNotMatch(properties, /listen<MpvEvent>\("mpv:\/\/event"/);
   assert.match(properties, /await coordinator\.whenSettled\(\)/);
@@ -492,6 +503,16 @@ test("mpv lifecycle and Auto Sync boundaries reset only subtitle FPS", () => {
     bridge,
     /setSecondarySubtitleTrack\(id\)[\s\S]*const requestMediaRevision = mediaRevision[\s\S]*await resetSubtitleFpsBeforeMpvTransition\([\s\S]*requestMediaRevision !== mediaRevision[\s\S]*name: "secondary-sid"/,
   );
+  assert.match(
+    bridge,
+    /could not select a subtitle after resetting subtitle FPS[\s\S]*SUBTITLE_FPS_TRANSITION_FAILED_EVENT/,
+  );
+  assert.match(
+    bridge,
+    /could not select a secondary subtitle after resetting subtitle FPS[\s\S]*SUBTITLE_FPS_TRANSITION_FAILED_EVENT/,
+  );
+  assert.match(player, /SUBTITLE_FPS_TRANSITION_FAILED_EVENT/);
+  assert.match(player, /Couldn't switch subtitles\. Try again\./);
   assert.match(
     bridge,
     /could not reset subtitle FPS before loading media[\s\S]*markMpvSubtitleFpsSessionRecreated\(\)[\s\S]*mpvStarted = false/,

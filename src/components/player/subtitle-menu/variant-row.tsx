@@ -8,6 +8,7 @@ import { subtitleTrackLanguageLabel, subtitleTrackTitle } from "@/lib/subtitles/
 import { saveSubtitleToDisk } from "@/lib/subtitles/save-to-disk";
 import { useImportedSubs } from "@/lib/player/imported-subs";
 import { useT } from "@/lib/i18n";
+import { OverflowMarquee } from "./overflow-marquee";
 
 function subExt(track: TrackInfo): string {
   const fromName = track.externalFilename?.match(/\.([a-z0-9]+)$/i)?.[1];
@@ -61,6 +62,7 @@ export function VariantRow({
 
   return (
     <div
+      data-subtitle-row
       className={`group/row flex items-stretch rounded-lg transition-colors ${
         selected
           ? "bg-elevated ring-1 ring-edge"
@@ -100,12 +102,10 @@ export function VariantRow({
         </span>
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <div className="flex min-w-0 items-center gap-1.5">
-            <p
-              className="truncate text-[12.5px] font-medium leading-snug text-ink"
+            <OverflowMarquee
+              text={titleText}
               title={realRelease && releaseLabel ? realRelease : undefined}
-            >
-              {titleText}
-            </p>
+            />
             {isImported && (
               <span className="flex shrink-0 items-center gap-1 rounded-full bg-accent/15 px-1.5 py-px text-[9px] font-bold uppercase tracking-[0.12em] text-accent ring-1 ring-accent/30">
                 <Sparkles size={9} strokeWidth={2.6} />

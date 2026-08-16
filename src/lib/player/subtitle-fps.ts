@@ -11,6 +11,8 @@ export const SUBTITLE_FPS_PRESETS = [
 
 export const MIN_SUBTITLE_FPS = 1;
 export const MAX_SUBTITLE_FPS = 240;
+export const SUBTITLE_FPS_TRANSITION_FAILED_EVENT =
+  "harbor:subtitle-fps-transition-failed";
 
 export type SubtitleFpsChoice = "default" | number;
 export type SubtitleFpsUnavailableReason =
@@ -49,6 +51,19 @@ export function matchingSubtitleFpsPreset(value: number | null): string | null {
   if (value == null) return null;
   return (
     SUBTITLE_FPS_PRESETS.find((preset) => Math.abs(preset.value - value) < 0.001)?.label ?? null
+  );
+}
+
+export function subtitleFpsMatchesVideo(
+  subtitleFps: number | null,
+  videoFps: number | null,
+): boolean {
+  return (
+    subtitleFps != null &&
+    videoFps != null &&
+    Number.isFinite(subtitleFps) &&
+    Number.isFinite(videoFps) &&
+    Math.abs(subtitleFps - videoFps) < 0.001
   );
 }
 
