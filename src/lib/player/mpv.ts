@@ -7,6 +7,10 @@ import { makeSafeTauriUnlisten } from "@/lib/tauri-unlisten";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import type { SubtitleLoadMetadata } from "@/lib/subtitles/types";
 import {
+  markMpvSubtitleFpsSessionRecreated,
+  resetMpvSubtitleFpsForTransition,
+} from "./mpv-properties";
+import {
   emptySnapshot,
   type PlayerBridge,
   type PlayerCapabilities,
@@ -97,6 +101,10 @@ const AUDIO_PROFILE_AF: Record<string, string> = {
 
 const DEFAULT_UA = "VLC/3.0.20 LibVLC/3.0.20";
 
+async function resetSubtitleFpsBeforeMpvTransition(): Promise<void> {
+  await resetMpvSubtitleFpsForTransition();
+}
+
 let appliedAudioDevice: string | null = null;
 
 async function applyAudioDevice(want: string): Promise<void> {
@@ -165,6 +173,7 @@ export function createMpvBridge(mpvOptions?: MpvOptions): PlayerBridge {
   let mediaLoadId = 0;
   let expectedMediaPath: string | null = null;
   let observedMediaPath: string | null = null;
+  let mediaRevision = 0;
   let suppressEndFileUntil = 0;
   let svpFilterFailed = false;
   let secondarySid: string | null = null;
@@ -239,6 +248,7 @@ export function createMpvBridge(mpvOptions?: MpvOptions): PlayerBridge {
     if (raw.event === "player-failure") {
       const reason = String((raw as { reason?: unknown }).reason ?? "");
       snap = mpvFailureSnapshot(snap, reason);
+      mediaRevision += 1;
       mpvStarted = false;
       invoke("mpv_stop").catch(() => {});
       emit();
@@ -415,6 +425,7 @@ export function createMpvBridge(mpvOptions?: MpvOptions): PlayerBridge {
     async load(src: PlayerSource) {
       const activeLoadId = ++mediaLoadId;
       expectedMediaPath = src.url;
+      mediaRevision += 1;
       svpFilterFailed = false;
       snap.status = "loading";
       snap.errorCode = null;
@@ -434,6 +445,16 @@ export function createMpvBridge(mpvOptions?: MpvOptions): PlayerBridge {
       pendingTracks = {};
       urlByExternalFilename.clear();
       emit();
+      try {
+        await resetSubtitleFpsBeforeMpvTransition();
+      } catch (error) {
+        console.warn(
+          "[mpv] could not reset subtitle FPS before loading media; recreating the mpv session",
+          error,
+        );
+        markMpvSubtitleFpsSessionRecreated();
+        mpvStarted = false;
+      }
       if (!unlistenEvent) {
         unlistenEvent = makeSafeTauriUnlisten(
           await listen<MpvEvent>("mpv://event", (ev) => handleEvent(ev.payload)),
@@ -586,26 +607,43 @@ export function createMpvBridge(mpvOptions?: MpvOptions): PlayerBridge {
       invoke("mpv_set_property", { name: "aid", value: Number(id) || id }).catch(() => {});
     },
     setSubtitleTrack(id) {
-      if (id == null) {
-        invoke("mpv_set_property", { name: "sid", value: "no" }).catch(() => {});
-        snap.subText = "";
-        snap.subStartSec = 0;
-        emit();
-      } else {
-        invoke("mpv_set_property", { name: "sid", value: Number(id) || id }).catch(() => {});
-        snap.subText = "";
-        snap.subStartSec = 0;
-        emit();
-      }
+      const requestMediaRevision = mediaRevision;
+      snap.subText = "";
+      snap.subStartSec = 0;
+      emit();
+      void (async () => {
+        try {
+          await resetSubtitleFpsBeforeMpvTransition();
+          if (requestMediaRevision !== mediaRevision) return;
+          await invoke("mpv_set_property", {
+            name: "sid",
+            value: id == null ? "no" : Number(id) || id,
+          });
+        } catch (error) {
+          console.warn("[mpv] could not select a subtitle after resetting subtitle FPS", error);
+        }
+      })();
     },
     setSecondarySubtitleTrack(id) {
-      secondarySid = id;
+      const requestMediaRevision = mediaRevision;
       snap.secondarySubText = "";
       emit();
-      invoke("mpv_set_property", {
-        name: "secondary-sid",
-        value: id == null ? "no" : Number(id) || id,
-      }).catch(() => {});
+      void (async () => {
+        try {
+          await resetSubtitleFpsBeforeMpvTransition();
+          if (requestMediaRevision !== mediaRevision) return;
+          secondarySid = id;
+          await invoke("mpv_set_property", {
+            name: "secondary-sid",
+            value: id == null ? "no" : Number(id) || id,
+          });
+        } catch (error) {
+          console.warn(
+            "[mpv] could not select a secondary subtitle after resetting subtitle FPS",
+            error,
+          );
+        }
+      })();
     },
     setSubVisible(on) {
       invoke("mpv_set_property", { name: "sub-visibility", value: on }).catch(() => {});
@@ -650,6 +688,7 @@ export function createMpvBridge(mpvOptions?: MpvOptions): PlayerBridge {
       }
     },
     async addSubtitle(url, lang, title, select, metadata): Promise<boolean> {
+      const requestMediaRevision = mediaRevision;
       let mpvUrl = url;
       if (/^https?:/i.test(url)) {
         try {
@@ -666,16 +705,21 @@ export function createMpvBridge(mpvOptions?: MpvOptions): PlayerBridge {
           }
         }
       }
+      if (requestMediaRevision !== mediaRevision) return false;
       mpvUrl = mpvUrl.replace(/\\/g, "/");
-      urlByExternalFilename.set(mpvUrl, {
-        url,
-        release: metadata?.release,
-        provider: metadata?.provider,
-        matchScore: metadata?.matchScore,
-        matchConfidence: metadata?.matchConfidence,
-        subId: metadata?.subId,
-      });
       try {
+        if (select ?? true) {
+          await resetSubtitleFpsBeforeMpvTransition();
+        }
+        if (requestMediaRevision !== mediaRevision) return false;
+        urlByExternalFilename.set(mpvUrl, {
+          url,
+          release: metadata?.release,
+          provider: metadata?.provider,
+          matchScore: metadata?.matchScore,
+          matchConfidence: metadata?.matchConfidence,
+          subId: metadata?.subId,
+        });
         await invoke("mpv_sub_add", {
           url: mpvUrl,
           lang: lang ?? null,
@@ -788,6 +832,8 @@ export function createMpvBridge(mpvOptions?: MpvOptions): PlayerBridge {
       };
     },
     destroy() {
+      mediaRevision += 1;
+      markMpvSubtitleFpsSessionRecreated();
       if (geomTimer != null) {
         window.clearInterval(geomTimer);
         geomTimer = null;
