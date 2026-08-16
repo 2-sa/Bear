@@ -202,6 +202,7 @@ const settingsFill: Record<string, string> = {
   "Show a second subtitle in another language at the same time. Handy when you are learning a language: keep the one you are learning as your main subtitle, and put your own language here.": "اعرض ترجمة ثانية بلغة أخرى في الوقت نفسه. مفيد عند تعلّم لغة جديدة: اجعل اللغة التي تتعلّمها هي الترجمة الأساسية، وضع لغتك الأم هنا.",
   "Second subtitle language": "لغة الترجمة الثانية",
   "Harbor loads it automatically when a track in that language exists. You can also set or clear the second track for one video from the subtitle menu in the player.": "يحمّلها بير تلقائيًا عند توفّر مسار بتلك اللغة. ويمكنك أيضًا تعيين المسار الثاني أو إزالته لفيديو واحد من قائمة الترجمات في المشغّل.",
+  "Bear loads it automatically when a track in that language exists. You can also set or clear the second track for one video from the subtitle menu in the player.": "يحمّلها بير تلقائيًا عند توفّر مسار بتلك اللغة. ويمكنك أيضًا تعيين المسار الثاني أو إزالته لفيديو واحد من قائمة الترجمات في المشغّل.",
   "Where it shows": "مكان ظهورها",
   "Top of the screen": "أعلى الشاشة",
   "Above the main line": "فوق السطر الأساسي",

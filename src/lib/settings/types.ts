@@ -298,6 +298,9 @@ export type Settings = {
     subsource?: boolean;
   };
   subShowInPip: boolean;
+  secondarySubLang: string;
+  subSecondaryPlacement: "top" | "bottom";
+  subSecondaryScale: number;
   subtitleAutoSync: boolean;
   autoSyncApplyStructural: boolean;
   autoSyncDrift: boolean;

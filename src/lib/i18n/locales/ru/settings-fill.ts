@@ -197,6 +197,7 @@ const settingsFill: Record<string, string> = {
   "Show a second subtitle in another language at the same time. Handy when you are learning a language: keep the one you are learning as your main subtitle, and put your own language here.": "Показывать одновременно вторые субтитры на другом языке. Удобно при изучении языка: оставьте изучаемый язык основными субтитрами, а родной укажите здесь.",
   "Second subtitle language": "Язык вторых субтитров",
   "Harbor loads it automatically when a track in that language exists. You can also set or clear the second track for one video from the subtitle menu in the player.": "Harbor загружает их автоматически, если есть дорожка на этом языке. Вторую дорожку для одного видео также можно выбрать или убрать в меню субтитров в плеере.",
+  "Bear loads it automatically when a track in that language exists. You can also set or clear the second track for one video from the subtitle menu in the player.": "Bear загружает их автоматически, если есть дорожка на этом языке. Вторую дорожку для одного видео также можно выбрать или убрать в меню субтитров в плеере.",
   "Where it shows": "Где показывать",
   "Top of the screen": "Вверху экрана",
   "Above the main line": "Над основной строкой",

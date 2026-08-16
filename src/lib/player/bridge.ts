@@ -17,6 +17,7 @@ export type TrackInfo = {
   forced?: boolean;
   default?: boolean;
   hearingImpaired?: boolean;
+  secondary?: boolean;
   url?: string;
   release?: string;
   provider?: string;
@@ -49,6 +50,7 @@ export type PlayerSnapshot = {
   audioDelaySec: number;
   subText: string;
   subStartSec: number;
+  secondarySubText: string;
   audioNormalize: boolean;
   videoWidth: number;
   videoHeight: number;
@@ -80,6 +82,7 @@ export type PlayerBridge = {
   setRate: (r: number) => void;
   setAudioTrack: (id: string) => void;
   setSubtitleTrack: (id: string | null) => void;
+  setSecondarySubtitleTrack: (id: string | null) => void;
   setSubVisible: (on: boolean) => void;
   setSubDelay: (sec: number) => void;
   setAudioDelay: (sec: number) => void;
@@ -141,6 +144,7 @@ export const emptySnapshot: PlayerSnapshot = {
   audioDelaySec: 0,
   subText: "",
   subStartSec: 0,
+  secondarySubText: "",
   audioNormalize: false,
   videoWidth: 0,
   videoHeight: 0,

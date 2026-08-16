@@ -197,6 +197,7 @@ const settingsFill: Record<string, string> = {
   "Show a second subtitle in another language at the same time. Handy when you are learning a language: keep the one you are learning as your main subtitle, and put your own language here.": "Mostra uma segunda legenda noutro idioma ao mesmo tempo. Útil quando está a aprender um idioma: mantenha o que está a aprender como legenda principal e coloque o seu próprio idioma aqui.",
   "Second subtitle language": "Idioma da segunda legenda",
   "Harbor loads it automatically when a track in that language exists. You can also set or clear the second track for one video from the subtitle menu in the player.": "O Bear carrega-a automaticamente quando existe uma faixa nesse idioma. Também pode definir ou remover a segunda faixa para um vídeo no menu de legendas do reprodutor.",
+  "Bear loads it automatically when a track in that language exists. You can also set or clear the second track for one video from the subtitle menu in the player.": "O Bear carrega-a automaticamente quando existe uma faixa nesse idioma. Também pode definir ou remover a segunda faixa para um vídeo no menu de legendas do reprodutor.",
   "Where it shows": "Onde aparece",
   "Top of the screen": "No topo do ecrã",
   "Above the main line": "Acima da linha principal",

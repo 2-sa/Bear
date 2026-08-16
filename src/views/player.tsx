@@ -1191,6 +1191,11 @@ export function PlayerView({ src }: { src: PlayerSrc }) {
           seek: seekTo,
           seekStep,
           rememberSub: rememberSubChoice,
+          setSubtitleTrack: (id) => bridgeRef.current?.setSubtitleTrack(id),
+          setSecondarySubtitleTrack: (id) => bridgeRef.current?.setSecondarySubtitleTrack(id),
+          addSubtitle: (url, lang, title, select, metadata) =>
+            bridgeRef.current?.addSubtitle(url, lang, title, select, metadata) ??
+            Promise.resolve(false),
           pip: togglePipMode,
           cast: () => cast.openCastMenu(null),
           back: closePlayer,

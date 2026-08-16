@@ -2,6 +2,7 @@ import { Check, FolderOpen, Languages, Loader2, Search as SearchIcon, SlidersHor
 import { useEffect, useMemo, useState } from "react";
 import { Flag } from "@/components/flag";
 import { hasImportedSubTitle, markImportedSub, useImportedSubs } from "@/lib/player/imported-subs";
+import { setSecondarySub } from "@/lib/player/secondary-sub";
 import { useT } from "@/lib/i18n";
 import { openSyncBar } from "@/lib/player/sub-sync";
 import { useAutoSyncHandle } from "@/components/player/autosync/autosync-store";
@@ -15,6 +16,7 @@ import { pickBestMatch } from "./best-match";
 import { useSubtitleSearch } from "./subtitle-search-store";
 import { Count, EmptyState, ImportBanner, Tab, ToggleChip } from "./menu-body-parts";
 import type { SubtitleMenuProps } from "./types";
+import { subtitleTrackLanguageLabel } from "@/lib/subtitles/track-label";
 import { groupByLang, isVeryNewRelease, variantTitle } from "./utils";
 
 type SourceFilter = "all" | "embedded" | "external";
@@ -32,7 +34,7 @@ export function MenuBody(props: SubtitleMenuProps & { onClose: () => void }) {
     const keep = new Set(filtered);
     for (const t of tracks) {
       const isImported = hasImportedSubTitle(t.title) || importedTitles.has(t.title ?? "");
-      if (isImported || t.id === props.selectedId) keep.add(t);
+      if (isImported || t.id === props.selectedId || t.secondary) keep.add(t);
     }
     return tracks.filter((t) => keep.has(t));
   }, [tracks, preferredLanguages, importedTitles, props.selectedId]);
@@ -90,6 +92,7 @@ export function MenuBody(props: SubtitleMenuProps & { onClose: () => void }) {
   const autoSync = useAutoSyncHandle();
   const selectedTrack = useMemo(() => tracks.find((t) => t.id === selectedId) ?? null, [tracks, selectedId]);
   const secondaryTrack = useMemo(() => tracks.find((t) => t.secondary) ?? null, [tracks]);
+  const pickSecondary = props.onSelectSecondary ?? setSecondarySub;
   const autoSyncBusy = autoSync?.status === "analyzing";
   const autoSyncApplied = autoSync?.status === "synced" || autoSync?.status === "best-effort";
   const autoSyncOn = autoSyncBusy || autoSyncApplied;
@@ -234,6 +237,7 @@ export function MenuBody(props: SubtitleMenuProps & { onClose: () => void }) {
           >
             <X size={16} strokeWidth={2.2} />
           </button>
+
         </div>
       </header>
 
@@ -263,6 +267,27 @@ export function MenuBody(props: SubtitleMenuProps & { onClose: () => void }) {
             </span>
             {offSelected ? tr("Off") : tr("On")}
           </button>
+
+          {secondaryTrack && (
+            <div className="mt-1 flex items-center gap-1 rounded-md bg-accent/10 px-2 py-1.5 ring-1 ring-accent/25">
+              <div className="flex min-w-0 flex-1 flex-col">
+                <span className="text-[9.5px] font-bold uppercase tracking-[0.14em] text-accent">
+                  {tr("2nd")}
+                </span>
+                <span className="truncate text-[11px] font-medium text-ink">
+                  {subtitleTrackLanguageLabel(secondaryTrack)}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => pickSecondary(null)}
+                aria-label={tr("Stop showing as second subtitle")}
+                className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-ink-subtle transition-colors hover:bg-canvas/60 hover:text-ink"
+              >
+                <X size={11} strokeWidth={2.6} />
+              </button>
+            </div>
+          )}
 
           {groups.length > 0 && (
             <div className="mt-1.5 mb-0.5 px-2.5 text-[10px] font-bold uppercase tracking-[0.16em] text-ink-subtle">
@@ -413,9 +438,13 @@ export function MenuBody(props: SubtitleMenuProps & { onClose: () => void }) {
                       track={t}
                       rank={index + 1}
                       selected={t.id === selectedId}
+                      isSecondary={t.id === secondaryTrack?.id}
                       onPick={() => {
                         onSelect(t.id);
                       }}
+                      onPickSecondary={() =>
+                        pickSecondary(t.id === secondaryTrack?.id ? null : t.id)
+                      }
                     />
                   ))}
                 </div>

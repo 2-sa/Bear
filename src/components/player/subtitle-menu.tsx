@@ -8,6 +8,7 @@ import {
   modalOverlayOpen,
 } from "@/lib/modal-overlay";
 import { openStyleBar } from "@/lib/player/sub-presets";
+import { setSecondarySub } from "@/lib/player/secondary-sub";
 import { useT } from "@/lib/i18n";
 import { useSettings } from "@/lib/settings";
 import { wasLimitReached } from "@/lib/subtitles/limit-signal";
@@ -60,6 +61,11 @@ export function SubtitleMenu(props: Props) {
     offs.push(
       listen<{ id: string | null }>("modal://subtitle/select", (e) => {
         propsRef.current.onSelect(e.payload.id);
+      }),
+    );
+    offs.push(
+      listen<{ id: string | null }>("modal://subtitle/secondary", (e) => {
+        setSecondarySub(e.payload.id);
       }),
     );
     offs.push(
