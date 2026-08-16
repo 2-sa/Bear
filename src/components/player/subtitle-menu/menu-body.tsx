@@ -9,6 +9,7 @@ import { Tooltip } from "../transport/tooltip";
 import { filterTracksByPreferredLanguage } from "@/lib/subtitles/language";
 import { HoverTooltip } from "@/components/hover-tooltip";
 import { SearchSection } from "./search-section";
+import { SubtitleFpsControl } from "./subtitle-fps-control";
 import { VariantRow } from "./variant-row";
 import { pickBestMatch } from "./best-match";
 import { useSubtitleSearch } from "./subtitle-search-store";
@@ -88,6 +89,7 @@ export function MenuBody(props: SubtitleMenuProps & { onClose: () => void }) {
   const delayNonZero = delaySec !== 0;
   const autoSync = useAutoSyncHandle();
   const selectedTrack = useMemo(() => tracks.find((t) => t.id === selectedId) ?? null, [tracks, selectedId]);
+  const secondaryTrack = useMemo(() => tracks.find((t) => t.secondary) ?? null, [tracks]);
   const autoSyncBusy = autoSync?.status === "analyzing";
   const autoSyncApplied = autoSync?.status === "synced" || autoSync?.status === "best-effort";
   const autoSyncOn = autoSyncBusy || autoSyncApplied;
@@ -203,6 +205,12 @@ export function MenuBody(props: SubtitleMenuProps & { onClose: () => void }) {
               )}
             </button>
           </Tooltip>
+
+          <SubtitleFpsControl
+            engine={props.engine ?? "html5"}
+            track={selectedTrack}
+            hasSecondary={secondaryTrack != null}
+          />
 
           {/* ── Style bar button ── */}
           {onOpenStyleBar && (
