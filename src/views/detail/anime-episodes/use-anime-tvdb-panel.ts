@@ -29,6 +29,14 @@ export type AnimeTvdbPanelState = {
   active: boolean;
 };
 
+const normTitle = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "");
+const isCloseDate = (d1: string, d2: string) => {
+  const t1 = new Date(d1).getTime();
+  const t2 = new Date(d2).getTime();
+  if (isNaN(t1) || isNaN(t2)) return false;
+  return Math.abs(t1 - t2) <= 86400000;
+};
+
 export function useAnimeTvdbPanel(
   kitsuId: number | null,
   imdbId: string | null,
@@ -161,14 +169,14 @@ export function useAnimeTvdbPanel(
           let extra = franchise.find((f) => 
             isFranchiseExtra(f) && 
             !claimedExtras.has(f.meta.id) &&
-            f.meta.name && e.name && f.meta.name.toLowerCase() === e.name.toLowerCase()
+            f.meta.name && e.name && normTitle(f.meta.name) === normTitle(e.name)
           );
 
           if (!extra) {
             extra = franchise.find((f) => 
               isFranchiseExtra(f) && 
               !claimedExtras.has(f.meta.id) &&
-              f.startDate && e.airDate && f.startDate === e.airDate
+              f.startDate && e.airDate && isCloseDate(f.startDate, e.airDate)
             );
           }
 
