@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { movieWatchedIds } from "@/lib/movie-watched";
 import { watchedFlagIds } from "@/lib/watched-flag";
+import { manualWatchedRawKeys } from "@/lib/manual-watched";
+import { playbackHistoryRawKeys } from "@/lib/playback-history";
+import { freshWatchedEntries } from "@/lib/stremio-watched-sync";
 import { library, type LibraryItem } from "@/lib/stremio";
 import { authToken } from "@/lib/theme-auth";
 import { socialPost } from "./client";
@@ -90,22 +93,15 @@ export async function computeWatchedBreakdown(authKey?: string | null): Promise<
 
   // 4. Include manual watched episodes (harbor.manualwatched.v1)
   try {
-    const raw = localStorage.getItem("harbor.manualwatched.v1");
-    if (raw) {
-      const arr = JSON.parse(raw);
-      if (Array.isArray(arr)) {
-        for (const key of arr) {
-          if (typeof key !== "string") continue;
-          const parts = key.split(":");
-          const metaId = parts[0];
-          if (!metaId) continue;
-          allWatchedIds.add(metaId);
-          if (parts.length > 1) {
-            episodeKeys.add(key);
-          } else if (!movieIds.has(metaId)) {
-            movieIds.add(metaId);
-          }
-        }
+    for (const key of manualWatchedRawKeys()) {
+      const parts = key.split("|");
+      const metaId = parts[0];
+      if (!metaId) continue;
+      allWatchedIds.add(metaId);
+      if (parts.length > 1) {
+        episodeKeys.add(key);
+      } else if (!movieIds.has(metaId)) {
+        movieIds.add(metaId);
       }
     }
   } catch {
@@ -114,19 +110,13 @@ export async function computeWatchedBreakdown(authKey?: string | null): Promise<
 
   // 5. Include fresh watched episodes (harbor.stremio.freshwatched.v1)
   try {
-    const raw = localStorage.getItem("harbor.stremio.freshwatched.v1");
-    if (raw) {
-      const obj = JSON.parse(raw) as Record<string, { watched?: string | null }>;
-      if (obj && typeof obj === "object") {
-        for (const [id, v] of Object.entries(obj)) {
-          if (!id) continue;
-          allWatchedIds.add(id);
-          if (typeof v?.watched === "string" && v.watched.trim().length > 0) {
-            const parts = v.watched.split(",").filter((p) => p.trim().length > 0);
-            for (const p of parts) {
-              episodeKeys.add(`${id}:${p.trim()}`);
-            }
-          }
+    for (const [id, value] of freshWatchedEntries()) {
+      if (!id) continue;
+      allWatchedIds.add(id);
+      if (typeof value.watched === "string" && value.watched.trim().length > 0) {
+        const parts = value.watched.split(",").filter((part) => part.trim().length > 0);
+        for (const part of parts) {
+          episodeKeys.add(`${id}:${part.trim()}`);
         }
       }
     }
@@ -136,19 +126,19 @@ export async function computeWatchedBreakdown(authKey?: string | null): Promise<
 
   // 6. Include local playback history (harbor.playback-history.v1)
   try {
-    const raw = localStorage.getItem("harbor.playback-history.v1");
-    if (raw) {
-      const parsed = JSON.parse(raw) as Record<string, unknown>;
-      for (const key of Object.keys(parsed)) {
-        const parts = key.split("|");
-        const metaId = parts[0];
-        if (!metaId) continue;
-        allWatchedIds.add(metaId);
-        if (parts.length > 1) {
-          episodeKeys.add(`${metaId}:${parts[1]}`);
-        } else if (!episodeKeys.has(metaId)) {
+    for (const key of playbackHistoryRawKeys()) {
+      const parts = key.split("|");
+      const metaId = parts[0];
+      if (!metaId) continue;
+      allWatchedIds.add(metaId);
+      if (parts.length > 1) {
+        if (parts[1] === "s0e0") {
           movieIds.add(metaId);
+        } else {
+          episodeKeys.add(`${metaId}:${parts[1]}`);
         }
+      } else if (!episodeKeys.has(metaId)) {
+        movieIds.add(metaId);
       }
     }
   } catch {
