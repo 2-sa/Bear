@@ -1,7 +1,7 @@
 import { Bookmark, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Poster, usePosterChain } from "@/components/poster";
-import { narrowMediaType, type Meta } from "@/lib/cinemeta";
+import { hasEmbeddedStreams, narrowMediaType, type Meta } from "@/lib/cinemeta";
 import { useSettings } from "@/lib/settings";
 import { useView } from "@/lib/view";
 import { useInWatchlist } from "@/lib/watchlist";
@@ -28,7 +28,7 @@ export function WatchlistCard({ meta, onRemove }: { meta: Meta; onRemove?: () =>
     setPosterFailed(true);
   }, []);
   useEffect(() => {
-    const needsAddonHydration = !!meta.addonOrigin?.base && !meta.videos?.length;
+    const needsAddonHydration = !!meta.addonOrigin && !hasEmbeddedStreams(meta.videos);
     if (meta.poster && meta.name && !posterFailed && !needsAddonHydration) {
       setHydrated(null);
       return;
@@ -70,6 +70,7 @@ export function WatchlistCard({ meta, onRemove }: { meta: Meta; onRemove?: () =>
     meta.name,
     settings.tmdbKey,
     posterFailed,
+    meta.addonOrigin?.id,
     meta.addonOrigin?.base,
     meta.videos?.length,
   ]);

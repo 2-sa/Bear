@@ -86,7 +86,12 @@ export function MyListSubmenu({ item, onClose }: { item: ListItemInput; onClose:
           } ${openUp ? "bottom-0" : "top-0"}`}
         >
           <div className="max-h-[248px] overflow-y-auto">
-            <ListRow label={t("My List")} checked={inDefault} count={local.count} onClick={toggleDefault} />
+            <ListRow
+              label={t("My List")}
+              checked={inDefault}
+              count={local.count}
+              onClick={toggleDefault}
+            />
             {lists.map((l) => (
               <ListRow
                 key={l.id}

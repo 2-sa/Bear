@@ -1,5 +1,5 @@
 import { safeFetch as fetch } from "@/lib/safe-fetch";
-import type { Meta } from "./cinemeta";
+import type { AddonOrigin, Meta } from "./cinemeta";
 import { fetchManifestAt, filterEnabled, loadInstalled } from "./addon-store";
 
 const STREMIO_API = "https://api.strem.io/api";
@@ -12,9 +12,7 @@ export type CatalogDef = {
   extra?: Array<{ name: string; isRequired?: boolean; options?: string[] }>;
 };
 
-export type AddonResource =
-  | string
-  | { name: string; types?: string[]; idPrefixes?: string[] };
+export type AddonResource = string | { name: string; types?: string[]; idPrefixes?: string[] };
 
 export type Addon = {
   manifest: {
@@ -38,6 +36,17 @@ export type Addon = {
   };
   transportUrl: string;
 };
+
+export function addonBasesForOrigin(addons: Addon[], origin: AddonOrigin | undefined): string[] {
+  if (!origin) return [];
+  const bases = new Set<string>();
+  if (origin.base) bases.add(origin.base.replace(/\/manifest\.json$/, ""));
+  for (const addon of addons) {
+    if (addon.manifest.id !== origin.id) continue;
+    bases.add(addon.transportUrl.replace(/\/manifest\.json$/, ""));
+  }
+  return [...bases];
+}
 
 export type CatalogExtra = { name: string; value: string };
 
@@ -294,7 +303,7 @@ export function withDebridKeys(addons: Addon[], keys: DebridKeySet): Addon[] {
   return addons.map((a) => {
     if (a.manifest.id !== "com.stremio.torrentio.addon") return a;
     if (torrentioCount > 1) return a;
-    if (!/torrentio\.strem\.fun\/manifest\.json$/.test(a.transportUrl)) return a;
+    if (!a.transportUrl.endsWith("torrentio.strem.fun/manifest.json")) return a;
     return {
       ...a,
       transportUrl: config
@@ -311,7 +320,8 @@ export async function gatherCatalogAddons(authKey: string | null): Promise<Addon
   const localOnly = filterEnabled(loadInstalled()).filter((l) => !seen.has(l.transportUrl));
   const localFull = await Promise.all(
     localOnly.map(async (l): Promise<Addon | null> => {
-      if (l.manifest?.catalogs?.length) return { manifest: l.manifest, transportUrl: l.transportUrl };
+      if (l.manifest?.catalogs?.length)
+        return { manifest: l.manifest, transportUrl: l.transportUrl };
       const manifest = await fetchManifestAt(l.transportUrl).catch(() => l.manifest ?? null);
       return manifest ? { manifest, transportUrl: l.transportUrl } : null;
     }),
@@ -383,7 +393,12 @@ export async function loadAddonRows(
             type: cat.type,
             name: cat.name,
             metas,
-            more: { base, type: cat.type, id: cat.id, extras: requiredCatalogExtras(cat) ?? undefined },
+            more: {
+              base,
+              type: cat.type,
+              id: cat.id,
+              extras: requiredCatalogExtras(cat) ?? undefined,
+            },
           };
         } catch {
           return null;
@@ -429,7 +444,8 @@ export async function fetchAddonCatalogPage(
   extras?: Array<{ name: string; value: string }>,
 ): Promise<Meta[]> {
   const parts: string[] = [];
-  for (const e of extras ?? []) parts.push(`${encodeURIComponent(e.name)}=${encodeURIComponent(e.value)}`);
+  for (const e of extras ?? [])
+    parts.push(`${encodeURIComponent(e.name)}=${encodeURIComponent(e.value)}`);
   if (skip > 0) parts.push(`skip=${skip}`);
   const seg = parts.length ? `/${parts.join("&")}` : "";
   const res = await fetchWithTimeout(`${base}/catalog/${type}/${id}${seg}.json`);
@@ -452,7 +468,13 @@ export function createAddonCatalogFetcher(
   return async (page: number, loaded?: number): Promise<Meta[]> => {
     const step = pageSize ?? DEFAULT_CATALOG_PAGE_SIZE;
     const skip = loaded != null && loaded > 0 ? loaded : page <= 1 ? 0 : (page - 1) * step;
-    const metas = await fetchAddonCatalogPage(cursor.base, cursor.type, cursor.id, skip, cursor.extras);
+    const metas = await fetchAddonCatalogPage(
+      cursor.base,
+      cursor.type,
+      cursor.id,
+      skip,
+      cursor.extras,
+    );
     if (metas.length > 0 && pageSize == null) pageSize = metas.length;
     return opts.mapMeta ? metas.map(opts.mapMeta) : metas;
   };

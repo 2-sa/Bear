@@ -3,7 +3,7 @@ import { lruSet } from "@/lib/cache";
 import { resolveMeta } from "@/lib/meta-resource";
 import { readLocalEntries } from "@/lib/watchlist";
 import { readActiveStremioAuthKey } from "@/lib/auth";
-import { fetchAddonMeta } from "@/lib/addons";
+import { addonBasesForOrigin, fetchAddonMeta, gatherCatalogAddons } from "@/lib/addons";
 
 const metaHydrateCache = new Map<string, Promise<Meta | null>>();
 
@@ -13,7 +13,7 @@ export async function hydrateLibraryMeta(
   tmdbKey: string | null,
   origin?: Meta["addonOrigin"],
 ): Promise<Meta | null> {
-  const cacheKey = `${type}:${id}:${origin?.base ?? ""}`;
+  const cacheKey = `${type}:${id}:${origin?.id ?? ""}`;
   const cached = metaHydrateCache.get(cacheKey);
   if (cached) return cached;
   const authKey = (() => {
@@ -24,12 +24,16 @@ export async function hydrateLibraryMeta(
     }
   })();
   const p = (async () => {
-    if (origin?.base) {
-      try {
-        const addonMeta = await fetchAddonMeta(origin.base, type, id);
-        if (addonMeta) return addonMeta;
-      } catch {
-        /* fall through to the existing resolve logic */
+    if (origin) {
+      const addons = await gatherCatalogAddons(authKey).catch(() => []);
+      const bases = addonBasesForOrigin(addons, origin);
+      for (const base of bases) {
+        try {
+          const addonMeta = await fetchAddonMeta(base, type, id);
+          if (addonMeta) return addonMeta;
+        } catch {
+          /* try the next matching addon instance */
+        }
       }
     }
     if (id.startsWith("tmdb:") && tmdbKey) {

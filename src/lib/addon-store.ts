@@ -23,7 +23,7 @@ function activeProfileId(): string {
     };
     const profiles = Array.isArray(s.profiles) ? s.profiles : [];
     const active = profiles.find((p) => p.id === s.activeId) ?? null;
-    const own = active?.id ?? (profiles.find((p) => p?.isPrimary)?.id ?? "");
+    const own = active?.id ?? profiles.find((p) => p?.isPrimary)?.id ?? "";
     if (!own) return "";
     if (active && typeof active.shareStremioWith === "string" && active.shareStremioWith) {
       const shared = profiles.find((p) => p.id === active.shareStremioWith);
@@ -38,7 +38,9 @@ function activeProfileId(): string {
 function primaryProfileId(): string {
   try {
     const raw = localStorage.getItem(PROFILES_KEY);
-    const s = raw ? (JSON.parse(raw) as { profiles?: Array<{ id?: string; isPrimary?: boolean }> }) : null;
+    const s = raw
+      ? (JSON.parse(raw) as { profiles?: Array<{ id?: string; isPrimary?: boolean }> })
+      : null;
     const primary = s?.profiles?.find((p) => p?.isPrimary);
     return (primary && typeof primary.id === "string" && primary.id) || activeProfileId();
   } catch {
@@ -274,9 +276,7 @@ export function findHostnameMatch(transportUrl: string): InstalledAddon | null {
   return loadInstalled().find((a) => transportHost(a.transportUrl) === host) ?? null;
 }
 
-export type AddonUrlParse =
-  | { kind: "ok"; url: string }
-  | { kind: "error"; message: string };
+export type AddonUrlParse = { kind: "ok"; url: string } | { kind: "error"; message: string };
 
 export function parseAddonUrl(input: string): AddonUrlParse {
   let raw = input.trim();
@@ -299,11 +299,15 @@ export function parseAddonUrl(input: string): AddonUrlParse {
   return { kind: "ok", url: raw };
 }
 
-function validateManifest(m: unknown): { ok: true; manifest: Addon["manifest"] } | { ok: false; error: string } {
+function validateManifest(
+  m: unknown,
+): { ok: true; manifest: Addon["manifest"] } | { ok: false; error: string } {
   if (!m || typeof m !== "object") return { ok: false, error: "Manifest is not a JSON object." };
   const obj = m as Record<string, unknown>;
-  if (typeof obj.id !== "string" || obj.id.length === 0) return { ok: false, error: "Manifest is missing an `id`." };
-  if (typeof obj.name !== "string" || obj.name.length === 0) return { ok: false, error: "Manifest is missing a `name`." };
+  if (typeof obj.id !== "string" || obj.id.length === 0)
+    return { ok: false, error: "Manifest is missing an `id`." };
+  if (typeof obj.name !== "string" || obj.name.length === 0)
+    return { ok: false, error: "Manifest is missing a `name`." };
   return { ok: true, manifest: obj as Addon["manifest"] };
 }
 
@@ -350,7 +354,9 @@ export async function installFromUrl(
   const replaceId = options.replaceId && options.replaceId !== id ? options.replaceId : null;
   const replacedById = before.some((a) => a.id === id);
   const replacedByOld = replaceId != null && before.some((a) => a.id === replaceId);
-  const next = before.filter((a) => a.transportUrl !== parsed.url && (!replaceId || a.id !== replaceId));
+  const next = before.filter(
+    (a) => a.transportUrl !== parsed.url && (!replaceId || a.id !== replaceId),
+  );
   next.push({ id, transportUrl: parsed.url, installedAt: Date.now(), manifest });
   saveInstalled(next);
   const addon: Addon = { manifest, transportUrl: parsed.url };
@@ -406,9 +412,7 @@ export async function fetchInstalledAddons(): Promise<Addon[]> {
     }
     try {
       const manifest = await fetchManifestAt(entry.transportUrl);
-      const updated = loadInstalled().map((e) =>
-        e.id === entry.id ? { ...e, manifest } : e,
-      );
+      const updated = loadInstalled().map((e) => (e.id === entry.id ? { ...e, manifest } : e));
       saveInstalled(updated);
       return { manifest, transportUrl: entry.transportUrl };
     } catch {
@@ -423,7 +427,10 @@ export function manifestToConfigureUrl(transportUrl: string): string {
   return transportUrl.replace(/manifest\.json(\?.*)?$/i, "configure");
 }
 
-export function manifestToShareUrl(transportUrl: string, scheme: "https" | "stremio" = "https"): string {
+export function manifestToShareUrl(
+  transportUrl: string,
+  scheme: "https" | "stremio" = "https",
+): string {
   if (scheme === "stremio") {
     return transportUrl.replace(/^https?:\/\//i, "stremio://");
   }

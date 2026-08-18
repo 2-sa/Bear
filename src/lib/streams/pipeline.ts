@@ -58,7 +58,12 @@ function finalizeWithRescue(
   const keep: ParsedStream[] = [...picker.all, ...rescued];
   const corpus = computeCorpusStats(keep, score);
   const scored = keep.map((s) => scoreStream(s, score, corpus));
-  const newPicker = rankAndPick(scored, score.activeDebrids, PREFER_AAC, score.respectAddonOrder === true);
+  const newPicker = rankAndPick(
+    scored,
+    score.activeDebrids,
+    PREFER_AAC,
+    score.respectAddonOrder === true,
+  );
   dlog(`[pipeline] early-leak rescue: restored ${rescued.size} corroborated high-res stream(s)`);
   return { picker: newPicker, rejected: rejected.filter((r) => !rescued.has(r.stream)) };
 }
@@ -103,7 +108,12 @@ export async function runPipeline(
     const { keep, rejected } = applyTrust(parsed, input.trust ?? {});
     const corpus = computeCorpusStats(keep, input.score);
     const scored = keep.map((s) => scoreStream(s, input.score, corpus));
-    const picker = rankAndPick(scored, input.score.activeDebrids, PREFER_AAC, input.score.respectAddonOrder === true);
+    const picker = rankAndPick(
+      scored,
+      input.score.activeDebrids,
+      PREFER_AAC,
+      input.score.respectAddonOrder === true,
+    );
     const fin = finalizeWithRescue(picker, rejected, input.trust ?? {}, input.score);
     return {
       picker: applyStreamPriority(fin.picker, priorityActive, input.score.activeDebrids),
@@ -133,7 +143,16 @@ export async function runPipeline(
     }),
     presets.length > 0
       ? Promise.resolve(presets)
-      : fetchAddonStreams(input.addons, input.request, signal, emitPartial, onAddonProgress, input.addonTimeoutMs, input.addonRanks, input.forcedAddonBases),
+      : fetchAddonStreams(
+          input.addons,
+          input.request,
+          signal,
+          emitPartial,
+          onAddonProgress,
+          input.addonTimeoutMs,
+          input.addonRanks,
+          input.forcedAddonBases,
+        ),
   ]);
   if (librarySettled.status === "fulfilled") library = librarySettled.value;
   const addonStreams = addonSettled.status === "fulfilled" ? addonSettled.value : [];
@@ -154,7 +173,9 @@ export async function runPipeline(
     ),
   ];
   if (hashes.length > 0 && input.debrids.length > 0 && !signal.aborted) {
-    dlog(`[pipeline] ${parsed.length} parsed streams · ${hashes.length} unique hashes · debrids: ${input.debrids.map((d) => d.name).join(", ")}`);
+    dlog(
+      `[pipeline] ${parsed.length} parsed streams · ${hashes.length} unique hashes · debrids: ${input.debrids.map((d) => d.name).join(", ")}`,
+    );
     const [cacheResults, libraryResults] = await Promise.all([
       Promise.allSettled(input.debrids.map((d) => d.cacheCheck(hashes, signal))),
       Promise.allSettled(input.debrids.map((d) => d.listLibrary(signal))),
@@ -177,11 +198,19 @@ export async function runPipeline(
     for (let i = 0; i < input.debrids.length; i++) {
       const r = libraryResults[i];
       if (r.status === "rejected") {
-        debridErrors.push({ slug: input.debrids[i].slug, name: input.debrids[i].name, code: "network-error" });
+        debridErrors.push({
+          slug: input.debrids[i].slug,
+          name: input.debrids[i].name,
+          code: "network-error",
+        });
         continue;
       }
       if (!r.value.ok) {
-        debridErrors.push({ slug: input.debrids[i].slug, name: input.debrids[i].name, code: r.value.code });
+        debridErrors.push({
+          slug: input.debrids[i].slug,
+          name: input.debrids[i].name,
+          code: r.value.code,
+        });
         continue;
       }
       const slug = input.debrids[i].slug;
@@ -195,7 +224,9 @@ export async function runPipeline(
           p.inLibrary[slug] = true;
         }
       }
-      dlog(`[pipeline] listLibrary cross-check on ${input.debrids[i].name}: ${hits} extra streams flagged cached (lib has ${libHashes.size} hashes)`);
+      dlog(
+        `[pipeline] listLibrary cross-check on ${input.debrids[i].name}: ${hits} extra streams flagged cached (lib has ${libHashes.size} hashes)`,
+      );
     }
 
     const totalCached = parsed.filter((p) => Object.values(p.cached).some(Boolean)).length;
@@ -211,7 +242,9 @@ export async function runPipeline(
         byReason.set(k, (byReason.get(k) ?? 0) + 1);
       }
       const summary = [...byReason.entries()].map(([k, n]) => `${k}=${n}`).join(", ");
-      dlog(`[pipeline] (core) trust kept ${core.picker.all.length}/${parsed.length} · rejected: ${summary}`);
+      dlog(
+        `[pipeline] (core) trust kept ${core.picker.all.length}/${parsed.length} · rejected: ${summary}`,
+      );
     }
     const fin = finalizeWithRescue(core.picker, core.rejected, input.trust ?? {}, input.score);
     return {
@@ -231,12 +264,19 @@ export async function runPipeline(
     const summary = [...byReason.entries()].map(([k, n]) => `${k}=${n}`).join(", ");
     dlog(`[pipeline] trust kept ${keep.length}/${parsed.length} · rejected: ${summary}`);
     for (const r of rejected.slice(0, 6)) {
-      dlog(`[pipeline]   reject ${r.reason} :: ${r.stream.parsedTitle ?? r.stream.title ?? r.stream.name ?? "?"}`);
+      dlog(
+        `[pipeline]   reject ${r.reason} :: ${r.stream.parsedTitle ?? r.stream.title ?? r.stream.name ?? "?"}`,
+      );
     }
   }
   const corpus = computeCorpusStats(keep, input.score);
   const scored = keep.map((s) => scoreStream(s, input.score, corpus));
-  const picker = rankAndPick(scored, input.score.activeDebrids, PREFER_AAC, input.score.respectAddonOrder === true);
+  const picker = rankAndPick(
+    scored,
+    input.score.activeDebrids,
+    PREFER_AAC,
+    input.score.respectAddonOrder === true,
+  );
   const fin = finalizeWithRescue(picker, rejected, input.trust ?? {}, input.score);
   return {
     picker: applyStreamPriority(fin.picker, priorityActive, input.score.activeDebrids),
@@ -250,7 +290,8 @@ async function runCorePipeline(
   trustOpts: TrustOptions,
   scoreOpts: ScoreOptions,
 ): Promise<{ picker: RankedPicker; rejected: Rejection[] } | null> {
-  const isTauri = typeof window !== "undefined" && ("__TAURI__" in window || "__TAURI_INTERNALS__" in window);
+  const isTauri =
+    typeof window !== "undefined" && ("__TAURI__" in window || "__TAURI_INTERNALS__" in window);
   if (!isTauri) return null;
   try {
     const { invoke } = await import("@tauri-apps/api/core");

@@ -18,7 +18,7 @@ function activeProfileId(): string {
     };
     const profiles = Array.isArray(s.profiles) ? s.profiles : [];
     const active = profiles.find((p) => p.id === s.activeId) ?? null;
-    const own = active?.id ?? (profiles.find((p) => p?.isPrimary)?.id ?? "");
+    const own = active?.id ?? profiles.find((p) => p?.isPrimary)?.id ?? "";
     if (!own) return "";
     if (active && typeof active.shareStremioWith === "string" && active.shareStremioWith) {
       const shared = profiles.find((p) => p.id === active.shareStremioWith);
@@ -33,7 +33,9 @@ function activeProfileId(): string {
 function primaryProfileId(): string {
   try {
     const raw = localStorage.getItem(PROFILES_KEY);
-    const s = raw ? (JSON.parse(raw) as { profiles?: Array<{ id?: string; isPrimary?: boolean }> }) : null;
+    const s = raw
+      ? (JSON.parse(raw) as { profiles?: Array<{ id?: string; isPrimary?: boolean }> })
+      : null;
     const primary = s?.profiles?.find((p) => p?.isPrimary);
     return (primary && typeof primary.id === "string" && primary.id) || activeProfileId();
   } catch {
@@ -65,7 +67,9 @@ function load(): Set<string> {
   migrateLegacy();
   try {
     const arr = JSON.parse(localStorage.getItem(storeKey()) ?? "[]");
-    cache = new Set(Array.isArray(arr) ? arr.filter((x): x is string => typeof x === "string") : []);
+    cache = new Set(
+      Array.isArray(arr) ? arr.filter((x): x is string => typeof x === "string") : [],
+    );
   } catch {
     cache = new Set();
   }
