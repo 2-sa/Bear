@@ -14,6 +14,9 @@ const resolve = read("src/lib/streams/resolve.ts");
 const usage = read("src/lib/torrent/local-engine.ts");
 const playerMedia = read("src/views/player/hooks/use-player-media.ts");
 const pickHandler = read("src/views/play-picker/use-pick-handler.ts");
+const picker = read("src/views/play-picker.tsx");
+const pickerUtils = read("src/views/play-picker/picker-utils.ts");
+const autoPlayTransition = read("src/views/play-picker/auto-play-transition.tsx");
 const episodePanel = read("src/components/player/episode-panel/index.tsx");
 const autoDownload = read("src/lib/auto-download/resolve.ts");
 const seasonDownload = read("src/lib/download/season-download.ts");
@@ -22,13 +25,15 @@ const downloads = read("src/lib/download/downloads-store.ts");
 const playerDownload = read("src/views/player/hooks/use-video-download.ts");
 const magnetCard = read("src/components/search/magnet-card.tsx");
 const app = read("src/App.tsx");
+const dhtBoot = read("src-tauri/src/torrent_engine/dht_boot.rs");
+const autoRetry = read("src/views/player/hooks/use-auto-retry.ts");
 
 test("selecting a torrent file does not start peer transfer", () => {
   const start = engine.indexOf("pub async fn torrent_engine_select");
   const end = engine.indexOf("pub async fn torrent_engine_stats", start);
   assert.ok(start >= 0 && end > start, "torrent_engine_select block is missing");
   const select = engine.slice(start, end);
-  assert.match(select, /update_only_files\(&handle, &only\)/);
+  assert.match(select, /update_only_files_bounded\(&session, &handle, &only\)/);
   assert.doesNotMatch(select, /\.unpause\(/);
 });
 
@@ -64,7 +69,7 @@ test("a canceled P2P resolve cleans up only a torrent created by that resolve", 
   assert.match(resolve, /if \(added\.already_managed !== true\)/);
   assert.match(usage, /export function scheduleAbandonedTorrentRemoval/);
   assert.match(usage, /if \(\(torrentUsage\.get\(key\)\?\.owners\.size \?\? 0\) > 0\) return;/);
-  assert.match(usage, /void torrentEngineRemove\(key, true\)/);
+  assert.match(usage, /void removeUnusedTorrentWithRetry\(key, true\)/);
   assert.doesNotMatch(resolve, /startFullDownload/);
 });
 
@@ -138,13 +143,83 @@ test("failed P2P preparation is discarded and remains retryable", () => {
     engine,
     /session\s+\.delete\(TorrentIdOrHash::Hash\(handle\.info_hash\(\)\), true\)/,
   );
-  assert.match(engine, /wait_for_torrent_initialization\(&session, &handle, !already_managed\)/);
+  assert.match(engine, /wait_for_torrent_initialization\(session, &handle, !already_managed\)/);
   assert.match(engine, /wait_for_torrent_initialization\(&session, &h, !already_managed\)/);
   assert.match(pickHandler, /RETRYABLE_ENGINE_FAILURES/);
   assert.match(
     pickHandler,
     /if \(!RETRYABLE_ENGINE_FAILURES\.has\(r\.code\)\) \{\s+setFailedStreams/,
   );
+});
+
+test("existing torrent preparation is reused without repeating magnet discovery", () => {
+  const addStart = engine.indexOf("pub async fn torrent_engine_add");
+  const seedStart = engine.indexOf("dht_boot::seed_peers", addStart);
+  const existingLookup = engine.indexOf("session.get(TorrentIdOrHash::Hash(info_hash))", addStart);
+  assert.ok(existingLookup > addStart && existingLookup < seedStart);
+  assert.match(dhtBoot, /pub\(crate\) fn info_hash_from_magnet/);
+});
+
+test("P2P season packs prepare serially and stop retrying the same failed setup", () => {
+  assert.match(seasonDownload, /const limit = limiter\(preferP2p \? 1 : MAX_CONCURRENT\)/);
+  assert.match(seasonDownload, /let p2pSetupFailed = false/);
+  assert.match(seasonDownload, /if \(preferP2p && p2pSetupFailed\)/);
+  assert.match(seasonDownload, /if \(preferP2p\) p2pSetupFailed = true/);
+});
+
+test("torrent file selection has a bounded recoverable wait", () => {
+  assert.match(engine, /const FILE_SELECTION_TIMEOUT_SECS: u64 = 12/);
+  assert.match(engine, /async fn update_only_files_bounded/);
+  assert.match(engine, /"torrent file selection timed out"/);
+  assert.match(
+    resolve,
+    /if \(!\(await torrentEngineSelect\(added\.info_hash, chosenIdx\)\)\) return null/,
+  );
+});
+
+test("local P2P streaming supports media-player byte ranges and completed-file recovery", () => {
+  assert.match(streamRoute, /parse_range\(value, len\)/);
+  assert.match(streamRoute, /len\.saturating_sub\(suffix_len\)/);
+  assert.match(streamRoute, /inclusive_end\.saturating_add\(1\)\.min\(len\)/);
+  assert.match(streamRoute, /bytes \*\/\{len\}/);
+  assert.match(autoRetry, /completed P2P file produced no frame — reloading local stream/);
+  assert.match(autoRetry, /completed P2P file produced no video frame/);
+});
+
+test("unused torrent cleanup retries after the player releases its local stream", () => {
+  assert.match(usage, /UNUSED_REMOVE_RETRY_MS = \[0, 750, 2_000\]/);
+  assert.match(usage, /async function removeUnusedTorrentWithRetry/);
+  assert.match(usage, /if \(await tryTorrentEngineRemove\(key, deleteFiles\)\) return/);
+  assert.match(usage, /if \(\(torrentUsage\.get\(key\)\?\.owners\.size \?\? 0\) > 0\) return/);
+});
+
+test("slow P2P discovery reports its real phase and a recoverable failure", () => {
+  assert.match(autoPlayTransition, /P2P_SEARCHING_DELAY_MS = 6000/);
+  assert.match(autoPlayTransition, /P2P_SLOW_DELAY_MS = 25000/);
+  assert.match(autoPlayTransition, /P2P · \$\{t\("Searching sources…"\)\}/);
+  assert.match(autoPlayTransition, /P2P · \$\{t\("Stream is taking a while"\)\}/);
+  assert.match(autoPlayTransition, /t\("Choose another source"\)/);
+  assert.match(autoPlayTransition, /t\("This source is slow\. Try another\."\)/);
+  assert.match(
+    pickHandler,
+    /export type ResolvingSelection = \{ stream: ScoredStream; p2p: boolean \}/,
+  );
+  assert.match(pickHandler, /setResolving\(\{ stream, p2p \}\)/);
+  assert.match(picker, /p2p=\{resolving\?\.p2p === true\}/);
+  assert.match(pickerUtils, /It may not have reachable peers/);
+});
+
+test("raw torrent downloads use the same P2P classification as the picker", () => {
+  assert.match(
+    resolve,
+    /export function shouldPreferP2pDownload[\s\S]*isP2pStream\(stream\) && engineP2pEligible\(stream\)/,
+  );
+  assert.match(
+    pickHandler,
+    /forceP2p \|\| \(intent === "download" && shouldPreferP2pDownload\(stream\)\)/,
+  );
+  assert.match(seasonDownload, /const preferP2p = shouldPreferP2pDownload\(packStream\)/);
+  assert.match(seasonDownload, /resolveStream\([\s\S]*?true,\s*preferP2p,\s*\{ season:/);
 });
 
 test("completed P2P downloads are reused by exact torrent identity", () => {

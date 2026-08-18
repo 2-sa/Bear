@@ -12,7 +12,7 @@ const RETRYABLE_ENGINE_FAILURES = new Set(["engine-no-peers", "engine-not-ready"
 import { engineP2pEligible } from "@/lib/torrent/stremio-stream";
 import { hasUncachedMarker } from "@/lib/streams/cached";
 import { preflightCheck } from "@/lib/streams/preflight";
-import { resolveStream } from "@/lib/streams/resolve";
+import { resolveStream, shouldPreferP2pDownload } from "@/lib/streams/resolve";
 import { registerStreamProxy } from "@/lib/stream-proxy";
 import type { ScoredStream } from "@/lib/streams/types";
 import type { PlayInvite } from "@/lib/together/protocol";
@@ -24,6 +24,8 @@ import { downloadSeasonFromPack } from "@/lib/download/season-download";
 import { isDownloadableSeasonPack } from "@/lib/download/season-pack";
 import { useT } from "@/lib/i18n";
 import { formatStreamQuality, humanError, isDebridFailure, streamIdentity } from "./picker-utils";
+
+export type ResolvingSelection = { stream: ScoredStream; p2p: boolean };
 
 export function usePickHandler({
   meta,
@@ -82,7 +84,7 @@ export function usePickHandler({
   setAutoExhausted: Dispatch<SetStateAction<boolean>>;
   setFailedStreams: Dispatch<SetStateAction<Set<ScoredStream>>>;
   setResolveError: (msg: string | null) => void;
-  setResolving: Dispatch<SetStateAction<{ stream: ScoredStream } | null>>;
+  setResolving: Dispatch<SetStateAction<ResolvingSelection | null>>;
 }) {
   const t = useT();
   const [queuedHash, setQueuedHash] = useState<string | null>(null);
@@ -231,7 +233,7 @@ export function usePickHandler({
         try {
           const proxied = await registerStreamProxy(r.data.url, r.data.headers);
           playUrl = proxied.url;
-        } catch (e) {
+        } catch {
           setFailedStreams((prev) => new Set(prev).add(stream));
           const willRetry = autoActive && autoAttemptIdx + 1 < autoCandidatesLength;
           if (!willRetry)
@@ -241,10 +243,7 @@ export function usePickHandler({
         }
       }
       const preflight =
-        intent === "download" ||
-        r.via === "p2p" ||
-        r.via === "direct" ||
-        r.via === "local-download"
+        intent === "download" || r.via === "p2p" || r.via === "direct" || r.via === "local-download"
           ? ({ ok: true } as const)
           : await preflightCheck(playUrl, ac.signal);
       if (ac.signal.aborted) return;
@@ -371,8 +370,17 @@ export function usePickHandler({
       window.clearTimeout(retryTimerRef.current);
       retryTimerRef.current = null;
     }
-    setResolving({ stream });
-    void resolveAndOpen(stream, committed, forceP2p);
+    const effectiveForceP2p =
+      forceP2p || (intent === "download" && shouldPreferP2pDownload(stream));
+    const p2p =
+      effectiveForceP2p ||
+      (intent !== "download" &&
+        !!stream.infoHash &&
+        !stream.url &&
+        engineP2pEligible(stream) &&
+        (debrids.length === 0 || (committed && !isCached(stream) && hasUncachedMarker(stream))));
+    setResolving({ stream, p2p });
+    void resolveAndOpen(stream, committed, effectiveForceP2p);
   };
 
   const onPlay = (stream: ScoredStream, committed = true, skipP2pConfirm = false, auto = false) => {
@@ -423,7 +431,7 @@ export function usePickHandler({
       setResolveError("Your debrid service doesn't support queueing torrents from Harbor yet.");
       return;
     }
-    setResolving({ stream });
+    setResolving({ stream, p2p: false });
     const ac = new AbortController();
     resolveAcRef.current?.abort();
     resolveAcRef.current = ac;

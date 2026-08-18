@@ -295,25 +295,40 @@ export function useTrackAutoload(params: {
     snap.durationSec,
     bridgeRef,
   ]);
-  const subRestoreRef = useRef<string | null>(null);
-  const subRestoreWaitRef = useRef<number | null>(null);
+  const subRestoreWaitRef = useRef<{ key: string; startedAt: number } | null>(null);
   const subRestoreLogRef = useRef<string | null>(null);
+  const subRestoreSelectRef = useRef<{
+    key: string;
+    attempts: number;
+    attemptedAt: number;
+  } | null>(null);
+  const subRestoreAddRef = useRef<{ key: string; pending: boolean } | null>(null);
+  const subRestoreTimerRef = useRef<{ id: number; dueAt: number } | null>(null);
+  const [subRestoreTick, setSubRestoreTick] = useState(0);
   useEffect(() => {
-    subRestoreRef.current = null;
     subRestoreWaitRef.current = null;
     subRestoreLogRef.current = null;
+    subRestoreSelectRef.current = null;
+    subRestoreAddRef.current = null;
+    if (subRestoreTimerRef.current != null) {
+      window.clearTimeout(subRestoreTimerRef.current.id);
+      subRestoreTimerRef.current = null;
+    }
+    setSubRestoreTick(0);
+    return () => {
+      if (subRestoreTimerRef.current != null) {
+        window.clearTimeout(subRestoreTimerRef.current.id);
+        subRestoreTimerRef.current = null;
+      }
+    };
   }, [src.url]);
   useEffect(() => {
     if (src.subtitlePreselect) return;
-    if (subRestoreRef.current === src.url) return;
     const remembered = readRememberedSub(
       subtitleMediaKey(src.meta.id, src.episode?.season, src.episode?.episode),
     );
     if (!remembered) return;
-    if (!rememberedSubAppliesToStream(remembered, src.streamRef)) {
-      subRestoreRef.current = src.url;
-      return;
-    }
+    if (!rememberedSubAppliesToStream(remembered, src.streamRef)) return;
     const mediaReady =
       snap.audioTracks.length > 0 || snap.subtitleTracks.length > 0 || snap.durationSec > 0;
     if (!mediaReady) return;
@@ -323,7 +338,6 @@ export function useTrackAutoload(params: {
       normalizeLang(a ?? "") === normalizeLang(b ?? "");
 
     if (remembered.off) {
-      subRestoreRef.current = src.url;
       if (snap.subtitleTracks.some((t) => t.selected)) bridge.setSubtitleTrack(null);
       autoSubIdRef.current = null;
       return;
@@ -331,6 +345,28 @@ export function useTrackAutoload(params: {
 
     if (remembered.source) {
       const source = remembered.source;
+      const restoreKey = [
+        src.url,
+        remembered.streamKey ?? "",
+        remembered.subId ?? "",
+        remembered.provider ?? "",
+        remembered.release ?? "",
+        source,
+      ].join("|");
+      const scheduleRestoreCheck = (delayMs: number) => {
+        const dueAt = Date.now() + Math.max(0, delayMs);
+        const current = subRestoreTimerRef.current;
+        if (current != null && current.dueAt <= dueAt) return;
+        if (current != null) window.clearTimeout(current.id);
+        const id = window.setTimeout(
+          () => {
+            subRestoreTimerRef.current = null;
+            setSubRestoreTick((tick) => tick + 1);
+          },
+          Math.max(0, delayMs),
+        );
+        subRestoreTimerRef.current = { id, dueAt };
+      };
       const norm = (v?: string | null) => normalizeLang(v ?? "");
       const bySubId = () =>
         remembered.subId
@@ -353,8 +389,8 @@ export function useTrackAutoload(params: {
         );
       };
       const existing = bySubId() ?? snap.subtitleTracks.find(sameSource) ?? byRelease();
-      if (!existing && subRestoreLogRef.current !== src.url) {
-        subRestoreLogRef.current = src.url;
+      if (!existing && subRestoreLogRef.current !== restoreKey) {
+        subRestoreLogRef.current = restoreKey;
         console.info("[subs/restore] no match yet", {
           remembered: {
             lang: remembered.lang,
@@ -379,26 +415,53 @@ export function useTrackAutoload(params: {
         });
       }
       if (existing) {
-        console.info("[subs/restore] selecting remembered track", {
-          id: existing.id,
-          subId: existing.subId,
-          via: bySubId() ? "subId" : snap.subtitleTracks.find(sameSource) ? "source" : "release",
-          release: existing.release,
-          title: existing.title,
-          matchConfidence: existing.matchConfidence,
-        });
-        subRestoreRef.current = src.url;
-        if (!existing.selected) bridge.setSubtitleTrack(existing.id);
-        autoSubIdRef.current = existing.id;
-        if (remembered.imported && remembered.title) markImportedSub(remembered.title);
-        else markAddedSub(source);
+        subRestoreWaitRef.current = null;
+        subRestoreAddRef.current = null;
+        if (existing.selected) {
+          subRestoreSelectRef.current = null;
+          autoSubIdRef.current = existing.id;
+          if (remembered.imported && remembered.title) markImportedSub(remembered.title);
+          else markAddedSub(source);
+          return;
+        }
+        const selectionKey = `${restoreKey}|${existing.id}`;
+        const previous = subRestoreSelectRef.current;
+        const attempts = previous?.key === selectionKey ? previous.attempts : 0;
+        const elapsed =
+          previous?.key === selectionKey ? Date.now() - previous.attemptedAt : Infinity;
+        if (attempts < 4 && elapsed >= 750) {
+          console.info("[subs/restore] selecting remembered track", {
+            id: existing.id,
+            subId: existing.subId,
+            via: bySubId() ? "subId" : snap.subtitleTracks.find(sameSource) ? "source" : "release",
+            release: existing.release,
+            title: existing.title,
+            matchConfidence: existing.matchConfidence,
+            attempt: attempts + 1,
+          });
+          subRestoreSelectRef.current = {
+            key: selectionKey,
+            attempts: attempts + 1,
+            attemptedAt: Date.now(),
+          };
+          bridge.setSubtitleTrack(existing.id);
+        }
+        if (attempts < 4) scheduleRestoreCheck(750);
         return;
       }
-      if (subRestoreWaitRef.current == null) subRestoreWaitRef.current = Date.now();
-      const waited = Date.now() - (subRestoreWaitRef.current ?? Date.now());
+      subRestoreSelectRef.current = null;
+      if (subRestoreWaitRef.current?.key !== restoreKey) {
+        subRestoreWaitRef.current = { key: restoreKey, startedAt: Date.now() };
+        subRestoreAddRef.current = null;
+      }
+      const waited = Date.now() - (subRestoreWaitRef.current?.startedAt ?? Date.now());
       const addNow = remembered.imported === true || waited > 12_000;
-      if (!addNow) return;
-      subRestoreRef.current = src.url;
+      if (!addNow) {
+        scheduleRestoreCheck(12_000 - waited + 1);
+        return;
+      }
+      if (subRestoreAddRef.current?.key === restoreKey) return;
+      subRestoreAddRef.current = { key: restoreKey, pending: true };
       console.info("[subs/restore] re-adding remembered sub from source", {
         lang: remembered.lang,
         provider: remembered.provider,
@@ -415,9 +478,12 @@ export function useTrackAutoload(params: {
           matchConfidence: remembered.matchConfidence,
         })
         .then((ok) => {
+          if (subRestoreAddRef.current?.key !== restoreKey) return;
+          subRestoreAddRef.current = { key: restoreKey, pending: false };
           if (!ok) return;
           if (remembered.imported && remembered.title) markImportedSub(remembered.title);
           else markAddedSub(source);
+          setSubRestoreTick((tick) => tick + 1);
         });
       return;
     }
@@ -431,7 +497,6 @@ export function useTrackAutoload(params: {
           (!remembered.title || t.title === remembered.title),
       ) ?? snap.subtitleTracks.find((t) => !t.external && sameLang(t.lang, remembered.lang));
     if (want) {
-      subRestoreRef.current = src.url;
       if (!want.selected) bridge.setSubtitleTrack(want.id);
       autoSubIdRef.current = want.id;
     }
@@ -444,6 +509,7 @@ export function useTrackAutoload(params: {
     snap.subtitleTracks,
     snap.durationSec,
     bridgeRef,
+    subRestoreTick,
   ]);
   useEffect(() => {
     if (engine !== "mpv") return;

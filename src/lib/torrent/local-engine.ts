@@ -104,11 +104,16 @@ export async function torrentEngineAdd(
   }
 }
 
-export async function torrentEngineSelect(infoHash: string, fileIdx: number): Promise<void> {
-  if (!isTauri) return;
-  await invoke("torrent_engine_select", { infoHash, fileIdx }).catch((e) =>
-    console.warn("[engine] select failed", e),
-  );
+export async function torrentEngineSelect(infoHash: string, fileIdx: number): Promise<boolean> {
+  if (!isTauri) return false;
+  try {
+    await invoke("torrent_engine_select", { infoHash, fileIdx });
+    return true;
+  } catch (error) {
+    lastAddError = String(error);
+    console.warn("[engine] select failed", error);
+    return false;
+  }
 }
 
 export async function torrentEngineStats(
@@ -146,7 +151,7 @@ export async function torrentEngineResume(infoHash: string): Promise<void> {
   );
 }
 
-export async function torrentEngineRemove(infoHash: string, deleteFiles: boolean): Promise<void> {
+async function tryTorrentEngineRemove(infoHash: string, deleteFiles: boolean): Promise<boolean> {
   const key = normalizeInfoHash(infoHash);
   if (deleteFiles) markPendingDelete(key);
   cancelTorrentRemoval(key, false);
@@ -155,14 +160,20 @@ export async function torrentEngineRemove(infoHash: string, deleteFiles: boolean
   stopFullDownload(key);
   if (!isTauri) {
     clearPendingDelete(key);
-    return;
+    return true;
   }
   try {
     await invoke("torrent_engine_remove", { infoHash: key, deleteFiles });
     clearPendingDelete(key);
+    return true;
   } catch (e) {
     console.warn("[engine] remove failed", e);
+    return false;
   }
+}
+
+export async function torrentEngineRemove(infoHash: string, deleteFiles: boolean): Promise<void> {
+  await tryTorrentEngineRemove(infoHash, deleteFiles);
 }
 
 const pendingRemovals = new Map<string, number>();
@@ -172,6 +183,7 @@ const torrentUsage = new Map<
   { owners: Set<string>; pausedOwners: Set<string>; deleteFilesRequested: boolean }
 >();
 let playbackHandoffSequence = 0;
+const UNUSED_REMOVE_RETRY_MS = [0, 750, 2_000] as const;
 
 function normalizeInfoHash(infoHash: string): string {
   return infoHash.trim().toLowerCase();
@@ -345,7 +357,7 @@ export function scheduleTorrentRemoval(
   cancelTorrentRemoval(key, false);
   const id = window.setTimeout(() => {
     pendingRemovals.delete(key);
-    void torrentEngineRemove(key, shouldDeleteFiles);
+    void removeUnusedTorrentWithRetry(key, shouldDeleteFiles);
   }, delayMs);
   pendingRemovals.set(key, id);
 }
@@ -359,9 +371,21 @@ export function scheduleAbandonedTorrentRemoval(infoHash: string, delayMs = 1200
   const id = window.setTimeout(() => {
     pendingRemovals.delete(key);
     if ((torrentUsage.get(key)?.owners.size ?? 0) > 0) return;
-    void torrentEngineRemove(key, true);
+    void removeUnusedTorrentWithRetry(key, true);
   }, delayMs);
   pendingRemovals.set(key, id);
+}
+
+async function removeUnusedTorrentWithRetry(infoHash: string, deleteFiles: boolean): Promise<void> {
+  const key = normalizeInfoHash(infoHash);
+  for (const delayMs of UNUSED_REMOVE_RETRY_MS) {
+    if (delayMs > 0) {
+      await new Promise<void>((resolve) => window.setTimeout(resolve, delayMs));
+    }
+    if ((torrentUsage.get(key)?.owners.size ?? 0) > 0) return;
+    if (await tryTorrentEngineRemove(key, deleteFiles)) return;
+  }
+  schedulePostStartReconciliation();
 }
 
 export function cancelTorrentRemoval(infoHash: string, clearPersisted = true): void {
