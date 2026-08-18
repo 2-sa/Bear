@@ -31,7 +31,9 @@ export async function computeWatchedCount(authKey?: string | null): Promise<numb
   return bd ? bd.watched : null;
 }
 
-export async function computeWatchedBreakdown(authKey?: string | null): Promise<WatchedBreakdown | null> {
+export async function computeWatchedBreakdown(
+  authKey?: string | null,
+): Promise<WatchedBreakdown | null> {
   const movieIds = new Set<string>();
   const episodeKeys = new Set<string>();
   const allWatchedIds = new Set<string>();
@@ -44,7 +46,12 @@ export async function computeWatchedBreakdown(authKey?: string | null): Promise<
       for (const i of lib) {
         if (!i._id) continue;
         const st = i.state as Record<string, unknown> | undefined;
-        const watchTime = typeof st?.overallTimeWatched === "number" ? st.overallTimeWatched : typeof st?.timeWatched === "number" ? st.timeWatched : 0;
+        const watchTime =
+          typeof st?.overallTimeWatched === "number"
+            ? st.overallTimeWatched
+            : typeof st?.timeWatched === "number"
+              ? st.timeWatched
+              : 0;
         if (watchTime > 0) {
           totalWatchMs += watchTime;
         }
@@ -172,8 +179,10 @@ export async function pushStats(
   if (typeof watched === "number" && watched >= 0) body.watched = watched;
   if (typeof mangaRead === "number" && mangaRead >= 0) body.mangaRead = mangaRead;
   if (typeof moviesWatched === "number" && moviesWatched >= 0) body.moviesWatched = moviesWatched;
-  if (typeof episodesWatched === "number" && episodesWatched >= 0) body.episodesWatched = episodesWatched;
-  if (typeof minutesWatched === "number" && minutesWatched >= 0) body.minutesWatched = minutesWatched;
+  if (typeof episodesWatched === "number" && episodesWatched >= 0)
+    body.episodesWatched = episodesWatched;
+  if (typeof minutesWatched === "number" && minutesWatched >= 0)
+    body.minutesWatched = minutesWatched;
   if (!Object.keys(body).length) return;
   try {
     await socialPost("/social/u/me/stats", body);
@@ -182,7 +191,10 @@ export async function pushStats(
   }
 }
 
-export async function syncProfileStats(authKey: string | null | undefined, mangaRead: number): Promise<void> {
+export async function syncProfileStats(
+  authKey: string | null | undefined,
+  mangaRead: number,
+): Promise<void> {
   const bd = await computeWatchedBreakdown(authKey);
   const watched = bd ? bd.watched : null;
   const movies = bd ? bd.moviesWatched : null;
@@ -192,7 +204,10 @@ export async function syncProfileStats(authKey: string | null | undefined, manga
   await pushStats(watched, mangaRead, movies, episodes, minutes);
 }
 
-export function useLibraryWatchedCount(authKey: string | null | undefined, enabled: boolean): number {
+export function useLibraryWatchedCount(
+  authKey: string | null | undefined,
+  enabled: boolean,
+): number {
   const bd = useLibraryWatchedBreakdown(authKey, enabled);
   return bd.watched;
 }

@@ -85,7 +85,9 @@ export async function fetchAddonStreams(
     }
   }
   if (skipped.length > 0) console.info(`[addons] skipped: ${skipped.join(", ")}`);
-  console.info(`[addons] querying ${namedTasks.length}: ${namedTasks.map((t) => t.name).join(", ")}`);
+  console.info(
+    `[addons] querying ${namedTasks.length}: ${namedTasks.map((t) => t.name).join(", ")}`,
+  );
 
   const total = namedTasks.length;
   const pendingByAddon = new Map<string, number>();
@@ -154,7 +156,16 @@ function pickId(addon: Addon, type: string, ids: string[]): string | null {
 
 const ANIME_SCHEMES = ["kitsu", "mal", "anidb", "anilist"];
 
-const STANDARD_ID_SCHEMES = ["tt", "tmdb:", "kitsu:", "mal:", "anidb:", "anilist:", "tvdb:", "simkl:"];
+const STANDARD_ID_SCHEMES = [
+  "tt",
+  "tmdb:",
+  "kitsu:",
+  "mal:",
+  "anidb:",
+  "anilist:",
+  "tvdb:",
+  "simkl:",
+];
 
 function idScheme(id: string): string {
   return id.startsWith("tt") ? "imdb" : id.split(":")[0];
@@ -185,9 +196,7 @@ function addonAcceptsId(addon: Addon, type: string, id: string): boolean {
     return streamResources.some((r) => {
       const typeOk = Array.isArray(r.types) && r.types.includes(type);
       const idOk =
-        !r.idPrefixes ||
-        r.idPrefixes.length === 0 ||
-        r.idPrefixes.some((p) => id.startsWith(p));
+        !r.idPrefixes || r.idPrefixes.length === 0 || r.idPrefixes.some((p) => id.startsWith(p));
       return typeOk && idOk;
     });
   }
@@ -208,9 +217,7 @@ function alternateStreamTypes(addon: Addon, type: string, id: string): string[] 
   const out = new Set<string>();
   for (const r of streamResources) {
     const idOk =
-      !r.idPrefixes ||
-      r.idPrefixes.length === 0 ||
-      r.idPrefixes.some((p) => id.startsWith(p));
+      !r.idPrefixes || r.idPrefixes.length === 0 || r.idPrefixes.some((p) => id.startsWith(p));
     if (!idOk) continue;
     for (const t of r.types ?? []) {
       if (t !== type) out.add(t);
@@ -271,7 +278,8 @@ async function fetchOne(
           const hash = fromUrl?.infoHash ?? infoHashFromSources(s.sources);
           if (hash) {
             mapped.infoHash = hash;
-            if (mapped.fileIdx == null && fromUrl?.fileIdx != null) mapped.fileIdx = fromUrl.fileIdx;
+            if (mapped.fileIdx == null && fromUrl?.fileIdx != null)
+              mapped.fileIdx = fromUrl.fileIdx;
           }
         }
         return mapped;

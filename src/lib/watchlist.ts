@@ -1,13 +1,24 @@
 import { useEffect, useMemo, useState } from "react";
-import { addToWatchlist as traktAdd, removeFromWatchlist as traktRemove } from "@/lib/trakt/watchlist";
+import {
+  addToWatchlist as traktAdd,
+  removeFromWatchlist as traktRemove,
+} from "@/lib/trakt/watchlist";
 import { stremioIdToTraktTarget } from "@/lib/trakt/ids";
-import { addToWatchlist as simklAdd, removeFromWatchlist as simklRemove } from "@/lib/simkl/watchlist";
+import {
+  addToWatchlist as simklAdd,
+  removeFromWatchlist as simklRemove,
+} from "@/lib/simkl/watchlist";
 import { stremioIdToSimklTarget } from "@/lib/simkl/ids";
 import { isAuthenticated as simklConnected } from "@/lib/simkl/session";
 import { setItemWithRecovery, freeStorageSpace } from "@/lib/storage-recovery";
-import { ANIME_CLOUD_ID, cloudWriteId, saveStremioBookmark, removeStremioBookmark } from "@/lib/stremio";
+import {
+  ANIME_CLOUD_ID,
+  cloudWriteId,
+  saveStremioBookmark,
+  removeStremioBookmark,
+} from "@/lib/stremio";
 import { readActiveStremioAuthKey } from "@/lib/auth";
-import { cappedEmbeddedVideos, type Meta } from "@/lib/cinemeta";
+import { persistableAddonOrigin, persistableVideos, type Meta } from "@/lib/cinemeta";
 
 const KEY_PREFIX = "harbor.watchlist.v1.";
 const LEGACY_KEY = "harbor.watchlist.v1";
@@ -48,7 +59,7 @@ function activeProfileId(): string {
     };
     const profiles = Array.isArray(s.profiles) ? s.profiles : [];
     const active = profiles.find((p) => p.id === s.activeId) ?? null;
-    const own = active?.id ?? (profiles.find((p) => p?.isPrimary)?.id ?? "");
+    const own = active?.id ?? profiles.find((p) => p?.isPrimary)?.id ?? "";
     if (!own) return "";
     if (active && typeof active.shareStremioWith === "string" && active.shareStremioWith) {
       const shared = profiles.find((p) => p.id === active.shareStremioWith);
@@ -63,7 +74,9 @@ function activeProfileId(): string {
 function primaryProfileId(): string {
   try {
     const raw = localStorage.getItem(PROFILES_KEY);
-    const s = raw ? (JSON.parse(raw) as { profiles?: Array<{ id?: string; isPrimary?: boolean }> }) : null;
+    const s = raw
+      ? (JSON.parse(raw) as { profiles?: Array<{ id?: string; isPrimary?: boolean }> })
+      : null;
     const primary = s?.profiles?.find((p) => p?.isPrimary);
     return (primary && typeof primary.id === "string" && primary.id) || activeProfileId();
   } catch {
@@ -122,8 +135,8 @@ function toEntry(input: string | WatchlistInput): LocalEntry {
     name: input.name ?? "",
     poster: input.poster,
     addedAt: Date.now(),
-    addonOrigin: input.addonOrigin,
-    videos: cappedEmbeddedVideos(input.videos),
+    addonOrigin: persistableAddonOrigin(input.addonOrigin),
+    videos: persistableVideos(input.videos),
   };
 }
 
@@ -155,13 +168,8 @@ function read(): Map<string, LocalEntry> {
           name: typeof e.name === "string" ? e.name : "",
           poster: typeof e.poster === "string" ? e.poster : undefined,
           addedAt: typeof e.addedAt === "number" ? e.addedAt : 0,
-          addonOrigin:
-            e.addonOrigin &&
-            typeof e.addonOrigin === "object" &&
-            typeof (e.addonOrigin as { id?: unknown }).id === "string"
-              ? (e.addonOrigin as Meta["addonOrigin"])
-              : undefined,
-          videos: Array.isArray(e.videos) ? (e.videos as Meta["videos"]) : undefined,
+          addonOrigin: persistableAddonOrigin(e.addonOrigin),
+          videos: persistableVideos(e.videos),
         });
       }
     }
@@ -208,7 +216,9 @@ function readAggregateCache(): Set<string> {
     const raw = localStorage.getItem(aggStoreKey());
     if (!raw) return new Set();
     const arr = JSON.parse(raw) as unknown;
-    return new Set(Array.isArray(arr) ? (arr as string[]).filter((v) => typeof v === "string") : []);
+    return new Set(
+      Array.isArray(arr) ? (arr as string[]).filter((v) => typeof v === "string") : [],
+    );
   } catch {
     return new Set();
   }
@@ -254,7 +264,7 @@ export function removeFromWatchlist(id: string): void {
 export function toggleWatchlist(input: string | WatchlistInput): boolean {
   const map = read();
   const id = typeof input === "string" ? input : input.id;
-  const imdb = typeof input === "string" ? null : input.imdbId ?? null;
+  const imdb = typeof input === "string" ? null : (input.imdbId ?? null);
   const has = map.has(id) || aggregateIds.has(id) || (!!imdb && aggregateIds.has(imdb));
   if (has) {
     map.delete(id);
@@ -298,13 +308,15 @@ async function syncWithStremio(input: string | WatchlistInput, added: boolean): 
   const authKey = readActiveStremioAuthKey();
   if (!authKey) return;
   const id = typeof input === "string" ? input : input.id;
-  const imdb = typeof input === "string" ? null : input.imdbId ?? null;
+  const imdb = typeof input === "string" ? null : (input.imdbId ?? null);
   try {
     if (added) {
       const writeId = cloudWriteId(id, imdb, !!imdb);
       if (!writeId) return;
       const meta =
-        typeof input === "string" ? {} : { type: input.type, name: input.name, poster: input.poster };
+        typeof input === "string"
+          ? {}
+          : { type: input.type, name: input.name, poster: input.poster };
       await saveStremioBookmark(authKey, writeId, meta);
     } else {
       const forms = new Set<string>();

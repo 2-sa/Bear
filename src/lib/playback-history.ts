@@ -35,7 +35,7 @@ function activeProfileId(): string {
     };
     const profiles = Array.isArray(s.profiles) ? s.profiles : [];
     const active = profiles.find((p) => p.id === s.activeId) ?? null;
-    const own = active?.id ?? (profiles.find((p) => p?.isPrimary)?.id ?? "");
+    const own = active?.id ?? profiles.find((p) => p?.isPrimary)?.id ?? "";
     if (!own) return "";
     if (active && typeof active.shareStremioWith === "string" && active.shareStremioWith) {
       const shared = profiles.find((p) => p.id === active.shareStremioWith);
@@ -50,7 +50,9 @@ function activeProfileId(): string {
 function primaryProfileId(): string {
   try {
     const raw = localStorage.getItem(PROFILES_KEY);
-    const s = raw ? (JSON.parse(raw) as { profiles?: Array<{ id?: string; isPrimary?: boolean }> }) : null;
+    const s = raw
+      ? (JSON.parse(raw) as { profiles?: Array<{ id?: string; isPrimary?: boolean }> })
+      : null;
     const primary = s?.profiles?.find((p) => p?.isPrimary);
     return (primary && typeof primary.id === "string" && primary.id) || activeProfileId();
   } catch {
@@ -215,7 +217,10 @@ export type WatchedSet = { ids: Set<string>; titles: Set<string> };
 
 export function watchTitleKey(name: string | null | undefined): string {
   if (!name) return "";
-  return name.toLowerCase().replace(/\(\d{4}\)/g, "").replace(/[^a-z0-9]+/g, "");
+  return name
+    .toLowerCase()
+    .replace(/\(\d{4}\)/g, "")
+    .replace(/[^a-z0-9]+/g, "");
 }
 
 export function recentlyPlayed(): WatchedSet {
@@ -240,7 +245,12 @@ export function useWatchedCount(): number {
   );
 }
 
-export function playbackEntries(): Array<{ metaId: string; savedAt: number; title?: string; parsedTitle?: string }> {
+export function playbackEntries(): Array<{
+  metaId: string;
+  savedAt: number;
+  title?: string;
+  parsedTitle?: string;
+}> {
   const out: Array<{ metaId: string; savedAt: number; title?: string; parsedTitle?: string }> = [];
   for (const [key, entry] of Object.entries(readAll())) {
     const metaId = key.split("|")[0];

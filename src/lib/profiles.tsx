@@ -78,7 +78,10 @@ type ProfilesValue = {
     color: ProfileColor;
     kid?: KidConfig | null;
   }) => Profile;
-  updateProfile: (id: string, patch: Partial<Omit<Profile, "id" | "createdAt" | "isPrimary">>) => void;
+  updateProfile: (
+    id: string,
+    patch: Partial<Omit<Profile, "id" | "createdAt" | "isPrimary">>,
+  ) => void;
   deleteProfile: (id: string) => void;
   setPrimary: (id: string) => void;
 };
@@ -161,7 +164,10 @@ function readProfilePromptInterval(): ProfilePromptInterval {
   try {
     const raw = readLaunchSettingsRaw();
     if (!raw) return "launch";
-    const parsed = JSON.parse(raw) as { profilePromptInterval?: unknown; skipProfileScreen?: unknown };
+    const parsed = JSON.parse(raw) as {
+      profilePromptInterval?: unknown;
+      skipProfileScreen?: unknown;
+    };
     const v = parsed.profilePromptInterval;
     if (v === "launch" || v === "15m" || v === "30m" || v === "never") return v;
     return parsed.skipProfileScreen === true ? "never" : "launch";
@@ -296,11 +302,19 @@ function readState(): ProfilesState {
       if (p.isPrimary) {
         if (isPlaceholderName(p.name)) next.name = fallbackName;
         if (identity.color) next.color = identity.color;
-        if (p.avatar == null && identity.avatar != null && !identity.avatar.startsWith("/kids/avatars/")) {
+        if (
+          p.avatar == null &&
+          identity.avatar != null &&
+          !identity.avatar.startsWith("/kids/avatars/")
+        ) {
           next.avatar = identity.avatar;
         }
       }
-      if (next.kid == null && typeof next.avatar === "string" && next.avatar.startsWith("/kids/avatars/")) {
+      if (
+        next.kid == null &&
+        typeof next.avatar === "string" &&
+        next.avatar.startsWith("/kids/avatars/")
+      ) {
         next.avatar = null;
       }
       if (isRemovedBuiltinAvatar(next.avatar)) {
@@ -617,10 +631,7 @@ export function profileInitials(name: string): string {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-export function stremioSourceProfileId(
-  active: Profile | null,
-  profiles: Profile[],
-): string | null {
+export function stremioSourceProfileId(active: Profile | null, profiles: Profile[]): string | null {
   if (!active) return null;
   if (!active.shareStremioWith) return active.id;
   const exists = profiles.some((p) => p.id === active.shareStremioWith);

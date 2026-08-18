@@ -24,7 +24,7 @@ function activeProfileId(): string {
     };
     const profiles = Array.isArray(s.profiles) ? s.profiles : [];
     const active = profiles.find((p) => p.id === s.activeId) ?? null;
-    const own = active?.id ?? (profiles.find((p) => p?.isPrimary)?.id ?? "");
+    const own = active?.id ?? profiles.find((p) => p?.isPrimary)?.id ?? "";
     if (!own) return "";
     if (active && typeof active.shareStremioWith === "string" && active.shareStremioWith) {
       const shared = profiles.find((p) => p.id === active.shareStremioWith);
@@ -39,7 +39,9 @@ function activeProfileId(): string {
 function primaryProfileId(): string {
   try {
     const raw = localStorage.getItem(PROFILES_KEY);
-    const s = raw ? (JSON.parse(raw) as { profiles?: Array<{ id?: string; isPrimary?: boolean }> }) : null;
+    const s = raw
+      ? (JSON.parse(raw) as { profiles?: Array<{ id?: string; isPrimary?: boolean }> })
+      : null;
     const primary = s?.profiles?.find((p) => p?.isPrimary);
     return (primary && typeof primary.id === "string" && primary.id) || activeProfileId();
   } catch {
@@ -73,7 +75,9 @@ function loadFresh(): void {
   try {
     const raw = JSON.parse(localStorage.getItem(storeKey()) ?? "null");
     if (raw && typeof raw === "object") {
-      for (const [id, v] of Object.entries(raw as Record<string, { watched?: unknown; mtime?: unknown }>)) {
+      for (const [id, v] of Object.entries(
+        raw as Record<string, { watched?: unknown; mtime?: unknown }>,
+      )) {
         if (v && typeof v.mtime === "number") {
           freshWatched.set(id, {
             watched: typeof v.watched === "string" ? v.watched : null,
@@ -154,44 +158,44 @@ async function putWithState(
   ) => Partial<FullState> | Promise<Partial<FullState>>,
 ): Promise<boolean> {
   return withItemLock(canonicalId, async () => {
-  let base: LibraryItem | null;
-  try {
-    base = await libraryGetOneStrict(authKey, canonicalId);
-  } catch {
-    return false;
-  }
-  const prev = baseState(base);
-  const now = new Date().toISOString();
-  const state: FullState = { ...prev, ...(await patch(base, prev)), lastWatched: now };
-  const name = (base?.name?.trim() || meta.name || "").trim();
-  if (!name) return false;
-  const baseRecord = base as unknown as Record<string, unknown> | null;
-  const baseHints = (baseRecord?.behaviorHints ?? {}) as Record<string, unknown>;
-  const posterShape = baseRecord?.posterShape;
-  const item = {
-    _id: canonicalId,
-    type: base?.type ?? (meta.type === "series" ? "series" : "movie"),
-    name,
-    poster: meta.poster ?? base?.poster ?? null,
-    posterShape:
-      posterShape === "square" || posterShape === "landscape" || posterShape === "poster"
-        ? posterShape
-        : "poster",
-    background: meta.background ?? base?.background,
-    state,
-    behaviorHints: {
-      defaultVideoId: baseHints.defaultVideoId ?? null,
-      featuredVideoId: baseHints.featuredVideoId ?? null,
-      hasScheduledVideos: baseHints.hasScheduledVideos ?? false,
-    },
-    removed: base ? base.removed === true : false,
-    temp: base ? base.temp === true : false,
-    _ctime: base?._ctime ?? now,
-    _mtime: now,
-  };
-  const ok = await cloudLibraryPut(authKey, item as unknown as LibraryItem);
-  if (state.watched != null) setFresh(canonicalId, state.watched, Date.parse(now));
-  return ok;
+    let base: LibraryItem | null;
+    try {
+      base = await libraryGetOneStrict(authKey, canonicalId);
+    } catch {
+      return false;
+    }
+    const prev = baseState(base);
+    const now = new Date().toISOString();
+    const state: FullState = { ...prev, ...(await patch(base, prev)), lastWatched: now };
+    const name = (base?.name?.trim() || meta.name || "").trim();
+    if (!name) return false;
+    const baseRecord = base as unknown as Record<string, unknown> | null;
+    const baseHints = (baseRecord?.behaviorHints ?? {}) as Record<string, unknown>;
+    const posterShape = baseRecord?.posterShape;
+    const item = {
+      _id: canonicalId,
+      type: base?.type ?? (meta.type === "series" ? "series" : "movie"),
+      name,
+      poster: meta.poster ?? base?.poster ?? null,
+      posterShape:
+        posterShape === "square" || posterShape === "landscape" || posterShape === "poster"
+          ? posterShape
+          : "poster",
+      background: meta.background ?? base?.background,
+      state,
+      behaviorHints: {
+        defaultVideoId: baseHints.defaultVideoId ?? null,
+        featuredVideoId: baseHints.featuredVideoId ?? null,
+        hasScheduledVideos: baseHints.hasScheduledVideos ?? false,
+      },
+      removed: base ? base.removed === true : false,
+      temp: base ? base.temp === true : false,
+      _ctime: base?._ctime ?? now,
+      _mtime: now,
+    };
+    const ok = await cloudLibraryPut(authKey, item as unknown as LibraryItem);
+    if (state.watched != null) setFresh(canonicalId, state.watched, Date.parse(now));
+    return ok;
   });
 }
 

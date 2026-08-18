@@ -1,5 +1,15 @@
 import { memo, useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { Check, ChevronRight, Info, Play, Plus, RotateCcw, TrendingUp, Volume2, VolumeX } from "lucide-react";
+import {
+  Check,
+  ChevronRight,
+  Info,
+  Play,
+  Plus,
+  RotateCcw,
+  TrendingUp,
+  Volume2,
+  VolumeX,
+} from "lucide-react";
 import { ImdbIcon } from "@/components/icons/imdb-icon";
 import tmdbIcon from "@/assets/addon-logos/tmdb.png";
 import traktIcon from "@/assets/trakt.svg";
