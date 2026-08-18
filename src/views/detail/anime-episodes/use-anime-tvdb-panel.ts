@@ -29,7 +29,15 @@ export type AnimeTvdbPanelState = {
   active: boolean;
 };
 
-const normTitle = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "");
+const normTitle = (s: string) =>
+  s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "");
+
+const matchTitle = (a?: string | null, b?: string | null) => {
+  if (!a || !b) return false;
+  const n1 = normTitle(a);
+  const n2 = normTitle(b);
+  return n1.length > 0 && n1 === n2;
+};
 const isCloseDate = (d1: string, d2: string) => {
   const t1 = new Date(d1).getTime();
   const t2 = new Date(d2).getTime();
@@ -169,7 +177,7 @@ export function useAnimeTvdbPanel(
           let extra = franchise.find((f) => 
             isFranchiseExtra(f) && 
             !claimedExtras.has(f.meta.id) &&
-            f.meta.name && e.name && normTitle(f.meta.name) === normTitle(e.name)
+            matchTitle(f.meta.name, e.name)
           );
 
           if (!extra) {
