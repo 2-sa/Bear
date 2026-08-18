@@ -80,5 +80,22 @@ jobs:
       - name: Prepare build assets
         run: pnpm run setup
 
-      - name: Build app without installers
-        run: pnpm tauri build --no-bundle
+      - name: Build installable app packages
+        env:
+          HARBOR_BUILD_ID: 0.0.1-test
+        run: pnpm tauri build
+
+      - name: Upload installable packages
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: harbor-0.0.1-${{ matrix.platform.name }}
+          path: |
+            src-tauri/target/release/bundle/**/*.exe
+            src-tauri/target/release/bundle/**/*.msi
+            src-tauri/target/release/bundle/**/*.dmg
+            src-tauri/target/release/bundle/**/*.AppImage
+            src-tauri/target/release/bundle/**/*.deb
+            src-tauri/target/release/bundle/**/*.rpm
+          retention-days: 14
+          if-no-files-found: error
