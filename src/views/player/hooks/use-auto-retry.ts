@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
 import type { PlayerBridge, PlayerSnapshot } from "@/lib/player/bridge";
-import { getPlaybackBuffered, getPlaybackPosition, usePlaybackFlag } from "@/lib/player/playback-clock";
+import {
+  getPlaybackBuffered,
+  getPlaybackPosition,
+  usePlaybackFlag,
+} from "@/lib/player/playback-clock";
 import { isLocalUrl } from "@/lib/player/local-url";
 import { clearOnePickerCache } from "@/lib/picker-cache";
 import { resolveViaDebrids } from "@/lib/streams/resolve";
@@ -9,7 +13,14 @@ import { buildTranscodedUrl, probeStremioServer } from "@/lib/stremio-server";
 import type { DebridStore } from "@/lib/debrid/types";
 import type { Meta } from "@/lib/cinemeta";
 import type { PlayerSrc, PlayEpisode } from "@/lib/view";
-import { BLACK_SCREEN_GRACE_MS, MAX_AUTORETRY_ATTEMPTS, NEVER_STARTED_CEILING_MS, ROOM_STALL_MS, SLOW_LOAD_MS, STUCK_AUTORETRY_MS } from "../player-utils";
+import {
+  BLACK_SCREEN_GRACE_MS,
+  MAX_AUTORETRY_ATTEMPTS,
+  NEVER_STARTED_CEILING_MS,
+  ROOM_STALL_MS,
+  SLOW_LOAD_MS,
+  STUCK_AUTORETRY_MS,
+} from "../player-utils";
 import { GENUINE_FAILURE_WINDOW_MS, type EngineStats } from "@/lib/torrent/engine-stats";
 
 type OpenPicker = (
@@ -30,14 +41,17 @@ function hostOf(url: string): string {
   }
 }
 
-async function probeSourceStatus(url: string, headers?: Record<string, string>): Promise<SourceError> {
+async function probeSourceStatus(
+  url: string,
+  headers?: Record<string, string>,
+): Promise<SourceError> {
   const host = hostOf(url);
   const ac = new AbortController();
   const timer = window.setTimeout(() => ac.abort(), PROBE_TIMEOUT_MS);
   try {
     const res = await fetch(url, {
       method: "GET",
-      headers: { ...(headers ?? {}), Range: "bytes=0-1" },
+      headers: { ...headers, Range: "bytes=0-1" },
       signal: ac.signal,
     });
     return { status: res.status, host };
@@ -62,11 +76,26 @@ export function useAutoRetry(params: {
   isP2pEngine: boolean;
   engineStats: EngineStats | null;
 }) {
-  const { bridgeRef, src, snap, stremioServerTranscode, instantPlay, inRoom, debrids, selfFrameReadyRef, openPicker, engineFailure, isP2pEngine, engineStats } = params;
+  const {
+    bridgeRef,
+    src,
+    snap,
+    stremioServerTranscode,
+    instantPlay,
+    inRoom,
+    debrids,
+    selfFrameReadyRef,
+    openPicker,
+    engineFailure,
+    isP2pEngine,
+    engineStats,
+  } = params;
   const isLocal = isLocalUrl(src.url);
   const isLive = src.meta.id.startsWith("iptv:");
   const ENGINE_FIRST_FRAME_GRACE_MS = 20_000;
   const ENGINE_HARD_CEILING_MS = 75_000;
+  const ENGINE_COMPLETE_RELOAD_MS = 8_000;
+  const ENGINE_COMPLETE_FAILURE_MS = 20_000;
   const urlAtRef = useRef(0);
   const urlSeenRef = useRef<string | null>(null);
   if (urlSeenRef.current !== src.url) {
@@ -99,6 +128,8 @@ export function useAutoRetry(params: {
   const proxyRetriedRef = useRef(false);
   const transcodeRescueRef = useRef(false);
   const debridFailoverTriedRef = useRef(false);
+  const p2pCompleteReloadedRef = useRef(false);
+  const p2pCompleteReloadedAtRef = useRef(0);
   const liveRetryCountRef = useRef(0);
   const livePlayedRef = useRef(false);
   const [transcodedUrl, setTranscodedUrl] = useState<string | null>(null);
@@ -111,6 +142,8 @@ export function useAutoRetry(params: {
     proxyRetriedRef.current = false;
     transcodeRescueRef.current = false;
     debridFailoverTriedRef.current = false;
+    p2pCompleteReloadedRef.current = false;
+    p2pCompleteReloadedAtRef.current = 0;
     liveRetryCountRef.current = 0;
     livePlayedRef.current = false;
     dlRef.current = { bytes: 0, at: Date.now() };
@@ -129,17 +162,20 @@ export function useAutoRetry(params: {
     const b = bridgeRef.current;
     if (!b) return;
     const attempt = liveRetryCountRef.current + 1;
-    const timer = window.setTimeout(() => {
-      liveRetryCountRef.current = attempt;
-      console.warn(`[player] live auto-reconnect attempt ${attempt}/${maxAttempts}`);
-      void b.load({
-        url: src.url,
-        subtitles: src.subtitles,
-        notWebReady: src.notWebReady,
-        isLive: true,
-        headers: src.headers,
-      });
-    }, livePlayedRef.current ? 4000 : 1500);
+    const timer = window.setTimeout(
+      () => {
+        liveRetryCountRef.current = attempt;
+        console.warn(`[player] live auto-reconnect attempt ${attempt}/${maxAttempts}`);
+        void b.load({
+          url: src.url,
+          subtitles: src.subtitles,
+          notWebReady: src.notWebReady,
+          isLive: true,
+          headers: src.headers,
+        });
+      },
+      livePlayedRef.current ? 4000 : 1500,
+    );
     return () => window.clearTimeout(timer);
   }, [isLive, snap.errorCode, src.url, src.subtitles, src.notWebReady, bridgeRef]);
 
@@ -179,12 +215,24 @@ export function useAutoRetry(params: {
       openPicker(
         src.meta,
         src.episode,
-        instantPlay || inRoom
-          ? { autoPlay: true, attempt: nextAttempt }
-          : { autoPlay: false },
+        instantPlay || inRoom ? { autoPlay: true, attempt: nextAttempt } : { autoPlay: false },
       );
     },
-    [src.attempt, src.meta, src.episode, openPicker, instantPlay, isLocal, isLive, inRoom, isP2pEngine, src.url, src.subtitles, src.notWebReady, bridgeRef],
+    [
+      src.attempt,
+      src.meta,
+      src.episode,
+      openPicker,
+      instantPlay,
+      isLocal,
+      isLive,
+      inRoom,
+      isP2pEngine,
+      src.url,
+      src.subtitles,
+      src.notWebReady,
+      bridgeRef,
+    ],
   );
 
   useEffect(() => {
@@ -195,7 +243,12 @@ export function useAutoRetry(params: {
       return;
     }
     if (getPlaybackPosition() > 5) return;
-    if (isP2pEngine && !engineFailure && Date.now() - urlAtRef.current < ENGINE_FIRST_FRAME_GRACE_MS) return;
+    if (
+      isP2pEngine &&
+      !engineFailure &&
+      Date.now() - urlAtRef.current < ENGINE_FIRST_FRAME_GRACE_MS
+    )
+      return;
     const failoverHash = src.streamRef?.infoHash;
     if (failoverHash && debrids.length > 0 && !debridFailoverTriedRef.current) {
       debridFailoverTriedRef.current = true;
@@ -204,25 +257,36 @@ export function useAutoRetry(params: {
       const hint = src.episode
         ? { season: src.episode.season ?? null, episode: src.episode.episode ?? null }
         : undefined;
-      void resolveViaDebrids(failoverHash, src.streamRef?.fileIdx ?? undefined, cached, debrids, ac.signal, false, {}, hint).then(
-        async (r) => {
-          const b = bridgeRef.current;
-          if (r.ok && b) {
-            let url = r.data.url;
-            if (r.data.headers && Object.keys(r.data.headers).length > 0) {
-              try {
-                url = (await registerStreamProxy(r.data.url, r.data.headers)).url;
-              } catch {
-                /* fall back to the raw debrid url */
-              }
+      void resolveViaDebrids(
+        failoverHash,
+        src.streamRef?.fileIdx ?? undefined,
+        cached,
+        debrids,
+        ac.signal,
+        false,
+        {},
+        hint,
+      ).then(async (r) => {
+        const b = bridgeRef.current;
+        if (r.ok && b) {
+          let url = r.data.url;
+          if (r.data.headers && Object.keys(r.data.headers).length > 0) {
+            try {
+              url = (await registerStreamProxy(r.data.url, r.data.headers)).url;
+            } catch {
+              /* fall back to the raw debrid url */
             }
-            console.warn(`[player] debrid failover via ${r.via}`);
-            void b.load({ url, subtitles: src.subtitles, notWebReady: r.data.notWebReady ?? src.notWebReady });
-          } else {
-            triggerAutoRetry(`playback error "${snap.errorCode}"`);
           }
-        },
-      );
+          console.warn(`[player] debrid failover via ${r.via}`);
+          void b.load({
+            url,
+            subtitles: src.subtitles,
+            notWebReady: r.data.notWebReady ?? src.notWebReady,
+          });
+        } else {
+          triggerAutoRetry(`playback error "${snap.errorCode}"`);
+        }
+      });
       return;
     }
     if (!sameUrlRetriedRef.current) {
@@ -254,7 +318,8 @@ export function useAutoRetry(params: {
         void registerStreamProxy(src.url, src.headers)
           .then((p) => {
             const bb = bridgeRef.current;
-            if (bb) void bb.load({ url: p.url, subtitles: src.subtitles, notWebReady: src.notWebReady });
+            if (bb)
+              void bb.load({ url: p.url, subtitles: src.subtitles, notWebReady: src.notWebReady });
           })
           .catch(() => triggerAutoRetry(`playback error "${snap.errorCode}"`));
         return;
@@ -348,7 +413,9 @@ export function useAutoRetry(params: {
       const graceMs = neverStarted ? 75_000 : 18_000;
       if (now - ref.urlAt < graceMs) return;
       if ((!isP2pEngine || engineFailure) && now - ref.at > graceMs && pos < 5) {
-        triggerAutoRetry(neverStarted ? "source did not start after 75s" : "position frozen for 18s");
+        triggerAutoRetry(
+          neverStarted ? "source did not start after 75s" : "position frozen for 18s",
+        );
       }
     }, 1000);
     return () => window.clearInterval(id);
@@ -376,13 +443,23 @@ export function useAutoRetry(params: {
       noVideoSinceRef.current = Date.now();
       return;
     }
-    const graceMs = isP2pEngine ? Math.max(BLACK_SCREEN_GRACE_MS, ENGINE_FIRST_FRAME_GRACE_MS) : BLACK_SCREEN_GRACE_MS;
+    const graceMs = isP2pEngine
+      ? Math.max(BLACK_SCREEN_GRACE_MS, ENGINE_FIRST_FRAME_GRACE_MS)
+      : BLACK_SCREEN_GRACE_MS;
     if (Date.now() - noVideoSinceRef.current > graceMs) {
       if (!isP2pEngine || engineFailure) {
         triggerAutoRetry("audio plays but no video frames (black screen)");
       }
     }
-  }, [snap.status, snap.videoWidth, snap.videoHeight, triggerAutoRetry, src.url, isP2pEngine, engineFailure]);
+  }, [
+    snap.status,
+    snap.videoWidth,
+    snap.videoHeight,
+    triggerAutoRetry,
+    src.url,
+    isP2pEngine,
+    engineFailure,
+  ]);
 
   useEffect(() => {
     if (snap.status === "ended") return;
@@ -399,13 +476,16 @@ export function useAutoRetry(params: {
   useEffect(() => {
     if (isLive || isLocal || inRoom || isP2pEngine) return;
     const remaining = NEVER_STARTED_CEILING_MS - (Date.now() - urlAtRef.current);
-    const t = window.setTimeout(() => {
-      const s = snapRef.current;
-      if (s.status === "playing" || s.status === "ended") return;
-      if (s.durationSec > 0 || getPlaybackPosition() > 0) return;
-      console.warn(`[player] source never started within ${NEVER_STARTED_CEILING_MS}ms`);
-      setSourceError((prev) => prev ?? { status: 0, host: hostOf(src.url) });
-    }, Math.max(0, remaining));
+    const t = window.setTimeout(
+      () => {
+        const s = snapRef.current;
+        if (s.status === "playing" || s.status === "ended") return;
+        if (s.durationSec > 0 || getPlaybackPosition() > 0) return;
+        console.warn(`[player] source never started within ${NEVER_STARTED_CEILING_MS}ms`);
+        setSourceError((prev) => prev ?? { status: 0, host: hostOf(src.url) });
+      },
+      Math.max(0, remaining),
+    );
     return () => window.clearTimeout(t);
   }, [src.url, isLive, isLocal, inRoom, isP2pEngine]);
 
@@ -426,7 +506,19 @@ export function useAutoRetry(params: {
       }
     }, ROOM_STALL_MS);
     return () => window.clearTimeout(t);
-  }, [inRoom, isLocal, isLive, snap.status, snap.videoWidth, snap.videoHeight, triggerAutoRetry, src.url, selfFrameReadyRef, isP2pEngine, engineFailure]);
+  }, [
+    inRoom,
+    isLocal,
+    isLive,
+    snap.status,
+    snap.videoWidth,
+    snap.videoHeight,
+    triggerAutoRetry,
+    src.url,
+    selfFrameReadyRef,
+    isP2pEngine,
+    engineFailure,
+  ]);
 
   useEffect(() => {
     if (!isP2pEngine || snap.status === "ended") return;
@@ -439,6 +531,38 @@ export function useAutoRetry(params: {
         return;
       }
       const st = engineStatsRef.current;
+      const selectedFileComplete =
+        !!st && st.streamLen != null && st.streamLen > 0 && st.streamProgress >= st.streamLen;
+      if (
+        selectedFileComplete &&
+        !snapRef.current.firstFrameReady &&
+        snapRef.current.videoWidth <= 0 &&
+        getPlaybackPosition() < 0.5
+      ) {
+        const now = Date.now();
+        if (!p2pCompleteReloadedRef.current && age >= ENGINE_COMPLETE_RELOAD_MS) {
+          const bridge = bridgeRef.current;
+          if (bridge) {
+            p2pCompleteReloadedRef.current = true;
+            p2pCompleteReloadedAtRef.current = now;
+            console.warn("[player] completed P2P file produced no frame — reloading local stream");
+            void bridge.load({
+              url: src.url,
+              subtitles: src.subtitles,
+              notWebReady: src.notWebReady,
+              headers: src.headers,
+            });
+            return;
+          }
+        }
+        if (
+          p2pCompleteReloadedAtRef.current > 0 &&
+          now - p2pCompleteReloadedAtRef.current >= ENGINE_COMPLETE_FAILURE_MS
+        ) {
+          triggerAutoRetry("completed P2P file produced no video frame");
+          return;
+        }
+      }
       if (st && st.downloaded > dlRef.current.bytes + 65536) {
         dlRef.current = { bytes: st.downloaded, at: Date.now() };
       }
@@ -458,7 +582,17 @@ export function useAutoRetry(params: {
       }
     }, 1000);
     return () => window.clearInterval(id);
-  }, [isP2pEngine, snap.status, engineFailure, triggerAutoRetry]);
+  }, [
+    isP2pEngine,
+    snap.status,
+    engineFailure,
+    triggerAutoRetry,
+    bridgeRef,
+    src.url,
+    src.subtitles,
+    src.notWebReady,
+    src.headers,
+  ]);
 
   return { slowLoad, transcodedUrl, sourceError, clearSourceError: () => setSourceError(null) };
 }

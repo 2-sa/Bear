@@ -61,6 +61,7 @@ pub const LAN_SERVER_PORT: u16 = 11470;
 
 const CACHE_SWEEP_INITIAL_DELAY_SECS: u64 = 60;
 const CACHE_SWEEP_INTERVAL_SECS: u64 = 30 * 60;
+const FILE_SELECTION_TIMEOUT_SECS: u64 = 12;
 static CACHE_SWEEP_RUNNING: AtomicBool = AtomicBool::new(false);
 
 struct CacheSweepGuard;
@@ -547,6 +548,62 @@ async fn wait_for_torrent_initialization(
     result
 }
 
+async fn update_only_files_bounded(
+    session: &Arc<Session>,
+    handle: &Arc<ManagedTorrent>,
+    only: &HashSet<usize>,
+) -> Result<(), String> {
+    timeout(
+        Duration::from_secs(FILE_SELECTION_TIMEOUT_SECS),
+        session.update_only_files(handle, only),
+    )
+    .await
+    .map_err(|_| "torrent file selection timed out".to_string())?
+    .map_err(|error| format!("{error:#}"))
+}
+
+async fn add_result_from_handle(
+    session: &Arc<Session>,
+    handle: Arc<ManagedTorrent>,
+    already_managed: bool,
+    file_idx: Option<usize>,
+) -> Result<AddResult, String> {
+    wait_for_torrent_initialization(session, &handle, !already_managed).await?;
+    let files = handle
+        .with_metadata(|m| {
+            m.file_infos
+                .iter()
+                .enumerate()
+                .map(|(idx, fi)| EngineFile {
+                    idx,
+                    name: fi
+                        .relative_filename
+                        .file_name()
+                        .map(|s| s.to_string_lossy().to_string())
+                        .unwrap_or_else(|| fi.relative_filename.to_string_lossy().to_string()),
+                    length: fi.len,
+                })
+                .collect::<Vec<_>>()
+        })
+        .map_err(|e| format!("{e:#}"))?;
+    let narrow_idx = file_idx
+        .filter(|&i| i < files.len())
+        .or_else(|| files.iter().max_by_key(|f| f.length).map(|f| f.idx));
+    if let Some(idx) = narrow_idx {
+        let only: HashSet<usize> = HashSet::from([idx]);
+        if let Err(error) = update_only_files_bounded(session, &handle, &only).await {
+            eprintln!("[torrent-engine] initial file narrowing failed: {error}");
+        }
+    }
+    let port = current_port().ok_or_else(|| "engine port unavailable".to_string())?;
+    Ok(AddResult {
+        info_hash: format!("{:?}", handle.info_hash()),
+        files,
+        stream_base: format!("http://127.0.0.1:{port}/stream"),
+        already_managed,
+    })
+}
+
 #[tauri::command]
 pub async fn torrent_engine_add(
     app: AppHandle,
@@ -555,6 +612,11 @@ pub async fn torrent_engine_add(
     file_idx: Option<usize>,
 ) -> Result<AddResult, String> {
     let session = ensure_session(&app).await?;
+    if let Some(info_hash) = dht_boot::info_hash_from_magnet(&magnet) {
+        if let Some(handle) = session.get(TorrentIdOrHash::Hash(info_hash)) {
+            return add_result_from_handle(&session, handle, true, file_idx).await;
+        }
+    }
     let seed = match current_side_dht() {
         Some(d) => dht_boot::seed_peers(&d, magnet.as_str(), 40, Duration::from_secs(3)).await,
         None => Vec::new(),
@@ -590,41 +652,7 @@ pub async fn torrent_engine_add(
             return Err("torrent added as list-only".to_string());
         }
     };
-    let info_hash = format!("{:?}", handle.info_hash());
-    wait_for_torrent_initialization(&session, &handle, !already_managed).await?;
-    let files = handle
-        .with_metadata(|m| {
-            m.file_infos
-                .iter()
-                .enumerate()
-                .map(|(idx, fi)| EngineFile {
-                    idx,
-                    name: fi
-                        .relative_filename
-                        .file_name()
-                        .map(|s| s.to_string_lossy().to_string())
-                        .unwrap_or_else(|| fi.relative_filename.to_string_lossy().to_string()),
-                    length: fi.len,
-                })
-                .collect::<Vec<_>>()
-        })
-        .map_err(|e| format!("{e:#}"))?;
-    let narrow_idx = file_idx
-        .filter(|&i| i < files.len())
-        .or_else(|| files.iter().max_by_key(|f| f.length).map(|f| f.idx));
-    if let Some(idx) = narrow_idx {
-        let only: HashSet<usize> = HashSet::from([idx]);
-        if let Err(e) = session.update_only_files(&handle, &only).await {
-            eprintln!("[torrent-engine] initial file narrowing failed: {e:#}");
-        }
-    }
-    let port = current_port().ok_or_else(|| "engine port unavailable".to_string())?;
-    Ok(AddResult {
-        info_hash,
-        files,
-        stream_base: format!("http://127.0.0.1:{port}/stream"),
-        already_managed,
-    })
+    add_result_from_handle(&session, handle, already_managed, file_idx).await
 }
 
 fn build_magnet(hash: &str) -> String {
@@ -703,7 +731,7 @@ pub(crate) async fn ensure_added(
         .map_err(|e| format!("{e:#}"))?;
     if let Some(idx) = file_idx.filter(|&i| i < files.len()) {
         let only: HashSet<usize> = HashSet::from([idx]);
-        let _ = session.update_only_files(&handle, &only).await;
+        let _ = update_only_files_bounded(&session, &handle, &only).await;
     }
     Ok((info_hash, files))
 }
@@ -752,10 +780,7 @@ pub async fn torrent_engine_select(info_hash: String, file_idx: usize) -> Result
     let id = TorrentIdOrHash::parse(&info_hash).map_err(|e| e.to_string())?;
     let handle = session.get(id).ok_or_else(|| "no torrent".to_string())?;
     let only: HashSet<usize> = HashSet::from([file_idx]);
-    session
-        .update_only_files(&handle, &only)
-        .await
-        .map_err(|e| format!("{e:#}"))?;
+    update_only_files_bounded(&session, &handle, &only).await?;
     Ok(())
 }
 

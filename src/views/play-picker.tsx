@@ -57,7 +57,7 @@ import { CachedTip } from "./play-picker/cached-tip";
 import { StremioLayout } from "./play-picker/stremio-layout";
 import { SourceDrawer } from "./play-picker/source-drawer";
 import { TierStrip } from "./play-picker/tier-strip";
-import { usePickHandler } from "./play-picker/use-pick-handler";
+import { usePickHandler, type ResolvingSelection } from "./play-picker/use-pick-handler";
 import { useActiveKid } from "@/lib/profiles";
 import { useAutoCandidates } from "./play-picker/use-auto-candidates";
 import { useAutoFire } from "./play-picker/use-auto-fire";
@@ -167,7 +167,7 @@ export function PlayPicker({
     () => (seasonLogo ? { ...meta, logo: seasonLogo } : meta),
     [meta, seasonLogo],
   );
-  const [resolving, setResolving] = useState<{ stream: ScoredStream } | null>(null);
+  const [resolving, setResolving] = useState<ResolvingSelection | null>(null);
   const [failedStreams, setFailedStreams] = useState<Set<ScoredStream>>(new Set());
   const [selectedTier, setSelectedTier] = useState<Tier | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -720,6 +720,7 @@ export function PlayPicker({
         meta={metaForDisplay}
         episode={episode}
         resolving={resolving != null}
+        p2p={resolving?.p2p === true}
         attemptIdx={autoAttemptIdx}
         download={isDownload}
         onCancel={() => {

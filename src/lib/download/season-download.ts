@@ -4,8 +4,6 @@ import { gatherContext } from "@/lib/auto-download/context";
 import { resolveBestDownload } from "@/lib/auto-download/resolve";
 import { activeDownloadFor, enqueueDownload } from "@/lib/download/downloads-store";
 
-const MAX_CONCURRENT = 2;
-
 function limiter(max: number) {
   let active = 0;
   const queue: Array<() => void> = [];
@@ -36,7 +34,7 @@ export async function downloadSeason(meta: Meta, episodes: PlayEpisode[]): Promi
   if (targets.length === 0) return 0;
   const ctx = await gatherContext();
   const controller = new AbortController();
-  const limit = limiter(MAX_CONCURRENT);
+  const limit = limiter(1);
   let queued = 0;
   await Promise.all(
     targets.map((ep) =>

@@ -1,6 +1,8 @@
 // @ts-expect-error Node test types are intentionally outside the browser-only tsconfig.
 import assert from "node:assert/strict";
 // @ts-expect-error Node test types are intentionally outside the browser-only tsconfig.
+import { readFileSync } from "node:fs";
+// @ts-expect-error Node test types are intentionally outside the browser-only tsconfig.
 import test from "node:test";
 import {
   rememberedSubAppliesToStream,
@@ -51,5 +53,28 @@ test("legacy external choices do not override an identifiable current release", 
   assert.equal(
     rememberedSubAppliesToStream(remembered, { infoHash: "current", fileIdx: 0 }),
     false,
+  );
+});
+
+test("remembered external subtitles remain authoritative until selection is observed", () => {
+  const autoload = readFileSync(
+    new URL("../src/views/player/hooks/use-track-autoload.ts", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(
+    autoload,
+    /if \(existing\.selected\) \{[\s\S]*subRestoreSelectRef\.current = null/,
+    "restoration must complete only after the remembered track is visibly selected",
+  );
+  assert.match(
+    autoload,
+    /attempts < 4 && elapsed >= 750[\s\S]*bridge\.setSubtitleTrack\(existing\.id\)/,
+    "a track-list race must retry the remembered selection with a bound",
+  );
+  assert.match(
+    autoload,
+    /scheduleRestoreCheck\(12_000 - waited \+ 1\)/,
+    "the direct-source fallback must run even when no later track event rerenders the player",
   );
 });

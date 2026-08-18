@@ -1,7 +1,7 @@
 import { safeFetch as fetch } from "@/lib/safe-fetch";
 import { dwarn } from "@/lib/debug";
 import { completedTorrentDownloadFor } from "@/lib/download/downloads-store";
-import { hasUncachedMarker } from "./cached";
+import { hasUncachedMarker, isP2pStream } from "./cached";
 import {
   magnetFromHash,
   type DebridResult,
@@ -196,6 +196,10 @@ export async function resolveStream(
   return { ok: false, code: tried[tried.length - 1]?.code ?? "all-debrids-failed", tried };
 }
 
+export function shouldPreferP2pDownload(stream: ParsedStream | ScoredStream): boolean {
+  return isP2pStream(stream) && engineP2pEligible(stream);
+}
+
 async function validateLink(
   link: DirectLink,
   expectedSize: number | null,
@@ -326,7 +330,7 @@ async function tryLocalEngine(
       const episode = hint?.episode ?? stream.episode;
       chosenIdx = selectEngineFileIdx(added.files, season, episode);
     }
-    await torrentEngineSelect(added.info_hash, chosenIdx);
+    if (!(await torrentEngineSelect(added.info_hash, chosenIdx))) return null;
     if (signal.aborted) return null;
     const engineUrl = `${added.stream_base}/${added.info_hash.toLowerCase()}/${chosenIdx}`;
     handedOff = true;
@@ -365,7 +369,7 @@ function registerAbortCleanup(added: AddResult, signal: AbortSignal): () => void
 function engineFailureCode(): string {
   if (!localTorrentAllowed()) return "direct-torrent-disabled";
   const err = lastEngineAddError();
-  if (err && /timed out|no peers/i.test(err)) return "engine-no-peers";
+  if (err && /metadata timed out|no peers/i.test(err)) return "engine-no-peers";
   return "engine-not-ready";
 }
 
