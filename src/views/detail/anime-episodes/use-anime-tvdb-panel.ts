@@ -136,6 +136,7 @@ export function useAnimeTvdbPanel(
     };
   }, [enabled, tvdbKey, seriesId, seasonType]);
 
+  const extrasLabel = t("Extras");
   const built = useMemo(() => {
     if (!ordering) return null;
     const pool = franchiseEpisodes ?? episodes;
@@ -227,12 +228,12 @@ export function useAnimeTvdbPanel(
     for (const eps of subset.values()) for (const e of eps) matchedIds.add(e.id);
     const leftovers = pool.filter((e) => e.id > 0 && e.sourceMetaId == null && !matchedIds.has(e.id));
     if (leftovers.length > 0) {
-      items.push({ key: "specials", name: t("Extras"), count: leftovers.length, extra: true });
+      items.push({ key: "specials", name: extrasLabel, count: leftovers.length, extra: true });
       subset.set("specials", leftovers);
     }
     if (items.length === 0) return null;
     return { items, subset, pool };
-  }, [ordering, episodes, franchiseEpisodes, t, franchise]);
+  }, [ordering, episodes, franchiseEpisodes, extrasLabel, franchise]);
 
   useEffect(() => {
     if (!ordering) return;
