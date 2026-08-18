@@ -38,6 +38,11 @@ test("mpv uses PlaybackRestart rather than FileLoaded as first-frame readiness",
   assert.match(loader, /snap\.firstFrameReady/);
 });
 
+test("cinematic loader cannot hide from playback time before the first frame", () => {
+  assert.match(loader, /if \(snap\.firstFrameReady\)/);
+  assert.doesNotMatch(loader, /getPlaybackPosition|usePlaybackFlag|hasProgress/);
+});
+
 test("first-frame readiness ignores a stale event from the previous media path", () => {
   assert.match(nativeMpv, /\("path", 20, PropertyKind::String\)/);
   assert.match(mpv, /expectedMediaPath = src\.url/);
