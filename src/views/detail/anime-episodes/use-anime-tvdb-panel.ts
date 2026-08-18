@@ -30,7 +30,7 @@ export type AnimeTvdbPanelState = {
 };
 
 const normTitle = (s: string) =>
-  s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "");
+  s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "");
 
 const matchTitle = (a?: string | null, b?: string | null) => {
   if (!a || !b) return false;
@@ -232,7 +232,7 @@ export function useAnimeTvdbPanel(
     }
     if (items.length === 0) return null;
     return { items, subset, pool };
-  }, [ordering, episodes, franchiseEpisodes, t]);
+  }, [ordering, episodes, franchiseEpisodes, t, franchise]);
 
   useEffect(() => {
     if (!ordering) return;
