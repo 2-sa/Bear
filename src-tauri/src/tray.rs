@@ -158,9 +158,9 @@ pub fn tray_set_custom_themes(app: AppHandle, themes: Vec<CustomThemeEntry>) {
 }
 
 pub fn build(app: &AppHandle) -> tauri::Result<()> {
-    let show = MenuItem::with_id(app, "tray_show", "Show Harbor", true, None::<&str>)?;
+    let show = MenuItem::with_id(app, "tray_show", "Show Bear", true, None::<&str>)?;
     let themes: [(&str, &str); 13] = [
-        ("cool-grey", "Harbor default"),
+        ("cool-grey", "Bear default"),
         ("nord", "Nord"),
         ("stremio", "Stremio"),
         ("crunch", "Crunchy"),
@@ -226,7 +226,7 @@ pub fn build(app: &AppHandle) -> tauri::Result<()> {
         None::<&str>,
     )?;
     let sep = PredefinedMenuItem::separator(app)?;
-    let quit = MenuItem::with_id(app, "tray_quit", "Quit Harbor", true, None::<&str>)?;
+    let quit = MenuItem::with_id(app, "tray_quit", "Quit Bear", true, None::<&str>)?;
     let menu = Menu::with_items(
         app,
         &[
@@ -249,7 +249,7 @@ pub fn build(app: &AppHandle) -> tauri::Result<()> {
     });
 
     let mut builder = TrayIconBuilder::with_id("harbor-tray")
-        .tooltip("Harbor")
+        .tooltip("Bear")
         .menu(&menu)
         .show_menu_on_left_click(false)
         .on_menu_event(|app, event| {
