@@ -397,15 +397,24 @@ export async function animeDetails(
 
   const episodes = buildKitsuEpisodes(addonMeta, kitsuRawEpisodes);
   let tmdbEpsRaw: TmdbEpisode[] | null = null;
-  let tmdbEpisodesId = 0;
-  let tmdbEpisodesSeason = 0;
   if (localized && settings.tmdbKey && kind === "tv") {
-    tmdbEpisodesId = Number(aniZip?.mappings?.themoviedb_id);
-    for (const az of Object.values(aniZip?.episodes ?? {})) {
-      if (az.seasonNumber != null && az.seasonNumber > tmdbEpisodesSeason) tmdbEpisodesSeason = az.seasonNumber;
-    }
-    if (tmdbEpisodesId > 0 && tmdbEpisodesSeason > 0) {
-      tmdbEpsRaw = await tmdbSeasonEpisodes(settings.tmdbKey, tmdbEpisodesId, tmdbEpisodesSeason, iso1).catch(() => null);
+    const tmdbEpisodesId = Number(aniZip?.mappings?.themoviedb_id);
+    if (tmdbEpisodesId > 0) {
+      // TMDB sometimes merges multiple cours into a single generalized season (e.g. a 25-episode
+      // "season 1" covering two 12/13-episode seasons). AniZip carries the real per-cour season
+      // numbers, so fetch every season it reports plus season 1 (where TMDB may have merged them)
+      // and concatenate, letting the merge match by absolute episode number.
+      const seasons = new Set<number>([1]);
+      for (const az of Object.values(aniZip?.episodes ?? {})) {
+        if (az.seasonNumber != null && az.seasonNumber > 0) seasons.add(az.seasonNumber);
+      }
+      const all = await Promise.all(
+        Array.from(seasons).map((s) =>
+          tmdbSeasonEpisodes(settings.tmdbKey, tmdbEpisodesId, s, iso1).catch(() => null),
+        ),
+      );
+      const merged = all.flat().filter((e): e is TmdbEpisode => e != null);
+      tmdbEpsRaw = merged.length > 0 ? merged : null;
     }
   }
   mergeAniZipEpisodes(episodes, aniZip, { lang: localized ? iso1 : undefined });

@@ -42,15 +42,23 @@ export function fetchEntryEpisodes(kitsuId: number, settings: Settings): Promise
         .catch(() => null),
     ]);
     let tmdbEpsRaw: TmdbEpisode[] | null = null;
-    let tmdbId = 0;
-    let tmdbSeason = 0;
     if (localized && settings.tmdbKey) {
-      tmdbId = Number(aniZip?.mappings?.themoviedb_id);
-      for (const az of Object.values(aniZip?.episodes ?? {})) {
-        if (az.seasonNumber != null && az.seasonNumber > tmdbSeason) tmdbSeason = az.seasonNumber;
-      }
-      if (tmdbId > 0 && tmdbSeason > 0) {
-        tmdbEpsRaw = await tmdbSeasonEpisodes(settings.tmdbKey, tmdbId, tmdbSeason, iso1).catch(() => null);
+      const tmdbId = Number(aniZip?.mappings?.themoviedb_id);
+      if (tmdbId > 0) {
+        // TMDB sometimes merges multiple cours into one generalized season 1 (e.g. 25 episodes
+        // covering two 12/13-episode seasons); fetch every season AniZip reports plus season 1
+        // and let the merge match by absolute episode number.
+        const seasons = new Set<number>([1]);
+        for (const az of Object.values(aniZip?.episodes ?? {})) {
+          if (az.seasonNumber != null && az.seasonNumber > 0) seasons.add(az.seasonNumber);
+        }
+        const all = await Promise.all(
+          Array.from(seasons).map((s) =>
+            tmdbSeasonEpisodes(settings.tmdbKey, tmdbId, s, iso1).catch(() => null),
+          ),
+        );
+        const merged = all.flat().filter((e): e is TmdbEpisode => e != null);
+        tmdbEpsRaw = merged.length > 0 ? merged : null;
       }
     }
     const eps = buildKitsuEpisodes(addonMeta, raw);
