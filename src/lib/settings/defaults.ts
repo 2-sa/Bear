@@ -93,6 +93,8 @@ export const DEFAULT: Settings = {
   controllerSupportEnabled: true,
   controllerBackgroundInput: false,
   controllerDeadzone: 0.35,
+  controllerCursorSpeed: 900,
+  controllerKeyboardSize: 100,
   controllerRepeatMs: 140,
   controllerInitialDelayMs: 400,
   trailerQuality: "auto",
