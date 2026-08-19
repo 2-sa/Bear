@@ -154,7 +154,7 @@ export function LanguagePanel() {
       )}
       <ToggleRow
         label={t("Translate titles")}
-        sub={t("On shows titles in your metadata language (English by default). Off keeps each title's original language, so anime and foreign films show their native names.")}
+        sub={t("On shows titles in your metadata language (English by default). Off keeps titles in English.")}
         value={settings.translateTitles}
         onChange={(v) => update({ translateTitles: v })}
       />

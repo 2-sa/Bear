@@ -5,6 +5,7 @@ import { pickLogo, fetchMovieAssets } from "./tmdb-images";
 import { imageLangParam, imageLangRank } from "./tmdb-image-lang";
 import { pickTrailers, type Video } from "./tmdb-trailers";
 import type { PersonRef } from "./tmdb-people";
+import { isAnimeItem } from "./tmdb-meta-mappers";
 
 export type CastEntry = {
   id: number;
@@ -340,11 +341,14 @@ export async function tmdbDetails(key: string, meta: Meta, lang?: string): Promi
   let tagline = raw.tagline ?? "";
   // Explicit per-call languages (anime localization) bypass the global "Translate overviews"
   // toggle, which is meant for regular TMDB content only.
+  const enTrans = raw.translations?.translations?.find((t: any) => t.iso_639_1 === "en")?.data;
   if (!settings.translateDescriptions && !lang) {
-    const enTrans = raw.translations?.translations?.find((t: any) => t.iso_639_1 === "en")?.data;
     if (enTrans?.overview) overview = enTrans.overview;
     if (enTrans?.tagline) tagline = enTrans.tagline;
   }
+  // "Translate titles" off means English titles; prefer the English translation over the
+  // requested-language title and the original-language title.
+  const enTitle = enTrans?.title || enTrans?.name;
 
   let finalPosterPath = raw.poster_path;
   if (!settings.posterBaseUrl && posterSource?.length) {
@@ -356,13 +360,18 @@ export async function tmdbDetails(key: string, meta: Meta, lang?: string): Promi
     if (best) finalPosterPath = best.file_path;
   }
 
+  const anime = isAnimeItem(raw);
+  const useEnglishForAnime = !settings.translateTitles && anime;
+
   return {
     kind,
     id: raw.id,
     imdbId: raw.external_ids?.imdb_id ?? null,
     title: settings.translateTitles
       ? (raw.title || raw.name)
-      : (raw.original_title || raw.original_name || raw.title || raw.name),
+      : useEnglishForAnime
+        ? (enTitle || raw.title || raw.name)
+        : (raw.original_title || raw.original_name || raw.title || raw.name),
     originalTitle: raw.original_title ?? raw.original_name ?? "",
     tagline,
     overview,
