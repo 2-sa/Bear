@@ -52,6 +52,8 @@ export function AnimeEpisodes({
   trackId,
   imdbId,
   episodeHint,
+  localizedOverview,
+  seasonOverviews,
   onSeasonArt,
 }: {
   meta: Meta;
@@ -62,6 +64,8 @@ export function AnimeEpisodes({
   trackId?: string;
   imdbId?: string | null;
   episodeHint?: { season: number; episode: number };
+  localizedOverview?: string;
+  seasonOverviews?: Record<number, string>;
   onSeasonArt?: (
     sel:
       | { background?: string; description?: string; logo?: string; name?: string; entryId: string }
@@ -195,19 +199,40 @@ export function AnimeEpisodes({
     () => mapSeasonToEntry(tvdbActiveSeason, franchise, currentId),
     [tvdbActiveSeason, franchise, currentId],
   );
+  // The matched franchise entry's episodes carry their TMDB season number (AniZip), which selects
+  // the right localized per-season overview so the hero changes per season instead of staying static.
+  const seasonOverview = useMemo(() => {
+    if (!seasonEntry || !seasonOverviews) return undefined;
+    const counts = new Map<number, number>();
+    for (const ep of franchiseEpisodes) {
+      if (ep.sourceMetaId !== seasonEntry.meta.id || ep.imdbSeason == null) continue;
+      counts.set(ep.imdbSeason, (counts.get(ep.imdbSeason) ?? 0) + 1);
+    }
+    let best: number | null = null;
+    let bestN = 0;
+    for (const [s, n] of counts) {
+      if (n > bestN) {
+        best = s;
+        bestN = n;
+      }
+    }
+    return best != null ? seasonOverviews[best] : undefined;
+  }, [seasonEntry, seasonOverviews, franchiseEpisodes]);
   useEffect(() => {
     onSeasonArtRef.current?.(
       seasonEntry
         ? {
             background: seasonEntry.meta.background,
-            description: seasonEntry.meta.description,
+            // Prefer the localized per-season TMDB overview, then the localized series overview,
+            // over the franchise entry's Kitsu synopsis (localized* is only set when localization is active).
+            description: seasonOverview ?? localizedOverview ?? seasonEntry.meta.description,
             logo: seasonEntry.meta.logo,
             name: seasonEntry.meta.name,
             entryId: seasonEntry.meta.id,
           }
         : null,
     );
-  }, [seasonEntry]);
+  }, [seasonEntry, localizedOverview, seasonOverview]);
   useEffect(() => () => onSeasonArtRef.current?.(null), []);
   const proxyImages = useTvdbProxyImages(
     parseKitsuId(meta.id),

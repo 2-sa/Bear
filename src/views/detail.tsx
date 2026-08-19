@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { Check, HardDrive, Heart, Layers, Pencil, Play, Plus, RotateCcw } from "lucide-react";
-import { animeDetails, type FranchiseEntry } from "@/lib/providers/anime-detail";
+import { animeDetails, type AnimeDetailExtras, type FranchiseEntry } from "@/lib/providers/anime-detail";
+import { isTextInLanguage } from "@/lib/providers/anime-episode-build";
 import { peekAnimeArt, saveAnimeArt } from "@/lib/providers/anime-art-cache";
 import { imdbToKitsu, tmdbTvToKitsu } from "@/lib/providers/anime-mapping";
 import { kitsuAnime, kitsuMainTvSeries } from "@/lib/providers/kitsu";
@@ -186,7 +187,7 @@ export function DetailView({
   const contentDrag = useContentDrag();
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
-  const [detail, setDetail] = useState<TmdbDetail | null>(null);
+  const [detail, setDetail] = useState<(TmdbDetail & Pick<AnimeDetailExtras, "seasonOverviews">) | null>(null);
   const [animeEpisodes, setAnimeEpisodes] = useState<KitsuEpisode[]>([]);
   const [franchise, setFranchise] = useState<FranchiseEntry[]>([]);
   const [animeCanonicalId, setAnimeCanonicalId] = useState<string | null>(null);
@@ -233,6 +234,13 @@ export function DetailView({
     },
     [],
   );
+  // Season picker swaps franchise seasons in-place without re-running animeDetails, so the
+  // localized TMDB series overview must be passed down for the season hero description.
+  const localizedAnimeOverview = useMemo(() => {
+    if (!settings.localizeAnimeMetadata || !detail?.overview) return undefined;
+    const iso1 = settings.tmdbLanguage || settings.uiLanguage || "en";
+    return isTextInLanguage(detail.overview, iso1) ? detail.overview : undefined;
+  }, [settings.localizeAnimeMetadata, settings.tmdbLanguage, settings.uiLanguage, detail?.overview]);
   const pinnedBackdrop = useTitleBackdrop(meta.id);
   const pinnedBackdropHi = pinnedBackdrop
     ? pinnedBackdrop.replace(/\/t\/p\/w\d+\//, "/t/p/original/")
@@ -1619,6 +1627,8 @@ export function DetailView({
               (meta.id.startsWith("tt") ? meta.id : null)
             }
             onSeasonArt={handleSeasonArt}
+            localizedOverview={localizedAnimeOverview}
+            seasonOverviews={detail.seasonOverviews}
           />
           </FadeInUp>
         )}

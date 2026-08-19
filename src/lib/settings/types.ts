@@ -583,6 +583,7 @@ export type Settings = {
   pauseListStatusOnPause: boolean;
   translateTitles: boolean;
   translateDescriptions: boolean;
+  localizeAnimeMetadata: boolean;
   letterboxd: LetterboxdSettings;
   adSkipEnabled: boolean;
   adReportAlwaysShow: boolean;
