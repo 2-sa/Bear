@@ -74,10 +74,16 @@ async function build(
   ]);
   const altEps = slug === "default" ? defaultEps : await tvdbEpisodesByType(apiKey, seriesId, slug);
   if (altEps.length === 0) return null;
-  const transAlt: TvdbEpisode[] = lang
-    ? await tvdbEpisodesByType(apiKey, seriesId, slug, lang).catch(() => [])
-    : [];
+  // Translations in the requested language. When a translation is missing, TVDB falls back to
+  // the original (e.g. Japanese for anime) name. Prefer an English translation over that so we
+  // never show untranslated content to the user.
+  const requestedLang = lang && lang !== "eng" ? lang : undefined;
+  const [transAlt, transEn] = await Promise.all([
+    requestedLang ? tvdbEpisodesByType(apiKey, seriesId, slug, requestedLang).catch(() => []) : Promise.resolve<TvdbEpisode[]>([]),
+    requestedLang ? tvdbEpisodesByType(apiKey, seriesId, slug, "eng").catch(() => []) : Promise.resolve<TvdbEpisode[]>([]),
+  ]);
   const transById = new Map(transAlt.map((e) => [e.id, e] as const));
+  const transEnById = new Map(transEn.map((e) => [e.id, e] as const));
 
   const canonical = new Map<number, { season: number; episode: number }>();
   for (const e of defaultEps) {
@@ -98,12 +104,13 @@ async function build(
     altBucket.push({ season: e.seasonNumber, episode: e.number });
     altBySeason.set(bucketKey, altBucket);
     const tr = transById.get(e.id);
+    const trEn = transEnById.get(e.id);
     bucket.push({
       id: e.id,
       seasonNumber: c.season,
       episodeNumber: c.episode,
-      name: (tr?.name || e.name) ?? "",
-      overview: (tr?.overview || e.overview) ?? "",
+      name: (tr?.name || trEn?.name || e.name) ?? "",
+      overview: (tr?.overview || trEn?.overview || e.overview) ?? "",
       stillPath: null,
       stillUrl: e.image ?? undefined,
       airDate: e.aired ?? null,

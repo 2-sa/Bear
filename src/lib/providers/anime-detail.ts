@@ -383,20 +383,26 @@ export async function animeDetails(
         .then((tid) => {
           if (!tid) return null;
           const lang = tvdbLangFromIso1(settings.tmdbLanguage || settings.uiLanguage);
+          const fetchAll = (l: string) =>
+            Promise.all([
+              tvdbEpisodesByType(settings.tvdbKey ?? "", tid, "default", l),
+              tvdbEpisodesAbsolute(settings.tvdbKey ?? "", tid, l)
+            ]).then(([def, abs]) => {
+              const all = [...def, ...abs];
+              const unique = new Map(all.map(e => [e.id, e]));
+              return Array.from(unique.values());
+            });
           return Promise.all([
-            tvdbEpisodesByType(settings.tvdbKey ?? "", tid, "default", lang),
-            tvdbEpisodesAbsolute(settings.tvdbKey ?? "", tid, lang)
-          ]).then(([def, abs]) => {
-            const all = [...def, ...abs];
-            const unique = new Map(all.map(e => [e.id, e]));
-            return Array.from(unique.values());
-          });
+            fetchAll(lang),
+            lang !== "eng" ? fetchAll("eng").catch(() => null) : Promise.resolve(null),
+          ]).then(([loc, en]) => ({ loc, en }));
         })
         .catch(() => null),
     ]);
 
   const episodes = buildKitsuEpisodes(addonMeta, kitsuRawEpisodes);
   let tmdbEpsRaw: TmdbEpisode[] | null = null;
+  let tmdbEnRaw: TmdbEpisode[] | null = null;
   if (localized && settings.tmdbKey && kind === "tv") {
     const tmdbEpisodesId = Number(aniZip?.mappings?.themoviedb_id);
     if (tmdbEpisodesId > 0) {
@@ -408,18 +414,33 @@ export async function animeDetails(
       for (const az of Object.values(aniZip?.episodes ?? {})) {
         if (az.seasonNumber != null && az.seasonNumber > 0) seasons.add(az.seasonNumber);
       }
-      const all = await Promise.all(
-        Array.from(seasons).map((s) =>
-          tmdbSeasonEpisodes(settings.tmdbKey, tmdbEpisodesId, s, iso1).catch(() => null),
-        ),
-      );
-      const merged = all.flat().filter((e): e is TmdbEpisode => e != null);
-      tmdbEpsRaw = merged.length > 0 ? merged : null;
+      const fetchTmdb = (l: string) =>
+        Promise.all(
+          Array.from(seasons).map((s) =>
+            tmdbSeasonEpisodes(settings.tmdbKey, tmdbEpisodesId, s, l).catch(() => null),
+          ),
+        ).then((arr) => {
+          const merged = arr.flat().filter((e): e is TmdbEpisode => e != null);
+          return merged.length > 0 ? merged : null;
+        });
+      const isoBase = iso1.split("-")[0]?.toLowerCase();
+      const [loc, en] = await Promise.all([
+        fetchTmdb(iso1),
+        isoBase && isoBase !== "en" ? fetchTmdb("en").catch(() => null) : Promise.resolve<TmdbEpisode[] | null>(null),
+      ]);
+      tmdbEpsRaw = loc;
+      tmdbEnRaw = en;
     }
   }
   mergeAniZipEpisodes(episodes, aniZip, { lang: localized ? iso1 : undefined });
-  mergeTvdbEpisodes(episodes, tvdbEpsRaw, { lang: localized ? iso1 : undefined });
+  mergeTvdbEpisodes(episodes, tvdbEpsRaw?.loc ?? null, { lang: localized ? iso1 : undefined });
   mergeTmdbEpisodes(episodes, tmdbEpsRaw, { lang: localized ? iso1 : undefined });
+  // Fall back to English titles/overviews when the localized translation is missing (providers
+  // otherwise fall back to the original, e.g. Japanese for anime).
+  if (localized) {
+    if (tvdbEpsRaw?.en) mergeTvdbEpisodes(episodes, tvdbEpsRaw.en);
+    if (tmdbEnRaw) mergeTmdbEpisodes(episodes, tmdbEnRaw);
+  }
 
   let seriesImdb = aniZip?.mappings?.imdb_id ?? episodes.find((e) => e.imdbId)?.imdbId ?? null;
   if (!seriesImdb) seriesImdb = await kitsuToImdb(kitsuId).catch(() => null);
