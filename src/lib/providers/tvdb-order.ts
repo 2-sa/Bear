@@ -78,12 +78,14 @@ async function build(
   if (altEps.length === 0) return null;
   // Translations in the requested language. When a translation is missing, TVDB falls back to
   // the original (e.g. Japanese for anime) name, which we keep so users see text in their
-  // requested language first. The English translation is carried alongside as nameEn/overviewEn
-  // for consumers that need an English fallback when no localized text exists anywhere.
+  // requested language first. The English translation is always fetched as the base/fallback —
+  // the language-less default fetch returns the series' original language (Japanese for anime),
+  // so without this English users would see original-language names — and is carried alongside
+  // as nameEn/overviewEn for consumers that need an English fallback when no localized text exists.
   const requestedLang = lang && lang !== "eng" ? lang : undefined;
   const [transAlt, transEn] = await Promise.all([
     requestedLang ? tvdbEpisodesByType(apiKey, seriesId, slug, requestedLang).catch(() => []) : Promise.resolve<TvdbEpisode[]>([]),
-    requestedLang ? tvdbEpisodesByType(apiKey, seriesId, slug, "eng").catch(() => []) : Promise.resolve<TvdbEpisode[]>([]),
+    tvdbEpisodesByType(apiKey, seriesId, slug, "eng").catch(() => []),
   ]);
   const transById = new Map(transAlt.map((e) => [e.id, e] as const));
   const transEnById = new Map(transEn.map((e) => [e.id, e] as const));
@@ -112,8 +114,8 @@ async function build(
       id: e.id,
       seasonNumber: c.season,
       episodeNumber: c.episode,
-      name: (tr?.name || e.name) ?? "",
-      overview: (tr?.overview || e.overview) ?? "",
+      name: (tr?.name || trEn?.name || e.name) ?? "",
+      overview: (tr?.overview || trEn?.overview || e.overview) ?? "",
       nameEn: trEn?.name,
       overviewEn: trEn?.overview,
       stillPath: null,
