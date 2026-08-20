@@ -2,9 +2,11 @@ import type { Episode, Season } from "@/lib/providers/tmdb";
 import { tvdbEpisodesByType, tvdbSeasonNames, tvdbSeriesByRemote, type TvdbEpisode } from "./tvdb";
 import { readOrderCache, writeOrderCache } from "./tvdb-order-cache";
 
+export type OrderedEpisode = Episode & { nameEn?: string; overviewEn?: string };
+
 export type TvdbOrder = {
   seasons: Season[];
-  bySeason: Map<number, Episode[]>;
+  bySeason: Map<number, OrderedEpisode[]>;
   absByEpId: Map<number, number>;
   imageByAbs: Map<number, string>;
 };
@@ -75,8 +77,9 @@ async function build(
   const altEps = slug === "default" ? defaultEps : await tvdbEpisodesByType(apiKey, seriesId, slug);
   if (altEps.length === 0) return null;
   // Translations in the requested language. When a translation is missing, TVDB falls back to
-  // the original (e.g. Japanese for anime) name. Prefer an English translation over that so we
-  // never show untranslated content to the user.
+  // the original (e.g. Japanese for anime) name, which we keep so users see text in their
+  // requested language first. The English translation is carried alongside as nameEn/overviewEn
+  // for consumers that need an English fallback when no localized text exists anywhere.
   const requestedLang = lang && lang !== "eng" ? lang : undefined;
   const [transAlt, transEn] = await Promise.all([
     requestedLang ? tvdbEpisodesByType(apiKey, seriesId, slug, requestedLang).catch(() => []) : Promise.resolve<TvdbEpisode[]>([]),
@@ -90,7 +93,7 @@ async function build(
     if (e.seasonNumber >= 1) canonical.set(e.id, { season: e.seasonNumber, episode: e.number });
   }
 
-  const bySeason = new Map<number, Episode[]>();
+  const bySeason = new Map<number, OrderedEpisode[]>();
   const altBySeason = new Map<number, Array<{ season: number; episode: number }>>();
   const seenEpisodeId = new Set<number>();
   for (const e of altEps) {
@@ -109,8 +112,10 @@ async function build(
       id: e.id,
       seasonNumber: c.season,
       episodeNumber: c.episode,
-      name: (tr?.name || trEn?.name || e.name) ?? "",
-      overview: (tr?.overview || trEn?.overview || e.overview) ?? "",
+      name: (tr?.name || e.name) ?? "",
+      overview: (tr?.overview || e.overview) ?? "",
+      nameEn: trEn?.name,
+      overviewEn: trEn?.overview,
       stillPath: null,
       stillUrl: e.image ?? undefined,
       airDate: e.aired ?? null,
