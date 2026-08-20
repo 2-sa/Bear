@@ -128,10 +128,24 @@ export function LanguagePanel() {
         options={[{ value: "", label: t("English (default)") }, ...TMDB_LANGUAGES]}
         className="w-full max-w-[340px]"
       />
+      <ToggleRow
+        label={t("Translate titles")}
+        sub={t("On shows titles in your metadata language (English by default). Off keeps titles in English.")}
+        value={settings.translateTitles}
+        onChange={(v) => update({ translateTitles: v })}
+      />
+      {langDraft !== "" && (
+        <ToggleRow
+          label={t("Translate overviews")}
+          sub={t("Translate plot descriptions and taglines into the language above. Turn off to keep English overviews.")}
+          value={settings.translateDescriptions}
+          onChange={(v) => update({ translateDescriptions: v })}
+        />
+      )}
       {langDraft !== settings.tmdbLanguage && (
         <div className="flex max-w-[340px] flex-col gap-2.5 rounded-xl border border-edge-soft bg-canvas/30 p-3.5">
           <p className="text-[12.5px] leading-relaxed text-ink-muted">
-            {t("Changing the metadata language reloads Bear so the new language takes effect. Apply when you're done with the options below.")}
+            {t("Changing the metadata language reloads Bear so the new language takes effect. Apply when you're done with the options above.")}
           </p>
           <div className="flex items-center gap-2">
             <button
@@ -151,20 +165,6 @@ export function LanguagePanel() {
             </button>
           </div>
         </div>
-      )}
-      <ToggleRow
-        label={t("Translate titles")}
-        sub={t("On shows titles in your metadata language (English by default). Off keeps titles in English.")}
-        value={settings.translateTitles}
-        onChange={(v) => update({ translateTitles: v })}
-      />
-      {langDraft !== "" && (
-        <ToggleRow
-          label={t("Translate overviews")}
-          sub={t("Translate plot descriptions and taglines into the language above. Turn off to keep English overviews.")}
-          value={settings.translateDescriptions}
-          onChange={(v) => update({ translateDescriptions: v })}
-        />
       )}
     </Section>
 
