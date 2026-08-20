@@ -356,7 +356,7 @@ export async function animeDetails(
 
   const kind: "movie" | "tv" = anime.subtype === "movie" ? "movie" : "tv";
   const iso1 = settings.tmdbLanguage || settings.uiLanguage || "en";
-  const localized = settings.localizeAnimeMetadata && iso1.split("-")[0]?.toLowerCase() !== "en";
+  const localized = iso1.split("-")[0]?.toLowerCase() !== "en";
 
   const franchisePromise = buildFranchise(kitsuId, anime).catch(() => [] as FranchiseEntry[]);
 

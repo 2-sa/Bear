@@ -166,12 +166,6 @@ export function LanguagePanel() {
           onChange={(v) => update({ translateDescriptions: v })}
         />
       )}
-      <ToggleRow
-        label={t("Localize anime metadata")}
-        sub={t("Applies the metadata language to anime as well: series overviews and episode names come from TMDB and TVDB translations when available, instead of Kitsu's English synopses. Needs a TMDB or TVDB key. Off keeps anime on Kitsu data.")}
-        value={settings.localizeAnimeMetadata}
-        onChange={(v) => update({ localizeAnimeMetadata: v })}
-      />
     </Section>
 
     <Section

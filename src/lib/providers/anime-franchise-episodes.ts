@@ -18,7 +18,7 @@ function isPlayable(ep: KitsuEpisode): boolean {
 export function fetchEntryEpisodes(kitsuId: number, settings: Settings): Promise<KitsuEpisode[]> {
   const lang = tvdbLangFromIso1(settings.tmdbLanguage || settings.uiLanguage);
   const iso1 = settings.tmdbLanguage || settings.uiLanguage || "en";
-  const localized = settings.localizeAnimeMetadata && iso1.split("-")[0]?.toLowerCase() !== "en";
+  const localized = iso1.split("-")[0]?.toLowerCase() !== "en";
   const cacheKey = `${kitsuId}:${lang}:${localized ? "loc" : "std"}`;
   const cached = cache.get(cacheKey);
   if (cached) return cached;

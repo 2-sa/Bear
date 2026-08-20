@@ -523,7 +523,6 @@ export const DEFAULT: Settings = {
   pauseListStatusOnPause: false,
   translateTitles: true,
   translateDescriptions: true,
-  localizeAnimeMetadata: false,
   letterboxd: {
     enabled: false,
     mode: "public",
