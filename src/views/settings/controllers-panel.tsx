@@ -122,7 +122,7 @@ export function ControllersPanel() {
         />
         <SliderRow
           label={t("Cursor speed")}
-          sub={t("How quickly the Harbor cursor moves with the right stick.")}
+          sub={t("How quickly the Bear cursor moves with the right stick.")}
           min={300}
           max={1500}
           step={100}
