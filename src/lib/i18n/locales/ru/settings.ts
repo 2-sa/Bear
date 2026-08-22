@@ -1800,6 +1800,7 @@ const settings: Record<string, string> = {
   "Start with data from {name}": "Начать с данных из {name}",
   "Addons ({n})": "Дополнения ({n})",
   "Watchlist ({n})": "Список просмотра ({n})",
+  "Favorites ({n})": "Избранное ({n})",
   "Watched history": "История просмотров",
   "Copied once — afterwards this profile keeps its own copy. Nothing stays linked to Primary.": "Данные копируются один раз; затем профиль хранит собственную копию и больше не связан с основным профилем.",
   "Import data from {name}": "Импортировать данные из {name}",

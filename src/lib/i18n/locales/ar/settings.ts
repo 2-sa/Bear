@@ -2231,6 +2231,7 @@ const settings: Record<string, string> = {
   "Start with data from {name}": "البدء ببيانات من {name}",
   "Addons ({n})": "الإضافات ({n})",
   "Watchlist ({n})": "قائمة المشاهدة ({n})",
+  "Favorites ({n})": "المفضلة ({n})",
   "Watched history": "سجل المشاهدة",
   "Copied once — afterwards this profile keeps its own copy. Nothing stays linked to Primary.": "تُنسخ البيانات مرة واحدة، وبعدها يحتفظ هذا الملف بنسخته المستقلة ولا يبقى شيء مرتبطًا بالملف الأساسي.",
   "Import data from {name}": "استيراد البيانات من {name}",
