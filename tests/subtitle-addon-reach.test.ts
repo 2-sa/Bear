@@ -144,6 +144,23 @@ test("built-in providers keep their longer timeout budget", () => {
   assert.match(search, /extraTimeout \+ 500/);
 });
 
+test("automatic subtitle loading consumes provider results progressively", () => {
+  assert.match(fetchIntoPlayer, /const PROGRESSIVE_TRACKS_PER_LANGUAGE = 1/);
+  assert.match(fetchIntoPlayer, /onPartial: queuePartial/);
+  assert.match(fetchIntoPlayer, /await progressiveQueue/);
+});
+
+test("automatic core subtitle providers do not wait for addon inventory", () => {
+  const autoload = readFileSync(
+    new URL("../src/views/player/hooks/use-track-autoload.ts", import.meta.url),
+    "utf8",
+  );
+  assert.match(autoload, /stage === "core"/);
+  assert.match(autoload, /\{ addons: false \}/);
+  assert.match(autoload, /stage === "addons"/);
+  assert.match(autoload, /opensubtitles: false, wyzie: false, addons: true, extras: false/);
+});
+
 test("the detached subtitle popup waits for the real add result", () => {
   assert.match(modalOverlayApp, /modalOverlayRequestAction<"ok" \| "failed" \| "limited">/);
   assert.match(modalOverlayApp, /if \(result === "limited"\) markLimitReached\(url\)/);

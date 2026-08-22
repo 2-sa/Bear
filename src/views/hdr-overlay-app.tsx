@@ -1,4 +1,4 @@
-import { Component, useEffect, useMemo, useRef, useState } from "react";
+import { Component, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AuthProvider } from "@/lib/auth";
 import { SettingsProvider } from "@/lib/settings";
 import { ShellLayer } from "./player/shell-layer";
@@ -8,6 +8,8 @@ import { createForwardingMpvBridge } from "@/lib/player/mpv-forward";
 import { buildSubtitleTimingMediaKey } from "@/lib/player/subtitle-fps";
 import { hdrOverlayEmitAction, onHdrStageProps } from "@/lib/hdr-overlay";
 import type { PlayerSrc } from "@/lib/view";
+import { PlayerInteractionLockControls } from "@/components/player/player-interaction-lock";
+import { usePlayerInteractionBlocker } from "./player/hooks/use-player-interaction-lock";
 
 export type HdrStagePayload = {
   snap: PlayerSnapshot;
@@ -22,6 +24,8 @@ export type HdrStagePayload = {
   hasPrevEp: boolean;
   hasNextEp: boolean;
   pipMode: boolean;
+  screenLocked: boolean;
+  screenLockBinding: string;
 };
 
 function emitDead() {
@@ -71,6 +75,16 @@ function HdrOverlayChrome() {
   const bridgeRef = useRef(bridge);
   const snapRef = useRef<PlayerSnapshot>(emptySnapshot);
   const gotPayloadRef = useRef(false);
+  const toggleLock = useCallback(() => {
+    const event = payload?.screenLocked ? "hdr-stage://unlock" : "hdr-stage://lock";
+    void hdrOverlayEmitAction(event, {});
+  }, [payload?.screenLocked]);
+
+  usePlayerInteractionBlocker({
+    locked: payload?.screenLocked ?? false,
+    binding: payload?.screenLockBinding ?? "ctrl+l",
+    onToggle: toggleLock,
+  });
 
   useEffect(() => {
     const un = onHdrStageProps<HdrStagePayload>((p) => {
@@ -189,6 +203,13 @@ function HdrOverlayChrome() {
         episode={src.episode?.episode ?? null}
         download={download}
         sleep={undefined}
+      />
+      <PlayerInteractionLockControls
+        locked={payload.screenLocked}
+        visible={payload.visible}
+        binding={payload.screenLockBinding}
+        onLock={() => act("hdr-stage://lock")}
+        onUnlock={() => act("hdr-stage://unlock")}
       />
     </div>
   );

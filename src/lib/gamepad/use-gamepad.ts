@@ -67,6 +67,9 @@ export function useGamepad(): void {
   const playerRef = useRef(!!player);
   playerRef.current = !!player;
 
+  const backgroundRef = useRef(backgroundInput);
+  backgroundRef.current = backgroundInput;
+
   useEffect(() => {
     if (!isTauri || !enabled) return;
 
@@ -84,14 +87,17 @@ export function useGamepad(): void {
       stopRepeat(id);
       fire();
       const r: { delay: number | null; interval: number | null } = { delay: null, interval: null };
-      r.delay = window.setTimeout(() => {
-        r.delay = null;
-        r.interval = window.setInterval(fire, Math.max(40, cfgRef.current.repeatMs));
-      }, Math.max(0, cfgRef.current.initialDelayMs));
+      r.delay = window.setTimeout(
+        () => {
+          r.delay = null;
+          r.interval = window.setInterval(fire, Math.max(40, cfgRef.current.repeatMs));
+        },
+        Math.max(0, cfgRef.current.initialDelayMs),
+      );
       repeats.set(id, r);
     };
     const stopAll = () => {
-      for (const id of [...repeats.keys()]) stopRepeat(id);
+      for (const id of repeats.keys()) stopRepeat(id);
     };
 
     const fireButton = (button: GpButton) => {
@@ -174,6 +180,7 @@ export function useGamepad(): void {
     });
 
     const stopWebSource = startWebGamepadSource({
+      inputAllowed: () => document.hasFocus() || backgroundRef.current,
       onButton: (button, isPressed) => {
         setLiveButton(button, isPressed);
         onButton(button, isPressed);

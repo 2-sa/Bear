@@ -7,10 +7,12 @@ import { makeSafeTauriUnlisten } from "@/lib/tauri-unlisten";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import type { SubtitleLoadMetadata } from "@/lib/subtitles/types";
 import {
+  invalidateMpvSubtitleFpsContext,
   markMpvSubtitleFpsSessionRecreated,
   resetMpvSubtitleFpsForTransition,
 } from "./mpv-properties";
 import { SUBTITLE_FPS_TRANSITION_FAILED_EVENT } from "./subtitle-fps";
+import { finishPlaybackTrace, markPlaybackTrace } from "@/lib/perf/playback-trace";
 import {
   emptySnapshot,
   type PlayerBridge,
@@ -28,6 +30,14 @@ export type MpvProbe = {
 };
 
 let mpvProbePromise: Promise<MpvProbe> | null = null;
+
+type RetainedMpv = {
+  configKey: string;
+  isLive: boolean;
+  startupProfile: "standard" | "high-bitrate";
+};
+let retainedMpv: RetainedMpv | null = null;
+let retainedMpvRelease: Promise<void> | null = null;
 
 export function probeMpv(): Promise<MpvProbe> {
   if (mpvProbePromise) return mpvProbePromise;
@@ -92,6 +102,21 @@ export type MpvOptions = {
   fullDownload?: boolean;
   getEmbedRect?: () => Promise<MpvRect | null> | MpvRect | null;
 };
+
+function mpvReuseConfigKey(options: MpvOptions | undefined, hdrToSdr: boolean): string {
+  return JSON.stringify({
+    anime4k: options?.anime4k === true,
+    hdrToSdr,
+    rtxHdr: options?.rtxHdr === true,
+    rtxVsr: options?.rtxVsr === true,
+    embed: options?.embed === true,
+    anime4kShaders: options?.anime4kShaders ?? [],
+    d3d11Flip: options?.d3d11Flip === true,
+    macEdr: options?.macEdr === true,
+    extraOptions: options?.extraOptions ?? "",
+    fullDownload: options?.fullDownload === true,
+  });
+}
 
 const AUDIO_PROFILE_AF: Record<string, string> = {
   bass: "lavfi=[bass=g=7:f=110:w=0.6]",
@@ -171,7 +196,10 @@ export function createMpvBridge(mpvOptions?: MpvOptions): PlayerBridge {
   let geomResizeObserver: ResizeObserver | null = null;
   let geomTauriUnlisten: Array<() => void> = [];
   let mpvStarted = false;
+  let currentIsLive: boolean | null = null;
+  let currentStartupProfile: "standard" | "high-bitrate" | null = null;
   let mediaLoadId = 0;
+  let activeTraceId: string | null = null;
   let expectedMediaPath: string | null = null;
   let observedMediaPath: string | null = null;
   let mediaRevision = 0;
@@ -218,6 +246,65 @@ export function createMpvBridge(mpvOptions?: MpvOptions): PlayerBridge {
     }
   };
 
+  const ensureGeometryTracking = async (opts: MpvOptions) => {
+    if (!opts.embed || !opts.getEmbedRect || geomKickHandler != null || isLinuxDesktop()) return;
+
+    let lastRect: MpvRect | null = null;
+    let geomDebounce: number | null = null;
+    const tick = async () => {
+      try {
+        const r = await opts.getEmbedRect!();
+        if (!r) return;
+        if (
+          lastRect &&
+          lastRect.cssLeft === r.cssLeft &&
+          lastRect.cssTop === r.cssTop &&
+          lastRect.cssWidth === r.cssWidth &&
+          lastRect.cssHeight === r.cssHeight &&
+          lastRect.cssViewW === r.cssViewW &&
+          lastRect.cssViewH === r.cssViewH
+        ) {
+          return;
+        }
+        lastRect = r;
+        await invoke("mpv_set_geometry", { geom: r });
+      } catch {}
+    };
+
+    geomKickHandler = () => {
+      if (geomDebounce != null) window.clearTimeout(geomDebounce);
+      geomDebounce = window.setTimeout(() => void tick(), 40);
+    };
+    geomForceHandler = () => {
+      lastRect = null;
+      geomKickHandler?.();
+    };
+    window.addEventListener("resize", geomKickHandler);
+    window.addEventListener("harbor:mpv-refresh-geom", geomKickHandler);
+    window.addEventListener("harbor:mpv-force-geom", geomForceHandler);
+    if (host && typeof ResizeObserver !== "undefined") {
+      try {
+        geomResizeObserver = new ResizeObserver(() => void tick());
+        geomResizeObserver.observe(host);
+      } catch {
+        /* noop */
+      }
+    }
+    try {
+      const { getCurrentWindow } = await import("@tauri-apps/api/window");
+      const win = getCurrentWindow();
+      const unResized = await win.onResized(() => geomKickHandler?.());
+      const unMoved = await win.onMoved(() => geomKickHandler?.());
+      geomTauriUnlisten.push(makeSafeTauriUnlisten(unResized), makeSafeTauriUnlisten(unMoved));
+    } catch {
+      /* noop */
+    }
+
+    // A retained Windows mpv child was hidden when the previous player view
+    // unmounted. Reapplying geometry also makes that native surface visible.
+    await tick();
+  };
+
   const handleSvpFilterFailure = () => {
     if (svpFilterFailed) return;
     if (!(mpvOptions?.extraOptions ?? "").includes("vapoursynth")) return;
@@ -251,6 +338,8 @@ export function createMpvBridge(mpvOptions?: MpvOptions): PlayerBridge {
       snap = mpvFailureSnapshot(snap, reason);
       mediaRevision += 1;
       mpvStarted = false;
+      finishPlaybackTrace(activeTraceId, "failed");
+      activeTraceId = null;
       invoke("mpv_stop").catch(() => {});
       emit();
     } else if (raw.event === "property-change") {
@@ -376,6 +465,7 @@ export function createMpvBridge(mpvOptions?: MpvOptions): PlayerBridge {
       }
       emit();
     } else if (raw.event === "file-loaded") {
+      markPlaybackTrace(activeTraceId, "file-loaded");
       snap.status = "playing";
       snap.errorCode = null;
       snap.errorMessage = null;
@@ -390,6 +480,9 @@ export function createMpvBridge(mpvOptions?: MpvOptions): PlayerBridge {
       }
       snap.status = "playing";
       snap.firstFrameReady = true;
+      markPlaybackTrace(activeTraceId, "first-frame");
+      finishPlaybackTrace(activeTraceId, "ready");
+      activeTraceId = null;
       snap.errorCode = null;
       snap.errorMessage = null;
       emit();
@@ -425,6 +518,35 @@ export function createMpvBridge(mpvOptions?: MpvOptions): PlayerBridge {
     },
     async load(src: PlayerSource) {
       const activeLoadId = ++mediaLoadId;
+      if (activeTraceId && activeTraceId !== src.traceId) {
+        finishPlaybackTrace(activeTraceId, "replaced");
+      }
+      activeTraceId = src.traceId ?? null;
+      markPlaybackTrace(activeTraceId, "bridge-load");
+      if (retainedMpvRelease) await retainedMpvRelease;
+      const nextIsLive = src.isLive === true;
+      const nextStartupProfile =
+        src.startupProfile ?? currentStartupProfile ?? retainedMpv?.startupProfile ?? "standard";
+      const reuseConfigKey = mpvReuseConfigKey(mpvOptions, hdrToSdr);
+      const canRetain = isWindowsDesktop() && mpvOptions?.embed === true;
+      if (
+        !mpvStarted &&
+        canRetain &&
+        retainedMpv?.configKey === reuseConfigKey &&
+        retainedMpv.isLive === nextIsLive &&
+        retainedMpv.startupProfile === nextStartupProfile
+      ) {
+        mpvStarted = true;
+        currentIsLive = nextIsLive;
+        currentStartupProfile = nextStartupProfile;
+        retainedMpv = null;
+      } else if (
+        mpvStarted &&
+        ((currentIsLive != null && currentIsLive !== nextIsLive) ||
+          (currentStartupProfile != null && currentStartupProfile !== nextStartupProfile))
+      ) {
+        mpvStarted = false;
+      }
       expectedMediaPath = src.url;
       mediaRevision += 1;
       svpFilterFailed = false;
@@ -481,6 +603,9 @@ export function createMpvBridge(mpvOptions?: MpvOptions): PlayerBridge {
               `start=${startAt}`,
             ];
             await invoke("mpv_command", { cmd });
+            markPlaybackTrace(activeTraceId, "loadfile-accepted");
+            await invoke("mpv_restore_media_surface");
+            await ensureGeometryTracking(opts);
             void addSeedSubtitles(src.subtitles, activeLoadId);
             window.dispatchEvent(new Event("harbor:mpv-refresh-geom"));
             return;
@@ -489,6 +614,7 @@ export function createMpvBridge(mpvOptions?: MpvOptions): PlayerBridge {
             mpvStarted = false;
           }
         }
+        retainedMpv = null;
         await invoke("mpv_start", {
           args: {
             url: src.url,
@@ -504,73 +630,25 @@ export function createMpvBridge(mpvOptions?: MpvOptions): PlayerBridge {
             macEdr: opts.macEdr === true,
             isLive: src.isLive === true,
             fullDownload: opts.fullDownload === true,
+            startupProfile: nextStartupProfile,
             headers: src.headers ?? null,
             extraOptions: opts.extraOptions || undefined,
           },
         });
+        markPlaybackTrace(activeTraceId, "loadfile-accepted");
         mpvStarted = true;
+        currentIsLive = nextIsLive;
+        currentStartupProfile = nextStartupProfile;
         void addSeedSubtitles(src.subtitles, activeLoadId);
         if (opts.embed) {
           await invoke("mpv_set_property", { name: "sub-visibility", value: false }).catch(
             () => {},
           );
         }
-        if (opts.embed && opts.getEmbedRect && geomKickHandler == null && !isLinuxDesktop()) {
-          let lastRect: MpvRect | null = null;
-          let geomDebounce: number | null = null;
-          const tick = async () => {
-            try {
-              const r = await opts.getEmbedRect!();
-              if (!r) return;
-              if (
-                lastRect &&
-                lastRect.cssLeft === r.cssLeft &&
-                lastRect.cssTop === r.cssTop &&
-                lastRect.cssWidth === r.cssWidth &&
-                lastRect.cssHeight === r.cssHeight &&
-                lastRect.cssViewW === r.cssViewW &&
-                lastRect.cssViewH === r.cssViewH
-              ) {
-                return;
-              }
-              lastRect = r;
-              await invoke("mpv_set_geometry", { geom: r });
-            } catch {}
-          };
-          tick();
-          geomKickHandler = () => {
-            if (geomDebounce != null) window.clearTimeout(geomDebounce);
-            geomDebounce = window.setTimeout(() => void tick(), 40);
-          };
-          geomForceHandler = () => {
-            lastRect = null;
-            geomKickHandler?.();
-          };
-          window.addEventListener("resize", geomKickHandler);
-          window.addEventListener("harbor:mpv-refresh-geom", geomKickHandler);
-          window.addEventListener("harbor:mpv-force-geom", geomForceHandler);
-          if (host && typeof ResizeObserver !== "undefined") {
-            try {
-              geomResizeObserver = new ResizeObserver(() => void tick());
-              geomResizeObserver.observe(host);
-            } catch {
-              /* noop */
-            }
-          }
-          try {
-            const { getCurrentWindow } = await import("@tauri-apps/api/window");
-            const win = getCurrentWindow();
-            const unResized = await win.onResized(() => geomKickHandler?.());
-            const unMoved = await win.onMoved(() => geomKickHandler?.());
-            geomTauriUnlisten.push(
-              makeSafeTauriUnlisten(unResized),
-              makeSafeTauriUnlisten(unMoved),
-            );
-          } catch {
-            /* noop */
-          }
-        }
+        await ensureGeometryTracking(opts);
       } catch (e) {
+        finishPlaybackTrace(activeTraceId, "failed");
+        activeTraceId = null;
         snap.status = "error";
         snap.errorCode = "source";
         snap.errorMessage = e instanceof Error ? e.message : String(e);
@@ -836,7 +914,41 @@ export function createMpvBridge(mpvOptions?: MpvOptions): PlayerBridge {
     },
     destroy() {
       mediaRevision += 1;
-      markMpvSubtitleFpsSessionRecreated();
+      finishPlaybackTrace(activeTraceId, "aborted");
+      activeTraceId = null;
+      const keepNativeSession =
+        mpvStarted && currentIsLive != null && isWindowsDesktop() && mpvOptions?.embed === true;
+      if (keepNativeSession) {
+        invalidateMpvSubtitleFpsContext();
+        const retained: RetainedMpv = {
+          configKey: mpvReuseConfigKey(mpvOptions, hdrToSdr),
+          isLive: currentIsLive!,
+          startupProfile: currentStartupProfile ?? "standard",
+        };
+        const release = invoke<boolean>("mpv_release_media")
+          .then(async (kept) => {
+            if (kept) {
+              retainedMpv = retained;
+              return;
+            }
+            retainedMpv = null;
+            markMpvSubtitleFpsSessionRecreated();
+            await invoke("mpv_stop").catch(() => {});
+          })
+          .catch(async () => {
+            retainedMpv = null;
+            markMpvSubtitleFpsSessionRecreated();
+            await invoke("mpv_stop").catch(() => {});
+          });
+        retainedMpvRelease = release;
+        void release.finally(() => {
+          if (retainedMpvRelease === release) retainedMpvRelease = null;
+        });
+      } else {
+        retainedMpv = null;
+        markMpvSubtitleFpsSessionRecreated();
+        invoke("mpv_stop").catch(() => {});
+      }
       if (geomTimer != null) {
         window.clearInterval(geomTimer);
         geomTimer = null;
@@ -867,7 +979,8 @@ export function createMpvBridge(mpvOptions?: MpvOptions): PlayerBridge {
       }
       geomTauriUnlisten = [];
       mpvStarted = false;
-      invoke("mpv_stop").catch(() => {});
+      currentIsLive = null;
+      currentStartupProfile = null;
       if (unlistenEvent) {
         unlistenEvent();
         unlistenEvent = null;

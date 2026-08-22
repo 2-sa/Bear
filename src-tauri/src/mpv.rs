@@ -52,6 +52,7 @@ pub struct MpvStartArgs {
     pub mac_edr: Option<bool>,
     pub is_live: Option<bool>,
     pub full_download: Option<bool>,
+    pub startup_profile: Option<String>,
     pub headers: Option<HashMap<String, String>>,
     pub extra_options: Option<String>,
 }
@@ -707,12 +708,39 @@ pub async fn mpv_start(
         let _ = mpv.set_property("stream-buffer-size", "16MiB");
     } else {
         let full_dl = args.full_download.unwrap_or(false);
+        let high_bitrate = args.startup_profile.as_deref() == Some("high-bitrate");
         let _ = mpv.set_property("cache", "yes");
         let _ = mpv.set_property("cache-secs", if full_dl { "100000" } else { "300" });
         let _ = mpv.set_property("cache-pause", "yes");
-        let _ = mpv.set_property("demuxer-max-bytes", if full_dl { "48GiB" } else { "512MiB" });
-        let _ = mpv.set_property("demuxer-max-back-bytes", if full_dl { "48GiB" } else { "64MiB" });
-        let _ = mpv.set_property("demuxer-readahead-secs", if full_dl { "100000" } else { "300" });
+        let _ = mpv.set_property("cache-pause-initial", "no");
+        let _ = mpv.set_property(
+            "cache-pause-wait",
+            if full_dl {
+                "10"
+            } else if high_bitrate {
+                "2"
+            } else {
+                "1"
+            },
+        );
+        let _ = mpv.set_property(
+            "demuxer-max-bytes",
+            if full_dl {
+                "48GiB"
+            } else if high_bitrate {
+                "768MiB"
+            } else {
+                "512MiB"
+            },
+        );
+        let _ = mpv.set_property(
+            "demuxer-max-back-bytes",
+            if full_dl { "48GiB" } else { "64MiB" },
+        );
+        let _ = mpv.set_property(
+            "demuxer-readahead-secs",
+            if full_dl { "100000" } else { "300" },
+        );
         if let Ok(base) = app.path().app_cache_dir() {
             let dvr = base.join("mpv-cache");
             let _ = std::fs::create_dir_all(&dvr);
@@ -727,7 +755,10 @@ pub async fn mpv_start(
             Ok(()) => eprintln!("[harbor::mpv] stream-lavf-o set {}", reconnect_opts),
             Err(e) => eprintln!("[harbor::mpv] stream-lavf-o rejected: {:?}", e),
         }
-        let _ = mpv.set_property("stream-buffer-size", "32MiB");
+        let _ = mpv.set_property(
+            "stream-buffer-size",
+            if high_bitrate { "64MiB" } else { "32MiB" },
+        );
     }
     if want_embed {
         let _ = mpv.set_property("sub-visibility", "no");
@@ -2185,6 +2216,58 @@ pub async fn mpv_stop(app: AppHandle, state: State<'_, MpvState>) -> Result<(), 
     Ok(())
 }
 
+#[tauri::command]
+pub async fn mpv_release_media(app: AppHandle, state: State<'_, MpvState>) -> Result<bool, String> {
+    #[cfg(windows)]
+    {
+        let (mpv, embedded) = {
+            let g = state.inner.lock().await;
+            let Some(session) = g.as_ref() else {
+                return Ok(false);
+            };
+            (session.mpv.clone(), session.embedded)
+        };
+        if !embedded {
+            return Ok(false);
+        }
+        mpv.command("stop", &[])
+            .map_err(|e| format!("stop retained mpv media: {e}"))?;
+        set_embedded_mpv_children_visible(&app, false)?;
+        return Ok(true);
+    }
+    #[cfg(not(windows))]
+    {
+        let _ = app;
+        let _ = state;
+        Ok(false)
+    }
+}
+
+#[tauri::command]
+pub async fn mpv_restore_media_surface(
+    app: AppHandle,
+    state: State<'_, MpvState>,
+) -> Result<bool, String> {
+    #[cfg(windows)]
+    {
+        let embedded = {
+            let g = state.inner.lock().await;
+            g.as_ref().is_some_and(|session| session.embedded)
+        };
+        if !embedded {
+            return Ok(false);
+        }
+        set_embedded_mpv_children_visible(&app, true)?;
+        return Ok(true);
+    }
+    #[cfg(not(windows))]
+    {
+        let _ = app;
+        let _ = state;
+        Ok(false)
+    }
+}
+
 #[cfg(windows)]
 fn get_main_hwnd_str(app: &AppHandle) -> Option<String> {
     let window = app.get_webview_window("main")?;
@@ -2261,6 +2344,56 @@ static MPV_POS_LAST_RECT: std::sync::Mutex<Option<(isize, i32, i32, u32, u32)>> 
 
 #[cfg(windows)]
 static MPV_HDR_STAGE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+#[cfg(windows)]
+fn set_embedded_mpv_children_visible(app: &AppHandle, visible: bool) -> Result<(), String> {
+    use windows::core::BOOL;
+    use windows::Win32::Foundation::{HWND, LPARAM};
+    use windows::Win32::UI::WindowsAndMessaging::{
+        EnumChildWindows, GetClassNameW, GetWindowTextW, SetWindowPos, HWND_BOTTOM, SWP_HIDEWINDOW,
+        SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE, SWP_SHOWWINDOW,
+    };
+
+    let window = app
+        .get_webview_window("main")
+        .ok_or_else(|| "main window missing".to_string())?;
+    let parent_hwnd = window.hwnd().map_err(|e| format!("hwnd: {e}"))?;
+    let mut children: Vec<isize> = Vec::new();
+    let children_ptr = &mut children as *mut Vec<isize>;
+
+    unsafe extern "system" fn enum_proc(hwnd: HWND, lparam: LPARAM) -> BOOL {
+        let mut class_buf = [0u16; 256];
+        let class_len = GetClassNameW(hwnd, &mut class_buf);
+        let class_name = String::from_utf16_lossy(&class_buf[..class_len as usize]);
+        let mut title_buf = [0u16; 256];
+        let title_len = GetWindowTextW(hwnd, &mut title_buf);
+        let title = String::from_utf16_lossy(&title_buf[..title_len as usize]);
+        let is_mpv = class_name == "mpv"
+            || class_name.starts_with("mpv ")
+            || (class_name.is_empty() && title.starts_with("Harbor"));
+        if is_mpv {
+            (*(lparam.0 as *mut Vec<isize>)).push(hwnd.0 as isize);
+        }
+        BOOL(1)
+    }
+
+    unsafe {
+        let _ = EnumChildWindows(
+            Some(parent_hwnd),
+            Some(enum_proc),
+            LPARAM(children_ptr as isize),
+        );
+        let flags = if visible {
+            SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW
+        } else {
+            SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE | SWP_HIDEWINDOW
+        };
+        for child in children {
+            let _ = SetWindowPos(HWND(child as *mut _), Some(HWND_BOTTOM), 0, 0, 0, 0, flags);
+        }
+    }
+    Ok(())
+}
 
 #[cfg(windows)]
 fn position_embedded_mpv_child(app: &AppHandle, css: MpvGeometry) -> Result<(), String> {

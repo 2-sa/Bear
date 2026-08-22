@@ -1,4 +1,4 @@
-import { useRef, useState, type RefObject } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import { ScanFace } from "lucide-react";
 import type { Meta } from "@/lib/cinemeta";
 import type { PlayerBridge } from "@/lib/player/bridge";
@@ -29,20 +29,23 @@ export function XrayOverlay({
   meta,
   visible,
   isPaused,
+  firstFrameReady,
   bridgeRef,
 }: {
   meta: Meta;
   visible: boolean;
   isPaused: boolean;
+  firstFrameReady: boolean;
   bridgeRef?: RefObject<PlayerBridge | null>;
 }) {
   const { settings } = useSettings();
   const t = useT();
   const [view, setView] = useState<View>("closed");
   const [trailer, setTrailer] = useState<{ ytId: string; name: string } | null>(null);
+  const [preloadedCastKey, setPreloadedCastKey] = useState<string | null>(null);
   const resumeRef = useRef(false);
   const active = settings.xrayEnabled && view !== "closed";
-  const { cast, details } = useXrayCast(meta, active);
+  const { cast, details } = useXrayCast(meta, active || preloadedCastKey === meta.id);
   const { people, ready, galleryReady, progress, error } = useFaceId({
     metaKey: meta.id,
     cast: cast ?? NO_CAST,
@@ -50,6 +53,29 @@ export function XrayOverlay({
     isPaused,
     loadBitmap,
   });
+
+  useEffect(() => {
+    if (!settings.xrayEnabled || !firstFrameReady) return;
+    let cancelled = false;
+    let timeoutId: number | undefined;
+    let idleId: number | undefined;
+    const warm = () => {
+      if (cancelled) return;
+      setPreloadedCastKey(meta.id);
+      void ensureFaceEngine().catch(() => {});
+    };
+
+    if (typeof window.requestIdleCallback === "function") {
+      idleId = window.requestIdleCallback(warm, { timeout: 2000 });
+    } else {
+      timeoutId = window.setTimeout(warm, 1000);
+    }
+    return () => {
+      cancelled = true;
+      if (idleId != null) window.cancelIdleCallback(idleId);
+      if (timeoutId != null) window.clearTimeout(timeoutId);
+    };
+  }, [settings.xrayEnabled, firstFrameReady, meta.id]);
 
   if (!settings.xrayEnabled) return null;
 
@@ -113,7 +139,12 @@ export function XrayOverlay({
         />
       )}
       {trailer && (
-        <TrailerOverlay id={trailer.ytId} title={trailer.name} logo={details?.logo ?? undefined} onClose={closeTrailer} />
+        <TrailerOverlay
+          id={trailer.ytId}
+          title={trailer.name}
+          logo={details?.logo ?? undefined}
+          onClose={closeTrailer}
+        />
       )}
     </>
   );

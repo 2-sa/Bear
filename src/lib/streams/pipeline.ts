@@ -159,6 +159,22 @@ export async function runPipeline(
   const merged = mergeAndDedupe(library, addonStreams);
 
   const parsed = merged.map(parseStream);
+  const verifiedCacheByHash = new Map<string, ParsedStream["cacheVerified"]>();
+  const markCacheVerified = (stream: ParsedStream, slug: DebridStore["slug"]) => {
+    if (!stream.infoHash) return;
+    const hash = stream.infoHash.toLowerCase();
+    stream.cacheVerified[slug] = true;
+    const byProvider = verifiedCacheByHash.get(hash) ?? {};
+    byProvider[slug] = true;
+    verifiedCacheByHash.set(hash, byProvider);
+  };
+  const restoreCacheVerification = (picker: RankedPicker) => {
+    for (const stream of picker.all) {
+      if (!stream.infoHash) continue;
+      const verified = verifiedCacheByHash.get(stream.infoHash.toLowerCase());
+      if (verified) stream.cacheVerified = { ...verified };
+    }
+  };
 
   if (input.isAnime) {
     await enhanceAnimeStreams(parsed);
@@ -189,6 +205,7 @@ export async function runPipeline(
         if (!p.infoHash) continue;
         if (r.value.data[p.infoHash.toLowerCase()]) {
           p.cached[slug] = true;
+          markCacheVerified(p, slug);
           hits++;
         }
       }
@@ -222,6 +239,7 @@ export async function runPipeline(
           if (!p.cached[slug]) hits++;
           p.cached[slug] = true;
           p.inLibrary[slug] = true;
+          markCacheVerified(p, slug);
         }
       }
       dlog(
@@ -247,6 +265,7 @@ export async function runPipeline(
       );
     }
     const fin = finalizeWithRescue(core.picker, core.rejected, input.trust ?? {}, input.score);
+    restoreCacheVerification(fin.picker);
     return {
       picker: applyStreamPriority(fin.picker, priorityActive, input.score.activeDebrids),
       rejected: fin.rejected,
@@ -278,6 +297,7 @@ export async function runPipeline(
     input.score.respectAddonOrder === true,
   );
   const fin = finalizeWithRescue(picker, rejected, input.trust ?? {}, input.score);
+  restoreCacheVerification(fin.picker);
   return {
     picker: applyStreamPriority(fin.picker, priorityActive, input.score.activeDebrids),
     rejected: fin.rejected,

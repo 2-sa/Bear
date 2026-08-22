@@ -1,5 +1,10 @@
 import { aniZipByKitsu } from "@/lib/providers/anizip";
-import { buildKitsuEpisodes, mergeAniZipEpisodes, mergeTvdbEpisodes } from "@/lib/providers/anime-episode-build";
+import {
+  buildKitsuEpisodes,
+  mergeAniZipEpisodes,
+  mergeTvdbEpisodes,
+} from "@/lib/providers/anime-episode-build";
+import { enrichEpisodes } from "@/lib/providers/anime-episode-enrich";
 import { animeKitsuMeta } from "@/lib/providers/anime-kitsu-addon";
 import { kitsuEpisodes, type KitsuEpisode } from "@/lib/providers/kitsu";
 import { kitsuToTvdb } from "@/lib/providers/anime-mapping";
@@ -28,10 +33,10 @@ export function fetchEntryEpisodes(kitsuId: number, settings: Settings): Promise
           if (!tid) return null;
           return Promise.all([
             tvdbEpisodesByType(settings.tvdbKey ?? "", tid, "default", lang),
-            tvdbEpisodesAbsolute(settings.tvdbKey ?? "", tid, lang)
+            tvdbEpisodesAbsolute(settings.tvdbKey ?? "", tid, lang),
           ]).then(([def, abs]) => {
             const all = [...def, ...abs];
-            const unique = new Map(all.map(e => [e.id, e]));
+            const unique = new Map(all.map((e) => [e.id, e]));
             return Array.from(unique.values());
           });
         })
@@ -40,6 +45,8 @@ export function fetchEntryEpisodes(kitsuId: number, settings: Settings): Promise
     const eps = buildKitsuEpisodes(addonMeta, raw);
     mergeAniZipEpisodes(eps, aniZip);
     mergeTvdbEpisodes(eps, tvdbEpsRaw);
+    const imdbId = aniZip?.mappings?.imdb_id ?? eps.find((ep) => ep.imdbId)?.imdbId ?? null;
+    await enrichEpisodes(eps, settings, kitsuId, imdbId).catch(() => {});
     const sourceMetaId = `kitsu:${kitsuId}`;
     const out: KitsuEpisode[] = [];
     for (const ep of eps) {

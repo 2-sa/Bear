@@ -3,6 +3,21 @@ import { MOVIE_GENRES, TV_GENRES } from "../../feed/tags";
 import { loadStoredSettings } from "../../settings/load";
 import { IMG } from "./tmdb-client";
 
+export function isAnimeItem(item: {
+  genre_ids?: number[];
+  genres?: any[];
+  original_language?: string;
+  origin_country?: string[];
+}): boolean {
+  const hasAnim =
+    (item.genre_ids ?? []).includes(16) ||
+    (item.genres ?? []).some((g: any) => g === "Animation" || g?.id === 16);
+  const isJp = item.original_language === "ja" || (item.origin_country ?? []).includes("JP");
+  return hasAnim && isJp;
+}
+
+const JAPANESE_SCRIPT = /[\u3040-\u30FF\u3400-\u4DBF\u4E00-\u9FFF]/;
+
 export type RawMovie = {
   id: number;
   title: string;
@@ -56,16 +71,25 @@ function genresFromIds(ids: number[] | undefined, kind: "movie" | "tv"): string[
   return names.length > 0 ? names : undefined;
 }
 
-export const movieMeta = (m: RawMovie): Meta => {
+export const movieMeta = (m: RawMovie, english?: { name?: string; overview?: string }): Meta => {
   const st = loadStoredSettings();
   const translate = st.translateTitles;
+  const anime = isAnimeItem(m);
+  let name = translate ? m.title : anime ? m.title : m.original_title || m.title;
+  if (anime && translate && english?.name && JAPANESE_SCRIPT.test(name)) name = english.name;
+  // TMDB returns a blank or original-language value when the requested language has no
+  // translation; fall back to English so non-localized titles still show readable info.
+  if (translate && (!name.trim() || JAPANESE_SCRIPT.test(name)) && english?.name)
+    name = english.name;
+  const description =
+    translate && !m.overview?.trim() && english?.overview ? english.overview : m.overview;
   return {
     id: `tmdb:movie:${m.id}`,
     type: "movie",
-    name: translate ? m.title : m.original_title || m.title,
+    name,
     poster: poster(m.poster_path),
     background: back(m.backdrop_path),
-    description: m.overview,
+    description,
     originalLanguage: m.original_language,
     releaseInfo: year(m.release_date),
     releaseDate: m.release_date,
@@ -75,16 +99,23 @@ export const movieMeta = (m: RawMovie): Meta => {
   };
 };
 
-export const seriesMeta = (s: RawSeries): Meta => {
+export const seriesMeta = (s: RawSeries, english?: { name?: string; overview?: string }): Meta => {
   const st = loadStoredSettings();
   const translate = st.translateTitles;
+  const anime = isAnimeItem(s);
+  let name = translate ? s.name : anime ? s.name : s.original_name || s.name;
+  if (anime && translate && english?.name && JAPANESE_SCRIPT.test(name)) name = english.name;
+  if (translate && (!name.trim() || JAPANESE_SCRIPT.test(name)) && english?.name)
+    name = english.name;
+  const description =
+    translate && !s.overview?.trim() && english?.overview ? english.overview : s.overview;
   return {
     id: `tmdb:tv:${s.id}`,
     type: "series",
-    name: translate ? s.name : s.original_name || s.name,
+    name,
     poster: poster(s.poster_path),
     background: back(s.backdrop_path),
-    description: s.overview,
+    description,
     originalLanguage: s.original_language,
     releaseInfo: year(s.first_air_date),
     releaseDate: s.first_air_date,

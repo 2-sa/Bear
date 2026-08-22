@@ -9,6 +9,10 @@ import {
   type DirectLink,
 } from "@/lib/debrid/types";
 import {
+  getPreparedDebridLink,
+  invalidatePreparedDebridLink,
+} from "@/lib/debrid/playback-preparation";
+import {
   beginTorrentPlaybackHandoff,
   lastEngineAddError,
   scheduleAbandonedTorrentRemoval,
@@ -28,8 +32,16 @@ import type { ParsedStream, ScoredStream } from "./types";
 import { matchEpisodeFileIndex, type EpisodeHint } from "./episode-file";
 
 export type ResolveResult =
-  | { ok: true; data: DirectLink; via: string }
+  | { ok: true; data: DirectLink; via: string; readiness?: LinkReadiness }
   | { ok: false; code: string; tried: Array<{ slug: string; code: string }>; webUrl?: string };
+
+export type LinkReadiness = {
+  exactUrlValidated: boolean;
+  method: "provider-size" | "not-checked";
+  sizeBytes: number | null;
+};
+
+type LinkValidation = { ok: boolean; readiness: LinkReadiness };
 
 const ERROR_VIDEO_MAX_BYTES = 80 * 1024 * 1024;
 const VIDEO_EXT_RE =
@@ -115,8 +127,10 @@ export async function resolveStream(
       notWebReady: stream.behaviorHints?.notWebReady,
       subtitles: stream.subtitles?.map((s) => ({ url: s.url, lang: s.lang, id: s.id })),
     };
-    const ok = await validateLink(data, expectedSize, headers, signal, false);
-    if (ok) return { ok: true, data, via: "direct" };
+    const validation = validateLink(data, expectedSize);
+    if (validation.ok) {
+      return { ok: true, data, via: "direct", readiness: validation.readiness };
+    }
     tried.push({ slug: "direct", code: "stub-or-error-video" });
     if (debrids.length === 0 || !stream.infoHash) {
       return { ok: false, code: "stub-or-error-video", tried };
@@ -172,16 +186,20 @@ export async function resolveStream(
     if (signal.aborted) {
       return { ok: false, code: "aborted", tried };
     }
-    const r: DebridResult<DirectLink> = await d.playableUrl(magnet, stream.fileIdx, signal, hint);
+    const prepared = await getPreparedDebridLink(stream, d, hint, signal);
+    const r: DebridResult<DirectLink> = prepared
+      ? { ok: true, data: prepared }
+      : await d.playableUrl(magnet, stream.fileIdx, signal, hint);
     if (!r.ok) {
       tried.push({ slug: d.slug, code: r.code });
       if (r.code === "aborted") return { ok: false, code: "aborted", tried };
       continue;
     }
-    const ok = await validateLink(r.data, expectedSize, r.data.headers, signal);
-    if (ok) {
-      return { ok: true, data: r.data, via: d.slug };
+    const validation = validateLink(r.data, expectedSize);
+    if (validation.ok) {
+      return { ok: true, data: r.data, via: d.slug, readiness: validation.readiness };
     }
+    invalidatePreparedDebridLink(stream, d, hint);
     dwarn(
       `[resolve] ${d.slug} returned suspicious link (likely error/downloading video), trying next debrid`,
     );
@@ -200,17 +218,18 @@ export function shouldPreferP2pDownload(stream: ParsedStream | ScoredStream): bo
   return isP2pStream(stream) && engineP2pEligible(stream);
 }
 
-async function validateLink(
-  link: DirectLink,
-  expectedSize: number | null,
-  headers: Record<string, string> | undefined,
-  signal: AbortSignal,
-  allowNetwork = true,
-): Promise<boolean> {
+function validateLink(link: DirectLink, expectedSize: number | null): LinkValidation {
   if (link.filesize != null && link.filesize > 0) {
     if (link.filesize < ERROR_VIDEO_MAX_BYTES) {
       if (expectedSize == null || expectedSize > ERROR_VIDEO_MAX_BYTES) {
-        return false;
+        return {
+          ok: false,
+          readiness: {
+            exactUrlValidated: false,
+            method: "provider-size",
+            sizeBytes: link.filesize,
+          },
+        };
       }
     }
     if (
@@ -218,42 +237,28 @@ async function validateLink(
       link.filesize < expectedSize * 0.4 &&
       expectedSize > 100 * 1024 * 1024
     ) {
-      return false;
+      return {
+        ok: false,
+        readiness: {
+          exactUrlValidated: false,
+          method: "provider-size",
+          sizeBytes: link.filesize,
+        },
+      };
     }
-    return true;
+    return {
+      ok: true,
+      readiness: {
+        exactUrlValidated: true,
+        method: "provider-size",
+        sizeBytes: link.filesize,
+      },
+    };
   }
-  if (!allowNetwork) return true;
-  try {
-    const ac = new AbortController();
-    const onAbort = () => ac.abort();
-    signal.addEventListener("abort", onAbort);
-    const timer = setTimeout(() => ac.abort(), 5000);
-    const headRes = await fetch(link.url, {
-      method: "HEAD",
-      headers: headers ?? {},
-      signal: ac.signal,
-    }).finally(() => {
-      clearTimeout(timer);
-      signal.removeEventListener("abort", onAbort);
-    });
-    if (!headRes.ok) return true;
-    const lenStr = headRes.headers.get("content-length");
-    if (!lenStr) return true;
-    const len = parseInt(lenStr, 10);
-    if (!Number.isFinite(len) || len <= 0) return true;
-    if (
-      len < ERROR_VIDEO_MAX_BYTES &&
-      (expectedSize == null || expectedSize > ERROR_VIDEO_MAX_BYTES)
-    ) {
-      return false;
-    }
-    if (expectedSize != null && len < expectedSize * 0.4 && expectedSize > 100 * 1024 * 1024) {
-      return false;
-    }
-    return true;
-  } catch {
-    return true;
-  }
+  return {
+    ok: true,
+    readiness: { exactUrlValidated: false, method: "not-checked", sizeBytes: null },
+  };
 }
 
 function sortDebridsForStream(
@@ -290,16 +295,20 @@ export async function resolveViaDebrids(
   const tried: Array<{ slug: string; code: string }> = [];
   for (const d of sorted) {
     if (signal.aborted) return { ok: false, code: "aborted", tried };
-    const r: DebridResult<DirectLink> = await d.playableUrl(magnet, fileIdx, signal, hint);
+    const prepared = await getPreparedDebridLink(stream, d, hint, signal);
+    const r: DebridResult<DirectLink> = prepared
+      ? { ok: true, data: prepared }
+      : await d.playableUrl(magnet, fileIdx, signal, hint);
     if (!r.ok) {
       tried.push({ slug: d.slug, code: r.code });
       if (r.code === "aborted") return { ok: false, code: "aborted", tried };
       continue;
     }
-    const ok = await validateLink(r.data, null, r.data.headers, signal);
-    if (ok) {
-      return { ok: true, data: r.data, via: d.slug };
+    const validation = validateLink(r.data, null);
+    if (validation.ok) {
+      return { ok: true, data: r.data, via: d.slug, readiness: validation.readiness };
     }
+    invalidatePreparedDebridLink(stream, d, hint);
     tried.push({ slug: d.slug, code: "stub-or-error-video" });
   }
   return { ok: false, code: tried[tried.length - 1]?.code ?? "all-debrids-failed", tried };

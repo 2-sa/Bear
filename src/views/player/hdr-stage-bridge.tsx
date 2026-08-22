@@ -29,6 +29,8 @@ export type HdrStageHandlers = {
   screenshot: () => void;
   menuOpen: (open: boolean) => void;
   activity: () => void;
+  lock: () => void;
+  unlock: () => void;
 } & Pick<PlayerBridge, "setSubtitleTrack" | "setSecondarySubtitleTrack" | "addSubtitle">;
 
 export function HdrStageBridge({
@@ -100,6 +102,8 @@ export function HdrStageBridge({
       await bind("hdr-stage://screenshot", () => h().screenshot());
       await bind("hdr-stage://menu-open", (p) => h().menuOpen((p as { open: boolean }).open));
       await bind("hdr-stage://activity", () => h().activity());
+      await bind("hdr-stage://lock", () => h().lock());
+      await bind("hdr-stage://unlock", () => h().unlock());
       await bind("hdr-stage://request", () => void hdrOverlayEmitProps(payloadRef.current));
       await bind(HDR_STAGE_SET_SUBTITLE_TRACK, (p) => {
         const request = p as Partial<HdrStageSubtitleTrackRequest>;

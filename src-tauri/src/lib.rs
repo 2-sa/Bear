@@ -11,6 +11,7 @@ mod crash_report;
 mod diagnostics;
 mod cf_relay;
 mod cf_solver;
+mod discord_auth;
 mod discord_rp;
 mod dlna;
 mod download;
@@ -531,6 +532,7 @@ pub fn run() {
         .manage(multiview_state)
         .manage(modal_overlay_state)
         .manage(discord_rp::DiscordState::new())
+        .manage(discord_auth::DiscordLoopbackState::new())
         .manage(download::DownloadState::new());
 
     #[cfg(target_os = "macos")]
@@ -770,6 +772,8 @@ pub fn run() {
             hdr_overlay::hdr_overlay_emit_action,
             mpv::mpv_sub_add,
             mpv::sub_download,
+            mpv::mpv_release_media,
+            mpv::mpv_restore_media_surface,
             mpv::mpv_stop,
             pip::pip_open,
             pip::pip_get_session,
@@ -838,6 +842,7 @@ pub fn run() {
             tray::tray_set_prefs,
             tray::tray_set_custom_themes,
             stremio_auth::stremio_auth_start,
+            discord_auth::discord_auth_start,
             song_id::recognize_now_playing,
             song_id::recognize_now_playing_ai,
             deeplink_set_stremio,
