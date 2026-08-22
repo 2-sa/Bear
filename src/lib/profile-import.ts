@@ -9,7 +9,13 @@ export const DEFAULT_IMPORT_ADDON_URLS: readonly string[] = [
   "https://v3-cinemeta.strem.io/manifest.json",
 ];
 
-export type ImportDomain = "settings" | "addons" | "watchlist" | "favorites" | "watched" | "continueWatching";
+export type ImportDomain =
+  | "settings"
+  | "addons"
+  | "watchlist"
+  | "favorites"
+  | "watched"
+  | "continueWatching";
 
 // Per-profile storage prefixes grouped by domain. Settings are handled
 // separately because their source key depends on whether the source profile is
@@ -144,7 +150,9 @@ export function importDomains(
         // caller unlinks settings on the target so this copy is what loads.
         const src = sourceKeyFor(fromProfileId, profileSettingsLinked(fromProfileId));
         const blob =
-          localStorage.getItem(src) ?? localStorage.getItem(SHARED_KEY) ?? localStorage.getItem(MIRROR_KEY);
+          localStorage.getItem(src) ??
+          localStorage.getItem(SHARED_KEY) ??
+          localStorage.getItem(MIRROR_KEY);
         if (blob != null) localStorage.setItem(profileKey(toProfileId), blob);
         continue;
       }

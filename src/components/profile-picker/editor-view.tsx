@@ -1,4 +1,15 @@
-import { Check, ChevronLeft, Crown, Loader2, Lock, Link2, ShieldCheck, Trash2, Unlock, User as UserIcon } from "lucide-react";
+import {
+  Check,
+  ChevronLeft,
+  Crown,
+  Loader2,
+  Lock,
+  Link2,
+  ShieldCheck,
+  Trash2,
+  Unlock,
+  User as UserIcon,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import traktLogo from "@/assets/trakt.svg";
 import simklLogo from "@/assets/simkl.png";
@@ -71,8 +82,15 @@ export function EditorView({
   onCancel: () => void;
   onDone: () => void;
 }) {
-  const { profiles, activeProfile, createProfile, updateProfile, deleteProfile, selectProfile, setPrimary } =
-    useProfiles();
+  const {
+    profiles,
+    activeProfile,
+    createProfile,
+    updateProfile,
+    deleteProfile,
+    selectProfile,
+    setPrimary,
+  } = useProfiles();
   const { isConnected: traktConnected } = useTrakt();
   const { isConnected: anilistConnected, avatar: anilistAvatar } = useAnilist();
   const { isConnected: simklConnected } = useSimkl();
@@ -95,11 +113,9 @@ export function EditorView({
   const [avatarSource, setAvatarSource] = useState<
     "trakt" | "anilist" | "simkl" | "upload" | "builtin" | "removed" | null
   >(null);
-  const [color, setColor] = useState<ProfileColor>(
-    editing?.color ?? nextProfileColor(profiles),
-  );
+  const [color, setColor] = useState<ProfileColor>(editing?.color ?? nextProfileColor(profiles));
   const [shareWith, setShareWith] = useState<string | null>(
-    editing ? editing.shareStremioWith : primary?.id ?? null,
+    editing ? editing.shareStremioWith : (primary?.id ?? null),
   );
   const [importSelection, setImportSelection] = useState<Record<ImportDomain, boolean>>({
     settings: false,
@@ -319,7 +335,9 @@ export function EditorView({
   if (subView.kind === "pin-set") {
     return (
       <PinEntry
-        title={editing ? t("Set a PIN for {name}", { name: trimmed || editing.name }) : t("Set a PIN")}
+        title={
+          editing ? t("Set a PIN for {name}", { name: trimmed || editing.name }) : t("Set a PIN")
+        }
         subtitle={t("Pick a 4-digit PIN. You'll be asked for it before this profile opens.")}
         mode="set"
         onBack={() => setSubView({ kind: "security" })}
@@ -478,7 +496,11 @@ export function EditorView({
                   {loadingAnilistAvatar ? (
                     <Loader2 size={12} className="animate-spin" />
                   ) : anilistAvatar ? (
-                    <img src={anilistAvatar} alt="" className="h-3.5 w-3.5 rounded-full object-cover" />
+                    <img
+                      src={anilistAvatar}
+                      alt=""
+                      className="h-3.5 w-3.5 rounded-full object-cover"
+                    />
                   ) : (
                     <Link2 size={12} />
                   )}
@@ -748,9 +770,13 @@ export function EditorView({
               <Crown size={16} strokeWidth={2.2} />
             </span>
             <div className="flex min-w-0 flex-1 flex-col">
-              <span className="text-[13px] font-semibold text-ink">{t("Make this the primary profile")}</span>
+              <span className="text-[13px] font-semibold text-ink">
+                {t("Make this the primary profile")}
+              </span>
               <span className="text-[11.5px] leading-snug text-ink-subtle">
-                {t("The primary manages profiles and can't be deleted. Transfer it here to delete the old one.")}
+                {t(
+                  "The primary manages profiles and can't be deleted. Transfer it here to delete the old one.",
+                )}
               </span>
             </div>
             {!confirmingPrimary ? (
@@ -797,9 +823,13 @@ export function EditorView({
                 <Crown size={16} strokeWidth={2.2} />
               </span>
               <div className="flex min-w-0 flex-1 flex-col">
-                <span className="text-[13px] font-semibold text-ink">{t("This is the primary profile")}</span>
+                <span className="text-[13px] font-semibold text-ink">
+                  {t("This is the primary profile")}
+                </span>
                 <span className="text-[11.5px] leading-snug text-ink-subtle">
-                  {t("It manages profiles and can't be deleted. Hand primary to another profile to delete this one.")}
+                  {t(
+                    "It manages profiles and can't be deleted. Hand primary to another profile to delete this one.",
+                  )}
                 </span>
               </div>
             </div>
@@ -821,7 +851,9 @@ export function EditorView({
                       type="button"
                       onClick={() => setTransferTarget(p.id)}
                       className={`flex items-center gap-2.5 rounded-lg border p-2 text-start transition-colors ${
-                        sel ? "border-accent bg-accent/10" : "border-edge-soft hover:border-edge hover:bg-elevated/40"
+                        sel
+                          ? "border-accent bg-accent/10"
+                          : "border-edge-soft hover:border-edge hover:bg-elevated/40"
                       }`}
                     >
                       <span
@@ -829,13 +861,22 @@ export function EditorView({
                         style={{ boxShadow: `0 0 0 2px ${p.color}` }}
                       >
                         {p.avatar ? (
-                          <img src={p.avatar} alt="" className="h-full w-full object-cover" draggable={false} />
+                          <img
+                            src={p.avatar}
+                            alt=""
+                            className="h-full w-full object-cover"
+                            draggable={false}
+                          />
                         ) : (
                           <CatAvatar className="h-full w-full" />
                         )}
                       </span>
-                      <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-ink">{p.name}</span>
-                      {sel && <Check size={15} className="shrink-0 text-accent" strokeWidth={2.6} />}
+                      <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-ink">
+                        {p.name}
+                      </span>
+                      {sel && (
+                        <Check size={15} className="shrink-0 text-accent" strokeWidth={2.6} />
+                      )}
                     </button>
                   );
                 })}
@@ -878,8 +919,10 @@ export function EditorView({
           >
             {t("common.cancel")}
           </button>
-          {editing && !isPrimary && canEditAdvanced && (
-            !confirmingDelete ? (
+          {editing &&
+            !isPrimary &&
+            canEditAdvanced &&
+            (!confirmingDelete ? (
               <button
                 type="button"
                 onClick={() => setConfirmingDelete(true)}
@@ -909,8 +952,7 @@ export function EditorView({
                   {t("common.confirm")}
                 </button>
               </div>
-            )
-          )}
+            ))}
         </div>
         <button
           type="button"
@@ -995,7 +1037,11 @@ function SecurityRow({
           </span>
         </div>
       </div>
-      <ChevronLeft size={14} strokeWidth={2.2} className="rotate-180 rtl:rotate-0 text-ink-subtle" />
+      <ChevronLeft
+        size={14}
+        strokeWidth={2.2}
+        className="rotate-180 rtl:rotate-0 text-ink-subtle"
+      />
     </button>
   );
 }
@@ -1124,7 +1170,11 @@ function SecurityView({
               </span>
             </div>
           </div>
-          <ChevronLeft size={14} strokeWidth={2.2} className="rotate-180 rtl:rotate-0 text-ink-subtle" />
+          <ChevronLeft
+            size={14}
+            strokeWidth={2.2}
+            className="rotate-180 rtl:rotate-0 text-ink-subtle"
+          />
         </button>
       </div>
     </div>
@@ -1147,7 +1197,9 @@ function ImportRow({
       type="button"
       onClick={onClick}
       className={`flex items-center gap-2.5 rounded-lg border px-3 text-start transition-colors ${
-        checked ? "border-ink/40 bg-canvas/60" : "border-edge-soft hover:border-edge hover:bg-canvas/40"
+        checked
+          ? "border-ink/40 bg-canvas/60"
+          : "border-edge-soft hover:border-edge hover:bg-canvas/40"
       } ${compact ? "py-1.5" : "py-2"}`}
     >
       <span

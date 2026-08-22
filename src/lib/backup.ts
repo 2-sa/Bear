@@ -410,10 +410,9 @@ function profileSuffixOf(key: string): string | null {
  * appended, so foreign ids are swapped for it; when several source profiles
  * collapse onto one target key, the entry with more data wins instead of
  * whichever came last in key order.
- * Watchlist is special: this build keeps it under a bare global key while
- * newer builds store it per-profile, so suffixed entries are additionally
- * aliased onto the bare key — including full backups that carry their own
- * profiles state, whose foreign ids would otherwise stay unreadable here.
+ * Legacy watchlists used a bare global key, while current builds store them
+ * per profile. A scoped restore maps either shape onto the active profile;
+ * full backups retain their original profile layout.
  */
 const BARE_BASES = new Set(["harbor.watchlist.v1", "harbor.watchlist.aggregate.v1"]);
 
@@ -428,14 +427,14 @@ function retargetProfileKeys(data: Record<string, string>): Record<string, strin
   for (const [key, value] of Object.entries(data)) {
     const from = profileSuffixOf(key);
     if (!from) {
-      out[key] = value;
+      if (!profilesIncluded && BARE_BASES.has(key)) {
+        setMerged(`${key}.${target}`, value);
+      } else {
+        out[key] = value;
+      }
       continue;
     }
     const base = key.slice(0, key.length - from.length - 1);
-    if (BARE_BASES.has(base)) {
-      setMerged(base, value);
-      continue;
-    }
     if (profilesIncluded) {
       out[key] = value;
       continue;
@@ -459,7 +458,9 @@ export async function applyBackup(backup: Backup): Promise<void> {
       if (!isPortable(key)) continue;
       filled.add(sectionOf(key));
     }
-    wipeSections = new Set<BackupSectionKey>([...ALL_SECTION_KEYS].filter((key) => filled.has(key)));
+    wipeSections = new Set<BackupSectionKey>(
+      [...ALL_SECTION_KEYS].filter((key) => filled.has(key)),
+    );
     const stale: string[] = [];
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
@@ -501,7 +502,8 @@ export async function applyBackup(backup: Backup): Promise<void> {
       /* keep restoring the rest even if one entry is rejected */
     }
   }
-  const restoresTheme = wipeSections === null || wipeSections.has("theme");
+  const restoresTheme =
+    backup.sections == null || backup.sections.length === 0 || backup.sections.includes("theme");
   if (restoresTheme) {
     if (backup.bgImages) {
       for (const [id, image] of Object.entries(backup.bgImages)) {
