@@ -637,3 +637,12 @@ export function stremioSourceProfileId(active: Profile | null, profiles: Profile
   const exists = profiles.some((p) => p.id === active.shareStremioWith);
   return exists ? active.shareStremioWith : active.id;
 }
+
+export function sharesStremioStorage(
+  a: Profile | null | undefined,
+  b: Profile | null | undefined,
+  profiles: Profile[],
+): boolean {
+  if (!a || !b) return false;
+  return stremioSourceProfileId(a, profiles) === stremioSourceProfileId(b, profiles);
+}
