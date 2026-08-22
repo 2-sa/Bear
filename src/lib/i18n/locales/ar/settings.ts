@@ -2227,6 +2227,12 @@ const settings: Record<string, string> = {
   "Choose which country's catalog Bear shows for services with limited regional availability. This changes TMDB listings only, not Bear's language or connection.": "اختر كتالوج الدولة الذي يعرضه بير للخدمات محدودة التوفر إقليميًا. يؤثر هذا على قوائم TMDB فقط، ولا يغيّر لغة بير أو اتصالك.",
   "Rejects size outliers, suspicious extensions, year/episode mismatches, season packs (for episode requests), trailers, and likely cams.": "يرفض الأحجام غير المنطقية، والامتدادات المشبوهة، وعدم تطابق سنة/حلقة الإصدار، وحزم المواسم (لطلبات الحلقات)، والعروض الدعائية، والجودات الضعيفة (cams).",
   "Default. Keeps the malware/year/episode-mismatch checks but allows season packs and oversized files. Same as hitting Search wider in the picker.": "الافتراضي. يحتفظ بفحص الفيروسات وعدم تطابق السنة/الحلقة، ولكنه يسمح بحزم المواسم والملفات كبيرة الحجم. يعادل اختيار 'بحث أوسع' في القائمة.",
+  "Data copied from {name}": "تم نسخ البيانات من {name}",
+  "Start with data from {name}": "البدء ببيانات من {name}",
+  "Addons ({n})": "الإضافات ({n})",
+  "Watchlist ({n})": "قائمة المشاهدة ({n})",
+  "Watched history": "سجل المشاهدة",
+  "Copied once — afterwards this profile keeps its own copy. Nothing stays linked to Primary.": "تُنسخ البيانات مرة واحدة، وبعدها يحتفظ هذا الملف بنسخته المستقلة ولا يبقى شيء مرتبطًا بالملف الأساسي.",
 };
 
 export default settings;

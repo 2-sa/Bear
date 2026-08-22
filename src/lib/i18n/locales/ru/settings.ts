@@ -1796,6 +1796,12 @@ const settings: Record<string, string> = {
   "Step forward one frame and pause. Frame-accurate on mpv.": "Шаг вперёд на один кадр с паузой. Покадровая точность в mpv.",
   "Rejects size outliers, suspicious extensions, year/episode mismatches, season packs (for episode requests), trailers, and likely cams.": "Отсеивает аномальные размеры, подозрительные расширения, несовпадения года и серии, сезонные раздачи (при запросе серии), трейлеры и вероятные экранки.",
   "Default. Keeps the malware/year/episode-mismatch checks but allows season packs and oversized files. Same as hitting Search wider in the picker.": "По умолчанию. Сохраняет проверки на вредоносное ПО, год и серию, но допускает сезонные раздачи и слишком большие файлы. То же, что «Искать шире» в окне выбора.",
+  "Data copied from {name}": "Данные скопированы из {name}",
+  "Start with data from {name}": "Начать с данных из {name}",
+  "Addons ({n})": "Дополнения ({n})",
+  "Watchlist ({n})": "Список просмотра ({n})",
+  "Watched history": "История просмотров",
+  "Copied once — afterwards this profile keeps its own copy. Nothing stays linked to Primary.": "Данные копируются один раз; затем профиль хранит собственную копию и больше не связан с основным профилем.",
 };
 
 export default settings;

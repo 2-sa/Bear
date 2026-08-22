@@ -1796,6 +1796,12 @@ const settings: Record<string, string> = {
   "Step forward one frame and pause. Frame-accurate on mpv.": "Avança um quadro e pausa. Preciso por quadro no mpv.",
   "Rejects size outliers, suspicious extensions, year/episode mismatches, season packs (for episode requests), trailers, and likely cams.": "Rejeita tamanhos fora do padrão, extensões suspeitas, incompatibilidades de ano/episódio, pacotes de temporada (para pedidos de episódio), trailers e prováveis cams.",
   "Default. Keeps the malware/year/episode-mismatch checks but allows season packs and oversized files. Same as hitting Search wider in the picker.": "Padrão. Mantém as verificações de malware/ano/episódio incompatível, mas permite pacotes de temporada e arquivos grandes demais. O mesmo que clicar em Ampliar busca no seletor.",
+  "Data copied from {name}": "Dados copiados de {name}",
+  "Start with data from {name}": "Começar com dados de {name}",
+  "Addons ({n})": "Addons ({n})",
+  "Watchlist ({n})": "Lista de reprodução ({n})",
+  "Watched history": "Histórico assistido",
+  "Copied once — afterwards this profile keeps its own copy. Nothing stays linked to Primary.": "Os dados são copiados uma vez; depois, este perfil mantém a própria cópia e nada permanece ligado ao perfil principal.",
 };
 
 export default settings;
