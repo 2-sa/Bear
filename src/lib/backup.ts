@@ -109,7 +109,7 @@ export function backupKeyCount(backup: Backup): number {
 
 const PROFILE_ID_RE = /^(?:default|p_[a-z0-9]+_[a-z0-9]+)$/;
 const PROFILES_STATE_KEY = "harbor.profiles.v1";
-const BARE_PROFILE_BASES = new Set(["harbor.watchlist.v1", "harbor.watchlist.aggregate.v1"]);
+const LEGACY_BARE_BASES = new Set(["harbor.watchlist.v1", "harbor.watchlist.aggregate.v1"]);
 
 function profileSuffixOf(key: string): string | null {
   const dot = key.lastIndexOf(".");
@@ -130,14 +130,14 @@ function retargetProfileKeys(data: Record<string, string>): Record<string, strin
   for (const [key, value] of Object.entries(data)) {
     const sourceProfile = profileSuffixOf(key);
     if (!sourceProfile) {
-      out[key] = value;
+      if (!profilesIncluded && LEGACY_BARE_BASES.has(key)) {
+        setMerged(`${key}.${target}`, value);
+      } else {
+        out[key] = value;
+      }
       continue;
     }
     const base = key.slice(0, key.length - sourceProfile.length - 1);
-    if (BARE_PROFILE_BASES.has(base)) {
-      setMerged(base, value);
-      continue;
-    }
     if (profilesIncluded) {
       out[key] = value;
       continue;
