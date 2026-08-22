@@ -1,6 +1,8 @@
 import { downloadText } from "@/lib/download-text";
 import { loadBgImage, saveBgImage } from "@/lib/theme-storage";
 import { readAllProfilesIdentity } from "@/lib/profiles";
+import { activeProfileId } from "@/lib/active-profile-id";
+import { setItemWithRecovery } from "@/lib/storage-recovery";
 
 declare const __APP_VERSION__: string;
 
@@ -105,19 +107,64 @@ export function backupKeyCount(backup: Backup): number {
   return Object.keys(backup.data).length;
 }
 
+const PROFILE_ID_RE = /^(?:default|p_[a-z0-9]+_[a-z0-9]+)$/;
+const PROFILES_STATE_KEY = "harbor.profiles.v1";
+const BARE_PROFILE_BASES = new Set(["harbor.watchlist.v1", "harbor.watchlist.aggregate.v1"]);
+
+function profileSuffixOf(key: string): string | null {
+  const dot = key.lastIndexOf(".");
+  if (dot < 0) return null;
+  const id = key.slice(dot + 1);
+  return PROFILE_ID_RE.test(id) ? id : null;
+}
+
+function retargetProfileKeys(data: Record<string, string>): Record<string, string> {
+  const target = activeProfileId();
+  const profilesIncluded = data[PROFILES_STATE_KEY] != null;
+  const out: Record<string, string> = {};
+  const setMerged = (key: string, value: string) => {
+    const previous = out[key];
+    out[key] = previous != null && previous.length >= value.length ? previous : value;
+  };
+
+  for (const [key, value] of Object.entries(data)) {
+    const sourceProfile = profileSuffixOf(key);
+    if (!sourceProfile) {
+      out[key] = value;
+      continue;
+    }
+    const base = key.slice(0, key.length - sourceProfile.length - 1);
+    if (BARE_PROFILE_BASES.has(base)) {
+      setMerged(base, value);
+      continue;
+    }
+    if (profilesIncluded) {
+      out[key] = value;
+      continue;
+    }
+    setMerged(`${base}.${target}`, value);
+  }
+  return out;
+}
+
 export async function applyBackup(backup: Backup): Promise<void> {
+  const data = retargetProfileKeys(backup.data);
   const stale: string[] = [];
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
     if (key && isPortable(key)) stale.push(key);
   }
   for (const key of stale) localStorage.removeItem(key);
-  for (const [k, v] of Object.entries(backup.data)) {
-    if (!isPortable(k)) continue;
+  const entries = Object.entries(data)
+    .filter(([key]) => isPortable(key))
+    .sort(([, a], [, b]) => a.length - b.length);
+  for (const [k, v] of entries) {
     try {
-      localStorage.setItem(k, v);
-    } catch {
-      /* keep restoring the rest even if one entry is rejected */
+      if (!setItemWithRecovery(k, v)) {
+        console.warn(`[backup] storage refused "${k}" during restore`);
+      }
+    } catch (error) {
+      console.warn(`[backup] failed to restore "${k}"`, error);
     }
   }
   if (backup.bgImages) {
