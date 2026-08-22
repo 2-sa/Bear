@@ -3,6 +3,7 @@ const manga: Record<string, string> = {
   "Hide the top and bottom bars while reading. Arrows, page number, and bookmark stay; the bars return when your cursor reaches the screen edge.": "أخفِ الشريطين العلوي والسفلي أثناء القراءة. تبقى الأسهم ورقم الصفحة والإشارة المرجعية، ويعود الشريطان عندما يصل المؤشر إلى حافة الشاشة.",
   " through ": " حتى ",
   "), put that suffix here.": ")، فضع تلك اللاحقة هنا.",
+  "All Extensions": "كل الإضافات",
   "1. Fill in the top": "1. املأ الجزء العلوي",
   "2. Selector syntax": "2. صيغة المُحدِّد",
   "3. The four blocks": "3. الكتل الأربع",
@@ -109,7 +110,7 @@ const manga: Record<string, string> = {
   "Long strip": "شريط طويل",
   "Make one folder for your library.": "أنشئ مجلدًا واحدًا لمكتبتك.",
   "Make your own source": "أنشئ مصدرك الخاص",
-  "Manage sources": "إدارة المصادر",
+  "Manage Servers": "إدارة الخوادم",
   "Manga sources": "مصادر المانجا",
   "Mute page-turn sound": "كتم صوت تقليب الصفحات",
   "Never target official or licensed publisher sites.": "لا تستهدف أبدًا مواقع الناشرين الرسمية أو المرخّصة.",
@@ -166,7 +167,6 @@ const manga: Record<string, string> = {
   "Reader settings": "إعدادات القارئ",
   "Readers also recommend": "يوصي القرّاء أيضًا",
   "Reading mode": "وضع القراءة",
-  "Refresh sources": "تحديث المصادر",
   "Related series": "سلاسل ذات صلة",
   "Remove all": "إزالة الكل",
   "Remove favorite": "إزالة من المفضّلة",
@@ -304,6 +304,8 @@ const manga: Record<string, string> = {
   "{page} of {count}": "{page} من {count}",
   "← folder or .cbz / .zip": "← مجلد أو .cbz / .zip",
   "← name it like the manga": "← سمِّه باسم المانجا",
+  "Manage sources": "إدارة المصادر",
+  "Refresh sources": "تحديث المصادر",
 };
 
 export default manga;

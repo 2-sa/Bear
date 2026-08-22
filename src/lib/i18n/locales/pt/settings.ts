@@ -1,8 +1,8 @@
 const settings: Record<string, string> = {
-"Sign in to Bear": "Iniciar sessão no Bear",
-  "Create Bear account": "Criar conta Bear",
   "Smooth scrolling": "Deslocamento suave",
   "Eases mouse-wheel scrolling instead of jumping line by line. Turn off if you prefer an instant response or notice any lag.": "Suaviza o deslocamento com a roda do rato em vez de saltar linha a linha. Desative se preferir uma resposta instantânea ou notar lentidão.",
+  "Sign in to Bear": "Iniciar sessão no Bear",
+  "Create Bear account": "Criar conta Bear",
   "Claim your handle": "Reivindicar o seu identificador (@handle)",
   "Reset password (recovery key)": "Repor palavra-passe (chave de recuperação)",
   "Sign out of Bear account": "Terminar sessão da conta Bear",
@@ -515,9 +515,9 @@ const settings: Record<string, string> = {
   "Synced addons": "Addons sincronizados",
   "How aggressively Bear rejects shady or mismatched streams before showing them in the picker.": "O quão agressivamente o Bear rejeita streams suspeitos ou incompatíveis antes de mostrá-los no seletor.",
   "Strict": "Estrito",
-  "Rejects size outliers, suspicious extensions, year/episode mismatches, season packs (for episode requests), trailers, and likely cams.": "Rejeita tamanhos fora do padrão, extensões suspeitas, incompatibilidades de ano/episódio, pacotes de temporada (para pedidos de episódio), trailers e prováveis cams.",
+  "Default. Rejects size outliers, suspicious extensions, year/episode mismatches, season packs (for episode requests), trailers, and likely cams.": "Padrão. Rejeita tamanhos fora do padrão, extensões suspeitas, incompatibilidades de ano/episódio, pacotes de temporada (para pedidos de episódio), trailers e prováveis cams.",
   "Balanced": "Equilibrado",
-  "Default. Keeps the malware/year/episode-mismatch checks but allows season packs and oversized files. Same as hitting Search wider in the picker.": "Padrão. Mantém as verificações de malware/ano/episódio incompatível, mas permite pacotes de temporada e arquivos grandes demais. O mesmo que clicar em Ampliar busca no seletor.",
+  "Keeps the malware/year/episode-mismatch checks but allows season packs and oversized files. Same as hitting Search wider in the picker.": "Mantém as verificações de malware/ano/episódio incompatível, mas permite pacotes de temporada e arquivos grandes demais. O mesmo que clicar em Ampliar busca no seletor.",
   "No filtering. Every stream every addon returns shows up, including obvious junk. You'll be on your own.": "Sem filtragem. Todos os streams retornados por qualquer addon aparecem, inclusive lixo óbvio. Você estará por sua conta.",
   "Condensed": "Condensado",
   "Default. Top pick at the top, quality tiles, and an All-Sources drawer. Bear scores and ranks results.": "Padrão. Melhor opção no topo, blocos de qualidade e uma gaveta com todas as fontes. O Bear pontua e classifica os resultados.",
@@ -624,6 +624,7 @@ const settings: Record<string, string> = {
   "Press a key…": "Pressione uma tecla…",
   "Focus search": "Focar busca",
   "Jump to the top-bar search from anywhere.": "Vá para a busca da barra superior de qualquer lugar.",
+  "Open Bear's settings outside playback.": "Abra as configurações do Bear fora da reprodução.",
   "Your face in Watch Together rooms, sessions, and chat. Sits on top of your Stremio account.": "Seu rosto nas salas, sessões e chat do Assistir Juntos. Fica em cima da sua conta Stremio.",
   "Use my AniList avatar as my Bear avatar": "Usar meu avatar do AniList como avatar do Bear",
   "Use my Trakt avatar as my Bear avatar": "Usar meu avatar do Trakt como avatar do Bear",
@@ -1429,6 +1430,7 @@ const settings: Record<string, string> = {
   "Saved {when} from Bear {app}.": "Salvo {when} pelo Bear {app}.",
   "Restoring...": "Restaurando...",
   "Restore and reload": "Restaurar e recarregar",
+  "Xtream credentials were left out of this backup.": "As credenciais Xtream foram deixadas de fora deste backup.",
   "Get beta updates": "Receber atualizações beta",
   "Receive early builds with the newest fixes before they reach the stable release. Betas can be rough around the edges; switch this off to return to stable at the next update.": "Receba builds antecipadas com as correções mais recentes antes de chegarem à versão estável. Betas podem ter arestas; desative para voltar ao estável na próxima atualização.",
   "Catch stremio:// install links inside Bear": "Capturar links de instalação stremio:// dentro do Bear",
@@ -1792,6 +1794,8 @@ const settings: Record<string, string> = {
   "Next frame": "Próximo quadro",
   "Step back one frame and pause. Frame-accurate on mpv.": "Volta um quadro e pausa. Preciso por quadro no mpv.",
   "Step forward one frame and pause. Frame-accurate on mpv.": "Avança um quadro e pausa. Preciso por quadro no mpv.",
+  "Rejects size outliers, suspicious extensions, year/episode mismatches, season packs (for episode requests), trailers, and likely cams.": "Rejeita tamanhos fora do padrão, extensões suspeitas, incompatibilidades de ano/episódio, pacotes de temporada (para pedidos de episódio), trailers e prováveis cams.",
+  "Default. Keeps the malware/year/episode-mismatch checks but allows season packs and oversized files. Same as hitting Search wider in the picker.": "Padrão. Mantém as verificações de malware/ano/episódio incompatível, mas permite pacotes de temporada e arquivos grandes demais. O mesmo que clicar em Ampliar busca no seletor.",
 };
 
 export default settings;

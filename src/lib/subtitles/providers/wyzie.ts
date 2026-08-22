@@ -1,5 +1,6 @@
 import type { SubResult, SubSearchQuery } from "../types";
 import { normalizeLang } from "../language";
+import { safeFetch } from "@/lib/safe-fetch";
 
 const ENDPOINT = "https://sub.wyzie.io/search";
 
@@ -33,7 +34,7 @@ export async function searchWyzie(q: SubSearchQuery): Promise<SubResult[]> {
   }
   let resp: Response;
   try {
-    resp = await fetch(`${ENDPOINT}?${params.toString()}`, {
+    resp = await safeFetch(`${ENDPOINT}?${params.toString()}`, {
       headers: { Accept: "application/json" },
     });
   } catch {

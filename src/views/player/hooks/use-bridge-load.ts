@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState, type RefObject } from "react";
 import type { PlayerBridge } from "@/lib/player/bridge";
 import { cloudWriteId } from "@/lib/stremio";
-import { resolveStartMs } from "@/lib/player/resume-start";
+import { isResumeStartReady, resolveStartMs } from "@/lib/player/resume-start";
 import type { PlayerSrc } from "@/lib/view";
 import { videoIdFor } from "./use-stremio-sync";
 import { useSettings } from "@/lib/settings";
+import { playbackStartupProfile } from "@/lib/player/startup-profile";
+import { releaseStreamProxy, retainStreamProxy } from "@/lib/stream-proxy";
 
 const RESUME_PROMPT_MIN_SEC = 30;
 const RESTART_THRESHOLD = 0.8;
@@ -52,6 +54,15 @@ export function useBridgeLoad(params: {
   const ackRef = useRef<((action: "resume" | "start-over") => void) | null>(null);
 
   useEffect(() => {
+    const sessionId = src.proxySessionId;
+    if (!sessionId) return;
+    retainStreamProxy(sessionId);
+    return () => {
+      releaseStreamProxy(sessionId);
+    };
+  }, [src.proxySessionId]);
+
+  useEffect(() => {
     if (!bridgeReady) return;
     const bridge = bridgeRef.current;
     if (!bridge) return;
@@ -72,18 +83,47 @@ export function useBridgeLoad(params: {
         src,
         cloudWriteId(src.meta.id, src.imdbId ?? null, src.imdbIdVerified === true),
       );
-      const resolved =
-        isLive || src.startFromZero
-          ? { ms: 0, fromRemote: false, finished: false }
-          : await resolveStartMs({
-              metaId: src.meta.id,
-              season,
-              episode,
-              authKey,
-              imdbId: src.imdbId ?? null,
-              imdbVerified: src.imdbIdVerified === true,
-              openingVid,
-            });
+      const resumeIdentity = {
+        metaId: src.meta.id,
+        authKey,
+        imdbId: src.imdbId ?? null,
+        imdbVerified: src.imdbIdVerified === true,
+      };
+      const shouldResolveResume =
+        !isLive && !src.startFromZero && (resumePlaybackRef.current || resumePromptRef.current);
+      const resumePromise = !shouldResolveResume
+        ? Promise.resolve({ ms: 0, fromRemote: false, finished: false })
+        : resolveStartMs({
+            ...resumeIdentity,
+            season,
+            episode,
+            openingVid,
+          });
+      const loadMedia = () =>
+        bridge.load({
+          url: playUrl,
+          traceId: src.playbackTraceId,
+          startupProfile: playbackStartupProfile(src.streamRef),
+          subtitles: src.subtitles,
+          notWebReady: src.notWebReady,
+          isLive,
+          headers: src.headers,
+        });
+      let resolved: Awaited<typeof resumePromise>;
+      try {
+        const waitBeforeLoad =
+          shouldResolveResume && !!authKey && !isResumeStartReady(resumeIdentity);
+        if (waitBeforeLoad) {
+          resolved = await resumePromise;
+          await loadMedia();
+        } else {
+          [resolved] = await Promise.all([resumePromise, loadMedia()]);
+        }
+      } catch (e) {
+        if (cancelled) return;
+        console.warn("[player] load failed", e);
+        return;
+      }
       const startMs = resolved.ms;
       const runtimeMin = src.episode?.runtime ?? null;
       const durationMs = runtimeMin && runtimeMin > 0 ? runtimeMin * 60_000 : 0;
@@ -98,19 +138,6 @@ export function useBridgeLoad(params: {
         resumePromptRef.current &&
         startSec > RESUME_PROMPT_MIN_SEC &&
         !guestInRoom;
-      try {
-        await bridge.load({
-          url: playUrl,
-          subtitles: src.subtitles,
-          notWebReady: src.notWebReady,
-          isLive,
-          headers: src.headers,
-        });
-      } catch (e) {
-        if (cancelled) return;
-        console.warn("[player] load failed", e);
-        return;
-      }
       if (cancelled) return;
       if (eligibleForPrompt) {
         bridge.pause();
@@ -146,6 +173,7 @@ export function useBridgeLoad(params: {
     bridgeKey,
     src.url,
     src.notWebReady,
+    src.playbackTraceId,
     src.meta.id,
     src.subtitles,
     season,

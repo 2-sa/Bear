@@ -90,6 +90,8 @@ import { SFX } from "@/lib/sfx";
 import { useKeyboardNavigation } from "@/lib/keyboard-navigation";
 import { subtitleStreamKey } from "@/lib/subtitles/subtitle-memory";
 import { SUBTITLE_FPS_TRANSITION_FAILED_EVENT } from "@/lib/player/subtitle-fps";
+import { PlayerInteractionLockControls } from "@/components/player/player-interaction-lock";
+import { usePlayerInteractionLock } from "./player/hooks/use-player-interaction-lock";
 
 let hdrFallbackNoticeShown = false;
 
@@ -264,6 +266,12 @@ export function PlayerView({ src }: { src: PlayerSrc }) {
       setChromeHidden,
       keyboardPauseShowsControls: settings.keyboardPauseShowsControls,
     });
+  const {
+    locked: screenLocked,
+    binding: screenLockBinding,
+    lock: lockScreen,
+    unlock: unlockScreen,
+  } = usePlayerInteractionLock();
 
   const { adjacent, swappingEp, goToEpisode } = useEpisodeNavigation({
     src,
@@ -364,6 +372,7 @@ export function PlayerView({ src }: { src: PlayerSrc }) {
     setSwitcherOpen,
     swapResolvingKey,
     liveUrl,
+    liveHistoryUrl,
     liveStreamRef,
     pickAnother,
     onSwitchStream,
@@ -377,8 +386,8 @@ export function PlayerView({ src }: { src: PlayerSrc }) {
     () =>
       liveUrl === src.url && liveStreamRef === src.streamRef
         ? src
-        : { ...src, url: liveUrl, streamRef: liveStreamRef },
-    [src, liveUrl, liveStreamRef],
+        : { ...src, url: liveUrl, historyUrl: liveHistoryUrl, streamRef: liveStreamRef },
+    [src, liveUrl, liveHistoryUrl, liveStreamRef],
   );
   const { resolvedImdbId, subAssNative, captureExitSnapshot, download, subDropToast } =
     usePlayerMedia({
@@ -400,9 +409,9 @@ export function PlayerView({ src }: { src: PlayerSrc }) {
 
   const contentAdvisory = useContentAdvisory(
     settings.contentAdvisoryToast,
-    resolvedImdbId,
+    resolvedImdbId ?? src.imdbId ?? (src.meta.id.startsWith("tt") ? src.meta.id : null),
     src.url,
-    playing,
+    src.meta,
   );
   const { hostSourceRef } = useHostSource({
     inRoom,
@@ -452,7 +461,7 @@ export function PlayerView({ src }: { src: PlayerSrc }) {
   });
 
   const { closePlayer, onStubEject } = usePlayerExit({
-    src,
+    src: activeMediaSrc,
     season,
     episode,
     bridgeRef,
@@ -484,7 +493,7 @@ export function PlayerView({ src }: { src: PlayerSrc }) {
   useKeyboardNavigation({
     // TV focus navigation intentionally owns arrows and Space while enabled.
     // Keep it opt-in so standard player hotkeys remain the default.
-    enabled: settings.tvNavigation && settings.playerTvNavigation,
+    enabled: settings.tvNavigation && settings.playerTvNavigation && !screenLocked,
     wrap: true,
     arrows: chromeVisible && !pipMode,
     onBack: () => {
@@ -671,10 +680,7 @@ export function PlayerView({ src }: { src: PlayerSrc }) {
     const onSubtitleFpsTransitionFailed = () => {
       showSyncToast("error", t("Couldn't switch subtitles. Try again."));
     };
-    window.addEventListener(
-      SUBTITLE_FPS_TRANSITION_FAILED_EVENT,
-      onSubtitleFpsTransitionFailed,
-    );
+    window.addEventListener(SUBTITLE_FPS_TRANSITION_FAILED_EVENT, onSubtitleFpsTransitionFailed);
     return () => {
       window.removeEventListener(
         SUBTITLE_FPS_TRANSITION_FAILED_EVENT,
@@ -718,7 +724,7 @@ export function PlayerView({ src }: { src: PlayerSrc }) {
   const videoFill = useVideoFill(bridgeRef, src.url, playing);
   useLivePictureEq(bridgeRef, src.url);
   const anime4k = useAnime4k(bridgeRef, src.url, src, snap.videoWidth);
-  const { holdSpeedActive, showStats } = usePlayerHotkeys({
+  const { holdSpeedActive, showStats, subtitleOffsetSec } = usePlayerHotkeys({
     bridgeRef,
     snap,
     metaId: src.meta.id,
@@ -937,7 +943,8 @@ export function PlayerView({ src }: { src: PlayerSrc }) {
     swapResolvingKey,
   });
   const [loaderShowing, setLoaderShowing] = useState(false);
-  const showChrome = !loaderActive && !loaderShowing && (chromeVisible || drawMode);
+  const showChrome =
+    !screenLocked && !loaderActive && !loaderShowing && (chromeVisible || drawMode);
   const liveShellSnap = cast.castDevice
     ? { ...snap, status: (cast.castPlaying ? "playing" : "paused") as typeof snap.status }
     : snap;
@@ -987,6 +994,7 @@ export function PlayerView({ src }: { src: PlayerSrc }) {
     subAssNative,
     showStats,
     holdSpeedActive,
+    subtitleOffsetSec,
     volumeIndicator,
     volumeHudPosition: settings.playerVolumeHudPosition,
     videoFillPill: videoFill.pill,
@@ -1143,7 +1151,7 @@ export function PlayerView({ src }: { src: PlayerSrc }) {
       data-harbor-player
       dir="ltr"
       className={`fixed inset-0 z-[100] overflow-hidden ${stageBg}`}
-      style={cursorStyle}
+      style={screenLocked ? { cursor: "default" } : cursorStyle}
       onMouseMove={wakeChrome}
       onMouseEnter={wakeChrome}
     >
@@ -1159,6 +1167,15 @@ export function PlayerView({ src }: { src: PlayerSrc }) {
         }}
       />
       {!hdrStageActive && <PlayerOverlayLayers {...overlayProps} />}
+      {!hdrStageActive && (
+        <PlayerInteractionLockControls
+          locked={screenLocked}
+          visible={showChrome}
+          binding={screenLockBinding}
+          onLock={lockScreen}
+          onUnlock={unlockScreen}
+        />
+      )}
       {stillPrompt && (
         <StillWatchingPrompt
           show={src.meta.name ?? ""}
@@ -1200,6 +1217,8 @@ export function PlayerView({ src }: { src: PlayerSrc }) {
           hasPrevEp: hasPrevEpisodeNow,
           hasNextEp: hasNextEpisodeNow,
           pipMode,
+          screenLocked,
+          screenLockBinding,
         }}
         handlers={{
           playPause: playPauseToggle,
@@ -1221,6 +1240,8 @@ export function PlayerView({ src }: { src: PlayerSrc }) {
           screenshot: () => frameGrab.trigger(),
           menuOpen: setAnyMenuOpen,
           activity: wakeChrome,
+          lock: lockScreen,
+          unlock: unlockScreen,
         }}
       />
     </main>

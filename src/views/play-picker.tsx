@@ -7,6 +7,10 @@ import { torrentsDisabled } from "@/lib/torrent/stremio-stream";
 import { useAuth } from "@/lib/auth";
 import type { Meta } from "@/lib/cinemeta";
 import { useDebridClients } from "@/lib/debrid/registry";
+import {
+  cachedDebridPreparationSignature,
+  prepareCachedDebridStreams,
+} from "@/lib/debrid/playback-preparation";
 import { useTogether } from "@/lib/together/provider";
 import { buildMatchScores, matchBadge, MATCH_CLOSE } from "@/lib/together/source-match";
 import { HostSourceBanner } from "@/components/host-source-banner";
@@ -339,6 +343,36 @@ export function PlayPicker({
     if (!hostMatch) return base;
     return base.slice().sort((a, b) => (hostMatch.get(b) ?? 0) - (hostMatch.get(a) ?? 0));
   }, [filteredPicker, addonOrderMode, result, addons, hostMatch]);
+
+  const playbackPreparationHint = useMemo(
+    () =>
+      episode ? { season: episode.season ?? null, episode: episode.episode ?? null } : undefined,
+    [episode?.season, episode?.episode],
+  );
+  const playbackPreparationSignature = useMemo(
+    () => cachedDebridPreparationSignature(displayStreams, debrids, playbackPreparationHint),
+    [displayStreams, debrids, playbackPreparationHint],
+  );
+  const playbackPreparationInput = useRef({
+    streams: displayStreams,
+    debrids,
+    hint: playbackPreparationHint,
+  });
+  playbackPreparationInput.current = {
+    streams: displayStreams,
+    debrids,
+    hint: playbackPreparationHint,
+  };
+
+  useEffect(() => {
+    if (!settings.instantPlaybackPreparation || isDownload || !playbackPreparationSignature) {
+      return;
+    }
+    const ac = new AbortController();
+    const { streams, debrids: clients, hint } = playbackPreparationInput.current;
+    void prepareCachedDebridStreams(streams, clients, hint, ac.signal);
+    return () => ac.abort();
+  }, [settings.instantPlaybackPreparation, isDownload, playbackPreparationSignature]);
 
   const langHiddenCount = useMemo(() => {
     if (!result || preferredLangs.length === 0) return 0;

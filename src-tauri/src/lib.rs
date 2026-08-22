@@ -765,6 +765,8 @@ pub fn run() {
             hdr_overlay::hdr_overlay_emit_action,
             mpv::mpv_sub_add,
             mpv::sub_download,
+            mpv::mpv_release_media,
+            mpv::mpv_restore_media_surface,
             mpv::mpv_stop,
             pip::pip_open,
             pip::pip_get_session,

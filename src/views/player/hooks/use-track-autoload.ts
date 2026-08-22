@@ -161,6 +161,11 @@ export function useTrackAutoload(params: {
   }, [resolutionSettled, resolvedImdbId, resolvedImdbVerified, src]);
 
   const autoSubLoadKeyRef = useRef<string | null>(null);
+  const autoSubStagesRef = useRef(new Set<string>());
+  useEffect(() => {
+    autoSubLoadKeyRef.current = null;
+    autoSubStagesRef.current.clear();
+  }, [src.url]);
   useEffect(() => {
     if (!resolutionSettled) return;
     const mediaReady = snap.audioTracks.length > 0 || snap.durationSec > 0;
@@ -168,9 +173,20 @@ export function useTrackAutoload(params: {
     const readyAddons = enabled.addons === false ? [] : userAddons;
     const searchImdbId = subtitleSearchImdbId(resolvedImdbId, resolvedImdbVerified);
     const contentId = searchImdbId ?? src.meta.id;
-    if (!canStartSubtitleAutoload({ imdbId: contentId, mediaReady, addons: readyAddons })) return;
+    if (!canStartSubtitleAutoload({ imdbId: contentId, mediaReady })) return;
     const key = `${contentId}|${src.episode?.season ?? ""}|${src.episode?.episode ?? ""}|${src.url}`;
-    if (autoSubLoadKeyRef.current === key) return;
+    const coreStageKey = `${key}|core`;
+    const coreStarted = autoSubStagesRef.current.has(coreStageKey);
+    const stage = readyAddons == null ? "core" : coreStarted ? "addons" : "all";
+    const addonSignature =
+      readyAddons == null
+        ? ""
+        : readyAddons
+            .map((addon) => addon.transportUrl)
+            .sort()
+            .join("|");
+    const stageKey = stage === "addons" ? `${key}|addons|${addonSignature}` : `${key}|${stage}`;
+    if (autoSubStagesRef.current.has(stageKey)) return;
     const subIsAnime =
       !!src.meta.id?.startsWith("kitsu:") ||
       !!src.meta.id?.startsWith("mal:") ||
@@ -196,8 +212,9 @@ export function useTrackAutoload(params: {
       ? (src.episode?.imdbEpisode ?? src.episode?.episode)
       : src.episode?.episode;
     autoSubLoadKeyRef.current = key;
+    autoSubStagesRef.current.add(stageKey);
     void (async () => {
-      console.info("[subs/autoload] starting", {
+      console.info(`[subs/autoload] starting ${stage} stage`, {
         imdbId: searchImdbId,
         candidateIds,
         season: searchSeason,
@@ -243,9 +260,17 @@ export function useTrackAutoload(params: {
       const result = await fetchSubtitlesIntoPlayer({
         ...base,
         bridge: b,
+        providers:
+          stage === "core"
+            ? { addons: false }
+            : stage === "addons"
+              ? { opensubtitles: false, wyzie: false, addons: true, extras: false }
+              : undefined,
         isActive: () => autoSubLoadKeyRef.current === key,
       });
-      console.info(`[subs/autoload] found ${result.found}, added ${result.added} tracks`);
+      console.info(
+        `[subs/autoload] ${stage} stage found ${result.found}, added ${result.added} tracks`,
+      );
     })();
   }, [
     resolvedImdbId,

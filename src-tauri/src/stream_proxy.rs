@@ -4,13 +4,14 @@ use axum::http::{HeaderMap, HeaderName, HeaderValue, StatusCode};
 use axum::response::{IntoResponse, Response};
 use axum::routing::get;
 use axum::Router;
+use futures_util::StreamExt;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::net::TcpListener;
-use tokio::sync::RwLock;
+use tokio::sync::{watch, RwLock};
 use uuid::Uuid;
 
 use crate::cast_hls::HlsState;
@@ -24,7 +25,21 @@ struct Session {
     transcode: bool,
     profile: TranscodeProfile,
     burn_sub: Option<(String, String)>,
+    prebuffer: Option<watch::Receiver<PrebufferState>>,
     created_at: Instant,
+}
+
+#[derive(Clone)]
+enum PrebufferState {
+    Loading,
+    Ready(Arc<PreparedPrefix>),
+    Failed,
+}
+
+struct PreparedPrefix {
+    bytes: Vec<u8>,
+    total_size: u64,
+    response_headers: HeaderMap,
 }
 
 #[derive(Clone)]
@@ -42,12 +57,15 @@ pub struct RegisterResult {
 }
 
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct RegisterArgs {
     pub url: String,
     #[serde(default)]
     pub headers: HashMap<String, String>,
     #[serde(default)]
     pub transcode: bool,
+    #[serde(default)]
+    pub prebuffer_bytes: Option<usize>,
     #[serde(default)]
     pub profile: Option<TranscodeProfile>,
     #[serde(default)]
@@ -117,6 +135,7 @@ impl ProxyState {
                     transcode: false,
                     profile: args.profile.unwrap_or_default(),
                     burn_sub: None,
+                    prebuffer: None,
                     created_at: Instant::now(),
                 };
                 self.sessions.write().await.insert(id.clone(), session);
@@ -128,6 +147,20 @@ impl ProxyState {
                 };
             }
         }
+        let prebuffer = if !args.transcode {
+            args.prebuffer_bytes
+                .filter(|bytes| *bytes > 0)
+                .map(|bytes| {
+                    start_prebuffer(
+                        self.client.clone(),
+                        args.url.clone(),
+                        args.headers.clone(),
+                        bytes,
+                    )
+                })
+        } else {
+            None
+        };
         let session = Session {
             url: args.url.clone(),
             base_url: None,
@@ -135,6 +168,7 @@ impl ProxyState {
             transcode: args.transcode,
             profile: args.profile.unwrap_or_default(),
             burn_sub: None,
+            prebuffer,
             created_at: Instant::now(),
         };
         self.sessions.write().await.insert(id.clone(), session);
@@ -199,6 +233,7 @@ impl ProxyState {
                 transcode: false,
                 profile: args.profile.unwrap_or_default(),
                 burn_sub: None,
+                prebuffer: None,
                 created_at: Instant::now(),
             };
             self.sessions.write().await.insert(id.clone(), session);
@@ -216,6 +251,7 @@ impl ProxyState {
             transcode: args.transcode,
             profile: args.profile.unwrap_or_default(),
             burn_sub,
+            prebuffer: None,
             created_at: Instant::now(),
         };
         self.sessions.write().await.insert(id.clone(), session);
@@ -337,6 +373,182 @@ fn guess_ct_from_url(url: &str) -> &'static str {
     "video/mp4"
 }
 
+const PREBUFFER_MIN_BYTES: usize = 256 * 1024;
+const PREBUFFER_MAX_BYTES: usize = 2 * 1024 * 1024;
+const PREBUFFER_TIMEOUT: Duration = Duration::from_millis(2500);
+
+fn start_prebuffer(
+    client: reqwest::Client,
+    url: String,
+    headers: HashMap<String, String>,
+    requested_bytes: usize,
+) -> watch::Receiver<PrebufferState> {
+    let (tx, rx) = watch::channel(PrebufferState::Loading);
+    let byte_limit = requested_bytes.clamp(PREBUFFER_MIN_BYTES, PREBUFFER_MAX_BYTES);
+    tokio::spawn(async move {
+        let state = match fetch_prebuffer_prefix(client, &url, &headers, byte_limit).await {
+            Ok(prefix) => {
+                eprintln!(
+                    "[harbor::proxy] playback prefix ready bytes={} total={}",
+                    prefix.bytes.len(),
+                    prefix.total_size
+                );
+                PrebufferState::Ready(Arc::new(prefix))
+            }
+            Err(reason) => {
+                eprintln!("[harbor::proxy] playback prefix unavailable reason={reason}");
+                PrebufferState::Failed
+            }
+        };
+        tx.send_replace(state);
+    });
+    rx
+}
+
+async fn fetch_prebuffer_prefix(
+    client: reqwest::Client,
+    url: &str,
+    headers: &HashMap<String, String>,
+    byte_limit: usize,
+) -> Result<PreparedPrefix, &'static str> {
+    let mut req = client
+        .get(url)
+        .timeout(PREBUFFER_TIMEOUT)
+        .header("range", format!("bytes=0-{}", byte_limit - 1));
+    for (key, value) in headers {
+        if key.eq_ignore_ascii_case("accept-encoding") || key.eq_ignore_ascii_case("range") {
+            continue;
+        }
+        req = req.header(key, value);
+    }
+    let upstream = req.send().await.map_err(|_| "request")?;
+    let status = upstream.status();
+    if status != StatusCode::PARTIAL_CONTENT {
+        return Err("range");
+    }
+    let total_size = upstream
+        .headers()
+        .get("content-range")
+        .and_then(|value| value.to_str().ok())
+        .and_then(content_range_total)
+        .ok_or("size")?;
+    if total_size == 0 {
+        return Err("empty");
+    }
+
+    let mut response_headers = HeaderMap::new();
+    for name in ["content-type", "etag", "last-modified", "cache-control"] {
+        if let Some(value) = upstream.headers().get(name) {
+            if let (Ok(name), Ok(value)) = (
+                HeaderName::try_from(name),
+                HeaderValue::from_bytes(value.as_bytes()),
+            ) {
+                response_headers.insert(name, value);
+            }
+        }
+    }
+
+    let total_capacity = usize::try_from(total_size).unwrap_or(usize::MAX);
+    let mut bytes = Vec::with_capacity(byte_limit.min(total_capacity));
+    let mut stream = upstream.bytes_stream();
+    while bytes.len() < byte_limit {
+        let Some(chunk) = stream.next().await else {
+            break;
+        };
+        let chunk = chunk.map_err(|_| "body")?;
+        let remaining = byte_limit - bytes.len();
+        bytes.extend_from_slice(&chunk[..chunk.len().min(remaining)]);
+    }
+    if bytes.is_empty() {
+        return Err("empty");
+    }
+    Ok(PreparedPrefix {
+        bytes,
+        total_size,
+        response_headers,
+    })
+}
+
+fn content_range_total(value: &str) -> Option<u64> {
+    let range = value.trim().strip_prefix("bytes ")?;
+    let (bounds, total) = range.split_once('/')?;
+    let (start, _) = bounds.split_once('-')?;
+    if start != "0" {
+        return None;
+    }
+    total.parse::<u64>().ok()
+}
+
+fn requested_prefix_len(headers: &HeaderMap, available: usize, total_size: u64) -> Option<usize> {
+    let value = headers.get("range")?.to_str().ok()?.trim();
+    let value = value.strip_prefix("bytes=")?;
+    if value.contains(',') {
+        return None;
+    }
+    let (start, end) = value.split_once('-')?;
+    if start != "0" {
+        return None;
+    }
+    let requested = if end.is_empty() {
+        available
+    } else {
+        end.parse::<usize>().ok()?.saturating_add(1)
+    };
+    let representation_len = usize::try_from(total_size).unwrap_or(usize::MAX);
+    let requested = requested.min(representation_len);
+    (requested > 0 && requested <= available).then_some(requested)
+}
+
+async fn prepared_prefix_response(session: &Session, headers: &HeaderMap) -> Option<Response> {
+    let mut receiver = session.prebuffer.clone()?;
+    let prepared = tokio::time::timeout(PREBUFFER_TIMEOUT + Duration::from_millis(250), async {
+        loop {
+            let state = receiver.borrow().clone();
+            match state {
+                PrebufferState::Ready(prefix) => return Some(prefix),
+                PrebufferState::Failed => return None,
+                PrebufferState::Loading => {
+                    if receiver.changed().await.is_err() {
+                        return None;
+                    }
+                }
+            }
+        }
+    })
+    .await
+    .ok()
+    .flatten()?;
+    let len = requested_prefix_len(headers, prepared.bytes.len(), prepared.total_size)?;
+    let mut response_headers = prepared.response_headers.clone();
+    response_headers.insert(
+        HeaderName::from_static("content-length"),
+        HeaderValue::from_str(&len.to_string()).ok()?,
+    );
+    response_headers.insert(
+        HeaderName::from_static("content-range"),
+        HeaderValue::from_str(&format!("bytes 0-{}/{}", len - 1, prepared.total_size)).ok()?,
+    );
+    response_headers.insert(
+        HeaderName::from_static("accept-ranges"),
+        HeaderValue::from_static("bytes"),
+    );
+    response_headers.insert(
+        HeaderName::from_static("access-control-allow-origin"),
+        HeaderValue::from_static("*"),
+    );
+    response_headers.insert(
+        HeaderName::from_static("access-control-expose-headers"),
+        HeaderValue::from_static("Content-Length, Content-Range"),
+    );
+    let mut response = Response::builder().status(StatusCode::PARTIAL_CONTENT);
+    if let Some(out_headers) = response.headers_mut() {
+        out_headers.extend(response_headers);
+    }
+    response
+        .body(Body::from(prepared.bytes[..len].to_vec()))
+        .ok()
+}
+
 async fn handle_stream(
     State(state): State<ProxyState>,
     Path(id_with_ext): Path<String>,
@@ -370,6 +582,11 @@ async fn handle_stream(
             session.burn_sub.as_ref(),
         )
         .await;
+    }
+
+    if let Some(response) = prepared_prefix_response(&session, &headers).await {
+        eprintln!("[harbor::proxy] served playback prefix id={id}");
+        return response;
     }
 
     forward_upstream(&state, &session, &session.url, &headers).await
@@ -619,4 +836,27 @@ pub async fn proxy_unregister(
 #[tauri::command]
 pub async fn proxy_gc_idle(state: tauri::State<'_, ProxyState>) -> Result<usize, String> {
     Ok(state.gc_idle().await)
+}
+
+#[cfg(test)]
+mod prebuffer_tests {
+    use super::*;
+
+    #[test]
+    fn parses_only_zero_based_content_ranges() {
+        assert_eq!(content_range_total("bytes 0-1023/4096"), Some(4096));
+        assert_eq!(content_range_total("bytes 1-1023/4096"), None);
+        assert_eq!(content_range_total("bytes */4096"), None);
+    }
+
+    #[test]
+    fn serves_only_ranges_fully_covered_by_the_prefix() {
+        let mut headers = HeaderMap::new();
+        headers.insert("range", HeaderValue::from_static("bytes=0-1"));
+        assert_eq!(requested_prefix_len(&headers, 1024, 4096), Some(2));
+        headers.insert("range", HeaderValue::from_static("bytes=0-2047"));
+        assert_eq!(requested_prefix_len(&headers, 1024, 4096), None);
+        headers.insert("range", HeaderValue::from_static("bytes=20-40"));
+        assert_eq!(requested_prefix_len(&headers, 1024, 4096), None);
+    }
 }

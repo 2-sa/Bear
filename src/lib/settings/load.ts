@@ -14,6 +14,10 @@ import {
   sanitizeFullscreenClockStyle,
 } from "@/lib/local-time";
 import { normalizePosterCardSettings } from "@/lib/poster-backdrop-expansion";
+import {
+  sanitizeSubtitleOffsetPosition,
+  sanitizeSubtitleOffsetSize,
+} from "@/lib/player/subtitle-offset";
 
 const RETIRED_GEMINI = new Set([
   "gemini-2.0-flash",
@@ -28,6 +32,7 @@ const RETIRED_GEMINI = new Set([
 import { DEFAULT, STORAGE_KEY } from "./defaults";
 import { migrateRelayDefault } from "../together/relay-version";
 import type { Settings } from "./types";
+import { adoptLegacyPlaylists, readPlaylists } from "@/lib/iptv/playlists-store";
 
 const HEX_RE = /^#[0-9a-f]{6}$/i;
 
@@ -175,6 +180,9 @@ export function loadStoredSettings(rawKey: string = STORAGE_KEY): Settings {
       parsed.stremioDeeplinkInstall = true;
       parsed._stremioDeeplinkOnByDefault = true;
     }
+    if (parsed.contentAdvisoryTheme !== "monochrome" && parsed.contentAdvisoryTheme !== "colored") {
+      parsed.contentAdvisoryTheme = "colored";
+    }
     if (!parsed._anilistSyncOnV1) {
       parsed.anilistAutoSync = true;
       parsed._anilistSyncOnV1 = true;
@@ -244,11 +252,17 @@ export function loadStoredSettings(rawKey: string = STORAGE_KEY): Settings {
       parsed._smoothScrollOptIn = true;
     }
     if (!parsed._playlistsTabV1) {
-      const lists = parsed.iptvPlaylists;
-      const hasVodSource =
-        Array.isArray(lists) && lists.some((l) => l && (l as { kind?: string }).kind !== "epg");
+      const lists = readPlaylists();
+      const hasVodSource = Array.isArray(lists) && lists.some((l) => l?.kind !== "epg");
       if (hasVodSource) parsed.showPlaylistsTab = true;
       parsed._playlistsTabV1 = true;
+    }
+    // Playlists now live in their own store; adopt any stranded legacy field and
+    // only drop it once it has been persisted, so a failed write never loses data.
+    if ("iptvPlaylists" in parsed) {
+      if (adoptLegacyPlaylists(Array.isArray(parsed.iptvPlaylists) ? parsed.iptvPlaylists : [])) {
+        delete parsed.iptvPlaylists;
+      }
     }
     if (!parsed._navThemeRepairV1) {
       const nav = parsed.navCustomization as Partial<Settings["navCustomization"]> | undefined;
@@ -288,6 +302,12 @@ export function loadStoredSettings(rawKey: string = STORAGE_KEY): Settings {
         ...DEFAULT.streamingRegions,
         ...(parsed.streamingRegions ?? {}),
       },
+      subOffsetIndicatorEnabled:
+        typeof parsed.subOffsetIndicatorEnabled === "boolean"
+          ? parsed.subOffsetIndicatorEnabled
+          : DEFAULT.subOffsetIndicatorEnabled,
+      subOffsetIndicatorPosition: sanitizeSubtitleOffsetPosition(parsed.subOffsetIndicatorPosition),
+      subOffsetIndicatorSize: sanitizeSubtitleOffsetSize(parsed.subOffsetIndicatorSize),
       subProvidersEnabled: {
         ...DEFAULT.subProvidersEnabled,
         ...(parsed.subProvidersEnabled ?? {}),

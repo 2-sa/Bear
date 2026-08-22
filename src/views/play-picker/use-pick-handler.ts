@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
 import type { Meta } from "@/lib/cinemeta";
 import type { DebridStore } from "@/lib/debrid/types";
+import { invalidatePreparedDebridLink } from "@/lib/debrid/playback-preparation";
 import { savePlayback } from "@/lib/playback-history";
 import { saveSeasonLock } from "@/lib/season-lock";
 import { markStreamDead, recordStubEvent } from "@/lib/dead-streams";
@@ -13,7 +14,13 @@ import { engineP2pEligible } from "@/lib/torrent/stremio-stream";
 import { hasUncachedMarker } from "@/lib/streams/cached";
 import { preflightCheck } from "@/lib/streams/preflight";
 import { resolveStream, shouldPreferP2pDownload } from "@/lib/streams/resolve";
-import { registerStreamProxy } from "@/lib/stream-proxy";
+import {
+  beginPlaybackTrace,
+  finishPlaybackTrace,
+  markPlaybackTrace,
+} from "@/lib/perf/playback-trace";
+import { registerStreamProxy, unregisterStreamProxy } from "@/lib/stream-proxy";
+import { playbackPrebufferBytes, playbackStartupProfile } from "@/lib/player/startup-profile";
 import type { ScoredStream } from "@/lib/streams/types";
 import type { PlayInvite } from "@/lib/together/protocol";
 import { buildPlayInvite } from "@/lib/together/build-invite";
@@ -23,6 +30,17 @@ import { enqueueDownload } from "@/lib/download/downloads-store";
 import { formatStreamQuality, humanError, isDebridFailure, streamIdentity } from "./picker-utils";
 
 export type ResolvingSelection = { stream: ScoredStream; p2p: boolean };
+
+function playbackSourceClass(
+  stream: ScoredStream,
+  debridCount: number,
+  forceP2p: boolean,
+): "direct" | "debrid" | "p2p" | "unknown" {
+  if (forceP2p || (!!stream.infoHash && !stream.url && debridCount === 0)) return "p2p";
+  if (stream.url) return "direct";
+  if (stream.infoHash && debridCount > 0) return "debrid";
+  return "unknown";
+}
 
 export function usePickHandler({
   meta,
@@ -126,6 +144,14 @@ export function usePickHandler({
     resolveAcRef.current?.abort();
     resolveAcRef.current = ac;
     let opened = false;
+    let traceTransferred = false;
+    let proxySessionId: string | undefined;
+    let proxyTransferred = false;
+    const playbackTraceId =
+      intent === "download"
+        ? undefined
+        : beginPlaybackTrace(playbackSourceClass(stream, debrids.length, forceP2p));
+    markPlaybackTrace(playbackTraceId, "resolve-start");
     try {
       const hint = episode
         ? { season: episode.season ?? null, episode: episode.episode ?? null }
@@ -169,27 +195,54 @@ export function usePickHandler({
         advanceAuto();
         return;
       }
+      markPlaybackTrace(playbackTraceId, "resolve-ready");
       debridFailStreakRef.current = 0;
       let playUrl = r.data.url;
-      if (intent !== "download" && r.data.headers && Object.keys(r.data.headers).length > 0) {
+      const hasProxyHeaders = !!r.data.headers && Object.keys(r.data.headers).length > 0;
+      const remoteDebridPlayback =
+        intent !== "download" &&
+        r.via !== "p2p" &&
+        r.via !== "direct" &&
+        r.via !== "local-download";
+      if (intent !== "download" && (hasProxyHeaders || remoteDebridPlayback)) {
         try {
-          const proxied = await registerStreamProxy(r.data.url, r.data.headers);
+          const startupProfile = playbackStartupProfile(stream);
+          const proxied = await registerStreamProxy(r.data.url, r.data.headers, {
+            prebufferBytes: remoteDebridPlayback
+              ? playbackPrebufferBytes(startupProfile)
+              : undefined,
+          });
           playUrl = proxied.url;
+          proxySessionId = proxied.sessionId;
         } catch {
-          setFailedStreams((prev) => new Set(prev).add(stream));
-          const willRetry = autoActive && autoAttemptIdx + 1 < autoCandidatesLength;
-          if (!willRetry)
-            setResolveError("Could not start the local stream proxy. Pick another stream.");
-          advanceAuto();
-          return;
+          if (!hasProxyHeaders) {
+            playUrl = r.data.url;
+          } else {
+            setFailedStreams((prev) => new Set(prev).add(stream));
+            const willRetry = autoActive && autoAttemptIdx + 1 < autoCandidatesLength;
+            if (!willRetry)
+              setResolveError("Could not start the local stream proxy. Pick another stream.");
+            advanceAuto();
+            return;
+          }
         }
       }
-      const preflight =
-        intent === "download" || r.via === "p2p" || r.via === "direct" || r.via === "local-download"
-          ? ({ ok: true } as const)
-          : await preflightCheck(playUrl, ac.signal);
+      const needsPreflight = !(
+        intent === "download" ||
+        r.via === "p2p" ||
+        r.via === "direct" ||
+        r.via === "local-download" ||
+        r.readiness?.exactUrlValidated === true
+      );
+      if (needsPreflight) markPlaybackTrace(playbackTraceId, "preflight-start");
+      const preflight = needsPreflight
+        ? await preflightCheck(playUrl, ac.signal)
+        : ({ ok: true } as const);
+      if (needsPreflight) markPlaybackTrace(playbackTraceId, "preflight-ready");
       if (ac.signal.aborted) return;
       if (!preflight.ok && preflight.reason === "stub") {
+        const preparedDebrid = debrids.find((debrid) => debrid.slug === r.via);
+        if (preparedDebrid) invalidatePreparedDebridLink(stream, preparedDebrid, hint);
         setFailedStreams((prev) => new Set(prev).add(stream));
         const reasonStr = `preflight_stub_${preflight.sizeBytes ?? 0}b`;
         markStreamDead({ url: r.data.url }, reasonStr, PREFLIGHT_STUB_TTL_MS);
@@ -256,6 +309,9 @@ export function usePickHandler({
         attempt: attempt ?? 0,
         autoFired: autoPickRef.current,
         resume: !!resume,
+        playbackTraceId,
+        proxySessionId,
+        historyUrl: r.data.url,
         streamRef: {
           infoHash: stream.infoHash ?? null,
           fileIdx: r.data.fileIdx ?? stream.fileIdx ?? null,
@@ -273,6 +329,9 @@ export function usePickHandler({
             .map(([k]) => k),
         },
       });
+      markPlaybackTrace(playbackTraceId, "player-opened");
+      traceTransferred = true;
+      proxyTransferred = true;
       opened = true;
       sameSourceRetryRef.current = 0;
       if (meta.id && !meta.id.startsWith("iptv:")) {
@@ -280,7 +339,7 @@ export function usePickHandler({
           infoHash: stream.infoHash ?? null,
           fileIdx: r.data.fileIdx ?? stream.fileIdx ?? null,
           addonId: stream.addonId ?? null,
-          url: playUrl,
+          url: r.data.url,
           title: meta.name,
           parsedTitle: stream.parsedTitle ?? null,
           resolution: stream.resolution ?? null,
@@ -298,6 +357,12 @@ export function usePickHandler({
         }
       }
     } finally {
+      if (proxySessionId && !proxyTransferred) {
+        void unregisterStreamProxy(proxySessionId).catch(() => {});
+      }
+      if (playbackTraceId && !traceTransferred) {
+        finishPlaybackTrace(playbackTraceId, ac.signal.aborted ? "aborted" : "failed");
+      }
       if (!opened && !ac.signal.aborted) {
         setResolving(null);
       }

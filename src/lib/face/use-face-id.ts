@@ -8,6 +8,8 @@ import type { GalleryEntry, WireFace } from "./match";
 
 const SCAN_MS = 800;
 const SEEN_WINDOW_MS = 6000;
+const CAPTURE_ERROR = "couldn't capture the video frame";
+const CAPTURE_FAILURES_BEFORE_ERROR = 3;
 
 export type OnScreenPerson = {
   id: number;
@@ -37,6 +39,7 @@ export function useFaceId({ metaKey, cast, liveScan, isPaused, loadBitmap }: Arg
   const galleryRef = useRef<GalleryEntry[]>([]);
   const seenRef = useRef<Map<number, { person: OnScreenPerson; ts: number }>>(new Map());
   const inFlightRef = useRef(false);
+  const captureFailuresRef = useRef(0);
   const [ready, setReady] = useState(false);
   const [galleryReady, setGalleryReady] = useState(false);
   const [progress, setProgress] = useState<GalleryProgress>({ done: 0, total: 0 });
@@ -65,7 +68,16 @@ export function useFaceId({ metaKey, cast, liveScan, isPaused, loadBitmap }: Arg
       if (inFlightRef.current || galleryRef.current.length === 0) return;
       inFlightRef.current = true;
       try {
-        const bmp = await captureFaceFrame();
+        let bmp: ImageBitmap | null;
+        try {
+          bmp = await captureFaceFrame();
+          captureFailuresRef.current = 0;
+          setError((current) => (current === CAPTURE_ERROR ? null : current));
+        } catch {
+          captureFailuresRef.current += 1;
+          if (captureFailuresRef.current >= CAPTURE_FAILURES_BEFORE_ERROR) setError(CAPTURE_ERROR);
+          return;
+        }
         if (!bmp) return;
         let faces: WireFace[];
         try {
@@ -81,13 +93,23 @@ export function useFaceId({ metaKey, cast, liveScan, isPaused, loadBitmap }: Arg
           if (!g) continue;
           seenRef.current.set(match.id, {
             ts: now,
-            person: { id: g.id, name: g.name, character: g.character, profilePath: g.profilePath, score: match.score },
+            person: {
+              id: g.id,
+              name: g.name,
+              character: g.character,
+              profilePath: g.profilePath,
+              score: match.score,
+            },
           });
         }
         for (const [id2, v] of seenRef.current) {
           if (now - v.ts > SEEN_WINDOW_MS) seenRef.current.delete(id2);
         }
-        setPeople([...seenRef.current.values()].sort((a, b) => b.person.score - a.person.score).map((v) => v.person));
+        setPeople(
+          [...seenRef.current.values()]
+            .sort((a, b) => b.person.score - a.person.score)
+            .map((v) => v.person),
+        );
       } finally {
         inFlightRef.current = false;
       }

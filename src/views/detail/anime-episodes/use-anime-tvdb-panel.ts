@@ -3,6 +3,7 @@ import { useT } from "@/lib/i18n";
 import type { KitsuEpisode } from "@/lib/providers/kitsu";
 import { kitsuToTvdb } from "@/lib/providers/anime-mapping";
 import { isFranchiseExtra, type FranchiseEntry } from "@/lib/providers/anime-detail";
+import { harborImdbEpisodesCached } from "@/lib/providers/harbor-imdb";
 import {
   tvdbLangFromIso1,
   tvdbOrderTypeHasEpisodes,
@@ -181,6 +182,7 @@ export function useAnimeTvdbPanel(
     const subset = new Map<string, KitsuEpisode[]>();
     const claimed = new Set<number>();
     const claimedExtras = new Set<string>();
+    const imdbMap = imdbId ? harborImdbEpisodesCached(imdbId) : undefined;
     for (const s of ordering.seasons) {
       if (s.seasonNumber < 0) continue;
       const bucket = ordering.bySeason.get(s.seasonNumber) ?? [];
@@ -240,12 +242,19 @@ export function useAnimeTvdbPanel(
             claimedExtras.add(extra.meta.id);
           }
         }
+        const imdbRating =
+          imdbMap?.get(`${e.seasonNumber}:${e.episodeNumber}`) ??
+          (abs != null ? imdbMap?.get(`1:${abs}`) : undefined);
+
         const ep: KitsuEpisode = match
           ? {
               ...match,
-              thumbnail: !match.thumbnail && img ? img : match.thumbnail,
+              ...(!match.thumbnail && img ? { thumbnail: img } : {}),
               ...(title != null ? { title } : {}),
               ...(synopsis != null ? { synopsis } : {}),
+              ...(match.rating == null && imdbRating != null
+                ? { rating: imdbRating, ratingIsImdb: true }
+                : {}),
             }
           : {
               id: -e.id,
@@ -267,6 +276,8 @@ export function useAnimeTvdbPanel(
               absoluteNumber: abs ?? undefined,
               tvdbEpisodeId: e.id > 0 ? e.id : undefined,
               streamId,
+              rating: imdbRating,
+              ratingIsImdb: imdbRating != null ? true : undefined,
             };
         if (seenId.has(ep.id)) continue;
         seenId.add(ep.id);

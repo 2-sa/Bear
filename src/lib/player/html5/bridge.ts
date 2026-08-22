@@ -14,6 +14,8 @@ import { bufferedAhead, readAudioTracks, videoAudio } from "./audio-tracks";
 import { mapErrorCode, mapErrorMessage } from "./error-map";
 import { noteSubtitleOrigin } from "@/lib/subtitles/subtitle-memory";
 import { mountCustomPip } from "./pip";
+import { finishPlaybackTrace, markPlaybackTrace } from "@/lib/perf/playback-trace";
+import { isPlayerInteractionLocked } from "@/lib/player/interaction-lock";
 
 let DOCUMENT_PIP_KNOWN_BROKEN = false;
 
@@ -39,6 +41,7 @@ export function createHtml5Bridge(): PlayerBridge {
   let subDelaySec = 0;
   let cueTickerRaf: number | null = null;
   let lastCueId = "";
+  let activeTraceId: string | null = null;
 
   const emit = () => {
     const next: PlayerSnapshot = { ...snap };
@@ -69,6 +72,7 @@ export function createHtml5Bridge(): PlayerBridge {
 
   const refreshSnapshot = () => {
     if (!video) return;
+    const hadFirstFrame = snap.firstFrameReady;
     probeAudio();
     snap.positionSec = Number.isFinite(video.currentTime) ? video.currentTime : 0;
     snap.durationSec = Number.isFinite(video.duration) ? video.duration : 0;
@@ -85,6 +89,11 @@ export function createHtml5Bridge(): PlayerBridge {
     snap.videoHeight = video.videoHeight || 0;
     if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA && snap.videoWidth > 0) {
       snap.firstFrameReady = true;
+    }
+    if (!hadFirstFrame && snap.firstFrameReady) {
+      markPlaybackTrace(activeTraceId, "first-frame");
+      finishPlaybackTrace(activeTraceId, "ready");
+      activeTraceId = null;
     }
     if (video.error) {
       snap.status = "error";
@@ -273,17 +282,21 @@ export function createHtml5Bridge(): PlayerBridge {
     const ms = navigator.mediaSession;
     try {
       ms.setActionHandler("play", () => {
+        if (isPlayerInteractionLocked()) return;
         video?.play().catch(() => {});
       });
       ms.setActionHandler("pause", () => {
+        if (isPlayerInteractionLocked()) return;
         video?.pause();
       });
       ms.setActionHandler("seekbackward", (details) => {
+        if (isPlayerInteractionLocked()) return;
         if (!video) return;
         const offset = details && details.seekOffset != null ? details.seekOffset : 30;
         video.currentTime = Math.max(0, video.currentTime - offset);
       });
       ms.setActionHandler("seekforward", (details) => {
+        if (isPlayerInteractionLocked()) return;
         if (!video) return;
         const offset = details && details.seekOffset != null ? details.seekOffset : 30;
         const max = Number.isFinite(video.duration)
@@ -292,6 +305,7 @@ export function createHtml5Bridge(): PlayerBridge {
         video.currentTime = Math.min(max, video.currentTime + offset);
       });
       ms.setActionHandler("seekto", (details) => {
+        if (isPlayerInteractionLocked()) return;
         if (!video || details.seekTime == null) return;
         video.currentTime = details.seekTime;
       });
@@ -381,6 +395,11 @@ export function createHtml5Bridge(): PlayerBridge {
     },
     async load(src: PlayerSource) {
       if (!video) return;
+      if (activeTraceId && activeTraceId !== src.traceId) {
+        finishPlaybackTrace(activeTraceId, "replaced");
+      }
+      activeTraceId = src.traceId ?? null;
+      markPlaybackTrace(activeTraceId, "bridge-load");
       isLiveSrc = src.notWebReady === true;
       pendingStart = src.startAtSec ?? null;
       if (hls) {
@@ -434,6 +453,7 @@ export function createHtml5Bridge(): PlayerBridge {
       } else {
         video.src = src.url;
       }
+      markPlaybackTrace(activeTraceId, "loadfile-accepted");
       subTracks.length = 0;
       activeSubId = null;
       secondarySubId = null;
@@ -824,6 +844,8 @@ export function createHtml5Bridge(): PlayerBridge {
       };
     },
     destroy() {
+      finishPlaybackTrace(activeTraceId, "aborted");
+      activeTraceId = null;
       stopCueTicker();
       subTracks.length = 0;
       activeSubId = null;

@@ -31,6 +31,7 @@ import {
 } from "./graphql";
 import { loadSources, pickTransport, sourceLang, withTransportFallback } from "./transport";
 import { registerServerPageHeaders } from "@/lib/manga/plugins/adapter";
+import { langFilterMatches, loadMangaLangFilter } from "@/lib/manga/lang-filter";
 
 const SEARCH_ALL_CONCURRENCY = 4;
 const BROWSE_ALL_CONCURRENCY = 4;
@@ -131,45 +132,69 @@ export function makeSuwayomiProvider(
       .filter((m): m is MangaSummary => !!m);
   }
 
-  async function browseAllSources(
-    kind: BrowseKind,
-    offset: number,
-    query: string,
-  ): Promise<MangaSummary[]> {
-    const transport = await pickTransport(client);
-    const sources = await loadSources(client, transport);
-    const lists: MangaSummary[][] = Array.from({ length: sources.length }, () => []);
-    let nextSource = 0;
+  let popularCache: { key: string; at: number; items: MangaSummary[] } | null = null;
+  const POPULAR_CACHE_TTL = 5 * 60_000;
+  const POPULAR_PAGES = 3;
+  const POPULAR_SOURCE_CAP = 20;
+  const POPULAR_MAX_TOTAL = 150;
+
+  async function mergedPopular(): Promise<MangaSummary[]> {
+    const filter = loadMangaLangFilter();
+    const cacheKey = `${server.base}|${[...filter].sort().join("+")}`;
+    if (
+      popularCache &&
+      popularCache.key === cacheKey &&
+      Date.now() - popularCache.at < POPULAR_CACHE_TTL
+    ) {
+      return popularCache.items;
+    }
+    const t = await pickTransport(client);
+    const sources = (await loadSources(client, t))
+      .filter((s) => langFilterMatches(filter, s.lang))
+      .slice(0, POPULAR_SOURCE_CAP);
+    if (sources.length === 0) {
+      popularCache = { key: cacheKey, at: Date.now(), items: [] };
+      return [];
+    }
+    const seen = new Set<string>();
+    const out: MangaSummary[] = [];
+    let next = 0;
     const worker = async () => {
-      while (true) {
-        const index = nextSource++;
-        const source = sources[index];
-        if (!source) return;
+      while (next < sources.length) {
+        const source = sources[next++];
         const requestClient = makeClient(server, 0);
-        lists[index] = await settleWithin(
-          browse(source.id, kind, offset, query, requestClient),
-          [] as MangaSummary[],
-          options.sourceTimeoutMs ?? BROWSE_SOURCE_TIMEOUT_MS,
-        );
+        let offset = 0;
+        for (let page = 0; page < POPULAR_PAGES; page++) {
+          const items = await settleWithin(
+            browse(source.id, "popular", offset, "", requestClient),
+            [] as MangaSummary[],
+            options.sourceTimeoutMs ?? BROWSE_SOURCE_TIMEOUT_MS,
+          );
+          if (items.length === 0) break;
+          for (const manga of items) {
+            if (seen.has(manga.id)) continue;
+            seen.add(manga.id);
+            out.push(manga);
+          }
+          offset += items.length;
+          if (out.length >= POPULAR_MAX_TOTAL) return;
+        }
       }
     };
     await Promise.all(
       Array.from({ length: Math.min(BROWSE_ALL_CONCURRENCY, sources.length) }, () => worker()),
     );
-    const merged: MangaSummary[] = [];
-    const longest = Math.max(0, ...lists.map((list) => list.length));
-    for (let index = 0; index < longest; index++) {
-      for (const list of lists) {
-        if (list[index]) merged.push(list[index]);
-      }
-    }
-    return merged;
+    popularCache = { key: cacheKey, at: Date.now(), items: out };
+    return out;
   }
 
   async function searchAll(query: string): Promise<MangaSummary[]> {
     const q = query.trim();
     if (!q) return [];
-    const sources = await loadSources(client, await pickTransport(client));
+    const filter = loadMangaLangFilter();
+    const sources = (await loadSources(client, await pickTransport(client))).filter((source) =>
+      langFilterMatches(filter, source.lang),
+    );
     if (!sources.length) return [];
 
     const unique = new Map<string, MangaSummary>();
@@ -185,7 +210,11 @@ export function makeSuwayomiProvider(
         const source = sources[nextSource++];
         if (!source) return;
         const requestClient = makeClient(server, 0);
-        const items = await browse(source.id, "search", 0, q, requestClient).catch(() => []);
+        const items = await settleWithin(
+          browse(source.id, "search", 0, q, requestClient),
+          [] as MangaSummary[],
+          options.sourceTimeoutMs ?? BROWSE_SOURCE_TIMEOUT_MS,
+        );
         for (const item of items) unique.set(item.id, item);
         if (items.some((item) => isStrongSearchMatch(item, q))) {
           exactFound = true;
@@ -204,8 +233,9 @@ export function makeSuwayomiProvider(
 
   async function popular(offset: number, tagId?: string): Promise<MangaSummary[]> {
     if (tagId) return browse(tagId, "popular", offset, "");
-    const all = await browseAllSources("popular", offset, "");
-    if (all.length || offset > 0) return all;
+    if (offset > 0) return [];
+    const all = await mergedPopular();
+    if (all.length) return all;
     return library();
   }
 
@@ -273,11 +303,19 @@ export function makeSuwayomiProvider(
 
   async function tags(): Promise<MangaTag[]> {
     const t = await pickTransport(client);
-    return (await loadSources(client, t)).map((s) => ({
-      id: s.id,
-      name: s.lang && s.lang !== "en" ? `${s.name} (${s.lang.toUpperCase()})` : s.name,
-      group: "Sources",
-    }));
+    const filter = loadMangaLangFilter();
+    return (await loadSources(client, t))
+      .filter((s) => langFilterMatches(filter, s.lang))
+      .map((s) => ({
+        id: s.id,
+        name:
+          s.lang.toLowerCase() === "localsourcelang"
+            ? "Local Source"
+            : s.lang && s.lang !== "en"
+              ? `${s.name} (${s.lang.toUpperCase()})`
+              : s.name,
+        group: "Sources",
+      }));
   }
 
   async function setLibrary(id: string, inLibrary: boolean): Promise<void> {

@@ -5,7 +5,15 @@ import {
   aggregateSubProviders,
   ensureMangaSources,
 } from "./sources";
-import { ownSourceChapters, routeById, streamAll, streamAggregateChapters } from "./sources/aggregate";
+import {
+  ownSourceChapters,
+  routeById,
+  streamAll,
+  streamAggregateChapters,
+} from "./sources/aggregate";
+import { suwayomiSourcesRevision } from "./sources/suwayomi/source-events";
+import { mangaLibraryRevision } from "./library-events";
+import { loadMangaLangFilter, mangaLangFilterRevision } from "./lang-filter";
 import type { MangaChapter, MangaProvider, MangaSummary } from "./types";
 
 export {
@@ -36,7 +44,6 @@ const TRIES = 2;
 const DISK_PREFIX = "harbor.manga.cache.v2.";
 const DISK_MAX_AGE = 7 * DAY;
 const POPULAR_DISK = { fresh: 30 * MIN, stale: 6 * HOUR };
-const TAGS_DISK = { fresh: 12 * HOUR, stale: 7 * DAY };
 
 function isEmpty(data: unknown): boolean {
   return data == null || (Array.isArray(data) && data.length === 0);
@@ -184,16 +191,27 @@ export function clearMangaCache(): void {
 
 export function popularManga(offset = 0, tagId?: string) {
   const tag = tagId ?? "";
-  return cached("pop", `${offset}|${tag}`, 5 * MIN, (p) => p.popular(offset, tagId), {
+  return cached("pop2", `${offset}|${tag}`, 5 * MIN, (p) => p.popular(offset, tagId), {
     tries: 3,
     timeout: 10_000,
-    disk: offset === 0 ? { key: `pop|${tag}`, ...POPULAR_DISK } : undefined,
+    disk: offset === 0 ? { key: `pop2|${tag}`, ...POPULAR_DISK } : undefined,
   });
 }
 
 export function searchManga(query: string, offset = 0, tagId?: string) {
   return cached("search", `${query}|${offset}|${tagId ?? ""}`, 5 * MIN, (p) =>
     p.search(query, offset, tagId),
+  );
+}
+
+export function searchMangaEverywhere(query: string) {
+  const revision = suwayomiSourcesRevision();
+  return cached(
+    "searchAll",
+    `${revision}|${query}`,
+    5 * MIN,
+    (p) => p.searchAll?.(query) ?? p.search(query, 0),
+    { tries: 1, timeout: 30_000 },
   );
 }
 
@@ -255,11 +273,15 @@ async function streamOrCall(
 export function popularMangaStream(offset: number, tagId: string | undefined, onChunk: Chunk) {
   const tag = tagId ?? "";
   return streamOrCall(
-    "pop",
+    "pop2",
     `${offset}|${tag}`,
     5 * MIN,
     (p) => p.popular(offset, tagId),
-    { tries: 3, timeout: 10_000, disk: offset === 0 ? { key: `pop|${tag}`, ...POPULAR_DISK } : undefined },
+    {
+      tries: 3,
+      timeout: 10_000,
+      disk: offset === 0 ? { key: `pop2|${tag}`, ...POPULAR_DISK } : undefined,
+    },
     onChunk,
   );
 }
@@ -336,19 +358,44 @@ export function chapterPages(chapterId: string) {
 }
 
 export function mangaTags() {
-  return cached("tags", "", 30 * MIN, (p) => (p.tags ? p.tags() : Promise.resolve([])), {
-    tries: 1,
-    disk: { key: "tags", ...TAGS_DISK },
-  });
+  const revision = suwayomiSourcesRevision();
+  const lib = mangaLibraryRevision();
+  const langRev = mangaLangFilterRevision();
+  // Key by the selection itself (not just a counter) so entries stay valid across app restarts.
+  const langKey = encodeURIComponent(loadMangaLangFilter().slice().sort().join("+"));
+  return cached(
+    "tags",
+    `${revision}|${lib}|${langRev}|${langKey}`,
+    30 * MIN,
+    (p) => (p.tags ? p.tags() : Promise.resolve([])),
+    { tries: 1 },
+  );
 }
 
 export function refreshMangaTags() {
   const sid = activeMangaSourceId();
-  cache.delete(`${sid}|tags|`);
+  for (const key of cache.keys()) {
+    if (key.startsWith(`${sid}|tags|`)) cache.delete(key);
+  }
   try {
-    localStorage.removeItem(`${DISK_PREFIX}${sid}|tags`);
+    const stale: string[] = [];
+    for (let index = 0; index < localStorage.length; index++) {
+      const key = localStorage.key(index);
+      if (key?.startsWith(`${DISK_PREFIX}${sid}|tags`)) stale.push(key);
+    }
+    for (const key of stale) localStorage.removeItem(key);
   } catch {
     /* use the live request even when storage is unavailable */
   }
   return mangaTags();
+}
+
+export async function setMangaInLibrary(id: string, inLibrary: boolean): Promise<boolean> {
+  await ensureMangaSources();
+  const routed = routeById(id);
+  const provider = routed?.provider ?? activeMangaProvider();
+  const mangaId = routed?.orig ?? id;
+  if (!provider.setLibrary) return false;
+  await provider.setLibrary(mangaId, inLibrary);
+  return true;
 }

@@ -2,6 +2,7 @@ import { memo } from "react";
 import { Anime4kIndicator } from "@/components/player/anime4k-indicator";
 import { SvpIndicator } from "@/components/player/svp-indicator";
 import { StatsOverlay } from "@/components/player/stats-overlay";
+import { SubtitleOffsetIndicator } from "@/components/player/subtitle-offset-indicator";
 import { SubStyleBar } from "@/components/player/sub-style-bar";
 import { PictureBar } from "@/components/player/picture-bar";
 import { SubSyncBar } from "@/components/player/sub-sync-bar";
@@ -12,8 +13,6 @@ import {
   type VolumeIndicatorState,
 } from "@/components/player/volume-indicator";
 import type { PlayerSnapshot } from "@/lib/player/bridge";
-import type { ParentalCategory } from "@/lib/providers/harbor-imdb";
-import { ContentAdvisoryToast } from "@/components/player/content-advisory-toast";
 import { useT } from "@/lib/i18n";
 
 export const StageOverlays = memo(function StageOverlays({
@@ -23,12 +22,12 @@ export const StageOverlays = memo(function StageOverlays({
   subShowInPip,
   subAssNative,
   showStats,
+  subtitleOffsetSec,
   holdSpeedActive,
   volumeIndicator,
   volumeHudPosition,
   videoFillPill,
   subDropToast,
-  contentAdvisory,
   onSubDelay,
   onEnterSync,
   chromeVisible,
@@ -39,12 +38,12 @@ export const StageOverlays = memo(function StageOverlays({
   subShowInPip: boolean;
   subAssNative: boolean;
   showStats: boolean;
+  subtitleOffsetSec: number | null;
   holdSpeedActive: boolean;
   volumeIndicator: VolumeIndicatorState;
   volumeHudPosition: VolumeHudPosition;
   videoFillPill: string | null;
   subDropToast: string | null;
-  contentAdvisory: { categories: ParentalCategory[]; playKey: string };
   onSubDelay: (sec: number) => void;
   onEnterSync?: () => void;
   chromeVisible: boolean;
@@ -63,12 +62,20 @@ export const StageOverlays = memo(function StageOverlays({
         />
       )}
       {showStats && !pipMode && <StatsOverlay snap={snap} engine={engine} />}
-      {!pipMode && <Anime4kIndicator engine={engine} chromeVisible={chromeVisible} suppressed={topVolumeShowing} />}
-      {!pipMode && <SvpIndicator engine={engine} chromeVisible={chromeVisible} suppressed={topVolumeShowing} />}
+      {!pipMode && <SubtitleOffsetIndicator delaySec={subtitleOffsetSec} />}
+      {!pipMode && (
+        <Anime4kIndicator
+          engine={engine}
+          chromeVisible={chromeVisible}
+          suppressed={topVolumeShowing}
+        />
+      )}
+      {!pipMode && (
+        <SvpIndicator engine={engine} chromeVisible={chromeVisible} suppressed={topVolumeShowing} />
+      )}
       {holdSpeedActive && !pipMode && (
         <div className="pointer-events-none absolute left-1/2 top-8 z-30 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-canvas/85 px-3.5 py-1.5 text-[13px] font-semibold text-ink backdrop-blur-md">
-          {snap.rate}x
-          <span className="font-normal text-ink-muted">{t("speed")}</span>
+          {snap.rate}x<span className="font-normal text-ink-muted">{t("speed")}</span>
         </div>
       )}
       {!holdSpeedActive && !pipMode && (
@@ -78,22 +85,20 @@ export const StageOverlays = memo(function StageOverlays({
           position={volumeHudPosition}
         />
       )}
-      {videoFillPill && !holdSpeedActive && !pipMode && !(showVolumeIndicator && volumeHudPosition === "top") && (
-        <div className="pointer-events-none absolute left-1/2 top-8 z-30 -translate-x-1/2 rounded-full bg-canvas/85 px-3.5 py-1.5 text-[13px] font-semibold text-ink backdrop-blur-md">
-          {videoFillPill}
-        </div>
-      )}
+      {videoFillPill &&
+        !holdSpeedActive &&
+        !pipMode &&
+        !(showVolumeIndicator && volumeHudPosition === "top") && (
+          <div className="pointer-events-none absolute left-1/2 top-8 z-30 -translate-x-1/2 rounded-full bg-canvas/85 px-3.5 py-1.5 text-[13px] font-semibold text-ink backdrop-blur-md">
+            {videoFillPill}
+          </div>
+        )}
       {subDropToast && !pipMode && (
         <div className="pointer-events-none absolute bottom-28 left-1/2 z-30 -translate-x-1/2 rounded-full bg-canvas/90 px-4 py-2 text-[13px] font-medium text-ink backdrop-blur-md">
           {subDropToast}
         </div>
       )}
-      {!pipMode && (
-        <ContentAdvisoryToast
-          categories={contentAdvisory.categories}
-          playKey={contentAdvisory.playKey}
-        />
-      )}
+
       {!pipMode && <SubStyleBar />}
       {!pipMode && <PictureBar />}
       {!pipMode && (

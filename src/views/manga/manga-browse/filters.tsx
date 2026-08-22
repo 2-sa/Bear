@@ -1,4 +1,4 @@
-import { Check, ChevronDown, Globe, SlidersHorizontal, Star, Tag } from "lucide-react";
+import { Check, ChevronDown, Globe, Layers, Settings, Star, Tag } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useT } from "@/lib/i18n";
 import { mangaTags, refreshMangaTags, type MangaTag } from "@/lib/manga/api";
@@ -11,13 +11,16 @@ import {
   subscribeMangaSources,
   type MangaSource,
 } from "@/lib/manga/sources";
+import { subscribeSuwayomiSourcesChanged } from "@/lib/manga/sources/suwayomi/source-events";
+import { subscribeMangaLibraryChanged } from "@/lib/manga/library-events";
+import { subscribeMangaLangFilter } from "@/lib/manga/lang-filter";
 
 export const FAVORITES = "__favorites__";
 
-const TRIGGER =
+export const TRIGGER =
   "flex items-center gap-2 rounded-lg border border-edge-soft bg-elevated/40 px-3 py-2 text-[13px] text-ink transition-colors hover:bg-elevated/70";
 
-function useOutsideClose(open: boolean, close: () => void) {
+export function useOutsideClose(open: boolean, close: () => void) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!open) return;
@@ -30,12 +33,11 @@ function useOutsideClose(open: boolean, close: () => void) {
   return ref;
 }
 
-export function SourceDropdown({ onManageSources }: { onManageSources: () => void }) {
+export function SourceDropdown() {
   const [open, setOpen] = useState(false);
   const [sources, setSources] = useState<MangaSource[]>(() => listMangaSources());
   const [activeId, setActiveIdState] = useState(() => activeMangaSourceId());
   const ref = useOutsideClose(open, () => setOpen(false));
-  const t = useT();
 
   useEffect(
     () =>
@@ -69,18 +71,6 @@ export function SourceDropdown({ onManageSources }: { onManageSources: () => voi
       </button>
       {open && (
         <div className="absolute z-30 mt-1.5 min-w-[220px] overflow-hidden rounded-lg border border-edge-soft bg-raised py-1 shadow-[0_16px_40px_-12px_rgba(0,0,0,0.6)]">
-          <button
-            type="button"
-            onClick={() => {
-              setOpen(false);
-              onManageSources();
-            }}
-            className="flex w-full items-center gap-2 px-3 py-2 text-start text-[13px] font-medium text-ink hover:bg-elevated/60"
-          >
-            <SlidersHorizontal size={14} className="text-ink-subtle" />
-            {t("Manage sources")}
-          </button>
-          <div className="my-1 border-t border-edge-soft/60" />
           {sources.map((s) => (
             <button
               key={s.id}
@@ -113,6 +103,27 @@ export function SourceDropdown({ onManageSources }: { onManageSources: () => voi
   );
 }
 
+export function ManageServersButton({
+  onClick,
+  className,
+}: {
+  onClick: () => void;
+  className?: string;
+}) {
+  const t = useT();
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={t("Manage Servers")}
+      title={t("Manage Servers")}
+      className={className ? `${TRIGGER} ${className}` : TRIGGER}
+    >
+      <Settings size={20} className="text-ink" />
+    </button>
+  );
+}
+
 export function TagDropdown({
   tagId,
   onSelect,
@@ -141,19 +152,35 @@ export function TagDropdown({
 
   useEffect(() => {
     let alive = true;
-    const request = ++tagRequest.current;
-    mangaTags()
-      .then((list) => {
-        if (alive && request === tagRequest.current) setTags(list);
-      })
-      .catch(() => {});
+    const load = (opts?: { clear?: boolean }) => {
+      const request = ++tagRequest.current;
+      if (opts?.clear && alive) setTags([]);
+      mangaTags()
+        .then((list) => {
+          if (!alive || request !== tagRequest.current) return;
+          setTags(list);
+          if (tagId && tagId !== FAVORITES && !list.some((tag) => tag.id === tagId)) onSelect("");
+        })
+        .catch((err) => {
+          console.warn("[manga] extension list refresh failed", err);
+        });
+    };
+    load();
+    const unsubSources = subscribeSuwayomiSourcesChanged(() => load());
+    const unsubLibrary = subscribeMangaLibraryChanged(() => load());
+    const unsubLang = subscribeMangaLangFilter(() => load({ clear: true }));
     return () => {
       alive = false;
       tagRequest.current += 1;
+      unsubSources();
+      unsubLibrary();
+      unsubLang();
     };
-  }, []);
+  }, [onSelect, tagId]);
 
   const active = tags.find((t) => t.id === tagId);
+  const sourceMode = tags.length > 0 && tags.every((tg) => tg.group === "Sources");
+  const allLabel = sourceMode ? "All Extensions" : "All tags";
   const shown = useMemo(() => {
     const q = filter.trim().toLowerCase();
     const list = q ? tags.filter((t) => t.name.toLowerCase().includes(q)) : tags;
@@ -171,9 +198,13 @@ export function TagDropdown({
         }}
         className={TRIGGER}
       >
-        <Tag size={15} className="text-ink-subtle" />
+        {sourceMode ? (
+          <Layers size={15} className="text-ink-subtle" />
+        ) : (
+          <Tag size={15} className="text-ink-subtle" />
+        )}
         <span className="max-w-[140px] truncate font-medium">
-          {tagId === FAVORITES ? t("Favorites") : active ? active.name : t("All tags")}
+          {tagId === FAVORITES ? t("Favorites") : active ? active.name : t(allLabel)}
         </span>
         <ChevronDown size={14} className="text-ink-subtle" />
       </button>
@@ -184,7 +215,7 @@ export function TagDropdown({
               autoFocus
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              placeholder={t("Filter tags...")}
+              placeholder={t(sourceMode ? "Filter sources..." : "Filter tags...")}
               className="w-full rounded-md bg-elevated/50 px-3 py-1.5 text-[12.5px] text-ink placeholder:text-ink-subtle outline-none focus:ring-1 focus:ring-edge"
             />
           </div>
@@ -201,7 +232,11 @@ export function TagDropdown({
               {tagId === FAVORITES && <Check size={14} className="text-accent" />}
             </button>
             <div className="my-1 border-t border-edge-soft/60" />
-            <TagRow label={t("All tags")} active={!tagId} onClick={() => (onSelect(""), setOpen(false))} />
+            <TagRow
+              label={t(allLabel)}
+              active={!tagId}
+              onClick={() => (onSelect(""), setOpen(false))}
+            />
             {shown.map((t) => (
               <TagRow
                 key={t.id}

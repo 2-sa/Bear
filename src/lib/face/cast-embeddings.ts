@@ -3,12 +3,13 @@ import type { CastEntry } from "@/lib/providers/tmdb";
 import { embedLargestFace } from "./face-engine";
 import type { GalleryEntry } from "./match";
 
-
-const MODEL_VERSION = "sface-int8-v2";
+const MODEL_VERSION = "sface-int8-v3";
 const CACHE_DIR = "xray/face-gallery";
 const TMDB_IMG = "https://image.tmdb.org/t/p/w185";
-const MAX_CAST = 40;
-const CONCURRENCY = 6;
+const PRIMARY_CAST = 24;
+const MAX_CAST = 80;
+const PRIMARY_CONCURRENCY = 6;
+const BACKGROUND_CONCURRENCY = 2;
 
 type CacheShape = {
   version: string;
@@ -29,7 +30,9 @@ async function readCache(key: string): Promise<GalleryEntry[] | null> {
   const path = cachePath(key);
   if (!(await exists(path, { baseDir: BaseDirectory.AppData }))) return null;
   try {
-    const raw = JSON.parse(await readTextFile(path, { baseDir: BaseDirectory.AppData })) as CacheShape;
+    const raw = JSON.parse(
+      await readTextFile(path, { baseDir: BaseDirectory.AppData }),
+    ) as CacheShape;
     if (raw.version !== MODEL_VERSION) return null;
     return raw.entries.map((e) => ({ ...e, emb: Float32Array.from(e.emb) }));
   } catch {
@@ -52,7 +55,11 @@ async function writeCache(key: string, entries: GalleryEntry[]): Promise<void> {
   await writeTextFile(cachePath(key), JSON.stringify(shape), { baseDir: BaseDirectory.AppData });
 }
 
-async function runPool<T>(items: T[], limit: number, fn: (item: T) => Promise<void>): Promise<void> {
+async function runPool<T>(
+  items: T[],
+  limit: number,
+  fn: (item: T) => Promise<void>,
+): Promise<void> {
   let cursor = 0;
   const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
     while (cursor < items.length) {
@@ -76,7 +83,7 @@ export async function buildGallery(
   }
   const pool = cast.filter((c) => c.profilePath).slice(0, MAX_CAST);
   const entries: GalleryEntry[] = [];
-  await runPool(pool, CONCURRENCY, async (c) => {
+  const addEntry = async (c: CastEntry) => {
     try {
       const bmp = await loadBitmap(castImageUrl(c.profilePath as string));
       let emb: number[] | null;
@@ -98,7 +105,12 @@ export async function buildGallery(
     } catch {
       /* skip this cast member */
     }
-  });
+  };
+
+  // Make the principal cast usable quickly, then broaden coverage at a lower
+  // concurrency so background gallery work does not compete with playback.
+  await runPool(pool.slice(0, PRIMARY_CAST), PRIMARY_CONCURRENCY, addEntry);
+  await runPool(pool.slice(PRIMARY_CAST), BACKGROUND_CONCURRENCY, addEntry);
   if (entries.length) {
     try {
       await writeCache(key, entries);

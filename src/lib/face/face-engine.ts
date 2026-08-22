@@ -7,8 +7,11 @@ import { l2normalize, MIN_BOX_PX } from "./match";
 import type { WireFace } from "./match";
 
 ort.env.wasm.wasmPaths = { wasm: ortWasmUrl, mjs: ortMjsUrl };
-const canThread = typeof SharedArrayBuffer !== "undefined" && globalThis.crossOriginIsolated === true;
-ort.env.wasm.numThreads = canThread ? Math.max(1, Math.min(4, (navigator.hardwareConcurrency || 2) - 1)) : 1;
+const canThread =
+  typeof SharedArrayBuffer !== "undefined" && globalThis.crossOriginIsolated === true;
+ort.env.wasm.numThreads = canThread
+  ? Math.max(1, Math.min(4, (navigator.hardwareConcurrency || 2) - 1))
+  : 1;
 ort.env.wasm.proxy = false;
 ort.env.wasm.simd = true;
 
@@ -76,7 +79,9 @@ async function embedCanvas(canvas: OffscreenCanvas): Promise<Float32Array> {
   return l2normalize(out[s.outputNames[0]].data as Float32Array);
 }
 
-const MAX_FACES_PER_SCAN = 5;
+const MIN_FACES_PER_SCAN = 5;
+const MAX_FACES_PER_SCAN = 8;
+const FACE_SCAN_BUDGET_MS = 220;
 
 export async function scanFrame(bitmap: ImageBitmap, w: number, h: number): Promise<WireFace[]> {
   if (!detector) return [];
@@ -91,7 +96,10 @@ export async function scanFrame(bitmap: ImageBitmap, w: number, h: number): Prom
 
   candidates.sort((a, b) => b.area - a.area);
   const faces: WireFace[] = [];
+  const startedAt = performance.now();
   for (const { d } of candidates.slice(0, MAX_FACES_PER_SCAN)) {
+    if (faces.length >= MIN_FACES_PER_SCAN && performance.now() - startedAt >= FACE_SCAN_BUDGET_MS)
+      break;
     const bb = d.boundingBox;
     if (!bb) continue;
     const pts = mpKeypointsTo4pt(d.keypoints, w, h);

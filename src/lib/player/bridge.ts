@@ -62,6 +62,8 @@ export type PlayerSnapshot = {
 
 export type PlayerSource = {
   url: string;
+  traceId?: string;
+  startupProfile?: "standard" | "high-bitrate";
   subtitles?: { id?: string; url: string; lang?: string; m?: string }[];
   notWebReady?: boolean;
   startAtSec?: number;

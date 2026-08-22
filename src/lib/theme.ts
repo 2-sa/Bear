@@ -21,7 +21,18 @@ export type ThemePresetId =
   | "forest"
   | "noir";
 
-export type ThemeLayout = "sidebar" | "topdock" | "rail" | "stremio" | "minui" | "dracula" | "nord" | "forest" | "royal" | "cinematic" | "custom";
+export type ThemeLayout =
+  | "sidebar"
+  | "topdock"
+  | "rail"
+  | "stremio"
+  | "minui"
+  | "dracula"
+  | "nord"
+  | "forest"
+  | "royal"
+  | "cinematic"
+  | "custom";
 export type ThemeCardStyle = "flat" | "glass" | "stremio" | "minui" | "crunch" | "noir" | "custom";
 export type ThemeButtonStyle = "flat" | "glossy" | "minui" | "crunch" | "noir" | "custom";
 
@@ -996,7 +1007,13 @@ const elegantFinJs = `(function () {
       return;
     }
     if (t.closest("#ef-profile")) {
-      setOpen(true);
+      var opened = false;
+      try {
+        if (w.harbor && typeof w.harbor.tryViewMyProfile === "function") {
+          opened = w.harbor.tryViewMyProfile() === true;
+        }
+      } catch (e) {}
+      setOpen(!opened);
       return;
     }
     if (t.closest("aside[data-harbor-sidebar] [data-harbor-nav]")) {
@@ -1392,7 +1409,8 @@ export const BETA_THEMES: ThemePreset[] = [
   {
     id: "elegantfin" as ThemePresetId,
     name: "ElegantFin",
-    blurb: "Dark navy glass with one purple accent, rounded cards, and a soft shine sweep. Ported from Jellyfin's ElegantFin.",
+    blurb:
+      "Dark navy glass with one purple accent, rounded cards, and a soft shine sweep. Ported from Jellyfin's ElegantFin.",
     swatch: ["#111827", "#1e2836", "#775bf4"],
     tokens: {
       "--color-canvas": "#111827",
@@ -1423,7 +1441,8 @@ const PARKED_THEMES: ThemePreset[] = [
   {
     id: "feishin" as ThemePresetId,
     name: "Feishin",
-    blurb: "Layered near-black with one electric-blue accent, tight 5px corners, and heavy Inter. Ported from the Feishin player.",
+    blurb:
+      "Layered near-black with one electric-blue accent, tight 5px corners, and heavy Inter. Ported from the Feishin player.",
     swatch: ["#0C0C0C", "#141414", "#3574FC"],
     tokens: {
       "--color-canvas": "#0C0C0C",
@@ -1501,8 +1520,7 @@ export const FEATURED_CUSTOM_THEMES: ThemePreset[] = [
       "--color-danger": "#b91c1c",
     },
     background: {
-      image:
-        "radial-gradient(ellipse 120% 70% at 50% -10%, #ffffff 0%, #f4f4f6 45%, #ececef 100%)",
+      image: "radial-gradient(ellipse 120% 70% at 50% -10%, #ffffff 0%, #f4f4f6 45%, #ececef 100%)",
       dim: 0,
     },
     layout: "minui",
@@ -1534,8 +1552,7 @@ export const TEMPLATE_THEMES: ThemePreset[] = [
       "--color-danger": "#e87474",
     },
     background: {
-      image:
-        "radial-gradient(ellipse 100% 70% at 50% 0%, #3a1f44 0%, #1f1226 40%, #0c0610 100%)",
+      image: "radial-gradient(ellipse 100% 70% at 50% 0%, #3a1f44 0%, #1f1226 40%, #0c0610 100%)",
       dim: 0,
     },
     layout: "rail",

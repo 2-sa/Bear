@@ -16,6 +16,9 @@ test("Bear-owned defaults survive upstream syncs", async (context) => {
 
   const { DEFAULT } = await server.ssrLoadModule("/src/lib/settings/defaults.ts");
   const { DEFAULT_THEME } = await server.ssrLoadModule("/src/lib/theme.ts");
+  const { DEFAULT_PLAYLISTS } = await server.ssrLoadModule(
+    "/src/lib/iptv/playlists-store.ts",
+  );
   const { DISCORD_PARTY_JOIN_ENABLED } = await server.ssrLoadModule(
     "/src/lib/discord/presence.ts",
   );
@@ -38,7 +41,7 @@ test("Bear-owned defaults survive upstream syncs", async (context) => {
   assert.ok(Object.values(DEFAULT.streamingRegions).every((region) => region === "US"));
   assert.equal(DEFAULT.showAdultAddons, false);
   assert.equal(DEFAULT.togetherRelayUrl, EXPECTED_RELAY);
-  assert.deepEqual(DEFAULT.iptvPlaylists, [
+  assert.deepEqual(DEFAULT_PLAYLISTS, [
     {
       id: "iptv-org-arabic",
       name: "عربي",

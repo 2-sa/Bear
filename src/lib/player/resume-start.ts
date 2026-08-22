@@ -21,6 +21,7 @@ type ResolveStartArgs = ResumeIdentity & {
 type RemoteEntry = {
   at: number;
   promise: Promise<LibraryItem | null>;
+  settled: boolean;
 };
 
 const remoteByAccount = new Map<string, Map<string, RemoteEntry>>();
@@ -45,14 +46,34 @@ export function resumeLibraryGetOne(authKey: string, id: string): Promise<Librar
   const now = Date.now();
   const cached = account.get(id);
   if (cached && now - cached.at < REMOTE_CACHE_TTL_MS) return cached.promise;
-  const promise = libraryGetOne(authKey, id).catch(() => null);
-  account.set(id, { at: now, promise });
+  const entry: RemoteEntry = {
+    at: now,
+    promise: Promise.resolve(null),
+    settled: false,
+  };
+  entry.promise = libraryGetOne(authKey, id)
+    .catch(() => null)
+    .finally(() => {
+      entry.settled = true;
+    });
+  account.set(id, entry);
   while (account.size > MAX_CACHE_KEYS_PER_ACCOUNT) {
     const oldest = account.keys().next().value as string | undefined;
     if (!oldest) break;
     account.delete(oldest);
   }
-  return promise;
+  return entry.promise;
+}
+
+export function isResumeStartReady(identity: ResumeIdentity): boolean {
+  if (!identity.authKey) return true;
+  const account = remoteByAccount.get(identity.authKey);
+  if (!account) return false;
+  const now = Date.now();
+  return lookupIds(identity).every((id) => {
+    const entry = account.get(id);
+    return !!entry && entry.settled && now - entry.at < REMOTE_CACHE_TTL_MS;
+  });
 }
 
 function remoteItems(identity: ResumeIdentity): Promise<Array<LibraryItem | null>> {

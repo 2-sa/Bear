@@ -5,6 +5,7 @@ import {
   getPlaybackPosition,
   usePlaybackFlag,
 } from "@/lib/player/playback-clock";
+import { isTruncatedEnd } from "@/lib/player/playback-end";
 import { isLocalUrl } from "@/lib/player/local-url";
 import { clearOnePickerCache } from "@/lib/picker-cache";
 import { resolveViaDebrids } from "@/lib/streams/resolve";
@@ -132,6 +133,8 @@ export function useAutoRetry(params: {
   const p2pCompleteReloadedAtRef = useRef(0);
   const liveRetryCountRef = useRef(0);
   const livePlayedRef = useRef(false);
+  const truncatedReloadedRef = useRef(false);
+  const resumedAfterTruncatedRef = useRef(false);
   const [transcodedUrl, setTranscodedUrl] = useState<string | null>(null);
   const [sourceError, setSourceError] = useState<SourceError | null>(null);
   useEffect(() => {
@@ -146,6 +149,8 @@ export function useAutoRetry(params: {
     p2pCompleteReloadedAtRef.current = 0;
     liveRetryCountRef.current = 0;
     livePlayedRef.current = false;
+    truncatedReloadedRef.current = false;
+    resumedAfterTruncatedRef.current = false;
     dlRef.current = { bytes: 0, at: Date.now() };
     setTranscodedUrl(null);
   }, [src.url]);
@@ -380,6 +385,54 @@ export function useAutoRetry(params: {
     bridgeRef,
     isP2pEngine,
     engineFailure,
+  ]);
+
+  // Distinguishes a genuine re-truncation after reload from the same EOF re-emitted:
+  // any departure from "ended" (loading/playing) after the reload marks the next
+  // ended as a real second death, even if it never managed to play.
+  useEffect(() => {
+    if (snap.status !== "ended") resumedAfterTruncatedRef.current = true;
+  }, [snap.status]);
+
+  // Premature EOF: reload the same URL once (sidecar re-registers a fresh session),
+  // and only escalate to candidate retry if the reloaded stream also dies.
+  useEffect(() => {
+    if (snap.status !== "ended") return;
+    if (isLocal) return;
+    if (isLive) return;
+    const pos = snap.positionSec > 0 ? snap.positionSec : getPlaybackPosition();
+    if (!isTruncatedEnd(snap, pos)) return;
+    const b = bridgeRef.current;
+    if (!b) return;
+    if (!truncatedReloadedRef.current) {
+      truncatedReloadedRef.current = true;
+      resumedAfterTruncatedRef.current = false;
+      console.warn(
+        `[player] stream ended prematurely at ${pos.toFixed(1)}s of ${snap.durationSec.toFixed(1)}s — reloading same URL for a fresh session`,
+      );
+      void b.load({
+        url: src.url,
+        subtitles: src.subtitles,
+        notWebReady: src.notWebReady,
+        isLive,
+        headers: src.headers,
+      });
+      return;
+    }
+    if (!resumedAfterTruncatedRef.current) return;
+    triggerAutoRetry("stream ended prematurely again after reload");
+  }, [
+    snap.status,
+    snap.durationSec,
+    snap.positionSec,
+    triggerAutoRetry,
+    isLocal,
+    isLive,
+    src.url,
+    src.subtitles,
+    src.notWebReady,
+    src.headers,
+    bridgeRef,
   ]);
 
   const lastPosRef = useRef({ pos: 0, at: 0, started: false, urlAt: 0 });
