@@ -2233,6 +2233,10 @@ const settings: Record<string, string> = {
   "Watchlist ({n})": "قائمة المشاهدة ({n})",
   "Watched history": "سجل المشاهدة",
   "Copied once — afterwards this profile keeps its own copy. Nothing stays linked to Primary.": "تُنسخ البيانات مرة واحدة، وبعدها يحتفظ هذا الملف بنسخته المستقلة ولا يبقى شيء مرتبطًا بالملف الأساسي.",
+  "Import data from {name}": "استيراد البيانات من {name}",
+  "Switch to sharing? This profile will use {name}'s library, watchlist and addons. Its own data is kept but hidden until you switch back.": "هل تريد التبديل إلى المشاركة؟ سيستخدم هذا الملف مكتبة {name} وقائمة مشاهدته وإضافاته. ستبقى بياناته الخاصة محفوظة لكنها ستكون مخفية حتى تعود للوضع المستقل.",
+  "Checking an area replaces this profile's current data in it.": "تحديد أي قسم سيستبدل بيانات هذا الملف الحالية في ذلك القسم.",
+  "Replace selected data?": "استبدال البيانات المحددة؟",
 };
 
 export default settings;

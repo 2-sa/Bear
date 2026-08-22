@@ -1802,6 +1802,10 @@ const settings: Record<string, string> = {
   "Watchlist ({n})": "Lista de reprodução ({n})",
   "Watched history": "Histórico assistido",
   "Copied once — afterwards this profile keeps its own copy. Nothing stays linked to Primary.": "Os dados são copiados uma vez; depois, este perfil mantém a própria cópia e nada permanece ligado ao perfil principal.",
+  "Import data from {name}": "Importar dados de {name}",
+  "Switch to sharing? This profile will use {name}'s library, watchlist and addons. Its own data is kept but hidden until you switch back.": "Mudar para o compartilhamento? Este perfil usará a biblioteca, a lista e os addons de {name}. Os dados próprios continuam guardados, mas ficam ocultos até você voltar.",
+  "Checking an area replaces this profile's current data in it.": "Marcar uma área substitui os dados atuais desse perfil nela.",
+  "Replace selected data?": "Substituir os dados selecionados?",
 };
 
 export default settings;

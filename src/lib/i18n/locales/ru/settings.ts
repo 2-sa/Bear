@@ -1802,6 +1802,10 @@ const settings: Record<string, string> = {
   "Watchlist ({n})": "Список просмотра ({n})",
   "Watched history": "История просмотров",
   "Copied once — afterwards this profile keeps its own copy. Nothing stays linked to Primary.": "Данные копируются один раз; затем профиль хранит собственную копию и больше не связан с основным профилем.",
+  "Import data from {name}": "Импортировать данные из {name}",
+  "Switch to sharing? This profile will use {name}'s library, watchlist and addons. Its own data is kept but hidden until you switch back.": "Переключиться на общий доступ? Профиль будет использовать библиотеку, список просмотра и дополнения {name}. Его собственные данные сохранятся, но будут скрыты до обратного переключения.",
+  "Checking an area replaces this profile's current data in it.": "Выбор раздела заменит текущие данные этого профиля в нём.",
+  "Replace selected data?": "Заменить выбранные данные?",
 };
 
 export default settings;
