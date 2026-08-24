@@ -1,7 +1,7 @@
 import { ChevronDown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { franchiseTags, type FranchiseEntry } from "@/lib/providers/anime-detail";
+import { franchiseTags, isFranchiseExtra, type FranchiseEntry } from "@/lib/providers/anime-detail";
 import { useT } from "@/lib/i18n";
 import { UpcomingBadge } from "../badges";
 
@@ -68,8 +68,11 @@ export function AnimeSeasonPicker({
 
   if (!current) return null;
   const tags = franchiseTags(franchise);
-  const positionLabel = tags[currentIdx]?.short ?? `S${currentIdx + 1}`;
-  const seasonIdxs = tags.map((tg, i) => (tg?.kind === "season" ? i : -1)).filter((i) => i >= 0);
+    const positionLabel = tags[currentIdx]?.short ?? `S${currentIdx + 1}`;
+    // Extras never belong here; they render under Movies & Specials buckets.
+    const seasonIdxs = tags
+      .map((tg, i) => (tg?.kind === "season" && !isFranchiseExtra(franchise[i]) ? i : -1))
+      .filter((i) => i >= 0);
 
   const renderEntry = (i: number) => {
     const f = franchise[i];

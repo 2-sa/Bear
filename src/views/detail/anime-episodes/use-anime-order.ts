@@ -5,6 +5,7 @@ import { tmdbLanguageIso } from "@/lib/providers/tmdb/tmdb-client";
 import { useEpisodeOrder } from "../series-episodes/use-episode-order";
 import type { PickerItem } from "../series-episodes/season-arc-picker";
 import { buildAnimeOrder } from "./anime-order-utils";
+import { foreignAnimeProviderSeasons } from "@/lib/streams/anime-identity";
 
 export type AnimeOrder = {
   items: PickerItem[];
@@ -32,6 +33,30 @@ export function useAnimeOrder(
   );
   const [sel, setSel] = useState<string | null>(null);
   const [touched, setTouched] = useState(false);
+  const [foreignSeasons, setForeignSeasons] = useState<Set<number> | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    void foreignAnimeProviderSeasons(metaId, imdbId)
+      .then((s) => {
+        if (!cancelled) setForeignSeasons(s);
+      })
+      .catch(() => {
+        if (!cancelled) setForeignSeasons(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [metaId, imdbId]);
+  const filteredBuilt = useMemo(() => {
+    if (!built || !foreignSeasons || foreignSeasons.size === 0) return built;
+    const items = built.items.filter(
+      (i) => !(Number.isFinite(Number(i.key)) && foreignSeasons.has(Number(i.key))),
+    );
+    if (items.length === built.items.length || items.length === 0) return built;
+    const subsetByKey = new Map(built.subsetByKey);
+    for (const s of foreignSeasons) subsetByKey.delete(String(s));
+    return { ...built, items, subsetByKey };
+  }, [built, foreignSeasons]);
   useEffect(() => {
     setSel(null);
     setTouched(false);
@@ -40,19 +65,19 @@ export function useAnimeOrder(
     setSel(key);
     setTouched(true);
   }, []);
-  if (!built) return null;
+  if (!filteredBuilt) return null;
   const activeKey =
-    touched && built.items.some((i) => i.key === sel)
+    touched && filteredBuilt.items.some((i) => i.key === sel)
       ? (sel as string)
-      : intentSeasonKey && built.items.some((i) => i.key === intentSeasonKey)
+      : intentSeasonKey && filteredBuilt.items.some((i) => i.key === intentSeasonKey)
         ? intentSeasonKey
-        : preferredSeasonKey && built.items.some((i) => i.key === preferredSeasonKey)
+        : preferredSeasonKey && filteredBuilt.items.some((i) => i.key === preferredSeasonKey)
           ? preferredSeasonKey
-          : built.items[0].key;
+          : filteredBuilt.items[0].key;
   return {
-    items: built.items,
+    items: filteredBuilt.items,
     activeKey,
     onSelect,
-    visibleEpisodes: built.subsetByKey.get(activeKey) ?? [],
+    visibleEpisodes: filteredBuilt.subsetByKey.get(activeKey) ?? [],
   };
 }

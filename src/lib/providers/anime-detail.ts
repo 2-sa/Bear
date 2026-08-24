@@ -308,7 +308,7 @@ async function buildFranchise(
 
 export type FranchiseTag = { kind: "season" | "movie"; seasonNum: number; short: string };
 
-const SHORT_SUBTYPES = new Set(["ona", "ova", "special", "music"]);
+const SHORT_SUBTYPES = new Set(["ona", "ova", "special", "music", "one_shot"]);
 
 export function isFranchiseExtra(f: FranchiseEntry): boolean {
   if (f.meta.type === "movie") return true;

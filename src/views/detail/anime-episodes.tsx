@@ -33,6 +33,9 @@ import { useAnimePreferredSeason } from "./anime-episodes/use-anime-preferred-se
 import { useAnimeTvdbPanel } from "./anime-episodes/use-anime-tvdb-panel";
 
 import { useFranchiseEpisodes } from "./anime-episodes/use-franchise-episodes";
+import { isFranchiseExtra } from "@/lib/providers/anime-detail";
+import { franchiseRoot, franchiseRootSync } from "@/lib/providers/anime-franchise-root";
+import { isScopedSplitFranchiseRoot } from "@/lib/streams/anime-identity-core";
 import { useAnimeWatchedRouting } from "./anime-episodes/use-anime-watched-routing";
 import { useAnimeFranchiseNav } from "./anime-episodes/use-anime-franchise-nav";
 import { useTvdbProxyImages } from "./anime-episodes/use-tvdb-proxy-images";
@@ -104,12 +107,46 @@ export function AnimeEpisodes({
     trackId ?? meta.id,
     episodes,
   );
+  // Split-franchise sequels (TYBW, Stone Wars, …) render standalone: only the
+  // opened entry's episodes, no sibling pooling, no whole-series TVDB buckets.
+  const [rootEntryId, setRootEntryId] = useState<string | null>(() => franchiseRootSync(meta.id));
+  useEffect(() => {
+    let cancelled = false;
+    setRootEntryId(franchiseRootSync(meta.id));
+    if (rootEntryId != null) return;
+    franchiseRoot(meta.id)
+      .then((r) => {
+        if (!cancelled) setRootEntryId(r);
+      })
+      .catch(() => {
+        if (!cancelled) setRootEntryId(meta.id);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [meta.id]);
+  const openedKitsu = parseKitsuId(meta.id);
+  const isFranchiseRoot =
+    rootEntryId == null ||
+    (openedKitsu != null
+      ? parseKitsuId(rootEntryId) === openedKitsu
+      : rootEntryId === meta.id);
+  const scopedSplitFranchise =
+    rootEntryId != null && isScopedSplitFranchiseRoot(parseKitsuId(rootEntryId));
+  const soloEntry =
+    /^(kitsu|mal|anilist|anidb):/.test(meta.id) && !isFranchiseRoot && scopedSplitFranchise;
   const franchiseEpisodes = useFranchiseEpisodes(
     franchise,
     currentId,
     episodes,
-    franchise.length > 1,
+    franchise.length > 1 && !soloEntry,
   );
+  const soloPickerFranchise = useMemo(
+    () => franchise.filter((f) => f.meta.id !== rootEntryId && !isFranchiseExtra(f)),
+    [franchise, rootEntryId],
+  );
+  const pickerFranchise =
+    soloEntry && soloPickerFranchise.length > 0 ? soloPickerFranchise : franchise;
   const panelPool = franchiseEpisodes !== episodes ? franchiseEpisodes : undefined;
   const mwVersion = useSyncExternalStore(subscribeManualWatched, manualWatchedVersion);
   const preferredSeasonKey = useAnimePreferredSeason({
@@ -155,6 +192,7 @@ export function AnimeEpisodes({
     intentSeasonKey ?? undefined,
   );
   const routing = useAnimeWatchedRouting(meta, franchise, trackId);
+  const effectiveOrder = soloEntry ? null : order;
   const { openMeta } = useView();
   const [activeEntryId, setActiveEntryId] = useState(currentId);
   useEffect(() => {
@@ -190,11 +228,12 @@ export function AnimeEpisodes({
     episodes,
     settings.tvdbSeasonType,
     settings.tvdbKey,
-    tvdbPanelEnabled(settings),
+    tvdbPanelEnabled(settings) && !soloEntry,
     panelPool,
     preferredSeasonKey ?? undefined,
     intentSeasonKey ?? undefined,
     franchise,
+    meta.id,
   );
 
   const onSeasonArtRef = useRef(onSeasonArt);
@@ -251,8 +290,8 @@ export function AnimeEpisodes({
     ? tvdbPanel.panel.visibleEpisodes
     : !activeIsAnchor
       ? entryEpisodes
-      : order
-        ? order.visibleEpisodes
+      : effectiveOrder
+        ? effectiveOrder.visibleEpisodes
         : episodes;
   const displayEpisodes = useMemo(() => {
     if (Object.keys(proxyImages).length === 0) return baseDisplay;
@@ -281,7 +320,7 @@ export function AnimeEpisodes({
     [displayEpisodes],
   );
   const { pickerItems, selectPickerItem, franchiseActiveKey } = useAnimeFranchiseNav(
-    order,
+    effectiveOrder,
     franchise,
     currentId,
     activeEntryId,
@@ -468,7 +507,7 @@ export function AnimeEpisodes({
             {isOneOff ? (
               franchise.length > 1 ? (
                 <AnimeSeasonPicker
-                  franchise={franchise}
+                  franchise={pickerFranchise}
                   activeEntryId={activeEntryId}
                   onSelectEntry={onSelectEntry}
                 />
@@ -489,15 +528,15 @@ export function AnimeEpisodes({
                 aria-hidden
                 className="h-10 w-44 animate-pulse rounded-full border border-edge-soft/50 bg-elevated/40"
               />
-            ) : order ? (
+            ) : effectiveOrder ? (
               <SeasonArcPicker
                 items={pickerItems}
-                activeKey={franchiseActiveKey ?? order.activeKey}
+                activeKey={franchiseActiveKey ?? effectiveOrder.activeKey}
                 onSelect={selectPickerItem}
               />
             ) : franchise.length > 1 ? (
               <AnimeSeasonPicker
-                franchise={franchise}
+                franchise={pickerFranchise}
                 activeEntryId={activeEntryId}
                 onSelectEntry={onSelectEntry}
               />
