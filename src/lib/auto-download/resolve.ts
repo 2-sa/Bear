@@ -5,7 +5,7 @@ import { buildEpisodePipelineInput } from "@/lib/streams/episode-pipeline-input"
 import type { EpisodeHint } from "@/lib/streams/episode-file";
 import { runPipeline } from "@/lib/streams/pipeline";
 import { resolveStream } from "@/lib/streams/resolve";
-import { buildStreamIds } from "@/lib/streams/stream-ids";
+import { buildStreamIdsWithIdentity } from "@/lib/streams/anime-identity";
 import type { Resolution, ScoredStream } from "@/lib/streams/types";
 import type { PlayEpisode } from "@/lib/view";
 import { readSettings } from "./context";
@@ -62,7 +62,7 @@ export async function resolveBestDownload(
   opts: ResolveOptions,
 ): Promise<DownloadPick | null> {
   const imdbId = meta.id.startsWith("tt") ? meta.id : null;
-  const streamIds = buildStreamIds(meta.id, episode, imdbId);
+  const streamIds = await buildStreamIdsWithIdentity(meta.id, episode, imdbId);
   if (streamIds.length === 0) return null;
 
   const input = buildEpisodePipelineInput({
