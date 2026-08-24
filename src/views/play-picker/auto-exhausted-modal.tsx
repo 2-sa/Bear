@@ -5,18 +5,22 @@ import { openUrl } from "@/lib/window";
 export function AutoExhaustedModal({
   meta,
   episode,
+  absoluteEpisode,
   triedCount,
   onBrowseManually,
 }: {
   meta: Meta;
   episode?: PlayEpisode;
+  absoluteEpisode?: number | null;
   triedCount: number;
   onBrowseManually: () => void;
 }) {
   const { goBack } = useView();
   const title = meta.name ?? "this title";
   const epSuffix = episode
-    ? ` S${episode.imdbSeason ?? episode.season}E${String(episode.imdbEpisode ?? episode.episode).padStart(2, "0")}`
+    ? absoluteEpisode != null
+      ? ` E${absoluteEpisode}`
+      : ` S${episode.imdbSeason ?? episode.season}E${String(episode.imdbEpisode ?? episode.episode).padStart(2, "0")}`
     : "";
   const subject = `Bear: no working stream for ${title}${epSuffix}`;
   const body =

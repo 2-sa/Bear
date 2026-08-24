@@ -35,6 +35,7 @@ export function SourceDrawer({
   resolvingId,
   showName,
   episode,
+  absoluteEpisode,
 }: {
   open: boolean;
   onToggle: () => void;
@@ -49,6 +50,7 @@ export function SourceDrawer({
   resolvingId: string | null;
   showName: string;
   episode?: PlayEpisode;
+  absoluteEpisode?: number | null;
 }) {
   const [addonFilter, setAddonFilter] = useState("all");
   const addonOptions = useMemo(() => buildAddonOptions(streams), [streams]);
@@ -108,6 +110,7 @@ export function SourceDrawer({
               divider={i > 0}
               showName={showName}
               episode={episode}
+              absoluteEpisode={absoluteEpisode}
             />
           ))}
         </ul>
@@ -152,6 +155,7 @@ function SourceRow({
   divider,
   showName,
   episode,
+  absoluteEpisode,
 }: {
   stream: ScoredStream;
   debrids: ReturnType<typeof useDebridClients>;
@@ -162,6 +166,7 @@ function SourceRow({
   divider: boolean;
   showName: string;
   episode?: PlayEpisode;
+  absoluteEpisode?: number | null;
 }) {
   const { settings } = useSettings();
   const cachedDebrids = debrids.filter((d) => stream.cached[d.slug]);
@@ -169,7 +174,7 @@ function SourceRow({
   const addonCached = anyStreamCached(stream);
   const summary = streamSummaryParts(stream);
   const link = resolveStreamLink(stream);
-  const title = displayTitle(stream, showName, episode);
+  const title = displayTitle(stream, showName, episode, absoluteEpisode);
   const fname = settings.pickerShowFilename ? torrentFilename(stream) : "";
 
   return (

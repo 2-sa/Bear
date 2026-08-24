@@ -46,6 +46,7 @@ export function usePickHandler({
   imdbId,
   imdbIdVerified,
   episode,
+  absoluteEpisode,
   attempt,
   resume,
   debrids,
@@ -74,6 +75,7 @@ export function usePickHandler({
   imdbId?: string | null;
   imdbIdVerified?: boolean;
   episode?: PlayEpisode;
+  absoluteEpisode?: number | null;
   attempt?: number;
   resume?: boolean;
   debrids: DebridStore[];
@@ -288,9 +290,11 @@ export function usePickHandler({
         imdbIdVerified: imdbIdVerified === true,
         episode,
         url: playUrl,
-        title: episode ? episode.name || `Episode ${episode.episode}` : meta.name,
+        title: episode ? episode.name || `Episode ${absoluteEpisode ?? episode.episode}` : meta.name,
         subtitle: episode
-          ? `${meta.name} · S${episode.imdbSeason ?? episode.season} · E${episode.imdbEpisode ?? episode.episode}`
+          ? absoluteEpisode != null
+            ? `${meta.name} · E${absoluteEpisode}`
+            : `${meta.name} · S${episode.imdbSeason ?? episode.season} · E${episode.imdbEpisode ?? episode.episode}`
           : meta.releaseInfo,
         notWebReady: r.data.notWebReady,
         subtitles: r.data.subtitles,

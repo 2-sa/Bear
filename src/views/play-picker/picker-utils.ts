@@ -301,7 +301,12 @@ export function tierChipBadges(s: ScoredStream): BadgeKind[] {
   return out;
 }
 
-export function displayTitle(s: ScoredStream, showName: string, episode?: PlayEpisode): string {
+export function displayTitle(
+  s: ScoredStream,
+  showName: string,
+  episode?: PlayEpisode,
+  absoluteEpisode?: number | null,
+): string {
   const raw = s.name?.trim();
   if (raw) return raw;
   if (!episode) {
@@ -311,7 +316,9 @@ export function displayTitle(s: ScoredStream, showName: string, episode?: PlayEp
   }
   const parts = [showName || s.parsedTitle];
   parts.push(
-    `S${String(episode.imdbSeason ?? episode.season).padStart(2, "0")}E${String(episode.imdbEpisode ?? episode.episode).padStart(2, "0")}`,
+    absoluteEpisode != null
+      ? `E${absoluteEpisode}`
+      : `S${String(episode.imdbSeason ?? episode.season).padStart(2, "0")}E${String(episode.imdbEpisode ?? episode.episode).padStart(2, "0")}`,
   );
   if (episode.name) parts.push(episode.name);
   else if (s.episodeTitle) parts.push(s.episodeTitle);
