@@ -6,6 +6,7 @@ import {
   animeCoordPairs,
   findAnimeEntryNumber,
   partitionByExactAnimeEpisode,
+  selectSiblingWindows,
 } from "../src/lib/streams/anime-identity-core.ts";
 import { buildStreamIds } from "../src/lib/streams/stream-ids.ts";
 
@@ -117,4 +118,28 @@ test("episode filter with no mismatches keeps everything", () => {
   const { keep, drop } = partitionByExactAnimeEpisode(streams, 1169);
   assert.equal(keep.length, 2);
   assert.equal(drop.length, 0);
+});
+
+test("sibling selection returns distinct entries claiming the requested season", () => {
+  const windows = [
+    { anidbId: 2960, season: 1, offset: 0 },
+    { anidbId: 16524, season: 17, offset: 0 },
+    { anidbId: 16524, season: 18, offset: 0 },
+    { anidbId: 16524, season: 17, offset: 0 },
+  ];
+  assert.deepEqual(selectSiblingWindows(windows, 17), [16524]);
+});
+
+test("sibling selection excludes the base entry and ignores absolute windows", () => {
+  const windows = [
+    { anidbId: 2960, season: 17, offset: 0 },
+    { anidbId: 16524, season: "a" as const, offset: 0 },
+    { anidbId: 16524, season: 17, offset: 0 },
+  ];
+  assert.deepEqual(selectSiblingWindows(windows, 17, 2960), [16524]);
+});
+
+test("sibling selection on empty or missing buckets yields nothing", () => {
+  assert.deepEqual(selectSiblingWindows(undefined, 17), []);
+  assert.deepEqual(selectSiblingWindows([], 1), []);
 });
