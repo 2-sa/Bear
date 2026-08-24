@@ -5,6 +5,7 @@ import { pickLogo, fetchMovieAssets } from "./tmdb-images";
 import { imageLangParam, imageLangRank } from "./tmdb-image-lang";
 import { pickTrailers, type Video } from "./tmdb-trailers";
 import type { PersonRef } from "./tmdb-people";
+import { isAnimeItem } from "./tmdb-meta-mappers";
 
 export type CastEntry = {
   id: number;
@@ -165,7 +166,7 @@ const uniqByName = (entries: Array<{ id: number; name: string }>): PersonRef[] =
   return out;
 };
 
-export async function tmdbDetails(key: string, meta: Meta): Promise<TmdbDetail | null> {
+export async function tmdbDetails(key: string, meta: Meta, lang?: string): Promise<TmdbDetail | null> {
   if (!key) return null;
   let kind: "movie" | "tv";
   let id: string;
@@ -192,13 +193,40 @@ export async function tmdbDetails(key: string, meta: Meta): Promise<TmdbDetail |
   }
 
   const settings = loadStoredSettings();
-  const metaLang = effectiveTmdbLanguage() || "en";
+  const metaLang = lang ?? (effectiveTmdbLanguage() || "en");
   const raw = await get<any>(key, `${kind}/${id}`, {
     append_to_response: "credits,aggregate_credits,recommendations,similar,videos,external_ids,images,keywords,translations",
     language: metaLang,
     include_image_language: imageLangParam(),
   });
   if (!raw) return null;
+
+  // TMDB returns a person's name in the requested language only when a translation
+  // exists; otherwise it falls back to the original name (e.g. Japanese for anime
+  // staff). Fetch English credits as a fallback so untranslated names stay readable.
+  const metaLangBase = metaLang.split("-")[0]?.toLowerCase() ?? "";
+  let enNameById: Map<number, string> | null = null;
+  if (metaLangBase && metaLangBase !== "en") {
+    const [enCredits, enAgg] = await Promise.all([
+      get<any>(key, `${kind}/${id}/credits`, { language: "en-US" }),
+      get<any>(key, `${kind}/${id}/aggregate_credits`, { language: "en-US" }),
+    ]);
+    enNameById = new Map();
+    for (const list of [enCredits?.cast, enCredits?.crew, enAgg?.cast, enAgg?.crew]) {
+      for (const p of list ?? []) {
+        if (p?.id != null && typeof p.name === "string" && p.name && !enNameById.has(p.id)) {
+          enNameById.set(p.id, p.name);
+        }
+      }
+    }
+  }
+  const displayName = (c: any): string => {
+    const localized = typeof c?.name === "string" ? c.name : "";
+    if (!enNameById) return localized;
+    const original = typeof c?.original_name === "string" ? c.original_name : "";
+    if (original && localized === original) return enNameById.get(c.id) ?? localized;
+    return localized;
+  };
 
   const origLang = typeof raw.original_language === "string" ? raw.original_language : "";
   let logo = pickLogo(raw.images?.logos ?? [], origLang);
@@ -231,7 +259,7 @@ export async function tmdbDetails(key: string, meta: Meta): Promise<TmdbDetail |
   const castSrc = aggCast.length > 0 ? aggCast : flatCast;
   const cast: CastEntry[] = castSrc.map((c: any) => ({
     id: c.id,
-    name: c.name,
+    name: displayName(c),
     character:
       c.character ??
       (c.roles?.length ? c.roles.map((r: any) => r.character).filter(Boolean).join(", ") : ""),
@@ -244,7 +272,7 @@ export async function tmdbDetails(key: string, meta: Meta): Promise<TmdbDetail |
   const crewSrc = aggCrew.length > 0 ? aggCrew : flatCrew;
   const crew: CrewEntry[] = crewSrc.map((c: any) => ({
     id: c.id,
-    name: c.name,
+    name: displayName(c),
     job: c.job ?? c.jobs?.[0]?.job ?? "",
     department: c.department ?? "",
     profilePath: c.profile_path ?? null,
@@ -253,7 +281,11 @@ export async function tmdbDetails(key: string, meta: Meta): Promise<TmdbDetail |
   const jobsOf = (e: any): string[] =>
     e.jobs?.length ? e.jobs.map((j: any) => j.job).filter(Boolean) : e.job ? [e.job] : [];
   const byJob = (test: (job: string) => boolean) =>
-    uniqByName(crewSrc.filter((c: any) => jobsOf(c).some(test)));
+    uniqByName(
+      crewSrc
+        .filter((c: any) => jobsOf(c).some(test))
+        .map((c: any) => ({ id: c.id, name: displayName(c) })),
+    );
 
   const directors = byJob((j) => j === "Director");
   const writers = byJob((j) => WRITER_JOBS.has(j));
@@ -261,7 +293,10 @@ export async function tmdbDetails(key: string, meta: Meta): Promise<TmdbDetail |
   const composer = byJob((j) => j === "Original Music Composer" || j === "Music");
   const cinematography = byJob((j) => j === "Director of Photography" || j === "Cinematography");
   const editor = byJob((j) => j === "Editor");
-  const creators: PersonRef[] = (raw.created_by ?? []).map((c: any) => ({ id: c.id, name: c.name }));
+  const creators: PersonRef[] = (raw.created_by ?? []).map((c: any) => ({
+    id: c.id,
+    name: displayName(c),
+  }));
 
   const toMeta = (r: any): Meta => ({
     id: kind === "movie" ? `tmdb:movie:${r.id}` : `tmdb:tv:${r.id}`,
@@ -302,13 +337,25 @@ export async function tmdbDetails(key: string, meta: Meta): Promise<TmdbDetail |
         ? `${seasons.length} season${seasons.length === 1 ? "" : "s"}`
         : undefined;
 
+  const anime = isAnimeItem(raw);
+  const requestedTitle = raw.title || raw.name;
+  const originalTitle = raw.original_title || raw.original_name || requestedTitle;
+  // TMDB falls back to the original (Japanese) title when the requested language lacks a
+  // translation, so anime falls back to English rather than unreadable Japanese.
+  const titleFellBackToOriginal = requestedTitle === originalTitle;
+
   let overview = raw.overview ?? "";
   let tagline = raw.tagline ?? "";
-  if (!settings.translateDescriptions) {
-    const enTrans = raw.translations?.translations?.find((t: any) => t.iso_639_1 === "en")?.data;
+  // Explicit per-call languages (anime localization) bypass the global "Translate overviews"
+  // toggle, which is meant for regular TMDB content only.
+  const enTrans = raw.translations?.translations?.find((t: any) => t.iso_639_1 === "en")?.data;
+  if (!settings.translateDescriptions && !lang) {
     if (enTrans?.overview) overview = enTrans.overview;
     if (enTrans?.tagline) tagline = enTrans.tagline;
   }
+  // "Translate titles" off means English titles; prefer the English translation over the
+  // requested-language title and the original-language title.
+  const enTitle = enTrans?.title || enTrans?.name;
 
   let finalPosterPath = raw.poster_path;
   if (!settings.posterBaseUrl && posterSource?.length) {
@@ -320,13 +367,17 @@ export async function tmdbDetails(key: string, meta: Meta): Promise<TmdbDetail |
     if (best) finalPosterPath = best.file_path;
   }
 
+  const useEnglishForAnime = anime && (!settings.translateTitles || titleFellBackToOriginal);
+
   return {
     kind,
     id: raw.id,
     imdbId: raw.external_ids?.imdb_id ?? null,
-    title: settings.translateTitles
-      ? (raw.title || raw.name)
-      : (raw.original_title || raw.original_name || raw.title || raw.name),
+    title: useEnglishForAnime
+      ? (enTitle || requestedTitle)
+      : settings.translateTitles
+        ? requestedTitle
+        : originalTitle,
     originalTitle: raw.original_title ?? raw.original_name ?? "",
     tagline,
     overview,
@@ -400,21 +451,35 @@ export async function tmdbSeasonEpisodes(
   key: string,
   tvId: number,
   seasonNumber: number,
+  lang?: string,
 ): Promise<Episode[]> {
   if (!key) return [];
+  const requested = lang ?? (effectiveTmdbLanguage() || "en");
   const data = await get<any>(key, `tv/${tvId}/season/${seasonNumber}`, {
-    language: effectiveTmdbLanguage() || "en",
+    language: requested,
   });
   if (!data?.episodes) return [];
-  return data.episodes.map((e: any) => ({
-    id: e.id,
-    episodeNumber: e.episode_number,
-    seasonNumber: e.season_number,
-    name: e.name ?? "",
-    overview: e.overview ?? "",
-    stillPath: e.still_path ?? null,
-    airDate: e.air_date ?? null,
-    runtime: e.runtime ?? null,
-    voteAverage: e.vote_average ?? null,
-  }));
+  const toEpisodes = (d: any): Episode[] =>
+    d.episodes.map((e: any) => ({
+      id: e.id,
+      episodeNumber: e.episode_number,
+      seasonNumber: e.season_number,
+      name: e.name ?? "",
+      overview: e.overview ?? "",
+      stillPath: e.still_path ?? null,
+      airDate: e.air_date ?? null,
+      runtime: e.runtime ?? null,
+      voteAverage: e.vote_average ?? null,
+    }));
+  const episodes = toEpisodes(data);
+  const base = requested.split("-")[0]?.toLowerCase() ?? "";
+  const wantsEnglishFallback = base !== "" && base !== "en" && base !== "ja";
+  const japanese = /[\u3040-\u30FF\u3400-\u4DBF\u4E00-\u9FFF]/;
+  const fellBackToJapanese = wantsEnglishFallback &&
+    episodes.some((e) => japanese.test(e.name) || japanese.test(e.overview));
+  if (fellBackToJapanese) {
+    const en = await get<any>(key, `tv/${tvId}/season/${seasonNumber}`, { language: "en-US" });
+    if (en?.episodes) return toEpisodes(en);
+  }
+  return episodes;
 }

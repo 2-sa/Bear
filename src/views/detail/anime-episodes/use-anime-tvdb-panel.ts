@@ -3,7 +3,6 @@ import { useT } from "@/lib/i18n";
 import type { KitsuEpisode } from "@/lib/providers/kitsu";
 import { kitsuToTvdb } from "@/lib/providers/anime-mapping";
 import { isFranchiseExtra, type FranchiseEntry } from "@/lib/providers/anime-detail";
-import { harborImdbEpisodesCached } from "@/lib/providers/harbor-imdb";
 import {
   tvdbLangFromIso1,
   tvdbOrderTypeHasEpisodes,
@@ -13,11 +12,9 @@ import {
   type TvdbSeasonTypeOption,
 } from "@/lib/providers/tvdb";
 import { tmdbLanguageIso } from "@/lib/providers/tmdb/tmdb-client";
-import {
-  fetchTvdbOrderBySeriesId,
-  seasonDateRange,
-  type TvdbOrder,
-} from "@/lib/providers/tvdb-order";
+import { pickLocalizedText } from "@/lib/localized-text";
+import { harborImdbEpisodesCached } from "@/lib/providers/harbor-imdb";
+import { fetchTvdbOrderBySeriesId, seasonDateRange, type TvdbOrder } from "@/lib/providers/tvdb-order";
 import type { PickerItem } from "../series-episodes/season-arc-picker";
 
 export type AnimeTvdbPanel = {
@@ -35,11 +32,7 @@ export type AnimeTvdbPanelState = {
 };
 
 const normTitle = (s: string) =>
-  s
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}]+/gu, "");
+  s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "");
 
 const matchTitle = (a?: string | null, b?: string | null) => {
   if (!a || !b) return false;
@@ -135,12 +128,7 @@ export function useAnimeTvdbPanel(
       const effective = values.has(norm) ? norm : values.has("aired") ? "aired" : nonEmpty[0].value;
       setOrderTypes(nonEmpty);
       setActiveType(effective);
-      const o = await fetchTvdbOrderBySeriesId(
-        tvdbKey,
-        seriesId,
-        effective,
-        tvdbLangFromIso1(tmdbLanguageIso()),
-      );
+      const o = await fetchTvdbOrderBySeriesId(tvdbKey, seriesId, effective, tvdbLangFromIso1(tmdbLanguageIso()));
       if (cancelled) return;
       setOrdering(o);
       if (!o) setResolved("none");
@@ -153,16 +141,28 @@ export function useAnimeTvdbPanel(
   const extrasLabel = t("Extras");
   const built = useMemo(() => {
     if (!ordering) return null;
+    const lang = tmdbLanguageIso();
     const pool = franchiseEpisodes ?? episodes;
     const franchiseWide = franchiseEpisodes != null;
     const byPair = new Map<string, KitsuEpisode>();
     const byAbs = new Map<number, KitsuEpisode>();
     const byTvdbId = new Map<number, KitsuEpisode>();
+    const currentByPair = new Map<string, KitsuEpisode>();
+    const currentByAbs = new Map<number, KitsuEpisode>();
+    const currentByTvdbId = new Map<number, KitsuEpisode>();
+    for (const ep of episodes) {
+      const abs = ep.absoluteNumber ?? ep.number;
+      if (abs != null && !currentByAbs.has(abs)) currentByAbs.set(abs, ep);
+      if (ep.tvdbEpisodeId != null && !currentByTvdbId.has(ep.tvdbEpisodeId)) currentByTvdbId.set(ep.tvdbEpisodeId, ep);
+      if (ep.imdbSeason != null && ep.imdbSeason >= 1 && ep.imdbEpisode != null) {
+        const key = `${ep.imdbSeason}:${ep.imdbEpisode}`;
+        if (!currentByPair.has(key)) currentByPair.set(key, ep);
+      }
+    }
     for (const ep of pool) {
-      const abs = franchiseWide ? ep.absoluteNumber : (ep.absoluteNumber ?? ep.number);
+      const abs = franchiseWide ? ep.absoluteNumber : ep.absoluteNumber ?? ep.number;
       if (abs != null && !byAbs.has(abs)) byAbs.set(abs, ep);
-      if (ep.tvdbEpisodeId != null && !byTvdbId.has(ep.tvdbEpisodeId))
-        byTvdbId.set(ep.tvdbEpisodeId, ep);
+      if (ep.tvdbEpisodeId != null && !byTvdbId.has(ep.tvdbEpisodeId)) byTvdbId.set(ep.tvdbEpisodeId, ep);
       if (ep.imdbSeason != null && ep.imdbSeason >= 0 && ep.imdbEpisode != null) {
         const k = `${ep.imdbSeason}:${ep.imdbEpisode}`;
         if (!byPair.has(k)) byPair.set(k, ep);
@@ -181,32 +181,43 @@ export function useAnimeTvdbPanel(
       const eps: KitsuEpisode[] = [];
       for (const e of bucket) {
         const abs = ordering.absByEpId.get(e.id);
-        const img =
-          e.stillUrl ?? e.stillPath ?? (abs != null ? ordering.imageByAbs.get(abs) : undefined);
+        const img = e.stillUrl ?? e.stillPath ?? (abs != null ? ordering.imageByAbs.get(abs) : undefined);
         let match: KitsuEpisode | undefined;
         if (e.seasonNumber > 0) {
           match = byTvdbId.get(e.id) ?? byPair.get(`${e.seasonNumber}:${e.episodeNumber}`);
           if (!match && abs != null) match = byAbs.get(abs);
-          if (match && claimed.has(match.id)) match = undefined;
         }
+        const currentMatch =
+          currentByTvdbId.get(e.id) ??
+          currentByPair.get(`${e.seasonNumber}:${e.episodeNumber}`) ??
+          (abs != null ? currentByAbs.get(abs) : undefined);
+        let title: string | undefined;
+        let synopsis: string | undefined;
+        if (match && currentMatch && match !== currentMatch) {
+          title = pickLocalizedText(
+            [{ text: match?.title }, { text: currentMatch?.title }],
+            { forName: true, lang },
+          );
+          synopsis = pickLocalizedText(
+            [{ text: match?.synopsis }, { text: currentMatch?.synopsis }],
+            { lang },
+          );
+        }
+        if (match && claimed.has(match.id)) match = undefined;
 
         let streamId: string | undefined;
         if (!match && franchise) {
-          let extra = franchise.find(
-            (f) =>
-              isFranchiseExtra(f) &&
-              !claimedExtras.has(f.meta.id) &&
-              matchTitle(f.meta.name, e.name),
+          let extra = franchise.find((f) =>
+            isFranchiseExtra(f) &&
+            !claimedExtras.has(f.meta.id) &&
+            matchTitle(f.meta.name, e.name)
           );
 
           if (!extra) {
-            extra = franchise.find(
-              (f) =>
-                isFranchiseExtra(f) &&
-                !claimedExtras.has(f.meta.id) &&
-                f.startDate &&
-                e.airDate &&
-                isCloseDate(f.startDate, e.airDate),
+            extra = franchise.find((f) =>
+              isFranchiseExtra(f) &&
+              !claimedExtras.has(f.meta.id) &&
+              f.startDate && e.airDate && isCloseDate(f.startDate, e.airDate)
             );
           }
 
@@ -223,7 +234,9 @@ export function useAnimeTvdbPanel(
         const ep: KitsuEpisode = match
           ? {
               ...match,
-              ...(!match.thumbnail && img ? { thumbnail: img } : {}),
+              thumbnail: !match.thumbnail && img ? img : match.thumbnail,
+              ...(title != null ? { title } : {}),
+              ...(synopsis != null ? { synopsis } : {}),
               ...(match.rating == null && imdbRating != null
                 ? { rating: imdbRating, ratingIsImdb: true }
                 : {}),
@@ -232,8 +245,14 @@ export function useAnimeTvdbPanel(
               id: -e.id,
               number: e.episodeNumber,
               seasonNumber: e.seasonNumber,
-              title: e.name || `Episode ${e.episodeNumber}`,
-              synopsis: e.overview ?? "",
+              title: pickLocalizedText(
+                [{ text: e.name }, { text: e.nameEn ?? "" }, { text: currentMatch?.title ?? "" }],
+                { forName: true, lang },
+              ) ?? e.name,
+              synopsis: pickLocalizedText(
+                [{ text: e.overview }, { text: e.overviewEn ?? "" }, { text: currentMatch?.synopsis ?? "" }],
+                { lang },
+              ) ?? e.overview,
               thumbnail: img ?? null,
               airdate: e.airDate ?? null,
               length: e.runtime ?? null,
@@ -252,29 +271,19 @@ export function useAnimeTvdbPanel(
       }
       const key = String(s.seasonNumber);
       const { from, to } = seasonDateRange(bucket);
-      items.push({
-        key,
-        name: s.name,
-        count: eps.length,
-        year: s.airDate?.slice(0, 4),
-        from,
-        to,
-        extra: s.seasonNumber === 0,
-      });
+      items.push({ key, name: s.name, count: eps.length, year: s.airDate?.slice(0, 4), from, to, extra: s.seasonNumber === 0 });
       subset.set(key, eps);
     }
     const matchedIds = new Set<number>();
     for (const eps of subset.values()) for (const e of eps) matchedIds.add(e.id);
-    const leftovers = pool.filter(
-      (e) => e.id > 0 && e.sourceMetaId == null && !matchedIds.has(e.id),
-    );
+    const leftovers = pool.filter((e) => e.id > 0 && e.sourceMetaId == null && !matchedIds.has(e.id));
     if (leftovers.length > 0) {
       items.push({ key: "specials", name: extrasLabel, count: leftovers.length, extra: true });
       subset.set("specials", leftovers);
     }
     if (items.length === 0) return null;
     return { items, subset, pool };
-  }, [ordering, episodes, franchiseEpisodes, extrasLabel, franchise]);
+  }, [ordering, episodes, franchiseEpisodes, extrasLabel, franchise, imdbId]);
 
   useEffect(() => {
     if (!ordering) return;

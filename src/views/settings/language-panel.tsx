@@ -1,6 +1,6 @@
-import {  } from "lucide-react";
+import { RotateCw } from "lucide-react";
 import { GitHubIcon } from "@/components/github-icon";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Dropdown, type DropdownOption } from "@/components/dropdown";
 import { useSettings } from "@/lib/settings";
 import { useT } from "@/lib/i18n";
@@ -39,6 +39,10 @@ export function LanguagePanel() {
   const { settings, update } = useSettings();
   const t = useT();
   const [blockDraft, setBlockDraft] = useState(settings.trackBlockWords.join(", "));
+  const [langDraft, setLangDraft] = useState(settings.tmdbLanguage);
+  useEffect(() => {
+    setLangDraft(settings.tmdbLanguage);
+  }, [settings.tmdbLanguage]);
   return (
     <>
     <DisplayLanguageSection />
@@ -130,24 +134,48 @@ export function LanguagePanel() {
       subtitle={t("Titles, overviews, and taglines from TMDB display in this language when a translation exists. Needs a TMDB key.")}
     >
       <Dropdown
-        value={settings.tmdbLanguage}
-        onChange={(v) => update({ tmdbLanguage: v })}
+        value={langDraft}
+        onChange={setLangDraft}
         options={[{ value: "", label: t("English (default)") }, ...TMDB_LANGUAGES]}
         className="w-full max-w-[340px]"
       />
       <ToggleRow
         label={t("Translate titles")}
-        sub={t("On shows titles in your metadata language (English by default). Off keeps each title's original language, so anime and foreign films show their native names.")}
+        sub={t("On shows titles in your metadata language (English by default). Off keeps titles in English.")}
         value={settings.translateTitles}
         onChange={(v) => update({ translateTitles: v })}
       />
-      {settings.tmdbLanguage !== "" && (
+      {langDraft !== "" && (
         <ToggleRow
           label={t("Translate overviews")}
           sub={t("Translate plot descriptions and taglines into the language above. Turn off to keep English overviews.")}
           value={settings.translateDescriptions}
           onChange={(v) => update({ translateDescriptions: v })}
         />
+      )}
+      {langDraft !== settings.tmdbLanguage && (
+        <div className="flex max-w-[340px] flex-col gap-2.5 rounded-xl border border-edge-soft bg-canvas/30 p-3.5">
+          <p className="text-[12.5px] leading-relaxed text-ink-muted">
+            {t("Changing the metadata language reloads Harbor so the new language takes effect. Apply when you're done with the options above.")}
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => update({ tmdbLanguage: langDraft })}
+              className="flex items-center gap-1.5 rounded-full bg-ink px-4 py-2 text-[12.5px] font-semibold text-canvas transition-transform hover:scale-[1.02] active:scale-[0.97]"
+            >
+              <RotateCw size={13} strokeWidth={2.2} />
+              {t("Apply and reload")}
+            </button>
+            <button
+              type="button"
+              onClick={() => setLangDraft(settings.tmdbLanguage)}
+              className="rounded-full border border-edge-soft px-4 py-2 text-[12.5px] font-semibold text-ink-muted transition-colors hover:border-edge hover:text-ink"
+            >
+              {t("Cancel")}
+            </button>
+          </div>
+        </div>
       )}
     </Section>
 

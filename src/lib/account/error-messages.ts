@@ -14,26 +14,14 @@ const BY_CODE: Record<string, string> = {
   handle_too_long: "That handle is too long. Use at most 24 characters.",
   handle_invalid: "Handles can use letters, numbers, and single hyphens only.",
   handle_taken: "That handle is already taken. Try one of the suggestions.",
-  handle_cooldown_other:
-    "Someone released that handle recently. It frees up 30 days after they dropped it.",
+  handle_cooldown_other: "Someone released that handle recently. It frees up 14 days after they dropped it.",
   handle_cooldown: "You changed your handle recently. You can change it again after the cooldown.",
-  stremio_already_bound:
-    "That Stremio account is already linked to a different Harbor account. Unlink it there first.",
+  stremio_already_bound: "That Stremio account is already linked to a different Harbor account. Unlink it there first.",
   stremio_key_invalid: "That Stremio sign-in did not go through. Try again.",
   stremio_anonymous: "Sign in to a real Stremio account, not a guest, to verify.",
   stremio_unreachable: "Could not reach Stremio right now. Try again in a moment.",
-  discord_already_bound:
-    "That Discord account is already linked to a different Harbor account. Unlink it there first.",
-  discord_not_linked: "No Harbor account is linked to that Discord account yet. Create one first.",
-  discord_code_invalid: "That Discord sign-in did not go through. Try again.",
-  discord_unreachable: "Could not reach Discord right now. Try again in a moment.",
   challenge_invalid: "That verification attempt expired. Start it again.",
   password_required: "Set a password before unlinking, so you don't get locked out.",
-  discord_recovery_unavailable:
-    "That account doesn't have Discord linked. Use your recovery key instead.",
-  discord_recovery_invalid: "That code is wrong or expired. Request a new one.",
-  no_alternate_credential:
-    "Link another way to sign in first — a password, Stremio, or Discord — so you don't get locked out.",
   no_image: "Choose an image file first.",
   bad_image: "That file could not be read as an image. Try a PNG, JPG, or WEBP.",
   slow_down: "You're doing that too fast. Wait a moment and try again.",
@@ -46,8 +34,7 @@ const SNAKE_CODE_RE = /^[a-z0-9]+(_[a-z0-9]+)+$/;
 const BY_REASON: Record<string, string> = {
   password_too_short: "Your password needs to be at least 8 characters.",
   "too-short": "That name is too short. Use at least 3 characters.",
-  invalid:
-    "That name has characters that aren't allowed. Stick to letters, numbers, and underscores.",
+  invalid: "That name has characters that aren't allowed. Stick to letters, numbers, and underscores.",
   reserved: "That name is reserved. Pick a different one.",
   taken: "That name is already taken. Try another.",
   profanity: "Please choose a different name.",
@@ -56,12 +43,7 @@ const BY_REASON: Record<string, string> = {
 
 function isNetworkError(e: AccountError): boolean {
   const m = (e?.message || "").toLowerCase();
-  return (
-    e?.name === "TypeError" ||
-    m.includes("failed to fetch") ||
-    m.includes("networkerror") ||
-    m.includes("load failed")
-  );
+  return e?.name === "TypeError" || m.includes("failed to fetch") || m.includes("networkerror") || m.includes("load failed");
 }
 
 export function accountErrorMessage(err: unknown): string {

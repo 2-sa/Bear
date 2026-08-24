@@ -143,6 +143,8 @@ export type Settings = {
   controllerSupportEnabled: boolean;
   controllerBackgroundInput: boolean;
   controllerDeadzone: number;
+  controllerCursorSpeed: number;
+  controllerKeyboardSize: number;
   controllerRepeatMs: number;
   controllerInitialDelayMs: number;
   trailerQuality: "auto" | "360p" | "720p" | "1080p" | "best";

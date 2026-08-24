@@ -335,7 +335,7 @@ export async function searchAll(
     };
   }
   const metaBase = effectiveTmdbLanguage().split("-")[0]?.toLowerCase() ?? "";
-  let enById: Map<number, { name?: string; overview?: string }> | null = null;
+  let enNameById: Map<number, string> | null = null;
   if (
     loadStoredSettings().translateTitles &&
     metaBase !== "" &&
@@ -348,11 +348,10 @@ export async function searchAll(
       language: "en-US",
     });
     if (en?.results) {
-      enById = new Map();
+      enNameById = new Map();
       for (const r of en.results) {
         const n = (r as { title?: string; name?: string }).title ?? (r as { name?: string }).name;
-        const o = (r as { overview?: string }).overview;
-        if (typeof r.id === "number" && (n || o)) enById.set(r.id, { name: n, overview: o });
+        if (typeof r.id === "number" && n) enNameById.set(r.id, n);
       }
     }
   }
@@ -375,14 +374,14 @@ export async function searchAll(
 
   for (const r of results) {
     if (r.media_type === "movie" && r.poster_path) {
-      movies.push(movieMeta(r, enById?.get(r.id)));
+      movies.push(movieMeta(r, enNameById?.get(r.id)));
       const pop = r.popularity ?? 0;
       if (pop > topPop) {
         topRaw = r;
         topPop = pop;
       }
     } else if (r.media_type === "tv" && r.poster_path) {
-      series.push(seriesMeta(r, enById?.get(r.id)));
+      series.push(seriesMeta(r, enNameById?.get(r.id)));
       const pop = r.popularity ?? 0;
       if (pop > topPop) {
         topRaw = r;
@@ -423,8 +422,8 @@ export async function searchAll(
     topMatch = {
       kind: isMovie ? "movie" : "series",
       meta: isMovie
-        ? movieMeta(winner as RawMovie, enById?.get(winner.id))
-        : seriesMeta(winner as RawSeries, enById?.get(winner.id)),
+        ? movieMeta(winner as RawMovie, enNameById?.get(winner.id))
+        : seriesMeta(winner as RawSeries, enNameById?.get(winner.id)),
       popularity: winner.popularity ?? 0,
       backdrop: winner.backdrop_path
         ? `https://image.tmdb.org/t/p/w1280${winner.backdrop_path}`
