@@ -15,6 +15,7 @@ import {
 import { tmdbLanguageIso } from "@/lib/providers/tmdb/tmdb-client";
 import { pickLocalizedText } from "@/lib/localized-text";
 import { fetchTvdbOrderBySeriesId, seasonDateRange, type TvdbOrder } from "@/lib/providers/tvdb-order";
+import { foreignAnimeProviderSeasons } from "@/lib/streams/anime-identity";
 import type { PickerItem } from "../series-episodes/season-arc-picker";
 
 export type AnimeTvdbPanel = {
@@ -147,13 +148,31 @@ export function useAnimeTvdbPanel(
     };
   }, [enabled, tvdbKey, seriesId, seasonType]);
 
+  const [foreignSeasons, setForeignSeasons] = useState<Set<number> | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    if (kitsuId == null) {
+      setForeignSeasons(null);
+      return;
+    }
+    void foreignAnimeProviderSeasons(`kitsu:${kitsuId}`, imdbId)
+      .then((s) => {
+        if (!cancelled) setForeignSeasons(s);
+      })
+      .catch(() => {
+        if (!cancelled) setForeignSeasons(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [kitsuId, imdbId]);
+
   const extrasLabel = t("Extras");
   const built = useMemo(() => {
     if (!ordering) return null;
     const lang = tmdbLanguageIso();
     const pool = franchiseEpisodes ?? episodes;
-    const franchiseWide = franchiseEpisodes != null;
-    const byPair = new Map<string, KitsuEpisode>();
+    const franchiseWide = franchiseEpisodes != null;    const byPair = new Map<string, KitsuEpisode>();
     const byAbs = new Map<number, KitsuEpisode>();
     const byTvdbId = new Map<number, KitsuEpisode>();
     const currentByPair = new Map<string, KitsuEpisode>();
@@ -185,6 +204,7 @@ export function useAnimeTvdbPanel(
     const imdbMap = imdbId ? harborImdbEpisodesCached(imdbId) : undefined;
     for (const s of ordering.seasons) {
       if (s.seasonNumber < 0) continue;
+      if (foreignSeasons?.has(s.seasonNumber)) continue;
       const bucket = ordering.bySeason.get(s.seasonNumber) ?? [];
       if (bucket.length === 0) continue;
       const seenId = new Set<number>();
@@ -308,7 +328,7 @@ export function useAnimeTvdbPanel(
     }
     if (items.length === 0) return null;
     return { items, subset, pool };
-  }, [ordering, episodes, franchiseEpisodes, extrasLabel, franchise]);
+  }, [ordering, episodes, franchiseEpisodes, extrasLabel, franchise, foreignSeasons]);
 
   useEffect(() => {
     if (!ordering) return;
