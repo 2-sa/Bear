@@ -5,6 +5,7 @@ import test from "node:test";
 import {
   animeCoordPairs,
   findAnimeEntryNumber,
+  isScopedSplitFranchiseRoot,
   partitionByExactAnimeEpisode,
   selectSiblingWindows,
 } from "../src/lib/streams/anime-identity-core.ts";
@@ -142,4 +143,11 @@ test("sibling selection excludes the base entry and ignores absolute windows", (
 test("sibling selection on empty or missing buckets yields nothing", () => {
   assert.deepEqual(selectSiblingWindows(undefined, 17), []);
   assert.deepEqual(selectSiblingWindows([], 1), []);
+});
+
+test("split-franchise scope allowlist admits only listed roots", () => {
+  assert.equal(isScopedSplitFranchiseRoot(244), true);
+  assert.equal(isScopedSplitFranchiseRoot(43078), false);
+  assert.equal(isScopedSplitFranchiseRoot(null), false);
+  assert.equal(isScopedSplitFranchiseRoot(undefined), false);
 });
