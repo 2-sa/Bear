@@ -17,6 +17,7 @@ import { PlayProvenance } from "./play-provenance";
 export function PrimaryCard({
   meta,
   episode,
+  absoluteEpisode,
   stream,
   debrids,
   addonLogo,
@@ -30,6 +31,7 @@ export function PrimaryCard({
 }: {
   meta: Meta;
   episode?: PlayEpisode;
+  absoluteEpisode?: number | null;
   stream: ScoredStream;
   debrids: ReturnType<typeof useDebridClients>;
   addonLogo: string | null;
@@ -56,7 +58,7 @@ export function PrimaryCard({
   const queueTarget = debrids.find((d) => d.queueCache);
   const canStream = !isCached && directStreamAvailable(stream);
   const summary = streamSummaryParts(stream);
-  const title = displayTitle(stream, meta.name, episode);
+  const title = displayTitle(stream, meta.name, episode, absoluteEpisode);
   const fname = settings.pickerShowFilename ? torrentFilename(stream) : "";
   const badges = settings.showQualityBadge ? streamBadges(stream) : [];
   const knownLanguages = stream.audioLanguages.filter((l) => l && l.toLowerCase() !== "unknown");

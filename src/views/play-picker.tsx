@@ -66,6 +66,7 @@ import { useAddons } from "./play-picker/use-addons";
 import { useAnimeAltTitles } from "./play-picker/use-anime-alt-titles";
 import { useImdbId } from "./play-picker/use-imdb-id";
 import { usePipelineResult } from "./play-picker/use-pipeline-result";
+import { animeAbsoluteFromStreamIds } from "@/lib/streams/anime-identity";
 import { useStreamIds } from "./play-picker/use-stream-ids";
 import { findLocalEpisodeVersions, findLocalMovieVersions } from "@/lib/local-library/versions";
 import { localPlayerSrc } from "@/lib/local-library/player-src";
@@ -125,6 +126,10 @@ export function PlayPicker({
   }, [meta, episode]);
   const imdbId = resolvedImdb.id;
   const streamIds = useStreamIds(meta, episode, imdbId);
+  const animeAbsoluteEpisode = useMemo(
+    () => animeAbsoluteFromStreamIds(streamIds),
+    [streamIds],
+  );
   const localMatches = useMemo(() => {
     const m = meta.id.match(/^tmdb:(?:movie|tv):(\d+)$/);
     const tmdbId = m ? parseInt(m[1], 10) : null;
@@ -487,6 +492,7 @@ export function PlayPicker({
     imdbId,
     imdbIdVerified: resolvedImdb.verified,
     episode,
+    absoluteEpisode: animeAbsoluteEpisode,
     attempt,
     resume,
     debrids,
@@ -684,6 +690,7 @@ export function PlayPicker({
     return (
       <SubtitleSelectStep
         src={pendingPreselect}
+        absoluteEpisode={animeAbsoluteEpisode}
         onStart={(finalSrc) => {
           setPendingPreselect(null);
           openPlayer(finalSrc);
@@ -739,6 +746,7 @@ export function PlayPicker({
       <AutoExhaustedModal
         meta={meta}
         episode={episode}
+        absoluteEpisode={animeAbsoluteEpisode}
         triedCount={autoCandidates.length}
         onBrowseManually={() => {
           setAutoCancelled(true);
@@ -760,7 +768,7 @@ export function PlayPicker({
 
       <div className="relative mx-auto flex min-h-full w-full max-w-5xl flex-col gap-12 px-12 pb-32 pt-32">
         <PickerNav onBack={backToDetail} onRefresh={refresh} refreshing={loading} />
-        <PickerHeader meta={metaForDisplay} episode={episode} />
+          <PickerHeader meta={metaForDisplay} episode={episode} absoluteEpisode={animeAbsoluteEpisode} />
 
         {!isDownload && (
           <LocalStreamList
@@ -902,6 +910,7 @@ export function PlayPicker({
               <PrimaryCard
                 meta={metaForDisplay}
                 episode={episode}
+                absoluteEpisode={animeAbsoluteEpisode}
                 stream={currentPick}
                 debrids={debrids}
                 addonLogo={lookupLogo(currentPick.addonId)}
@@ -964,6 +973,7 @@ export function PlayPicker({
                 resolvingId={resolving?.stream.infoHash ?? null}
                 showName={meta.name}
                 episode={episode}
+                absoluteEpisode={animeAbsoluteEpisode}
               />
             )}
           </>

@@ -15,10 +15,12 @@ type Selection = string | "off" | null;
 
 export function SubtitleSelectStep({
   src,
+  absoluteEpisode,
   onStart,
   onCancel,
 }: {
   src: PlayerSrc;
+  absoluteEpisode?: number | null;
   onStart: (finalSrc: PlayerSrc) => void;
   onCancel: () => void;
 }) {
@@ -67,7 +69,7 @@ export function SubtitleSelectStep({
 
   const visible =
     activeLang === "all" ? results ?? [] : groups.find((g) => g.langKey === activeLang)?.items ?? [];
-  const context = episodeContext(src.episode, src.meta.name);
+  const context = episodeContext(src.episode, src.meta.name, absoluteEpisode);
   const total = results?.length ?? 0;
 
   return (
@@ -182,9 +184,15 @@ export function SubtitleSelectStep({
   );
 }
 
-function episodeContext(episode: PlayEpisode | undefined, name: string): string {
+function episodeContext(
+  episode: PlayEpisode | undefined,
+  name: string,
+  absoluteEpisode?: number | null,
+): string {
   if (!episode) return name;
-  const label = `S${episode.imdbSeason ?? episode.season} · E${episode.imdbEpisode ?? episode.episode}`;
+  const label = absoluteEpisode != null
+    ? `E${absoluteEpisode}`
+    : `S${episode.imdbSeason ?? episode.season} · E${episode.imdbEpisode ?? episode.episode}`;
   return episode.name ? `${name} · ${label} · ${episode.name}` : `${name} · ${label}`;
 }
 
