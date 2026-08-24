@@ -4,7 +4,7 @@ import type { KitsuEpisode } from "@/lib/providers/kitsu";
 import { tmdbLanguageIso } from "@/lib/providers/tmdb/tmdb-client";
 import { useEpisodeOrder } from "../series-episodes/use-episode-order";
 import type { PickerItem } from "../series-episodes/season-arc-picker";
-import { buildAnimeOrder } from "./anime-order-utils";
+import { buildSoloAnimeOrder, buildAnimeOrder } from "./anime-order-utils";
 import { foreignAnimeProviderSeasons } from "@/lib/streams/anime-identity";
 
 export type AnimeOrder = {
@@ -23,18 +23,26 @@ export function useAnimeOrder(
   tvdbKey: string,
   preferredSeasonKey?: string,
   intentSeasonKey?: string,
+  solo = false,
 ): AnimeOrder | null {
   const t = useT();
-  const ordering = useEpisodeOrder(imdbId, metaId, provider, seasonType, tvdbKey);
+  const ordering = useEpisodeOrder(imdbId, metaId, provider, seasonType, tvdbKey, !solo);
   const built = useMemo(
     // pickLocalizedText keys its script tests by ISO-1 ("ko"), not TVDB codes ("kor").
-    () => buildAnimeOrder(ordering, episodes, t("Specials"), tmdbLanguageIso()),
-    [ordering, episodes, t],
+    () =>
+      solo
+        ? buildSoloAnimeOrder(episodes, t("Specials"), (s) => t("Season {n}", { n: s }))
+        : buildAnimeOrder(ordering, episodes, t("Specials"), tmdbLanguageIso()),
+    [solo, ordering, episodes, t],
   );
   const [sel, setSel] = useState<string | null>(null);
   const [touched, setTouched] = useState(false);
   const [foreignSeasons, setForeignSeasons] = useState<Set<number> | null>(null);
   useEffect(() => {
+    if (solo) {
+      setForeignSeasons(null);
+      return;
+    }
     let cancelled = false;
     void foreignAnimeProviderSeasons(metaId, imdbId)
       .then((s) => {
@@ -46,7 +54,7 @@ export function useAnimeOrder(
     return () => {
       cancelled = true;
     };
-  }, [metaId, imdbId]);
+  }, [metaId, imdbId, solo]);
   const filteredBuilt = useMemo(() => {
     if (!built || !foreignSeasons || foreignSeasons.size === 0) return built;
     const items = built.items.filter(

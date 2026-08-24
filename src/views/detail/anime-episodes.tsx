@@ -186,9 +186,10 @@ export function AnimeEpisodes({
     settings.tvdbKey,
     preferredSeasonKey ?? undefined,
     intentSeasonKey ?? undefined,
+    soloEntry,
   );
   const routing = useAnimeWatchedRouting(meta, franchise, trackId);
-  const effectiveOrder = soloEntry ? null : order;
+  const effectiveOrder = order;
   const { openMeta } = useView();
   const [activeEntryId, setActiveEntryId] = useState(currentId);
   useEffect(() => {

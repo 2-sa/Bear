@@ -70,3 +70,44 @@ export function buildAnimeOrder(
   }
   return { items, subsetByKey };
 }
+
+// Season order for a standalone split-franchise entry (e.g. Bleach TYBW opened
+// as its own page): bucket the entry's own episodes by their AniZip provider
+// season (imdbSeason), so the cours appear as seasons without pulling in the
+// franchise root's (Bleach 2004) provider order.
+export function buildSoloAnimeOrder(
+  episodes: KitsuEpisode[],
+  specialsLabel: string,
+  seasonLabel: (season: number) => string,
+): AnimeOrderBuild | null {
+  const bySeason = new Map<number, KitsuEpisode[]>();
+  const specials: KitsuEpisode[] = [];
+  for (const ep of episodes) {
+    const s = ep.imdbSeason;
+    if (s == null || s < 1) {
+      specials.push(ep);
+      continue;
+    }
+    const bucket = bySeason.get(s);
+    if (bucket) bucket.push(ep);
+    else bySeason.set(s, [ep]);
+  }
+  const items: PickerItem[] = [];
+  const subsetByKey = new Map<string, KitsuEpisode[]>();
+  for (const s of [...bySeason.keys()].sort((a, b) => a - b)) {
+    const eps = bySeason.get(s)!.slice().sort((a, b) => (a.number ?? 0) - (b.number ?? 0));
+    items.push({
+      key: String(s),
+      name: seasonLabel(s),
+      count: eps.length,
+      year: eps[0]?.airdate?.slice(0, 4),
+    });
+    subsetByKey.set(String(s), eps);
+  }
+  if (specials.length > 0) {
+    items.push({ key: "specials", name: specialsLabel, count: specials.length, extra: true });
+    subsetByKey.set("specials", specials);
+  }
+  if (items.length < 2) return null;
+  return { items, subsetByKey };
+}
