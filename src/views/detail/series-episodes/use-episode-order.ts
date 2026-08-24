@@ -11,6 +11,7 @@ export function useEpisodeOrder(
   provider: "default" | "tmdb" | "tvdb",
   seasonType: string,
   tvdbKey: string,
+  enabled = true,
 ): TvdbOrder | null {
   const [order, setOrder] = useState<TvdbOrder | null>(null);
   const remoteId =
@@ -20,7 +21,8 @@ export function useEpisodeOrder(
         ? metaId.slice(8)
         : null;
   const kitsuId = /^(kitsu|mal|anilist|anidb):/.test(metaId) ? parseKitsuId(metaId) : null;
-  const active = provider === "tvdb" && seasonType !== "tmdb" && (!!remoteId || kitsuId != null);
+  const active =
+    enabled && provider === "tvdb" && seasonType !== "tmdb" && (!!remoteId || kitsuId != null);
 
   useEffect(() => {
     if (!active) {
