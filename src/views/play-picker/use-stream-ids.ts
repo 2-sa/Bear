@@ -19,7 +19,11 @@ export function useStreamIds(
         meta.behaviorHints?.defaultVideoId,
       );
       if (cancelled) return;
-      setStreamIds(out.length > 0 ? out : null);
+      setStreamIds((prev) => {
+        // Preserve reference when unchanged: pipeline effects refire on new arrays.
+        if (prev && prev.join("|") === out.join("|")) return prev;
+        return out.length > 0 ? out : null;
+      });
     })();
     return () => {
       cancelled = true;
