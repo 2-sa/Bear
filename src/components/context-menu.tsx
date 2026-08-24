@@ -19,6 +19,7 @@ import {
   Wallpaper,
 } from "lucide-react";
 import { useEffect, useRef } from "react";
+import { readText as readClipboardText } from "@tauri-apps/plugin-clipboard-manager";
 import { useActiveAddon } from "@/lib/active-addon";
 import { copyText } from "@/components/player/copy-link-button";
 import { magnetFromHash } from "@/lib/debrid/types";
@@ -476,7 +477,7 @@ export function ContextMenu() {
     const handlePaste = async () => {
       if (!canPaste || !element) return;
       try {
-        const text = await navigator.clipboard.readText();
+        const text = await readClipboardText();
         if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement) {
           const start = element.selectionStart ?? element.value.length;
           const end = element.selectionEnd ?? element.value.length;
