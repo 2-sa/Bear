@@ -58,6 +58,7 @@ export function useAnimeTvdbPanel(
   preferredSeasonKey?: string,
   intentSeasonKey?: string,
   franchise?: FranchiseEntry[],
+  metaId?: string | null,
 ): AnimeTvdbPanelState {
   const t = useT();
   const [seriesId, setSeriesId] = useState<number | null>(null);
@@ -141,11 +142,13 @@ export function useAnimeTvdbPanel(
   const [foreignSeasons, setForeignSeasons] = useState<Set<number> | null>(null);
   useEffect(() => {
     let cancelled = false;
-    if (kitsuId == null) {
+    // metaId first: tt-opened titles carry no kitsu id here.
+    const identitySource = metaId?.trim() || (kitsuId != null ? `kitsu:${kitsuId}` : null);
+    if (!identitySource) {
       setForeignSeasons(null);
       return;
     }
-    void foreignAnimeProviderSeasons(`kitsu:${kitsuId}`, imdbId)
+    void foreignAnimeProviderSeasons(identitySource, imdbId)
       .then((s) => {
         if (!cancelled) setForeignSeasons(s);
       })
@@ -155,7 +158,7 @@ export function useAnimeTvdbPanel(
     return () => {
       cancelled = true;
     };
-  }, [kitsuId, imdbId]);
+  }, [kitsuId, imdbId, metaId]);
 
   const extrasLabel = t("Extras");
   const built = useMemo(() => {
