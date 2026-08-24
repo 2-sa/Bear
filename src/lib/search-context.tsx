@@ -106,6 +106,16 @@ function sameShow(a: string, b: string): boolean {
   return x.length > 0 && x === normShow(b);
 }
 
+// True when the anime title is the same show the user typed, allowing a
+// dedicated anime entry to beat a TMDB popularity winner that collapses the
+// title into a franchise root (e.g. "Bleach: Thousand-Year Blood War" being
+// returned as Bleach 2004).
+function animeNearQuery(name: string, query: string): boolean {
+  const n = normShow(name);
+  const q = normShow(query);
+  return n.length > 0 && (n === q || n.includes(q) || q.includes(n));
+}
+
 function animeKindFromFormat(
   format: string | null,
   fallback: "movie" | "series",
@@ -306,8 +316,13 @@ export function SearchProvider({ children }: { children: ReactNode }) {
         const animeTopKind: "movie" | "series" = animeTop
           ? animeKindFromFormat(animeTop.format, base.topMatch?.kind ?? "series")
           : "series";
+        const animeWinsTopMatch =
+          !!animeTop &&
+          !!base.topMatch &&
+          (sameShow(base.topMatch.meta.name, animeTop.name) ||
+            (trimmed.split(/\s+/).length >= 2 && animeNearQuery(animeTop.name, trimmed)));
         const topMatch =
-          animeTop && base.topMatch && sameShow(base.topMatch.meta.name, animeTop.name)
+          animeTop && base.topMatch && animeWinsTopMatch
             ? {
                 kind: animeTopKind,
                 meta: {
