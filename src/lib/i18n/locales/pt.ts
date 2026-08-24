@@ -1,3 +1,4 @@
+import uiFallback from "./ui-fallback";
 import chrome from "./pt/chrome";
 import common from "./pt/common";
 import catalog from "./pt/catalog";
@@ -26,6 +27,7 @@ import controllers from "./pt/controllers";
 import used from "./pt/used";
 
 const pt: Record<string, string> = {
+  ...uiFallback,
   ...chrome,
   ...common,
   ...catalog,
