@@ -7,11 +7,13 @@ import {
   loadAnidbMaps,
   tmdbTvToKitsu,
 } from "@/lib/providers/anime-mapping";
+import { franchiseRoot } from "@/lib/providers/anime-franchise-root";
 import type { PlayEpisode } from "@/lib/view";
 import {
   animeAbsoluteFromScopedId,
   animeCoordPairs,
   findAnimeEntryNumber,
+  isScopedSplitFranchiseRoot,
   type AnimeEpisodeCoords,
 } from "./anime-identity-core";
 import { buildStreamIds } from "./stream-ids";
@@ -148,6 +150,15 @@ export async function foreignAnimeProviderSeasons(
     if (kitsuId == null) return null;
     const az = await aniZipByKitsu(kitsuId).catch(() => null);
     if (!az?.mappings) return null;
+    // Scoped rollout: only franchises in the allowlist get foreign-season
+    // handling; every other title keeps stock behavior.
+    const rootKitsu = await franchiseRoot(`kitsu:${kitsuId}`)
+      .then((r) => {
+        const m = /^kitsu:(\d+)$/.exec(r);
+        return m ? Number(m[1]) : null;
+      })
+      .catch(() => null);
+    if (!isScopedSplitFranchiseRoot(rootKitsu)) return null;
     const covered = new Set<number>();
     for (const m of Object.values(az.episodes ?? {})) {
       if (typeof m.seasonNumber === "number" && m.seasonNumber >= 1) covered.add(m.seasonNumber);

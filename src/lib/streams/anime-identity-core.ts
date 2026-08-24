@@ -106,6 +106,15 @@ export function animeAbsoluteFromScopedId(id: string | null | undefined): number
 }
 
 /**
+ * Split-franchise handling (foreign-season hiding, solo entry grids) ships
+ * scoped to specific shows until proven broader. 244 = Bleach (2004), whose
+ * TVDB/TMDB entry folds Thousand-Year Blood War in as later seasons.
+ */
+export function isScopedSplitFranchiseRoot(rootKitsuId: number | null | undefined): boolean {
+  return rootKitsuId === 244;
+}
+
+/**
  * One anime-lists claim: an AniDB entry occupying `season` of a shared
  * provider series, shifted by `offset` episodes within that season.
  * `season: "a"` marks absolute-order entries.
