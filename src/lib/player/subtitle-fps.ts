@@ -11,8 +11,7 @@ export const SUBTITLE_FPS_PRESETS = [
 
 export const MIN_SUBTITLE_FPS = 1;
 export const MAX_SUBTITLE_FPS = 240;
-export const SUBTITLE_FPS_TRANSITION_FAILED_EVENT =
-  "harbor:subtitle-fps-transition-failed";
+export const SUBTITLE_FPS_TRANSITION_FAILED_EVENT = "harbor:subtitle-fps-transition-failed";
 
 export type SubtitleFpsChoice = "default" | number;
 export type SubtitleFpsUnavailableReason =

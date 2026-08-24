@@ -109,9 +109,7 @@ export function SubtitleFpsPanel({
       const value = choice === "default" ? null : choice;
       setSubtitleFps(value);
       setAutomatic(mode === "auto");
-      setCustomOpen(
-        mode !== "auto" && value != null && matchingSubtitleFpsPreset(value) == null,
-      );
+      setCustomOpen(mode !== "auto" && value != null && matchingSubtitleFpsPreset(value) == null);
       if (value != null) setDraft(formatSubtitleFps(value, 6));
     } catch (cause) {
       if (request !== applyRequestRef.current) return;

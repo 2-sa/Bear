@@ -2,10 +2,7 @@
 import assert from "node:assert/strict";
 // @ts-expect-error Node test types are intentionally outside the browser-only tsconfig.
 import test from "node:test";
-import {
-  preferredSourceAddonPending,
-  streamMatchesSource,
-} from "../src/lib/playback-history.ts";
+import { preferredSourceAddonPending, streamMatchesSource } from "../src/lib/playback-history.ts";
 
 test("season-pack episodes match by torrent hash when their file-specific binge groups differ", () => {
   const entry = {

@@ -29,16 +29,29 @@ function keyboardNav(dir: string): boolean {
   const root = document.querySelector<HTMLElement>("[data-controller-keyboard]");
   if (!root || !["up", "down", "left", "right"].includes(dir)) return false;
   const keys = [...root.querySelectorAll<HTMLButtonElement>("button:not([disabled])")];
-  const current = root.contains(document.activeElement) ? document.activeElement as HTMLButtonElement : null;
-  if (!current) { keys[0]?.focus({ preventScroll: true }); return true; }
-  const a = current.getBoundingClientRect(), ax = a.left + a.width / 2, ay = a.top + a.height / 2;
-  let candidates = keys.filter((key) => key !== current).map((key) => {
-    const b = key.getBoundingClientRect(), dx = b.left + b.width / 2 - ax, dy = b.top + b.height / 2 - ay;
-    const valid = dir === "left" ? dx < 0 : dir === "right" ? dx > 0 : dir === "up" ? dy < 0 : dy > 0;
-    const primary = dir === "left" || dir === "right" ? Math.abs(dx) : Math.abs(dy);
-    const cross = dir === "left" || dir === "right" ? Math.abs(dy) : Math.abs(dx);
-    return { key, valid, primary, cross };
-  }).filter((x) => x.valid);
+  const current = root.contains(document.activeElement)
+    ? (document.activeElement as HTMLButtonElement)
+    : null;
+  if (!current) {
+    keys[0]?.focus({ preventScroll: true });
+    return true;
+  }
+  const a = current.getBoundingClientRect(),
+    ax = a.left + a.width / 2,
+    ay = a.top + a.height / 2;
+  let candidates = keys
+    .filter((key) => key !== current)
+    .map((key) => {
+      const b = key.getBoundingClientRect(),
+        dx = b.left + b.width / 2 - ax,
+        dy = b.top + b.height / 2 - ay;
+      const valid =
+        dir === "left" ? dx < 0 : dir === "right" ? dx > 0 : dir === "up" ? dy < 0 : dy > 0;
+      const primary = dir === "left" || dir === "right" ? Math.abs(dx) : Math.abs(dy);
+      const cross = dir === "left" || dir === "right" ? Math.abs(dy) : Math.abs(dx);
+      return { key, valid, primary, cross };
+    })
+    .filter((x) => x.valid);
   if (dir === "left" || dir === "right") {
     const sameRow = candidates.filter((x) => x.cross < a.height / 2);
     if (sameRow.length) candidates = sameRow;
@@ -126,7 +139,9 @@ export function useGamepad(): void {
       const nav = NAV_BUTTON[button];
       if (nav && !keyboardNav(nav)) {
         dispatchTvNav(nav);
-        document.activeElement?.dispatchEvent(new CustomEvent("harbor-controller-focus", { bubbles: true }));
+        document.activeElement?.dispatchEvent(
+          new CustomEvent("harbor-controller-focus", { bubbles: true }),
+        );
       }
     };
 

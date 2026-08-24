@@ -250,9 +250,7 @@ export function MangaBrowse({
       return [...list].sort((a, b) => (b.year ?? 0) - (a.year ?? 0));
     }
     if (sortMode === "chapters") {
-      return [...list].sort(
-        (a, b) => chapterNumber(b.lastChapter) - chapterNumber(a.lastChapter),
-      );
+      return [...list].sort((a, b) => chapterNumber(b.lastChapter) - chapterNumber(a.lastChapter));
     }
     return list;
   }, [items, favItems, tagId, query, sortMode, statusFilter]);

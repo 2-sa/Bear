@@ -433,8 +433,7 @@ const player: Record<string, string> = {
     "Перетащите для изменения размера. Используйте клавиши со стрелками для настройки, а Home — для сброса.",
   "Drag the corner to resize. Left and right change width; up and down change height; Home resets the size.":
     "Перетащите угол для изменения размера. Стрелки влево и вправо меняют ширину, вверх и вниз — высоту, а Home сбрасывает размер.",
-  "Couldn't switch subtitles. Try again.":
-    "Не удалось переключить субтитры. Повторите попытку.",
+  "Couldn't switch subtitles. Try again.": "Не удалось переключить субтитры. Повторите попытку.",
 };
 
 export default player;

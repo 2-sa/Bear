@@ -435,8 +435,7 @@ const player: Record<string, string> = {
     "Arraste para redimensionar. Use as teclas de seta para ajustar ou Home para repor.",
   "Drag the corner to resize. Left and right change width; up and down change height; Home resets the size.":
     "Arraste o canto para redimensionar. Esquerda e direita alteram a largura; cima e baixo alteram a altura; Home repõe o tamanho.",
-  "Couldn't switch subtitles. Try again.":
-    "Não foi possível mudar de legenda. Tente novamente.",
+  "Couldn't switch subtitles. Try again.": "Não foi possível mudar de legenda. Tente novamente.",
 };
 
 export default player;
