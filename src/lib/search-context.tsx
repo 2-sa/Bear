@@ -124,6 +124,30 @@ function normShow(s: string): string {
     .trim();
 }
 
+function sameShow(a: string, b: string): boolean {
+  const x = normShow(a);
+  return x.length > 0 && x === normShow(b);
+}
+
+// True when the anime title is the same show the user typed, allowing a
+// dedicated anime entry to beat a TMDB popularity winner that collapses the
+// title into a franchise root (e.g. "Bleach: Thousand-Year Blood War" being
+// returned as Bleach 2004).
+function animeNearQuery(name: string, query: string): boolean {
+  const n = normShow(name);
+  const q = normShow(query);
+  return n.length > 0 && (n === q || n.includes(q) || q.includes(n));
+}
+
+function animeKindFromFormat(
+  format: string | null,
+  fallback: "movie" | "series",
+): "movie" | "series" {
+  const fmt = (format ?? "").toUpperCase();
+  if (!fmt) return fallback;
+  return fmt === "MOVIE" ? "movie" : "series";
+}
+
 function loadRecent(): string[] {
   try {
     const raw = localStorage.getItem(RECENT_KEY);
@@ -316,10 +340,54 @@ export function SearchProvider({ children }: { children: ReactNode }) {
         const dedupedGroups = acc.groups
           .map((g) => ({ ...g, metas: dropAnime(g.metas.filter((m) => !shown.has(m.id))) }))
           .filter((g) => g.metas.length > 0);
-        // Keep the top match as the localized TMDB entry. Replacing it with the anime
-        // (MAL/Kitsu) version changed its id and poster, which flickered the localized
-        // result to the English/MAL artwork once the anime search resolved.
-        const topMatch = base.topMatch;
+        const animeTop = acc.anime[0];
+        const animeTopKind: "movie" | "series" = animeTop
+          ? animeKindFromFormat(animeTop.format, base.topMatch?.kind ?? "series")
+          : "series";
+        const sameAnimeTitle =
+          !!animeTop && !!base.topMatch && sameShow(base.topMatch.meta.name, animeTop.name);
+        const animeWinsTopMatch =
+          !!animeTop &&
+          !!base.topMatch &&
+          (sameAnimeTitle ||
+            (trimmed.split(/\s+/).length >= 2 && animeNearQuery(animeTop.name, trimmed)));
+        const topMatch =
+          animeTop && base.topMatch && animeWinsTopMatch
+            ? {
+                kind: animeTopKind,
+                meta: sameAnimeTitle
+                  ? {
+                      ...base.topMatch.meta,
+                      id: animeTop.kitsuId
+                        ? `kitsu:${animeTop.kitsuId}`
+                        : animeTop.malId
+                          ? `mal:${animeTop.malId}`
+                          : `anilist:${animeTop.anilistId}`,
+                      type: animeTopKind,
+                    }
+                  : {
+                      id: animeTop.kitsuId
+                        ? `kitsu:${animeTop.kitsuId}`
+                        : animeTop.malId
+                          ? `mal:${animeTop.malId}`
+                          : `anilist:${animeTop.anilistId}`,
+                      type: animeTopKind,
+                      name: animeTop.name,
+                      poster: animeTop.poster ?? base.topMatch.meta.poster,
+                      background: animeTop.background ?? undefined,
+                      description: animeTop.overview || undefined,
+                      releaseInfo: animeTop.year ?? undefined,
+                    },
+                popularity: base.topMatch.popularity,
+                backdrop: sameAnimeTitle
+                  ? base.topMatch.backdrop
+                  : animeTop.background ?? base.topMatch.backdrop,
+                overview: sameAnimeTitle
+                  ? base.topMatch.overview
+                  : animeTop.overview || base.topMatch.overview,
+                voteAverage: base.topMatch.voteAverage,
+              }
+            : base.topMatch;
         setResults({
           ...base,
           topMatch:
