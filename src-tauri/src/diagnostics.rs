@@ -32,6 +32,7 @@ pub struct CollectResult {
 
 struct ScrubRules {
     bearer: Regex,
+    authorization: Regex,
     storage_key: Regex,
     key_value: Regex,
     email: Regex,
@@ -46,12 +47,16 @@ fn rules() -> &'static ScrubRules {
     static RULES: OnceLock<ScrubRules> = OnceLock::new();
     RULES.get_or_init(|| ScrubRules {
         bearer: Regex::new(r"(?i)bearer\s+[A-Za-z0-9._~+/=\-]{8,}").unwrap(),
+        authorization: Regex::new(
+            r#"(?i)(authorization"?\s*[:=]\s*"?)(bearer\s+|basic\s+)?([^"'\s,;&}\)]+)"#,
+        )
+        .unwrap(),
         storage_key: Regex::new(
             r#"(?i)(harbor\.(?:theme-session|session\.token|auth(?:\.[A-Za-z0-9_.-]+)?))("?\s*[:=]\s*"?)([^"'\s,;&}\)]+)"#,
         )
         .unwrap(),
         key_value: Regex::new(
-            r#"(?i)(authorization|auth[_-]?key|api[_-]?key|access[_-]?token|refresh[_-]?token|session[_-]?token|client[_-]?secret|secret|token|password|passwd|pwd)("?\s*[:=]\s*"?)([^"'\s,;&}\)]+)"#,
+            r#"(?i)(auth[_-]?key|api[_-]?key|access[_-]?token|refresh[_-]?token|session[_-]?token|client[_-]?secret|secret|token|password|passwd|pwd)("?\s*[:=]\s*"?)([^"'\s,;&}\)]+)"#,
         )
         .unwrap(),
         email: Regex::new(r"(?i)[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}").unwrap(),
@@ -69,22 +74,25 @@ pub fn diagnostics_scrub(text: &str) -> String {
     let step1 = r
         .bearer
         .replace_all(text, |_: &regex::Captures| format!("Bearer {REDACTED}"));
-    let step2 = r.storage_key.replace_all(&step1, |c: &regex::Captures| {
+    let step2 = r.authorization.replace_all(&step1, |c: &regex::Captures| {
         format!("{}{}{}", &c[1], &c[2], REDACTED)
     });
-    let step3 = r.key_value.replace_all(&step2, |c: &regex::Captures| {
+    let step3 = r.storage_key.replace_all(&step2, |c: &regex::Captures| {
         format!("{}{}{}", &c[1], &c[2], REDACTED)
     });
-    let step4 = r.email.replace_all(&step3, "<email>");
-    let step5 = r
+    let step4 = r.key_value.replace_all(&step3, |c: &regex::Captures| {
+        format!("{}{}{}", &c[1], &c[2], REDACTED)
+    });
+    let step5 = r.email.replace_all(&step4, "<email>");
+    let step6 = r
         .user_path
-        .replace_all(&step4, |c: &regex::Captures| format!("{}<user>", &c[1]));
-    let step6 = r.ip_addr.replace_all(&step5, "<ip>");
-    let step7 = r.path_seg.replace_all(&step6, |c: &regex::Captures| {
-        format!("{}{}", &c[1], REDACTED)
-    });
-    let step8 = r.base64_token.replace_all(&step7, REDACTED);
-    r.long_token.replace_all(&step8, REDACTED).into_owned()
+        .replace_all(&step5, |c: &regex::Captures| format!("{}<user>", &c[1]));
+    let step7 = r.ip_addr.replace_all(&step6, "<ip>");
+    let step8 = r
+        .path_seg
+        .replace_all(&step7, |c: &regex::Captures| format!("{}{}", &c[1], REDACTED));
+    let step9 = r.base64_token.replace_all(&step8, REDACTED);
+    r.long_token.replace_all(&step9, REDACTED).into_owned()
 }
 
 fn read_text_capped(path: &Path, max_bytes: usize) -> Option<String> {
@@ -144,7 +152,7 @@ fn build_system_info(
 ) -> String {
     let version = app.package_info().version.to_string();
     format!(
-        "Harbor Diagnostics\n\
+        "Bear Diagnostics\n\
          generatedAt: {}\n\
          appVersion: {}\n\
          os: {}\n\
@@ -261,6 +269,13 @@ mod tests {
         let out = diagnostics_scrub("Authorization: Bearer abc123DEF456ghi789JKL");
         assert!(out.contains("Bearer [REDACTED]"));
         assert!(!out.contains("abc123DEF456ghi789JKL"));
+    }
+
+    #[test]
+    fn redacts_authorization_basic() {
+        let out = diagnostics_scrub("Authorization=Basic dXNlcjpwYXNzd29yZA==");
+        assert!(out.contains("Basic [REDACTED]"));
+        assert!(!out.contains("dXNlcjpwYXNzd29yZA=="));
     }
 
     #[test]
