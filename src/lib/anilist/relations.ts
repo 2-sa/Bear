@@ -139,25 +139,46 @@ export type AnimeRelation = {
   upcoming: boolean;
 };
 
+const MAX_RELATIONS = 20;
+
 export async function animeRelations(anilistId: number): Promise<AnimeRelation[]> {
-  const edges = await fetchEdges(anilistId);
   const out: AnimeRelation[] = [];
-  for (const e of edges) {
-    if (e.relationType !== "PREQUEL" && e.relationType !== "SEQUEL") continue;
-    const n = e.node;
-    if (!n || n.id == null) continue;
-    if (n.format === "MOVIE") continue; // exclude movies
-    const node = toNode(n);
-    if (!node.name) continue;
-    out.push({
-      id: node.id,
-      name: node.name,
-      year: node.year,
-      format: node.format,
-      poster: node.poster,
-      kind: e.relationType === "PREQUEL" ? "prequel" : "sequel",
-      upcoming: node.upcoming,
-    });
+  const seen = new Map<number, number>();
+  let frontier: Array<{ id: number; dir: number }> = [{ id: anilistId, dir: 0 }];
+  seen.set(anilistId, 0);
+  while (frontier.length > 0 && out.length < MAX_RELATIONS) {
+    const batches = await Promise.all(frontier.map((f) => fetchEdges(f.id)));
+    const next: Array<{ id: number; dir: number }> = [];
+    for (let i = 0; i < frontier.length; i++) {
+      const dir = frontier[i].dir;
+      for (const e of batches[i]) {
+        if (e.relationType !== "PREQUEL" && e.relationType !== "SEQUEL") continue;
+        const n = e.node;
+        if (!n || n.id == null) continue;
+        if (n.format === "MOVIE") continue;
+        if (seen.has(n.id)) continue;
+        const nextDir = dir + (e.relationType === "SEQUEL" ? 1 : -1);
+        seen.set(n.id, nextDir);
+        const node = toNode(n);
+        if (!node.name) continue;
+        out.push({
+          id: node.id,
+          name: node.name,
+          year: node.year,
+          format: node.format,
+          poster: node.poster,
+          kind: nextDir < 0 ? "prequel" : "sequel",
+          upcoming: node.upcoming,
+        });
+        next.push({ id: n.id, dir: nextDir });
+      }
+    }
+    frontier = next;
   }
+  out.sort((a, b) => {
+    if (a.kind !== b.kind) return a.kind === "prequel" ? -1 : 1;
+    if (a.kind === "prequel") return (b.year ?? 0) - (a.year ?? 0);
+    return (a.year ?? 0) - (b.year ?? 0);
+  });
   return out;
 }
