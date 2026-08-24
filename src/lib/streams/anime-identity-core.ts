@@ -85,16 +85,18 @@ export interface EpisodeBearing {
  * Partition parsed streams around the requested entry-relative episode.
  * Only streams with a concrete mismatched episode token are dropped; packs,
  * batches, and titles without an episode token pass through untouched, since
- * they may legitimately contain the target episode.
+ * they may legitimately contain the target episode. `valid` may carry both the
+ * entry-relative number and a provider alias (split-franchise cours) so streams
+ * in either numbering are kept.
  */
 export function partitionByExactAnimeEpisode<T extends EpisodeBearing>(
   streams: T[],
-  expected: number,
+  valid: Set<number>,
 ): { keep: T[]; drop: T[] } {
   const keep: T[] = [];
   const drop: T[] = [];
   for (const s of streams) {
-    if (!s.seasonPack && s.episode != null && s.episode !== expected) drop.push(s);
+    if (!s.seasonPack && s.episode != null && !valid.has(s.episode)) drop.push(s);
     else keep.push(s);
   }
   return { keep, drop };
