@@ -40,7 +40,7 @@ jobs:
         if: matrix.platform.name == 'Linux'
         run: |
           sudo apt-get update
-          sudo env DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a apt-get install -y --no-install-recommends \
+          sudo apt-get install -y \
             libasound2-dev \
             libayatana-appindicator3-dev \
             libgtk-3-dev \
@@ -50,16 +50,6 @@ jobs:
             libwebkit2gtk-4.1-dev \
             pkg-config \
             xz-utils
-
-          udev_root="$RUNNER_TEMP/libudev-dev"
-          mkdir -p "$udev_root"
-          cd "$RUNNER_TEMP"
-          apt-get download libudev-dev
-          dpkg-deb --extract ./libudev-dev_*.deb "$udev_root"
-          udev_pkgconfig="$udev_root/usr/lib/x86_64-linux-gnu/pkgconfig/libudev.pc"
-          sed -i "s|^prefix=/usr$|prefix=$udev_root/usr|" "$udev_pkgconfig"
-          echo "PKG_CONFIG_PATH=$(dirname "$udev_pkgconfig")${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}" >> "$GITHUB_ENV"
-          echo "LIBRARY_PATH=$udev_root/usr/lib/x86_64-linux-gnu${LIBRARY_PATH:+:$LIBRARY_PATH}" >> "$GITHUB_ENV"
 
       - name: Install macOS build dependencies
         if: matrix.platform.name == 'macOS'
@@ -90,22 +80,5 @@ jobs:
       - name: Prepare build assets
         run: pnpm run setup
 
-      - name: Build installable app packages
-        env:
-          HARBOR_BUILD_ID: 0.0.1-test
-        run: pnpm tauri build
-
-      - name: Upload installable packages
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: harbor-0.0.1-${{ matrix.platform.name }}
-          path: |
-            src-tauri/target/release/bundle/**/*.exe
-            src-tauri/target/release/bundle/**/*.msi
-            src-tauri/target/release/bundle/**/*.dmg
-            src-tauri/target/release/bundle/**/*.AppImage
-            src-tauri/target/release/bundle/**/*.deb
-            src-tauri/target/release/bundle/**/*.rpm
-          retention-days: 14
-          if-no-files-found: error
+      - name: Build app without installers
+        run: pnpm tauri build --no-bundle
