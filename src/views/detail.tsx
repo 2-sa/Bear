@@ -167,6 +167,7 @@ import { LetterboxdReviews } from "./detail/letterboxd-reviews";
 import { AnilistComments } from "./detail/anilist-comments";
 import { stremioIdToTraktTarget } from "@/lib/trakt/ids";
 import type { IdResolution } from "@/lib/trakt/ids";
+import { searchAnime } from "@/lib/search";
 
 function parseYear(v: string | number | undefined | null): number {
   if (v == null) return 0;
@@ -505,6 +506,31 @@ export function DetailView({
     (async () => {
       let k = tmdbTv != null && Number.isFinite(tmdbTv) ? await tmdbTvToKitsu(tmdbTv) : null;
       if (k == null && imdb) k = await imdbToKitsu(imdb);
+      // Orphan ids (standalone TMDB/IMDb entries with no cross-db mapping —
+      // e.g. Bleach TYBW tt14986406): fall back to Kitsu title search and
+      // accept the hit only when the year verdict agrees.
+      if (k == null) {
+        const name = meta.name || detail?.title;
+        if (name && name.trim().length >= 2) {
+          const hits = await searchAnime(name).catch(() => []);
+          const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "");
+          const target = norm(name);
+          const yr = parseInt(detail?.year ?? meta.releaseInfo ?? "", 10) || null;
+          const candidates = hits.filter((h) => norm(h.name).startsWith(target.slice(0, 8)));
+          const byYear = yr
+            ? candidates.find((h) => parseInt(h.year ?? "", 10) === yr)
+            : undefined;
+          const pick = byYear ?? (candidates.length === 1 ? candidates[0] : undefined);
+          if (pick?.kitsuId != null && pick.kitsuId !== failedKitsu.current) {
+            const verdict = await kitsuYearVerdict(
+              pick.kitsuId,
+              meta.releaseInfo,
+              detail?.year ?? pick.year ?? undefined,
+            );
+            if (!cancelled && verdict === "ok") k = pick.kitsuId;
+          }
+        }
+      }
       if (cancelled) return;
       if (k != null && k !== failedKitsu.current) {
         const verdict = await kitsuYearVerdict(k, meta.releaseInfo, detail?.year);
