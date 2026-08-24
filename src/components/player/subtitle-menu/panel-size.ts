@@ -5,8 +5,8 @@ const MIN_WIDTH = 420;
 const MIN_HEIGHT = 320;
 const MAX_WIDTH = 920;
 const MAX_HEIGHT = 720;
-const VIEWPORT_INLINE_MARGIN = 16;
-const PLAYER_CONTROLS_SPACE = 108;
+const VIEWPORT_INLINE_MARGIN = 48;
+const PLAYER_CONTROLS_SPACE = 120;
 
 export function clampSubtitlePanelSize(
   size: SubtitlePanelSize,

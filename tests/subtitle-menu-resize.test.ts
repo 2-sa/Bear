@@ -25,14 +25,14 @@ test("subtitle panel keeps its normal size when the viewport has enough room", (
 test("subtitle panel is bounded by the player viewport", () => {
   assert.deepEqual(
     clampSubtitlePanelSize({ width: 2_000, height: 2_000 }, { width: 800, height: 600 }),
-    { width: 784, height: 492 },
+    { width: 752, height: 480 },
   );
 });
 
 test("subtitle panel can still fit on a viewport smaller than its normal minimum", () => {
   assert.deepEqual(
     clampSubtitlePanelSize({ width: 100, height: 100 }, { width: 360, height: 360 }),
-    { width: 344, height: 252 },
+    { width: 312, height: 240 },
   );
 });
 

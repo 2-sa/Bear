@@ -295,6 +295,14 @@ export function PlayerLayoutPanel() {
         subtitle={t("Optional overlays that appear over the video.")}
       >
         <ToggleRow
+          label={t("Player screen lock")}
+          sub={t(
+            "Show a lock control in the player that blocks mouse, keyboard, remote, and media-key input until you unlock it.",
+          )}
+          value={settings.playerScreenLockEnabled}
+          onChange={(v) => update({ playerScreenLockEnabled: v })}
+        />
+        <ToggleRow
           label={t("Show P2P status chip")}
           sub={t(
             "Peers, speed and progress while a torrent streams. Sits clear of the exit button, top left.",

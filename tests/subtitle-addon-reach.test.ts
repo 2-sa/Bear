@@ -190,7 +190,7 @@ test("the configured languages reach the separate subtitle popup", () => {
 });
 
 test("subtitle popups use the shared resizable panel above the controls", () => {
-  assert.match(subtitleMenu, /ResizableSubtitlePanel className="fixed end-2 bottom-\[84px\]"/);
-  assert.match(subtitleModal, /ResizableSubtitlePanel className="m-2 mb-\[84px\]"/);
+  assert.match(subtitleMenu, /ResizableSubtitlePanel className="fixed end-6 bottom-24"/);
+  assert.match(subtitleModal, /ResizableSubtitlePanel className="mb-24 me-6"/);
   assert.doesNotMatch(subtitleModal, /me-\[120px\]/);
 });

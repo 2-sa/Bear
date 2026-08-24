@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { effectiveBinding, eventToBinding } from "@/lib/hotkeys";
 import { setPlayerInteractionLocked } from "@/lib/player/interaction-lock";
 import { useSettings } from "@/lib/settings";
 
 const UNLOCK_CONTROL = "[data-player-unlock-control]";
+const LOCK_CONTROL_IDLE_MS = 2_200;
 
 function isUnlockControlTarget(target: EventTarget | null): boolean {
   return target instanceof Element && target.closest(UNLOCK_CONTROL) != null;
@@ -16,15 +17,21 @@ function stopInteraction(event: Event): void {
 }
 
 export function usePlayerInteractionBlocker({
+  enabled = true,
   locked,
   binding,
   onToggle,
+  onLockedActivity,
 }: {
+  enabled?: boolean;
   locked: boolean;
   binding: string;
   onToggle: () => void;
+  onLockedActivity?: () => void;
 }): void {
   useEffect(() => {
+    if (!enabled) return;
+
     const onKeyboard = (event: KeyboardEvent) => {
       const isToggle = event.type === "keydown" && eventToBinding(event) === binding;
       if (isToggle) {
@@ -33,10 +40,16 @@ export function usePlayerInteractionBlocker({
         return;
       }
       if (!locked) return;
+      const activatesUnlock =
+        isUnlockControlTarget(event.target) && (event.key === "Enter" || event.key === " ");
+      if (activatesUnlock) return;
+      onLockedActivity?.();
       stopInteraction(event);
     };
     const onPointer = (event: Event) => {
-      if (!locked || isUnlockControlTarget(event.target)) return;
+      if (!locked) return;
+      onLockedActivity?.();
+      if (isUnlockControlTarget(event.target)) return;
       stopInteraction(event);
     };
     const keyboardOptions: AddEventListenerOptions = { capture: true };
@@ -68,26 +81,69 @@ export function usePlayerInteractionBlocker({
       window.removeEventListener("touchmove", onPointer, activePointerOptions);
       window.removeEventListener("touchend", onPointer, activePointerOptions);
     };
-  }, [binding, locked, onToggle]);
+  }, [binding, enabled, locked, onLockedActivity, onToggle]);
 }
 
 export function usePlayerInteractionLock() {
   const { settings } = useSettings();
+  const enabled = settings.playerScreenLockEnabled;
   const [locked, setLocked] = useState(false);
+  const [controlsVisible, setControlsVisible] = useState(false);
+  const idleTimerRef = useRef<number | null>(null);
   const binding = useMemo(
     () => effectiveBinding("playerScreenLock", settings.hotkeys ?? {}),
     [settings.hotkeys],
   );
-  const lock = useCallback(() => setLocked(true), []);
-  const unlock = useCallback(() => setLocked(false), []);
-  const toggle = useCallback(() => setLocked((value) => !value), []);
+  const clearIdleTimer = useCallback(() => {
+    if (idleTimerRef.current === null) return;
+    window.clearTimeout(idleTimerRef.current);
+    idleTimerRef.current = null;
+  }, []);
+  const wakeControls = useCallback(() => {
+    clearIdleTimer();
+    setControlsVisible(true);
+    idleTimerRef.current = window.setTimeout(() => {
+      idleTimerRef.current = null;
+      setControlsVisible(false);
+    }, LOCK_CONTROL_IDLE_MS);
+  }, [clearIdleTimer]);
+  const lock = useCallback(() => {
+    if (!enabled) return;
+    setLocked(true);
+    wakeControls();
+  }, [enabled, wakeControls]);
+  const unlock = useCallback(() => {
+    clearIdleTimer();
+    setControlsVisible(false);
+    setLocked(false);
+  }, [clearIdleTimer]);
+  const toggle = useCallback(() => {
+    if (locked) unlock();
+    else lock();
+  }, [lock, locked, unlock]);
 
-  usePlayerInteractionBlocker({ locked, binding, onToggle: toggle });
+  usePlayerInteractionBlocker({
+    enabled,
+    locked,
+    binding,
+    onToggle: toggle,
+    onLockedActivity: wakeControls,
+  });
 
   useEffect(() => {
-    setPlayerInteractionLocked(locked);
-  }, [locked]);
-  useEffect(() => () => setPlayerInteractionLocked(false), []);
+    if (!enabled && locked) unlock();
+  }, [enabled, locked, unlock]);
 
-  return { locked, binding, lock, unlock };
+  useEffect(() => {
+    setPlayerInteractionLocked(enabled && locked);
+  }, [enabled, locked]);
+  useEffect(
+    () => () => {
+      clearIdleTimer();
+      setPlayerInteractionLocked(false);
+    },
+    [clearIdleTimer],
+  );
+
+  return { enabled, locked, controlsVisible, binding, lock, unlock, wakeControls };
 }

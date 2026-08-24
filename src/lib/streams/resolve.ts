@@ -113,7 +113,11 @@ export async function resolveStream(
   if (stream.url && stream.url !== "#") {
     const headers = stream.behaviorHints?.proxyHeaders?.request ?? stream.behaviorHints?.headers;
     const filename = stream.behaviorHints?.filename ?? stream.behaviorHints?.fileName;
-    if (!stream.infoHash && !VIDEO_EXT_RE.test(stream.url)) {
+    // A manual source selection is already an explicit playback commitment.
+    // Let mpv validate an extensionless media URL instead of delaying it behind
+    // a separate HEAD request that many signed/CDN URLs reject. Automatic picks
+    // retain the webpage guard because they have no user confirmation step.
+    if (!userCommitted && !stream.infoHash && !VIDEO_EXT_RE.test(stream.url)) {
       if (await probeIsWebPage(stream.url, headers, signal)) {
         return { ok: false, code: "web-page", tried: [], webUrl: stream.url };
       }

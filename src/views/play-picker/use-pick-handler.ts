@@ -20,7 +20,6 @@ import {
   markPlaybackTrace,
 } from "@/lib/perf/playback-trace";
 import { registerStreamProxy, unregisterStreamProxy } from "@/lib/stream-proxy";
-import { playbackPrebufferBytes, playbackStartupProfile } from "@/lib/player/startup-profile";
 import type { ScoredStream } from "@/lib/streams/types";
 import type { PlayInvite } from "@/lib/together/protocol";
 import { buildPlayInvite } from "@/lib/together/build-invite";
@@ -257,32 +256,21 @@ export function usePickHandler({
       debridFailStreakRef.current = 0;
       let playUrl = r.data.url;
       const hasProxyHeaders = !!r.data.headers && Object.keys(r.data.headers).length > 0;
-      const remoteDebridPlayback =
-        intent !== "download" &&
-        r.via !== "p2p" &&
-        r.via !== "direct" &&
-        r.via !== "local-download";
-      if (intent !== "download" && (hasProxyHeaders || remoteDebridPlayback)) {
+      // Native mpv can consume ordinary debrid URLs directly. Keep the local
+      // proxy off the startup path unless the source actually requires custom
+      // request headers.
+      if (intent !== "download" && hasProxyHeaders) {
         try {
-          const startupProfile = playbackStartupProfile(stream);
-          const proxied = await registerStreamProxy(r.data.url, r.data.headers, {
-            prebufferBytes: remoteDebridPlayback
-              ? playbackPrebufferBytes(startupProfile)
-              : undefined,
-          });
+          const proxied = await registerStreamProxy(r.data.url, r.data.headers);
           playUrl = proxied.url;
           proxySessionId = proxied.sessionId;
         } catch {
-          if (!hasProxyHeaders) {
-            playUrl = r.data.url;
-          } else {
-            setFailedStreams((prev) => new Set(prev).add(stream));
-            const willRetry = autoActive && autoAttemptIdx + 1 < autoCandidatesLength;
-            if (!willRetry)
-              setResolveError("Could not start the local stream proxy. Pick another stream.");
-            advanceAuto();
-            return;
-          }
+          setFailedStreams((prev) => new Set(prev).add(stream));
+          const willRetry = autoActive && autoAttemptIdx + 1 < autoCandidatesLength;
+          if (!willRetry)
+            setResolveError("Could not start the local stream proxy. Pick another stream.");
+          advanceAuto();
+          return;
         }
       }
       const needsPreflight = !(

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type RefObject } from "react";
+import { useRef, useState, type RefObject } from "react";
 import { ScanFace } from "lucide-react";
 import type { Meta } from "@/lib/cinemeta";
 import type { PlayerBridge } from "@/lib/player/bridge";
@@ -7,8 +7,8 @@ import { useSettings } from "@/lib/settings";
 import { useT } from "@/lib/i18n";
 import { fetch as tauriHttpFetch } from "@tauri-apps/plugin-http";
 import { useFaceId } from "@/lib/face/use-face-id";
-import { ensureFaceEngine } from "@/lib/face/face-engine";
 import { useXrayCast } from "@/lib/xray/use-xray-cast";
+import { usePageVisible } from "@/lib/visibility";
 import { TrailerOverlay } from "@/views/detail/trailer-overlay";
 import { XrayRail } from "./xray-rail";
 import { XrayBrowser } from "./xray-browser";
@@ -17,9 +17,10 @@ import type { XrayPerson } from "./xray-actor-card";
 const IS_TAURI = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 const NO_CAST: CastEntry[] = [];
 
-async function loadBitmap(url: string): Promise<ImageBitmap> {
-  const doFetch = IS_TAURI ? tauriHttpFetch : fetch;
-  const buf = await (await doFetch(url)).arrayBuffer();
+async function loadBitmap(url: string, signal?: AbortSignal): Promise<ImageBitmap> {
+  const response = IS_TAURI ? await tauriHttpFetch(url, { signal }) : await fetch(url, { signal });
+  const buf = await response.arrayBuffer();
+  if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
   return createImageBitmap(new Blob([buf]));
 }
 
@@ -29,53 +30,28 @@ export function XrayOverlay({
   meta,
   visible,
   isPaused,
-  firstFrameReady,
   bridgeRef,
 }: {
   meta: Meta;
   visible: boolean;
   isPaused: boolean;
-  firstFrameReady: boolean;
   bridgeRef?: RefObject<PlayerBridge | null>;
 }) {
   const { settings } = useSettings();
   const t = useT();
+  const pageVisible = usePageVisible();
   const [view, setView] = useState<View>("closed");
   const [trailer, setTrailer] = useState<{ ytId: string; name: string } | null>(null);
-  const [preloadedCastKey, setPreloadedCastKey] = useState<string | null>(null);
   const resumeRef = useRef(false);
   const active = settings.xrayEnabled && view !== "closed";
-  const { cast, details } = useXrayCast(meta, active || preloadedCastKey === meta.id);
+  const { cast, details } = useXrayCast(meta, active);
   const { people, ready, galleryReady, progress, error } = useFaceId({
     metaKey: meta.id,
     cast: cast ?? NO_CAST,
-    liveScan: active && settings.xrayLiveScan,
+    liveScan: active && settings.xrayLiveScan && pageVisible,
     isPaused,
     loadBitmap,
   });
-
-  useEffect(() => {
-    if (!settings.xrayEnabled || !firstFrameReady) return;
-    let cancelled = false;
-    let timeoutId: number | undefined;
-    let idleId: number | undefined;
-    const warm = () => {
-      if (cancelled) return;
-      setPreloadedCastKey(meta.id);
-      void ensureFaceEngine().catch(() => {});
-    };
-
-    if (typeof window.requestIdleCallback === "function") {
-      idleId = window.requestIdleCallback(warm, { timeout: 2000 });
-    } else {
-      timeoutId = window.setTimeout(warm, 1000);
-    }
-    return () => {
-      cancelled = true;
-      if (idleId != null) window.cancelIdleCallback(idleId);
-      if (timeoutId != null) window.clearTimeout(timeoutId);
-    };
-  }, [settings.xrayEnabled, firstFrameReady, meta.id]);
 
   if (!settings.xrayEnabled) return null;
 
@@ -109,7 +85,6 @@ export function XrayOverlay({
         <button
           type="button"
           onClick={() => setView("rail")}
-          onPointerEnter={() => void ensureFaceEngine().catch(() => {})}
           aria-label={t("X-Ray")}
           className="absolute left-4 top-20 z-20 flex h-9 items-center gap-1.5 rounded-full border border-white/20 bg-black/45 px-3 text-[12.5px] font-semibold text-white backdrop-blur-md transition-[background-color,transform] hover:bg-black/65 active:scale-[0.97] motion-reduce:active:scale-100"
         >

@@ -3,12 +3,14 @@ import { Lock, Unlock } from "lucide-react";
 import { formatBindingForDisplay } from "@/lib/hotkeys";
 
 export function PlayerInteractionLockControls({
+  enabled,
   locked,
   visible,
   binding,
   onLock,
   onUnlock,
 }: {
+  enabled: boolean;
   locked: boolean;
   visible: boolean;
   binding: string;
@@ -18,17 +20,17 @@ export function PlayerInteractionLockControls({
   const unlockRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    if (locked) unlockRef.current?.focus({ preventScroll: true });
-  }, [locked]);
+    if (locked && visible) unlockRef.current?.focus({ preventScroll: true });
+  }, [locked, visible]);
 
-  if (!locked && !visible) return null;
+  if (!enabled || (!locked && !visible)) return null;
 
   return (
     <div
       className={`pointer-events-none absolute inset-0 z-[4000] ${locked ? "bg-black/[0.01]" : ""}`}
       aria-live="polite"
     >
-      {locked ? (
+      {locked && visible ? (
         <button
           ref={unlockRef}
           type="button"
@@ -43,7 +45,7 @@ export function PlayerInteractionLockControls({
             {formatBindingForDisplay(binding)}
           </kbd>
         </button>
-      ) : (
+      ) : !locked ? (
         <button
           type="button"
           onClick={onLock}
@@ -53,7 +55,7 @@ export function PlayerInteractionLockControls({
         >
           <Lock aria-hidden="true" className="size-4" strokeWidth={2} />
         </button>
-      )}
+      ) : null}
       <span className="sr-only">Player controls {locked ? "locked" : "unlocked"}</span>
     </div>
   );

@@ -8,7 +8,7 @@ import { savePlayback } from "@/lib/playback-history";
 import { resolveStream } from "@/lib/streams/resolve";
 import type { ScoredStream } from "@/lib/streams/types";
 import { registerStreamProxy, unregisterStreamProxy } from "@/lib/stream-proxy";
-import { playbackPrebufferBytes, playbackStartupProfile } from "@/lib/player/startup-profile";
+import { playbackStartupProfile } from "@/lib/player/startup-profile";
 import type { PlayerSrc } from "@/lib/view";
 import type { DebridStore } from "@/lib/debrid/types";
 
@@ -97,23 +97,14 @@ export function useStreamSwitcher(params: {
       let playUrl = r.data.url;
       let nextProxySessionId: string | null = null;
       const hasProxyHeaders = !!r.data.headers && Object.keys(r.data.headers).length > 0;
-      const remoteDebridPlayback =
-        r.via !== "p2p" && r.via !== "direct" && r.via !== "local-download";
-      if (hasProxyHeaders || remoteDebridPlayback) {
+      if (hasProxyHeaders) {
         try {
-          const profile = playbackStartupProfile(stream);
-          const proxied = await registerStreamProxy(r.data.url, r.data.headers, {
-            prebufferBytes: remoteDebridPlayback ? playbackPrebufferBytes(profile) : undefined,
-          });
+          const proxied = await registerStreamProxy(r.data.url, r.data.headers);
           playUrl = proxied.url;
           nextProxySessionId = proxied.sessionId;
         } catch {
-          if (!hasProxyHeaders) {
-            playUrl = r.data.url;
-          } else {
-            setSwapResolvingKey(null);
-            return;
-          }
+          setSwapResolvingKey(null);
+          return;
         }
       }
       const b = bridgeRef.current;

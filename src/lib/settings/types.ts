@@ -228,6 +228,7 @@ export type Settings = {
   playerShellId: string;
   playerChromeTheme: "auto" | "default" | "stremio";
   playerMenuBlack: boolean;
+  playerScreenLockEnabled: boolean;
   seekPreviewEnabled: boolean;
   instantPlay: boolean;
   instantPlaybackPreparation: boolean;

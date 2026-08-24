@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { AlertTriangle } from "lucide-react";
 import { useSettings } from "@/lib/settings";
 import { listMpvAudioDevices, type MpvAudioDevice } from "@/lib/player/mpv";
 import { PlayModePanel, PlayerEnginePanel } from "./player-panel";
@@ -76,6 +77,21 @@ export function QualityPanel() {
             value={settings.xrayLiveScan}
             onChange={(v) => update({ xrayLiveScan: v })}
           />
+        )}
+        {settings.xrayEnabled && settings.xrayLiveScan && (
+          <div className="flex items-start gap-2.5 rounded-xl border border-amber-400/35 bg-amber-400/10 px-3.5 py-3 text-start">
+            <AlertTriangle size={14} strokeWidth={2.2} className="mt-0.5 shrink-0 text-amber-300" />
+            <div className="flex min-w-0 flex-col gap-0.5">
+              <span className="text-[12.5px] font-semibold text-amber-200">
+                {t("Performance notice")}
+              </span>
+              <span className="text-[12px] leading-relaxed text-amber-200/85">
+                {t(
+                  "Live face scanning loads on-device AI models and can significantly increase RAM, CPU, and GPU usage while playback is active. Turn it off if Harbor slows down or your device gets hot.",
+                )}
+              </span>
+            </div>
+          </div>
         )}
         {settings.xrayEnabled && !settings.tmdbKey.trim() && (
           <button

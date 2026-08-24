@@ -183,6 +183,7 @@ export const DEFAULT: Settings = {
   playerShellId: "default",
   playerChromeTheme: "auto",
   playerMenuBlack: false,
+  playerScreenLockEnabled: false,
   seekPreviewEnabled: typeof navigator !== "undefined" && (navigator.hardwareConcurrency || 8) >= 4,
   instantPlay: true,
   instantPlaybackPreparation: false,

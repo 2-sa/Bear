@@ -314,7 +314,6 @@ export const PlayerOverlayLayers = memo(function PlayerOverlayLayers(p: PlayerOv
           meta={p.src.meta}
           visible={p.showChrome}
           isPaused={p.snap.status === "paused"}
-          firstFrameReady={p.snap.firstFrameReady}
           bridgeRef={p.bridgeRef}
         />
       )}

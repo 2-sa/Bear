@@ -32,34 +32,11 @@ type OpenPicker = (
 
 export type SourceError = { status: number; host: string; exhausted?: boolean };
 
-const PROBE_TIMEOUT_MS = 5000;
-
 function hostOf(url: string): string {
   try {
     return new URL(url).host;
   } catch {
     return "";
-  }
-}
-
-async function probeSourceStatus(
-  url: string,
-  headers?: Record<string, string>,
-): Promise<SourceError> {
-  const host = hostOf(url);
-  const ac = new AbortController();
-  const timer = window.setTimeout(() => ac.abort(), PROBE_TIMEOUT_MS);
-  try {
-    const res = await fetch(url, {
-      method: "GET",
-      headers: { ...headers, Range: "bytes=0-1" },
-      signal: ac.signal,
-    });
-    return { status: res.status, host };
-  } catch {
-    return { status: 0, host };
-  } finally {
-    window.clearTimeout(timer);
   }
 }
 
@@ -195,6 +172,16 @@ export function useAutoRetry(params: {
         console.warn(`[player] live channel: skipping auto-retry (${reason})`);
         return;
       }
+      // An explicitly selected source must not be killed by a short startup
+      // timer. Signed playback URLs often reject browser probes (CORS) even
+      // though mpv can read them, which previously produced a false
+      // "No response" error. Keep mpv alive and let the longer startup ceiling
+      // or a genuine mpv error own the visible failure state.
+      if (!instantPlay && !inRoom) {
+        console.warn(`[player] manual source failed (${reason})`);
+        setSourceError((prev) => prev ?? { status: 0, host: hostOf(src.url) });
+        return;
+      }
       const currentAttempt = src.attempt ?? 0;
       if (currentAttempt >= MAX_AUTORETRY_ATTEMPTS) {
         console.warn(`[player] giving up after ${currentAttempt} attempts (${reason})`);
@@ -212,10 +199,6 @@ export function useAutoRetry(params: {
       }
       if (nextAttempt >= 2) {
         clearOnePickerCache(src.meta, src.episode);
-      }
-      if (!instantPlay && !inRoom && /^https?:\/\//i.test(src.url)) {
-        void probeSourceStatus(src.url, src.headers).then(setSourceError);
-        return;
       }
       openPicker(
         src.meta,
@@ -517,6 +500,7 @@ export function useAutoRetry(params: {
   useEffect(() => {
     if (snap.status === "ended") return;
     if (isP2pEngine && !engineFailure) return;
+    if (!instantPlay && !inRoom) return;
     if (snap.durationSec > 0 || getPlaybackPosition() > 1) return;
     const t = window.setTimeout(() => {
       if (snap.durationSec === 0 && getPlaybackPosition() === 0) {
@@ -524,7 +508,16 @@ export function useAutoRetry(params: {
       }
     }, STUCK_AUTORETRY_MS);
     return () => window.clearTimeout(t);
-  }, [src.url, snap.durationSec, snap.status, triggerAutoRetry, isP2pEngine, engineFailure]);
+  }, [
+    src.url,
+    snap.durationSec,
+    snap.status,
+    triggerAutoRetry,
+    isP2pEngine,
+    engineFailure,
+    instantPlay,
+    inRoom,
+  ]);
 
   useEffect(() => {
     if (isLive || isLocal || inRoom || isP2pEngine) return;

@@ -49,9 +49,15 @@ test("warm resume lookup overlaps loading while uncached deep links remain gated
   assert.match(bridgeLoad, /if \(waitBeforeLoad\)/);
 });
 
-test("Windows embedded mpv is stopped and retained between compatible player views", () => {
+test("Windows embedded mpv is retained across compatible VOD bitrate profiles", () => {
   assert.match(mpv, /invoke<boolean>\("mpv_release_media"\)/);
   assert.match(mpv, /retainedMpv\?\.configKey === reuseConfigKey/);
+  assert.match(mpv, /retainedMpv\.isLive === nextIsLive/);
+  assert.doesNotMatch(mpv, /retainedMpv\.startupProfile === nextStartupProfile/);
+  assert.doesNotMatch(
+    mpv,
+    /currentStartupProfile != null && currentStartupProfile !== nextStartupProfile/,
+  );
   assert.match(mpv, /invoke\("mpv_restore_media_surface"\)/);
   assert.match(mpv, /await ensureGeometryTracking\(opts\);/);
   assert.match(mpv, /A retained Windows mpv child was hidden/);
@@ -80,21 +86,31 @@ test("early debrid preparation is explicit, bounded, verified, and memory-only",
   assert.doesNotMatch(preparation, /localStorage|sessionStorage|indexedDB|writeFile|console\./);
 });
 
-test("committed debrid playback reuses one bounded in-memory prefix through the local proxy", () => {
-  assert.match(picker, /intent !== "download" && \(hasProxyHeaders \|\| remoteDebridPlayback\)/);
-  assert.match(picker, /prebufferBytes: remoteDebridPlayback/);
+test("committed debrid playback bypasses the local proxy unless request headers require it", () => {
+  assert.match(picker, /intent !== "download" && hasProxyHeaders/);
+  assert.doesNotMatch(picker, /remoteDebridPlayback|prebufferBytes/);
   assert.match(proxyClient, /args\.prebufferBytes = opts\.prebufferBytes/);
+  assert.match(resolve, /if \(!userCommitted && !stream\.infoHash/);
+});
+
+test("proxy prebuffering never blocks the real player request", () => {
   assert.match(streamProxy, /PREBUFFER_MAX_BYTES: usize = 2 \* 1024 \* 1024/);
   assert.match(streamProxy, /status != StatusCode::PARTIAL_CONTENT/);
+  assert.match(streamProxy, /PrebufferState::Loading \| PrebufferState::Failed => return None/);
+  assert.doesNotMatch(streamProxy, /receiver\.changed\(\)\.await/);
   assert.match(streamProxy, /served playback prefix id=\{id\}/);
   assert.doesNotMatch(streamProxy, /playback prefix.*url|url=.*playback prefix/i);
 });
 
-test("startup buffering adapts to high-bitrate releases without lowering media quality", () => {
+test("startup buffering is staged and adapts without lowering media quality", () => {
   assert.match(startupProfile, /HIGH_BITRATE_MIN_BYTES = 12 \* 1024 \* 1024 \* 1024/);
   assert.match(startupProfile, /2160p\?|4320p\?|4k\|8k\|uhd\|remux/);
   assert.match(nativeMpv, /startup_profile: Option<String>/);
-  assert.match(nativeMpv, /if high_bitrate \{ "64MiB" \} else \{ "32MiB" \}/);
+  assert.match(nativeMpv, /if high_bitrate \{ "32MiB" \} else \{ "16MiB" \}/);
+  assert.match(mpv, /phase === "startup"/);
+  assert.match(mpv, /\["demuxer-max-bytes", highBitrate \? "256MiB" : "128MiB"\]/);
+  assert.match(mpv, /\["demuxer-max-bytes", highBitrate \? "768MiB" : "512MiB"\]/);
+  assert.match(mpv, /steadyBufferLoadId !== mediaLoadId/);
   assert.match(nativeMpv, /"cache-pause-initial", "no"/);
   assert.doesNotMatch(startupProfile, /resolution.*replace|transcode|downscale/i);
 });

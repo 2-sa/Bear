@@ -4946,6 +4946,12 @@ const SETTINGS_OPTIONS: SettingsOption[] = [
     ],
   },
   {
+    label: "Player screen lock",
+    section: "playerLayout",
+    anchorTitle: "While you watch",
+    keywords: ["screen lock", "lock controls", "disable input", "child lock"],
+  },
+  {
     label: "Show P2P status chip",
     section: "playerLayout",
     keywords: [

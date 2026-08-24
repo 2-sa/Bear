@@ -24,7 +24,9 @@ export type HdrStagePayload = {
   hasPrevEp: boolean;
   hasNextEp: boolean;
   pipMode: boolean;
+  screenLockEnabled: boolean;
   screenLocked: boolean;
+  screenLockControlsVisible: boolean;
   screenLockBinding: string;
 };
 
@@ -79,11 +81,17 @@ function HdrOverlayChrome() {
     const event = payload?.screenLocked ? "hdr-stage://unlock" : "hdr-stage://lock";
     void hdrOverlayEmitAction(event, {});
   }, [payload?.screenLocked]);
+  const reportLockedActivity = useCallback(
+    () => void hdrOverlayEmitAction("hdr-stage://activity", {}),
+    [],
+  );
 
   usePlayerInteractionBlocker({
+    enabled: payload?.screenLockEnabled ?? false,
     locked: payload?.screenLocked ?? false,
     binding: payload?.screenLockBinding ?? "ctrl+l",
     onToggle: toggleLock,
+    onLockedActivity: reportLockedActivity,
   });
 
   useEffect(() => {
@@ -205,8 +213,9 @@ function HdrOverlayChrome() {
         sleep={undefined}
       />
       <PlayerInteractionLockControls
+        enabled={payload.screenLockEnabled}
         locked={payload.screenLocked}
-        visible={payload.visible}
+        visible={payload.screenLocked ? payload.screenLockControlsVisible : payload.visible}
         binding={payload.screenLockBinding}
         onLock={() => act("hdr-stage://lock")}
         onUnlock={() => act("hdr-stage://unlock")}

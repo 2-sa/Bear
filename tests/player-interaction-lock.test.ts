@@ -15,11 +15,15 @@ const hdrOverlay = read("src/views/hdr-overlay-app.tsx");
 const mediaSession = read("src/lib/media-session.ts");
 const html5Bridge = read("src/lib/player/html5/bridge.ts");
 const keyboardShortcuts = read("src/views/player/hooks/use-keyboard-shortcuts.ts");
+const defaults = read("src/lib/settings/defaults.ts");
+const playerLayout = read("src/views/settings/player-layout-panel/index.tsx");
 
 test("player lock is configurable and has a deliberate default shortcut", () => {
   assert.match(hotkeys, /id: "playerScreenLock"/);
   assert.match(hotkeys, /defaultBinding: "ctrl\+l"/);
   assert.match(lockHook, /effectiveBinding\("playerScreenLock"/);
+  assert.match(defaults, /playerScreenLockEnabled: false/);
+  assert.match(playerLayout, /value=\{settings\.playerScreenLockEnabled\}/);
 });
 
 test("locked playback captures pointer and keyboard input while preserving unlock access", () => {
@@ -28,6 +32,9 @@ test("locked playback captures pointer and keyboard input while preserving unloc
   assert.match(lockHook, /stopImmediatePropagation\(\)/);
   assert.match(lockHook, /window\.addEventListener\("pointerdown"/);
   assert.match(lockHook, /window\.addEventListener\("keydown"/);
+  assert.match(lockHook, /LOCK_CONTROL_IDLE_MS/);
+  assert.match(lockHook, /onLockedActivity/);
+  assert.match(lockHook, /event\.key === "Enter" \|\| event\.key === " "/);
   assert.doesNotMatch(lockHook, /keyboardActivatesUnlock/);
   assert.match(keyboardShortcuts, /if \(isPlayerInteractionLocked\(\)\)/);
 });
@@ -38,4 +45,5 @@ test("screen lock covers TV navigation, media keys, HTML5 media session, and HDR
   assert.match(html5Bridge, /if \(isPlayerInteractionLocked\(\)\) return/);
   assert.match(hdrOverlay, /usePlayerInteractionBlocker/);
   assert.match(hdrOverlay, /PlayerInteractionLockControls/);
+  assert.match(hdrOverlay, /screenLockControlsVisible/);
 });
