@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Sparkles } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import { usePosterChain } from "@/components/poster";
 import type { AnimeHit } from "@/lib/search";
 import { useT } from "@/lib/i18n";
@@ -35,8 +35,6 @@ export function AnimeRelations({ anime, onClose }: { anime: AnimeHit; onClose: (
     };
   }, [anime]);
 
-  if (!entries || entries.length === 0) return null;
-
   const open = (entry: AnimeRelation) => {
     const meta: Meta = {
       id: `anilist:${entry.id}`,
@@ -50,22 +48,99 @@ export function AnimeRelations({ anime, onClose }: { anime: AnimeHit; onClose: (
     openMeta(meta, { exact: true });
   };
 
+  if (!entries || entries.length === 0) return null;
+
+  const items = [
+    ...entries.filter((e) => e.kind === "prequel"),
+    ...entries.filter((e) => e.kind === "sequel"),
+  ];
+
   return (
     <section>
       <h3 className="mb-3 flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-[0.2em] text-ink-subtle">
         <Sparkles size={11} strokeWidth={2.2} />
         {t("Sequels & Prequels")}
       </h3>
-      <div className="grid min-w-0 gap-1">
-        {entries.map((entry) => (
-          <RelationRow key={entry.id} entry={entry} rpdbKey={settings.rpdbKey} onOpen={open} />
-        ))}
-      </div>
+      <RelationCarousel items={items} rpdbKey={settings.rpdbKey} onOpen={open} />
     </section>
   );
 }
 
-function RelationRow({
+function RelationCarousel({
+  items,
+  rpdbKey,
+  onOpen,
+}: {
+  items: AnimeRelation[];
+  rpdbKey: string;
+  onOpen: (entry: AnimeRelation) => void;
+}) {
+  const t = useT();
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [canPrev, setCanPrev] = useState(false);
+  const [canNext, setCanNext] = useState(false);
+
+  const measure = () => {
+    const el = trackRef.current;
+    if (!el) return;
+    setCanPrev(el.scrollLeft > 1);
+    setCanNext(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
+  };
+
+  useEffect(() => {
+    const el = trackRef.current;
+    if (!el) return;
+    measure();
+    el.addEventListener("scroll", measure, { passive: true });
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => {
+      el.removeEventListener("scroll", measure);
+      ro.disconnect();
+    };
+  }, [items.length]);
+
+  const slide = (dir: -1 | 1) => {
+    const el = trackRef.current;
+    if (!el) return;
+    el.scrollBy({ left: dir * el.clientWidth * 0.8, behavior: "smooth" });
+  };
+
+  return (
+    <div className="relative">
+      {canPrev && (
+        <button
+          type="button"
+          aria-label={t("Scroll left")}
+          onClick={() => slide(-1)}
+          className="absolute start-0 top-[42%] z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-edge-soft bg-elevated/90 text-ink shadow-[0_6px_16px_-8px_rgba(0,0,0,0.55)] backdrop-blur transition-colors hover:bg-raised"
+        >
+          <ChevronLeft size={18} strokeWidth={2.2} />
+        </button>
+      )}
+      <div
+        ref={trackRef}
+        className="flex gap-3 overflow-x-auto px-2 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {items.map((entry) => (
+          <RelationCard key={entry.id} entry={entry} rpdbKey={rpdbKey} onOpen={onOpen} />
+        ))}
+      </div>
+      {canNext && (
+        <button
+          type="button"
+          aria-label={t("Scroll right")}
+          onClick={() => slide(1)}
+          className="absolute end-0 top-[42%] z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-edge-soft bg-elevated/90 text-ink shadow-[0_6px_16px_-8px_rgba(0,0,0,0.55)] backdrop-blur transition-colors hover:bg-raised"
+        >
+          <ChevronRight size={18} strokeWidth={2.2} />
+        </button>
+      )}
+    </div>
+  );
+}
+
+function RelationCard({
   entry,
   rpdbKey,
   onOpen,
@@ -79,9 +154,9 @@ function RelationRow({
   return (
     <button
       onClick={() => onOpen(entry)}
-      className="group flex min-w-0 items-center gap-4 rounded-2xl border border-transparent px-3 py-2.5 text-start transition-colors hover:border-edge-soft hover:bg-elevated/50 active:scale-[0.997]"
+      className="flex w-[110px] shrink-0 flex-col gap-1.5 text-start transition-transform active:scale-[0.98]"
     >
-      <span className="flex h-[96px] w-[64px] shrink-0 items-center justify-center overflow-hidden rounded-xl bg-canvas shadow-[0_6px_16px_-8px_rgba(0,0,0,0.55)] ring-1 ring-edge-soft">
+      <span className="aspect-[2/3] w-full overflow-hidden rounded-xl bg-canvas shadow-[0_6px_16px_-8px_rgba(0,0,0,0.55)] ring-1 ring-edge-soft">
         {poster.src ? (
           <img
             src={poster.src}
@@ -92,17 +167,17 @@ function RelationRow({
             className="h-full w-full object-cover"
           />
         ) : (
-          <span className="text-[10px] text-ink-subtle">{t("No art")}</span>
+          <span className="flex h-full w-full items-center justify-center text-[10px] text-ink-subtle">
+            {t("No art")}
+          </span>
         )}
       </span>
-      <span className="flex min-w-0 flex-1 flex-col gap-1">
-        <span className="truncate text-[16px] font-semibold text-ink">{entry.name}</span>
-        <span className="flex items-center gap-2 text-[12.5px] text-ink-muted">
-          <span className="rounded-md bg-canvas/70 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-[0.12em] text-ink-muted">
-            {t(entry.kind === "prequel" ? "Prequel" : "Sequel")}
-          </span>
-          {entry.year && <span>{entry.year}</span>}
+      <span className="truncate text-[12px] font-semibold leading-tight text-ink">{entry.name}</span>
+      <span className="flex items-center gap-1.5 text-[10px] leading-none text-ink-subtle">
+        <span className="font-medium uppercase tracking-[0.08em] text-ink-muted">
+          {t(entry.kind === "prequel" ? "Prequel" : "Sequel")}
         </span>
+        {entry.year && <span>{entry.year}</span>}
       </span>
     </button>
   );
