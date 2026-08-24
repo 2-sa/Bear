@@ -104,3 +104,34 @@ export function animeAbsoluteFromScopedId(id: string | null | undefined): number
   const m = /^(?:kitsu|mal):\d+:(\d+)$/.exec(id ?? "");
   return m ? Number(m[1]) : null;
 }
+
+/**
+ * One anime-lists claim: an AniDB entry occupying `season` of a shared
+ * provider series, shifted by `offset` episodes within that season.
+ * `season: "a"` marks absolute-order entries.
+ */
+export interface AnimeListWindow {
+  anidbId: number;
+  season: number | "a";
+  offset: number;
+}
+
+/**
+ * Distinct AniDB entries other than `excludeAnidbId` that claim the requested
+ * provider season. Absolute ("a") windows are ignored: they describe whole-show
+ * continuous entries, not siblings pinned to a specific season.
+ */
+export function selectSiblingWindows(
+  windows: AnimeListWindow[] | undefined | null,
+  season: number,
+  excludeAnidbId?: number | null,
+): number[] {
+  if (!windows || windows.length === 0) return [];
+  const out: number[] = [];
+  for (const w of windows) {
+    if (typeof w.season !== "number" || w.season !== season) continue;
+    if (excludeAnidbId != null && w.anidbId === excludeAnidbId) continue;
+    if (!out.includes(w.anidbId)) out.push(w.anidbId);
+  }
+  return out;
+}
