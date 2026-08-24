@@ -1286,7 +1286,7 @@ function TabsView({
   onSave: (next: HiddenTabs) => void;
 }) {
   const t = useT();
-  const [tabs, setTabs] = useState<HiddenTabs>({ ...DEFAULT_HIDDEN, ...(initial ?? {}) });
+  const [tabs, setTabs] = useState<HiddenTabs>({ ...DEFAULT_HIDDEN, ...initial });
   const toggle = (key: LockableTab) => setTabs((prev) => ({ ...prev, [key]: !prev[key] }));
   const count = Object.values(tabs).filter(Boolean).length;
   return (
