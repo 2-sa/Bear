@@ -93,7 +93,7 @@ export function AnimeSeasonPicker({
         </span>
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className="flex items-center gap-2 text-[13.5px] font-medium">
-            <span className="truncate">{f.meta.name}</span>
+            <span title={f.meta.name} className="truncate">{f.meta.name}</span>
             {f.isUpcoming && <UpcomingBadge />}
           </span>
           <span className="text-[11.5px] text-ink-subtle">
@@ -119,7 +119,7 @@ export function AnimeSeasonPicker({
         className="flex h-10 items-center gap-2 rounded-full border border-edge-soft bg-elevated/70 ps-4 pe-3 text-[13.5px] font-medium text-ink transition-colors hover:bg-elevated"
       >
         <span className="font-mono text-[11.5px] text-ink-subtle">{positionLabel}</span>
-        <span className="max-w-[280px] truncate">{current.meta.name}</span>
+        <span title={current.meta.name} className="max-w-[280px] truncate">{current.meta.name}</span>
         {current.isUpcoming && <UpcomingBadge />}
         <ChevronDown
           size={15}
