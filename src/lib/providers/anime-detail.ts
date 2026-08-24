@@ -7,6 +7,8 @@ import {
   kitsuToImdb,
   externalToKitsu,
   kitsuToAnilist,
+  kitsuToAnidb,
+  loadAnidbMaps,
 } from "@/lib/providers/anime-mapping";
 import { anilistFranchise, type AnilistFranchiseNode } from "@/lib/anilist/relations";
 import { anilistArtById, anilistRecommendations } from "@/lib/anilist/browse";
@@ -456,6 +458,30 @@ export async function animeDetails(
   if (localized) {
     if (tvdbEpsRaw?.en) mergeTvdbEpisodes(episodes, tvdbEpsRaw.en);
     if (tmdbEnRaw) mergeTmdbEpisodes(episodes, tmdbEnRaw);
+  }
+
+  // AniZip has no mapping for not-yet-indexed cours (e.g. Bleach TYBW cour 4).
+  // Fall back to the AniDB id (ARM) plus the anime-lists season window to
+  // attach provider season/episode coords, so stream queries carry the season.
+  if (!aniZip) {
+    const anidb = await kitsuToAnidb(kitsuId).catch(() => null);
+    if (anidb != null) {
+      const maps = await loadAnidbMaps().catch(() => null);
+      const tvdbId = maps?.tvdb[String(anidb)];
+      const win =
+        tvdbId != null
+          ? maps?.byTvdb?.[String(tvdbId)]?.find((w) => w.anidbId === anidb)
+          : undefined;
+      if (win && typeof win.season === "number") {
+        const imdbId = maps?.imdb[String(anidb)] ?? null;
+        for (const ep of episodes) {
+          if (ep.number == null) continue;
+          if (ep.imdbSeason == null) ep.imdbSeason = win.season;
+          if (ep.imdbEpisode == null) ep.imdbEpisode = ep.number + win.offset;
+          if (imdbId && !ep.imdbId) ep.imdbId = imdbId;
+        }
+      }
+    }
   }
 
   let seriesImdb = aniZip?.mappings?.imdb_id ?? episodes.find((e) => e.imdbId)?.imdbId ?? null;

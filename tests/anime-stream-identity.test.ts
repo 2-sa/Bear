@@ -101,7 +101,7 @@ test("episode filter drops only confident single-episode mismatches", () => {
     { label: "range batch keeps parsed low bound", episode: 1099, seasonPack: true },
     { label: "no episode token", episode: null, seasonPack: false },
   ];
-  const { keep, drop } = partitionByExactAnimeEpisode(streams, 1169);
+  const { keep, drop } = partitionByExactAnimeEpisode(streams, new Set([1169]));
   assert.deepEqual(keep.map((s) => s.label), [
     "target single",
     "batch pack",
@@ -116,7 +116,7 @@ test("episode filter with no mismatches keeps everything", () => {
     { episode: 1169, seasonPack: false },
     { episode: null, seasonPack: true },
   ];
-  const { keep, drop } = partitionByExactAnimeEpisode(streams, 1169);
+  const { keep, drop } = partitionByExactAnimeEpisode(streams, new Set([1169]));
   assert.equal(keep.length, 2);
   assert.equal(drop.length, 0);
 });
