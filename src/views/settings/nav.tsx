@@ -792,6 +792,7 @@ const SETTINGS_OPTIONS: SettingsOption[] = [
   { label: "Hotkeys / keyboard shortcuts", section: "hotkeys", keywords: ["hotkeys", "shortcuts", "keybindings", "keyboard", "rebind", "reset shortcuts"] },
   { label: "Controllers / gamepad", section: "controllers", keywords: ["controller", "gamepad", "joystick", "joypad", "xbox", "playstation", "ps4", "ps5", "dualshock", "dualsense", "deadzone", "repeat speed", "bluetooth controller", "usb controller"] },
   { label: "Player layout / chrome", section: "playerLayout", keywords: ["player layout", "chrome", "controls", "buttons", "overlay", "arrange", "rearrange", "trickplay", "thumbnail", "hide buttons"] },
+  { label: "Player screen lock", section: "playerLayout", anchorTitle: "While you watch", keywords: ["screen lock", "lock controls", "disable input", "child lock"] },
   { label: "Report a bug", section: "bug", keywords: ["bug report", "report", "feedback", "issue", "crash", "screenshot", "diagnostics"] },
 
   { label: "Sign in to Stremio", section: "basics", keywords: ["sign in", "login", "stremio account", "sync", "manage account", "email", "log in"] },

@@ -499,25 +499,15 @@ fn requested_prefix_len(headers: &HeaderMap, available: usize, total_size: u64) 
     (requested > 0 && requested <= available).then_some(requested)
 }
 
-async fn prepared_prefix_response(session: &Session, headers: &HeaderMap) -> Option<Response> {
-    let mut receiver = session.prebuffer.clone()?;
-    let prepared = tokio::time::timeout(PREBUFFER_TIMEOUT + Duration::from_millis(250), async {
-        loop {
-            let state = receiver.borrow().clone();
-            match state {
-                PrebufferState::Ready(prefix) => return Some(prefix),
-                PrebufferState::Failed => return None,
-                PrebufferState::Loading => {
-                    if receiver.changed().await.is_err() {
-                        return None;
-                    }
-                }
-            }
-        }
-    })
-    .await
-    .ok()
-    .flatten()?;
+fn prepared_prefix_response(session: &Session, headers: &HeaderMap) -> Option<Response> {
+    let receiver = session.prebuffer.as_ref()?;
+    // Prebuffering is an opportunistic fast path. The real player request must
+    // never wait for it: if the prefix is not already complete, immediately
+    // forward upstream below and let mpv own startup.
+    let prepared = match receiver.borrow().clone() {
+        PrebufferState::Ready(prefix) => prefix,
+        PrebufferState::Loading | PrebufferState::Failed => return None,
+    };
     let len = requested_prefix_len(headers, prepared.bytes.len(), prepared.total_size)?;
     let mut response_headers = prepared.response_headers.clone();
     response_headers.insert(
@@ -584,7 +574,7 @@ async fn handle_stream(
         .await;
     }
 
-    if let Some(response) = prepared_prefix_response(&session, &headers).await {
+    if let Some(response) = prepared_prefix_response(&session, &headers) {
         eprintln!("[harbor::proxy] served playback prefix id={id}");
         return response;
     }

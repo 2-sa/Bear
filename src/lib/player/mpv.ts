@@ -127,6 +127,39 @@ const AUDIO_PROFILE_AF: Record<string, string> = {
 
 const DEFAULT_UA = "VLC/3.0.20 LibVLC/3.0.20";
 
+type BufferPhase = "startup" | "steady";
+
+function hasCustomBufferPolicy(extraOptions: string | undefined): boolean {
+  return /(?:^|\n)\s*(?:cache(?:-[\w-]+)?|demuxer-(?:max|readahead)[\w-]*|stream-buffer-size)\s*=/im.test(
+    extraOptions ?? "",
+  );
+}
+
+function defaultVodBufferProperties(
+  profile: "standard" | "high-bitrate",
+  phase: BufferPhase,
+): Array<[string, string]> {
+  const highBitrate = profile === "high-bitrate";
+  if (phase === "startup") {
+    return [
+      ["cache-secs", highBitrate ? "45" : "30"],
+      ["cache-pause-wait", highBitrate ? "2" : "1"],
+      ["demuxer-max-bytes", highBitrate ? "256MiB" : "128MiB"],
+      ["demuxer-max-back-bytes", highBitrate ? "64MiB" : "32MiB"],
+      ["demuxer-readahead-secs", highBitrate ? "45" : "30"],
+      ["stream-buffer-size", highBitrate ? "32MiB" : "16MiB"],
+    ];
+  }
+  return [
+    ["cache-secs", "300"],
+    ["cache-pause-wait", highBitrate ? "2" : "1"],
+    ["demuxer-max-bytes", highBitrate ? "768MiB" : "512MiB"],
+    ["demuxer-max-back-bytes", "64MiB"],
+    ["demuxer-readahead-secs", "300"],
+    ["stream-buffer-size", highBitrate ? "64MiB" : "32MiB"],
+  ];
+}
+
 async function resetSubtitleFpsBeforeMpvTransition(): Promise<void> {
   await resetMpvSubtitleFpsForTransition();
 }
@@ -199,6 +232,7 @@ export function createMpvBridge(mpvOptions?: MpvOptions): PlayerBridge {
   let currentIsLive: boolean | null = null;
   let currentStartupProfile: "standard" | "high-bitrate" | null = null;
   let mediaLoadId = 0;
+  let steadyBufferLoadId = 0;
   let activeTraceId: string | null = null;
   let expectedMediaPath: string | null = null;
   let observedMediaPath: string | null = null;
@@ -206,6 +240,31 @@ export function createMpvBridge(mpvOptions?: MpvOptions): PlayerBridge {
   let suppressEndFileUntil = 0;
   let svpFilterFailed = false;
   let secondarySid: string | null = null;
+  let bufferPolicyQueue = Promise.resolve();
+  const applyDefaultVodBufferPhase = (
+    profile: "standard" | "high-bitrate",
+    phase: BufferPhase,
+    expectedLoadId: number,
+  ): Promise<void> => {
+    bufferPolicyQueue = bufferPolicyQueue.catch(() => undefined).then(async () => {
+      if (
+        expectedLoadId !== mediaLoadId ||
+        mpvOptions?.fullDownload ||
+        hasCustomBufferPolicy(mpvOptions?.extraOptions)
+      ) {
+        return;
+      }
+      for (const [name, value] of defaultVodBufferProperties(profile, phase)) {
+        if (expectedLoadId !== mediaLoadId) return;
+        try {
+          await invoke("mpv_set_property", { name, value });
+        } catch (error) {
+          console.warn(`[mpv] could not set ${name} for the ${phase} buffer phase`, error);
+        }
+      }
+    });
+    return bufferPolicyQueue;
+  };
   const urlByExternalFilename = new Map<
     string,
     {
@@ -480,6 +539,11 @@ export function createMpvBridge(mpvOptions?: MpvOptions): PlayerBridge {
       }
       snap.status = "playing";
       snap.firstFrameReady = true;
+      if (currentIsLive === false && currentStartupProfile && steadyBufferLoadId !== mediaLoadId) {
+        steadyBufferLoadId = mediaLoadId;
+        const profile = currentStartupProfile;
+        void applyDefaultVodBufferPhase(profile, "steady", mediaLoadId);
+      }
       markPlaybackTrace(activeTraceId, "first-frame");
       finishPlaybackTrace(activeTraceId, "ready");
       activeTraceId = null;
@@ -533,18 +597,13 @@ export function createMpvBridge(mpvOptions?: MpvOptions): PlayerBridge {
         !mpvStarted &&
         canRetain &&
         retainedMpv?.configKey === reuseConfigKey &&
-        retainedMpv.isLive === nextIsLive &&
-        retainedMpv.startupProfile === nextStartupProfile
+        retainedMpv.isLive === nextIsLive
       ) {
         mpvStarted = true;
         currentIsLive = nextIsLive;
         currentStartupProfile = nextStartupProfile;
         retainedMpv = null;
-      } else if (
-        mpvStarted &&
-        ((currentIsLive != null && currentIsLive !== nextIsLive) ||
-          (currentStartupProfile != null && currentStartupProfile !== nextStartupProfile))
-      ) {
+      } else if (mpvStarted && currentIsLive != null && currentIsLive !== nextIsLive) {
         mpvStarted = false;
       }
       expectedMediaPath = src.url;
@@ -592,6 +651,9 @@ export function createMpvBridge(mpvOptions?: MpvOptions): PlayerBridge {
           try {
             suppressEndFileUntil = Date.now() + 1500;
             await invoke("mpv_command", { cmd: ["stop"] });
+            if (!nextIsLive) {
+              await applyDefaultVodBufferPhase(nextStartupProfile, "startup", activeLoadId);
+            }
             await applyHeaderProps(src.headers);
             const startAt =
               typeof src.startAtSec === "number" && src.startAtSec > 0 ? src.startAtSec : 0;
@@ -603,6 +665,8 @@ export function createMpvBridge(mpvOptions?: MpvOptions): PlayerBridge {
               `start=${startAt}`,
             ];
             await invoke("mpv_command", { cmd });
+            currentIsLive = nextIsLive;
+            currentStartupProfile = nextStartupProfile;
             markPlaybackTrace(activeTraceId, "loadfile-accepted");
             await invoke("mpv_restore_media_surface");
             await ensureGeometryTracking(opts);

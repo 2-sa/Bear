@@ -10,7 +10,6 @@ import { useSettings } from "@/lib/settings";
 import { spoilerMaskFor } from "@/lib/spoilers";
 import { registerStreamProxy } from "@/lib/stream-proxy";
 import { unregisterStreamProxy } from "@/lib/stream-proxy";
-import { playbackPrebufferBytes, playbackStartupProfile } from "@/lib/player/startup-profile";
 import { preflightCheck } from "@/lib/streams/preflight";
 import { resolveStream } from "@/lib/streams/resolve";
 import {
@@ -147,25 +146,14 @@ export function EpisodePanel({
       markPlaybackTrace(playbackTraceId, "resolve-ready");
       let playUrl = r.data.url;
       const hasProxyHeaders = !!r.data.headers && Object.keys(r.data.headers).length > 0;
-      const remoteDebridPlayback =
-        r.via !== "p2p" && r.via !== "direct" && r.via !== "local-download";
-      if (hasProxyHeaders || remoteDebridPlayback) {
+      if (hasProxyHeaders) {
         try {
-          const startupProfile = playbackStartupProfile(stream);
-          const proxied = await registerStreamProxy(r.data.url, r.data.headers, {
-            prebufferBytes: remoteDebridPlayback
-              ? playbackPrebufferBytes(startupProfile)
-              : undefined,
-          });
+          const proxied = await registerStreamProxy(r.data.url, r.data.headers);
           playUrl = proxied.url;
           proxySessionId = proxied.sessionId;
         } catch {
-          if (!hasProxyHeaders) {
-            playUrl = r.data.url;
-          } else {
-            setResolvingFor(null);
-            return;
-          }
+          setResolvingFor(null);
+          return;
         }
       }
       const skipPreflight =

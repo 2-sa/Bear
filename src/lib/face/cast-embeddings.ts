@@ -8,8 +8,9 @@ const CACHE_DIR = "xray/face-gallery";
 const TMDB_IMG = "https://image.tmdb.org/t/p/w185";
 const PRIMARY_CAST = 24;
 const MAX_CAST = 80;
-const PRIMARY_CONCURRENCY = 6;
-const BACKGROUND_CONCURRENCY = 2;
+const PRIMARY_CONCURRENCY = 3;
+const BACKGROUND_CONCURRENCY = 1;
+const ALLOWED_CAST_IMAGE_HOSTS = new Set(["image.tmdb.org", "artworks.thetvdb.com"]);
 
 type CacheShape = {
   version: string;
@@ -20,7 +21,11 @@ type CacheShape = {
 // latter produced a broken URL, so every face silently failed to load and X-Ray
 // matched nobody.
 function castImageUrl(profilePath: string): string {
-  return profilePath.startsWith("http") ? profilePath : TMDB_IMG + profilePath;
+  const url = new URL(profilePath.startsWith("/") ? TMDB_IMG + profilePath : profilePath);
+  if (url.protocol !== "https:" || !ALLOWED_CAST_IMAGE_HOSTS.has(url.hostname)) {
+    throw new Error("Unsupported X-Ray cast image host");
+  }
+  return url.toString();
 }
 function cachePath(key: string): string {
   return `${CACHE_DIR}/${key.replace(/[^a-z0-9_-]/gi, "_")}.json`;
@@ -58,11 +63,12 @@ async function writeCache(key: string, entries: GalleryEntry[]): Promise<void> {
 async function runPool<T>(
   items: T[],
   limit: number,
+  signal: AbortSignal,
   fn: (item: T) => Promise<void>,
 ): Promise<void> {
   let cursor = 0;
   const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
-    while (cursor < items.length) {
+    while (!signal.aborted && cursor < items.length) {
       const idx = cursor++;
       await fn(items[idx]);
     }
@@ -73,10 +79,12 @@ async function runPool<T>(
 export async function buildGallery(
   key: string,
   cast: CastEntry[],
-  loadBitmap: (url: string) => Promise<ImageBitmap>,
+  loadBitmap: (url: string, signal?: AbortSignal) => Promise<ImageBitmap>,
+  signal: AbortSignal,
   onEntry?: (entry: GalleryEntry) => void,
 ): Promise<GalleryEntry[]> {
   const cached = await readCache(key);
+  if (signal.aborted) return [];
   if (cached) {
     if (onEntry) for (const e of cached) onEntry(e);
     return cached;
@@ -84,15 +92,15 @@ export async function buildGallery(
   const pool = cast.filter((c) => c.profilePath).slice(0, MAX_CAST);
   const entries: GalleryEntry[] = [];
   const addEntry = async (c: CastEntry) => {
+    if (signal.aborted) return;
     try {
-      const bmp = await loadBitmap(castImageUrl(c.profilePath as string));
-      let emb: number[] | null;
-      try {
-        emb = await embedLargestFace(bmp);
-      } finally {
+      const bmp = await loadBitmap(castImageUrl(c.profilePath as string), signal);
+      if (signal.aborted) {
         bmp.close();
+        return;
       }
-      if (!emb) return;
+      const emb = await embedLargestFace(bmp, signal);
+      if (!emb || signal.aborted) return;
       const entry: GalleryEntry = {
         id: c.id,
         name: c.name,
@@ -109,9 +117,9 @@ export async function buildGallery(
 
   // Make the principal cast usable quickly, then broaden coverage at a lower
   // concurrency so background gallery work does not compete with playback.
-  await runPool(pool.slice(0, PRIMARY_CAST), PRIMARY_CONCURRENCY, addEntry);
-  await runPool(pool.slice(PRIMARY_CAST), BACKGROUND_CONCURRENCY, addEntry);
-  if (entries.length) {
+  await runPool(pool.slice(0, PRIMARY_CAST), PRIMARY_CONCURRENCY, signal, addEntry);
+  await runPool(pool.slice(PRIMARY_CAST), BACKGROUND_CONCURRENCY, signal, addEntry);
+  if (entries.length && !signal.aborted) {
     try {
       await writeCache(key, entries);
     } catch {

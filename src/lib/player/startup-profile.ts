@@ -10,8 +10,6 @@ type StartupProfileInput = {
 };
 
 const HIGH_BITRATE_MIN_BYTES = 12 * 1024 * 1024 * 1024;
-const STANDARD_PREBUFFER_BYTES = 512 * 1024;
-const HIGH_BITRATE_PREBUFFER_BYTES = 2 * 1024 * 1024;
 
 export function playbackStartupProfile(
   stream: StartupProfileInput | null | undefined,
@@ -32,8 +30,4 @@ export function playbackStartupProfile(
   return /(?:^|[^a-z0-9])(?:2160p?|4320p?|4k|8k|uhd|remux)(?:[^a-z0-9]|$)/i.test(descriptor)
     ? "high-bitrate"
     : "standard";
-}
-
-export function playbackPrebufferBytes(profile: PlaybackStartupProfile): number {
-  return profile === "high-bitrate" ? HIGH_BITRATE_PREBUFFER_BYTES : STANDARD_PREBUFFER_BYTES;
 }

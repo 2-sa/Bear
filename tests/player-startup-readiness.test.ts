@@ -14,6 +14,7 @@ const html5 = read("src/lib/player/html5/bridge.ts");
 const loader = read("src/views/player/cinematic-player-loader.tsx");
 const picker = read("src/views/play-picker.tsx");
 const bridgeLoad = read("src/views/player/hooks/use-bridge-load.ts");
+const autoRetry = read("src/views/player/hooks/use-auto-retry.ts");
 const sync = read("src/views/player/hooks/use-stremio-sync.ts");
 const nativeMpv = read("src-tauri/src/mpv.rs");
 
@@ -74,4 +75,13 @@ test("resume state is prefetched and shared instead of duplicated on play", () =
   assert.match(picker, /prefetchResumeStart\(/);
   assert.match(bridgeLoad, /resolveStartMs\(/);
   assert.match(sync, /resumeLibraryGetOne\(authKey, canonicalId\)/);
+});
+
+test("manual HTTP sources are not killed by the short startup retry timer", () => {
+  const stuckLoadEffect = autoRetry.slice(
+    autoRetry.indexOf('triggerAutoRetry("stuck on load")') - 700,
+    autoRetry.indexOf('triggerAutoRetry("stuck on load")') + 200,
+  );
+  assert.match(stuckLoadEffect, /if \(!instantPlay && !inRoom\) return/);
+  assert.doesNotMatch(autoRetry, /fetch\(url/);
 });

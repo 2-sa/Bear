@@ -60,6 +60,8 @@ const settingsFill: Record<string, string> = {
   "Adds an X-Ray button in the player to see the full cast with photos and tap through to any actor. Needs a TMDB key for photos and filmographies.": "Adiciona um botão X-Ray no player para ver o elenco completo com fotos e navegar até qualquer ator. Precisa de uma chave TMDB para fotos e filmografias.",
   "Scan who is on screen while playing": "Detectar quem está na tela durante a reprodução",
   "Periodically match faces in the current frame against the cast to show who is on screen now. On-device, nothing leaves your machine. Uses a little more CPU while playing.": "Compara periodicamente os rostos no quadro atual com o elenco para mostrar quem está na tela agora. Tudo no próprio dispositivo, nada sai da sua máquina. Usa um pouco mais de CPU durante a reprodução.",
+  "Performance notice": "Aviso de desempenho",
+  "Live face scanning loads on-device AI models and can significantly increase RAM, CPU, and GPU usage while playback is active. Turn it off if Bear slows down or your device gets hot.": "A detecção facial ao vivo carrega modelos de IA no dispositivo e pode aumentar significativamente o uso de RAM, CPU e GPU durante a reprodução. Desative-a se o Bear ficar lento ou se o dispositivo aquecer.",
   "X-Ray needs a TMDB key": "O X-Ray precisa de uma chave do TMDB",
   "X-Ray reads the cast and their photos from TMDB. Without a TMDB key there is no cast to match against. Add your free key under Library & metadata.": "O X-Ray lê o elenco e suas fotos do TMDB. Sem uma chave do TMDB não há elenco para comparar. Adicione sua chave gratuita em Biblioteca e metadados.",
   "Ask if you're still watching": "Perguntar se você ainda está assistindo",

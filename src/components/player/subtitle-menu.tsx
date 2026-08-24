@@ -188,7 +188,7 @@ export function SubtitleMenu(props: Props) {
         </button>
       </Tooltip>
       {open && (forceInline || !useOverlay) && (
-        <ResizableSubtitlePanel className="fixed end-2 bottom-[84px]">
+        <ResizableSubtitlePanel className="fixed end-6 bottom-24">
           <MenuBody
             {...props}
             preferredLanguages={preferredLanguages}

@@ -733,7 +733,16 @@ pub async fn mpv_start(
         let full_dl = args.full_download.unwrap_or(false);
         let high_bitrate = args.startup_profile.as_deref() == Some("high-bitrate");
         let _ = mpv.set_property("cache", "yes");
-        let _ = mpv.set_property("cache-secs", if full_dl { "100000" } else { "300" });
+        let _ = mpv.set_property(
+            "cache-secs",
+            if full_dl {
+                "100000"
+            } else if high_bitrate {
+                "45"
+            } else {
+                "30"
+            },
+        );
         let _ = mpv.set_property("cache-pause", "yes");
         let _ = mpv.set_property("cache-pause-initial", "no");
         let _ = mpv.set_property(
@@ -751,18 +760,30 @@ pub async fn mpv_start(
             if full_dl {
                 "48GiB"
             } else if high_bitrate {
-                "768MiB"
+                "256MiB"
             } else {
-                "512MiB"
+                "128MiB"
             },
         );
         let _ = mpv.set_property(
             "demuxer-max-back-bytes",
-            if full_dl { "48GiB" } else { "64MiB" },
+            if full_dl {
+                "48GiB"
+            } else if high_bitrate {
+                "64MiB"
+            } else {
+                "32MiB"
+            },
         );
         let _ = mpv.set_property(
             "demuxer-readahead-secs",
-            if full_dl { "100000" } else { "300" },
+            if full_dl {
+                "100000"
+            } else if high_bitrate {
+                "45"
+            } else {
+                "30"
+            },
         );
         if let Ok(base) = app.path().app_cache_dir() {
             let dvr = base.join("mpv-cache");
@@ -780,7 +801,7 @@ pub async fn mpv_start(
         }
         let _ = mpv.set_property(
             "stream-buffer-size",
-            if high_bitrate { "64MiB" } else { "32MiB" },
+            if high_bitrate { "32MiB" } else { "16MiB" },
         );
     }
     if want_embed {
@@ -1860,7 +1881,9 @@ pub async fn mpv_screenshot_data_url(state: State<'_, MpvState>) -> Result<Strin
     let path_str = temp.to_string_lossy().to_string();
     let _ = mpv.set_property("screenshot-format", "jpg");
     let _ = mpv.set_property("screenshot-jpeg-quality", "72");
-    let _ = mpv.set_property("screenshot-sw", "no");
+    // X-Ray samples frequently. Software screenshots avoid reinitializing the
+    // live video renderer for every sample, which can retain large 4K surfaces.
+    let _ = mpv.set_property("screenshot-sw", "yes");
     mpv_argv_command(&mpv, &["screenshot-to-file", path_str.as_str(), "video"])
         .map_err(|e| format!("screenshot-to-file: {}", e))?;
     let mut waited = 0u64;

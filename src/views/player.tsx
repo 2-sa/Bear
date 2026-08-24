@@ -267,10 +267,13 @@ export function PlayerView({ src }: { src: PlayerSrc }) {
       keyboardPauseShowsControls: settings.keyboardPauseShowsControls,
     });
   const {
+    enabled: screenLockEnabled,
     locked: screenLocked,
+    controlsVisible: screenLockControlsVisible,
     binding: screenLockBinding,
     lock: lockScreen,
     unlock: unlockScreen,
+    wakeControls: wakeScreenLockControls,
   } = usePlayerInteractionLock();
 
   const { adjacent, swappingEp, goToEpisode } = useEpisodeNavigation({
@@ -1169,8 +1172,9 @@ export function PlayerView({ src }: { src: PlayerSrc }) {
       {!hdrStageActive && <PlayerOverlayLayers {...overlayProps} />}
       {!hdrStageActive && (
         <PlayerInteractionLockControls
+          enabled={screenLockEnabled}
           locked={screenLocked}
-          visible={showChrome}
+          visible={screenLocked ? screenLockControlsVisible : showChrome}
           binding={screenLockBinding}
           onLock={lockScreen}
           onUnlock={unlockScreen}
@@ -1218,6 +1222,8 @@ export function PlayerView({ src }: { src: PlayerSrc }) {
           hasNextEp: hasNextEpisodeNow,
           pipMode,
           screenLocked,
+          screenLockEnabled,
+          screenLockControlsVisible,
           screenLockBinding,
         }}
         handlers={{
@@ -1239,7 +1245,10 @@ export function PlayerView({ src }: { src: PlayerSrc }) {
           pickAnother: pickAnotherOrGuide,
           screenshot: () => frameGrab.trigger(),
           menuOpen: setAnyMenuOpen,
-          activity: wakeChrome,
+          activity: () => {
+            wakeChrome();
+            if (screenLocked) wakeScreenLockControls();
+          },
           lock: lockScreen,
           unlock: unlockScreen,
         }}
