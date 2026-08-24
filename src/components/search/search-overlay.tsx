@@ -6,7 +6,9 @@ import type { Meta } from "@/lib/cinemeta";
 import { useSearch } from "@/lib/search-context";
 import { useView } from "@/lib/view";
 import { MOVIE_GENRES, TV_GENRES } from "@/lib/feed/tags";
+import { metaLooksAnime } from "@/lib/anime-detect";
 import { AnimeRow } from "./anime-row";
+import { AnimeRelations } from "./anime-relations";
 import { MangaRow } from "./manga-row";
 import { CharacterGroup } from "./character-group";
 import { EmptyState } from "./empty-state";
@@ -157,6 +159,12 @@ export function SearchOverlay() {
 
   const trimmed = query.trim();
   const personMatch = matchPersonForQuery(currentResults?.people, trimmed);
+  const topMatchIsAnime =
+    !personMatch &&
+    !!currentResults?.topMatch &&
+    currentResults.anime.length > 0 &&
+    metaLooksAnime(currentResults.topMatch.meta);
+  const topAnime = topMatchIsAnime && currentResults ? currentResults.anime[0] : null;
   const magnetInput = !!trimmed && isMagnetInput(trimmed);
   const urlInput = !!trimmed && !magnetInput && isDirectVideoUrl(trimmed);
   const directInput = magnetInput || urlInput;
@@ -361,6 +369,7 @@ export function SearchOverlay() {
                   />
                 )
               )}
+              {topAnime && <AnimeRelations anime={topAnime} onClose={commit} />}
               <LiveTvRow items={currentResults.liveTv} onClose={commit} />
               <AddonHits hits={currentResults.addons} onClose={commit} />
               <PeopleRow

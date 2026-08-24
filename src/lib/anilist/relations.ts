@@ -128,3 +128,36 @@ export async function anilistFranchise(kitsuId: number): Promise<AnilistFranchis
   }
   return [...out.values()];
 }
+
+export type AnimeRelation = {
+  id: number;
+  name: string;
+  year?: number;
+  format?: string;
+  poster?: string;
+  kind: "prequel" | "sequel";
+  upcoming: boolean;
+};
+
+export async function animeRelations(anilistId: number): Promise<AnimeRelation[]> {
+  const edges = await fetchEdges(anilistId);
+  const out: AnimeRelation[] = [];
+  for (const e of edges) {
+    if (e.relationType !== "PREQUEL" && e.relationType !== "SEQUEL") continue;
+    const n = e.node;
+    if (!n || n.id == null) continue;
+    if (n.format === "MOVIE") continue; // exclude movies
+    const node = toNode(n);
+    if (!node.name) continue;
+    out.push({
+      id: node.id,
+      name: node.name,
+      year: node.year,
+      format: node.format,
+      poster: node.poster,
+      kind: e.relationType === "PREQUEL" ? "prequel" : "sequel",
+      upcoming: node.upcoming,
+    });
+  }
+  return out;
+}
