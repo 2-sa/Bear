@@ -1,6 +1,8 @@
 import { ArrowLeft, ExternalLink, TriangleAlert } from "lucide-react";
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
+import { pushBackHandler } from "@/lib/back-intercept";
+import { isBackKey } from "@/lib/keyboard-navigation/geometry";
 import { closeLinkOut, useLinkOut } from "@/lib/social/link-out";
 import { openUrl } from "@/lib/window";
 
@@ -18,10 +20,27 @@ export function LinkOutInterstitial() {
   useEffect(() => {
     if (!url) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") closeLinkOut();
+      if (!isBackKey(e)) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      closeLinkOut();
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    const onLocalBack = (e: Event) => {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      closeLinkOut();
+    };
+    const removeBackHandler = pushBackHandler(() => {
+      closeLinkOut();
+      return true;
+    });
+    window.addEventListener("keydown", onKey, true);
+    window.addEventListener("harbor:local-back", onLocalBack, true);
+    return () => {
+      removeBackHandler();
+      window.removeEventListener("keydown", onKey, true);
+      window.removeEventListener("harbor:local-back", onLocalBack, true);
+    };
   }, [url]);
 
   if (!url) return null;
@@ -33,15 +52,27 @@ export function LinkOutInterstitial() {
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[300] flex items-center justify-center overflow-y-auto bg-canvas/95 px-6 py-10 backdrop-blur-xl animate-in fade-in duration-200">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="link-out-title"
+      aria-describedby="link-out-description"
+      className="fixed inset-0 z-[300] flex items-center justify-center overflow-y-auto bg-canvas/95 px-6 py-10 backdrop-blur-xl animate-in fade-in duration-200"
+    >
       <div className="w-full max-w-md text-center">
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-elevated ring-1 ring-edge-soft">
           <ExternalLink size={26} className="text-ink-muted" strokeWidth={1.9} />
         </div>
-        <h1 className="mt-6 font-display text-[26px] font-medium tracking-tight text-ink">
+        <h1
+          id="link-out-title"
+          className="mt-6 font-display text-[26px] font-medium tracking-tight text-ink"
+        >
           You're leaving Bear
         </h1>
-        <p className="mt-2 text-[14px] leading-relaxed text-ink-muted">
+        <p
+          id="link-out-description"
+          className="mt-2 text-[14px] leading-relaxed text-ink-muted"
+        >
           This link goes to an external site that Bear does not control or vouch for. Triple-check
           the address before you continue, and never enter your Bear password anywhere but Bear.
         </p>

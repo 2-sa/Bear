@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 import { renderBbcode } from "@/lib/social/bbcode";
 import { EmbedPrompt, type EmbedKind } from "@/components/embed-prompt";
+import { handleLinkOutActivation } from "@/lib/social/link-out-activation";
+import { openLinkOut } from "@/lib/social/link-out";
 
 export const ABOUT_MAX = 4000;
 
@@ -110,6 +112,8 @@ export function AboutEditor({ value, onChange }: { value: string; onChange: (nex
           {value.trim() ? (
             <div
               className="max-w-none break-words text-[14px] leading-relaxed text-ink-muted"
+              onClick={(e) => handleLinkOutActivation(e, openLinkOut)}
+              onAuxClick={(e) => handleLinkOutActivation(e, openLinkOut)}
               dangerouslySetInnerHTML={{ __html: renderBbcode(value) }}
             />
           ) : (

@@ -96,6 +96,7 @@ import { SettingsProvider } from "@/lib/settings";
 import { SearchProvider, useSearch } from "@/lib/search-context";
 import { SearchOverlay } from "@/components/search/search-overlay";
 import { SearchHotkey } from "@/components/search/search-hotkey";
+import { LinkOutInterstitial } from "@/components/link-out-interstitial";
 import { TogetherProvider, useTogether } from "@/lib/together/provider";
 import { DvrProvider } from "@/lib/dvr/provider";
 import { FavoritesProvider } from "@/lib/iptv/favorites";
@@ -399,6 +400,7 @@ export function App({ onReady }: { onReady?: () => void }) {
                                                   <CurfewGuard />
                                                   <SearchOverlay />
                                                   <SearchHotkey />
+                                                  <LinkOutInterstitial />
                                                   <EmbedViewportRoot />
                                                   <InstallerViewportRoot />
                                                   <UpdateRoot />
