@@ -1,5 +1,6 @@
 import { useMemo } from "react";
-import { openUrl } from "@/lib/window";
+import { handleLinkOutActivation } from "@/lib/social/link-out-activation";
+import { openLinkOut } from "@/lib/social/link-out";
 import { useT } from "@/lib/i18n";
 import { segmentMentions } from "@/lib/social/mentions";
 import { MentionLink } from "@/views/profile/mention-link";
@@ -78,16 +79,9 @@ function render(nodes: CNode[]): React.ReactNode {
             key={i}
             href={n.href}
             title={n.href}
-            target="_blank"
             rel="noreferrer noopener nofollow"
-            onClick={(e) => {
-              e.preventDefault();
-              openUrl(n.href);
-            }}
-            onAuxClick={(e) => {
-              e.preventDefault();
-              openUrl(n.href);
-            }}
+            onClick={(e) => handleLinkOutActivation(e, openLinkOut)}
+            onAuxClick={(e) => handleLinkOutActivation(e, openLinkOut)}
             className="break-all text-accent underline decoration-accent/40 underline-offset-2 transition-colors hover:decoration-accent"
           >
             {n.label}

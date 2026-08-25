@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent } from "react";
 import { renderBbcode } from "@/lib/social/bbcode";
+import { handleLinkOutActivation } from "@/lib/social/link-out-activation";
 import { scanMentions } from "@/lib/social/mentions";
 import { openLinkOut } from "@/lib/social/link-out";
 import { requestOpenProfile } from "@/lib/social/open-profile";
@@ -80,12 +81,7 @@ export function PostBody({ body, onOpenProfile }: { body: string; onOpenProfile?
       else openMeta({ id: mediaId, type: kind === "series" || kind === "anime" ? "series" : "movie", name, poster });
       return;
     }
-    const a = el.closest?.("a");
-    const href = a?.getAttribute("href");
-    if (a && href) {
-      e.preventDefault();
-      openLinkOut(href);
-    }
+    handleLinkOutActivation(e, openLinkOut);
   };
 
   const onKeyDown = (e: ReactKeyboardEvent) => {
@@ -117,6 +113,7 @@ export function PostBody({ body, onOpenProfile }: { body: string; onOpenProfile?
       <div
         className="max-w-none break-words text-[14px] leading-relaxed text-ink-muted [&_a]:break-words"
         onClick={onClick}
+        onAuxClick={(e) => handleLinkOutActivation(e, openLinkOut)}
         onKeyDown={onKeyDown}
         onMouseOver={onMouseOver}
         onMouseOut={onMouseOut}
