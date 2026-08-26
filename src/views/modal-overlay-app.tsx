@@ -73,6 +73,7 @@ function ModalRouter() {
         onSelect={(id) => modalOverlayEmitAction("modal://subtitle/select", { id })}
         onSelectSecondary={(id) => modalOverlayEmitAction("modal://subtitle/secondary", { id })}
         onDelay={(sec) => modalOverlayEmitAction("modal://subtitle/delay", { sec })}
+        onEnterSync={() => modalOverlayEmitAction("modal://subtitle/live-sync", {})}
         onAddSubtitle={async (url, lang, title, metadata) => {
           const result = await modalOverlayRequestAction<"ok" | "failed" | "limited">(
             "modal://subtitle/add",

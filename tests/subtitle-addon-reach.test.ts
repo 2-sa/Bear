@@ -123,7 +123,7 @@ test("an enriched addon timeout still falls back to the standard subtitle endpoi
 });
 
 test("automatic subtitle loading limits each preferred language independently", () => {
-  assert.match(fetchIntoPlayer, /const EXTRA_TRACKS_PER_LANGUAGE = 40/);
+  assert.match(fetchIntoPlayer, /const EXTRA_TRACKS_PER_LANGUAGE = 35/);
   assert.match(fetchIntoPlayer, /spreadBySourcePerLanguage\(/);
   assert.match(
     fetchIntoPlayer,
@@ -145,7 +145,9 @@ test("built-in providers keep their longer timeout budget", () => {
 });
 
 test("automatic subtitle loading consumes provider results progressively", () => {
-  assert.match(fetchIntoPlayer, /const PROGRESSIVE_TRACKS_PER_LANGUAGE = 1/);
+  assert.match(fetchIntoPlayer, /const PROGRESSIVE_TRACKS_PER_LANGUAGE = 35/);
+  assert.match(fetchIntoPlayer, /const SUBTITLE_ADD_CONCURRENCY = 4/);
+  assert.match(fetchIntoPlayer, /Array\.from\(/);
   assert.match(fetchIntoPlayer, /onPartial: queuePartial/);
   assert.match(fetchIntoPlayer, /await progressiveQueue/);
 });
@@ -159,6 +161,34 @@ test("automatic core subtitle providers do not wait for addon inventory", () => 
   assert.match(autoload, /\{ addons: false \}/);
   assert.match(autoload, /stage === "addons"/);
   assert.match(autoload, /opensubtitles: false, wyzie: false, addons: true, extras: false/);
+  assert.match(autoload, /refreshing \|\| initialSearches > 0 \? "searching" : "idle"/);
+});
+
+test("Auto Sync moviehash enrichment never blocks progressive subtitle discovery", () => {
+  const autoload = readFileSync(
+    new URL("../src/views/player/hooks/use-track-autoload.ts", import.meta.url),
+    "utf8",
+  );
+  const searchStart = autoload.indexOf("const res = await fetchSubtitlesIntoPlayer({");
+  const hashMerge = autoload.indexOf("if (movieHashPromise)");
+  assert.ok(searchStart >= 0 && hashMerge > searchStart);
+  assert.doesNotMatch(
+    autoload.slice(searchStart, hashMerge),
+    /await resolveVideoHash\(src\)/,
+    "the initial provider search must start without waiting for remote moviehash reads",
+  );
+  assert.match(autoload, /\[subs\/autoload\] moviehash stage found/);
+});
+
+test("content advisory waits for playback readiness and subtitle discovery", () => {
+  const player = readFileSync(new URL("../src/views/player.tsx", import.meta.url), "utf8");
+  const advisory = readFileSync(
+    new URL("../src/views/player/hooks/use-content-advisory.ts", import.meta.url),
+    "utf8",
+  );
+  assert.match(player, /!subtitleSearchActive/);
+  assert.match(advisory, /if \(!enabled \|\| !ready \|\| !meta\) return/);
+  assert.match(advisory, /window\.setTimeout/);
 });
 
 test("the detached subtitle popup waits for the real add result", () => {

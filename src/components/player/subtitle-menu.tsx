@@ -75,6 +75,14 @@ export function SubtitleMenu(props: Props) {
       }),
     );
     offs.push(
+      listen("modal://subtitle/live-sync", () => {
+        void modalOverlayClose();
+        setOpen(false);
+        setForceInline(false);
+        propsRef.current.onEnterSync?.();
+      }),
+    );
+    offs.push(
       listen<
         SubtitleLoadMetadata & {
           url: string;

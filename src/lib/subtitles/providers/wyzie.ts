@@ -18,6 +18,8 @@ type RawWyzie = {
   flagUrl?: string;
   fps?: number;
   downloads?: number;
+  author?: string;
+  uploader?: string;
 };
 
 export async function searchWyzie(q: SubSearchQuery): Promise<SubResult[]> {
@@ -66,6 +68,7 @@ export async function searchWyzie(q: SubSearchQuery): Promise<SubResult[]> {
       hearingImpaired: r.isHearingImpaired || r.hi || false,
       release: r.release,
       downloads: r.downloads,
+      author: r.author ?? r.uploader,
     });
   }
   return out;

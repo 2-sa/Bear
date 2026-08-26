@@ -19,12 +19,13 @@ import {
 import { loadFirstWorkingSubtitle } from "./autoload";
 import type { SubResult } from "./types";
 
-const EXTRA_TRACKS_PER_LANGUAGE = 40;
+const EXTRA_TRACKS_PER_LANGUAGE = 35;
 const DEEP_EXTRA_TRACKS = 60;
 const DEEP_TIMEOUT_MS = 20_000;
 const BUILT_IN_TIMEOUT_MS = 12_000;
 const BUILT_IN_EAGER_LIMIT_PER_LANGUAGE = 1;
-const PROGRESSIVE_TRACKS_PER_LANGUAGE = 1;
+const PROGRESSIVE_TRACKS_PER_LANGUAGE = 35;
+const SUBTITLE_ADD_CONCURRENCY = 4;
 const ON_DEMAND_SOURCES = new Set<SubResult["source"]>([
   "podnapisi",
   "subdl",
@@ -168,8 +169,12 @@ export async function fetchSubtitlesIntoPlayer(p: SubFetchParams): Promise<SubFe
       encoding: r.encoding,
       release: releaseOf(r),
       provider: providerLabel(r),
+      fps: r.fps,
+      downloads: r.downloads,
+      author: r.author,
       matchScore: match.score,
       matchConfidence: match.confidence,
+      matchReasons: match.reasons,
       subId: r.id,
     };
   };
@@ -185,23 +190,35 @@ export async function fetchSubtitlesIntoPlayer(p: SubFetchParams): Promise<SubFe
     rankedResults(results).filter((r) => !attemptedUrls.has(r.url));
 
   const addCandidates = async (candidates: SubResult[]) => {
-    for (const result of candidates) {
-      if (!p.isActive()) break;
-      if (attemptedUrls.has(result.url)) continue;
+    const claimed = candidates.filter((result) => {
+      if (attemptedUrls.has(result.url)) return false;
       attemptedUrls.add(result.url);
-      const ok = await p.bridge.addSubtitle(
-        result.url,
-        result.lang,
-        subtitleTitleOf(result),
-        false,
-        meta(result),
-      );
-      if (ok !== true) continue;
-      markAddedSub(result.url);
-      consumed.add(result);
-      selected ??= result;
-      added++;
-    }
+      return true;
+    });
+    let cursor = 0;
+    const worker = async () => {
+      while (p.isActive()) {
+        const result = claimed[cursor++];
+        if (!result) return;
+        const ok = await p.bridge.addSubtitle(
+          result.url,
+          result.lang,
+          subtitleTitleOf(result),
+          false,
+          meta(result),
+        );
+        if (ok !== true) continue;
+        markAddedSub(result.url);
+        consumed.add(result);
+        selected ??= result;
+        added++;
+      }
+    };
+    await Promise.all(
+      Array.from({ length: Math.min(SUBTITLE_ADD_CONCURRENCY, claimed.length) }, async () =>
+        worker(),
+      ),
+    );
   };
 
   let progressiveQueue = Promise.resolve();

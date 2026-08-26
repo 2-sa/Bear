@@ -1,13 +1,14 @@
-import { Check, Crosshair, Languages, Sparkles } from "lucide-react";
+import { Check, Crosshair, Info, Languages, Sparkles } from "lucide-react";
 import type { TrackInfo } from "@/lib/player/bridge";
 import { HoverTooltip } from "@/components/hover-tooltip";
-import { useContextMenu } from "@/lib/context-menu";
+import { useContextMenu, type ContextMenuTarget } from "@/lib/context-menu";
 import { isImageSubTrack } from "@/lib/player/sub-format";
 import { subtitleReleaseLabel } from "@/lib/subtitles/release-label";
 import { subtitleTrackLanguageLabel, subtitleTrackTitle } from "@/lib/subtitles/track-label";
 import { saveSubtitleToDisk } from "@/lib/subtitles/save-to-disk";
 import { useImportedSubs } from "@/lib/player/imported-subs";
 import { useT } from "@/lib/i18n";
+import { parseRelease } from "@/lib/subtitles/release-match";
 import { OverflowMarquee } from "./overflow-marquee";
 
 function subExt(track: TrackInfo): string {
@@ -22,6 +23,8 @@ function subExt(track: TrackInfo): string {
 export function VariantRow({
   track,
   rank,
+  compatibilityPercent,
+  matchReasons,
   selected,
   onPick,
   isSecondary,
@@ -29,13 +32,15 @@ export function VariantRow({
 }: {
   track: TrackInfo;
   rank: number;
+  compatibilityPercent?: number;
+  matchReasons?: string[];
   selected: boolean;
   onPick: () => void;
   isSecondary?: boolean;
   onPickSecondary?: () => void;
 }) {
   const tr = useT();
-  const { open } = useContextMenu();
+  const { openAt } = useContextMenu();
   const imported = useImportedSubs();
   const isImported = !!track.title && imported.has(track.title);
   const tags: { label: string; tone: "warn" | "info" | "default" }[] = [];
@@ -55,10 +60,48 @@ export function VariantRow({
   const provider = track.provider?.trim();
   const detailSource = provider && provider !== titleText ? provider : sourceLabel;
   const langName = subtitleTrackLanguageLabel(track);
+  const isSynced = track.external === true && /^Synced \((?:SRT|VTT)\)/i.test(track.title ?? "");
   const isBestMatch =
-    track.matchConfidence === "exact" ||
-    track.matchConfidence === "high" ||
-    (track.matchConfidence == null && (track.matchScore ?? 0) >= 120);
+    track.external === true &&
+    (track.matchConfidence === "exact" ||
+      track.matchConfidence === "high" ||
+      (track.matchConfidence == null && (track.matchScore ?? 0) >= 120));
+  const releaseTags = parseRelease(`${realRelease ?? ""} ${track.title ?? ""}`);
+  const quality = [
+    releaseTags.resolution,
+    releaseTags.source?.toUpperCase(),
+    ...releaseTags.hdr.map((tag) => tag.toUpperCase()),
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  const flags = tags.map((tag) => tag.label);
+  const contextTarget: ContextMenuTarget = {
+    kind: "subtitle",
+    label: titleText,
+    details: {
+      language: langName,
+      source: sourceLabel,
+      provider,
+      format: subExt(track).toUpperCase(),
+      fps: track.fps,
+      quality: quality || undefined,
+      release: realRelease,
+      author: track.author,
+      downloads: track.downloads,
+      compatibilityPercent,
+      matchReasons: matchReasons?.length ? matchReasons : track.matchReasons,
+      flags,
+    },
+    download: track.url
+      ? () =>
+          saveSubtitleToDisk(track.url!, {
+            title: track.title || titleText,
+            lang: track.lang,
+            format: subExt(track),
+            label: tr("Subtitle"),
+          })
+      : undefined,
+  };
 
   return (
     <div
@@ -74,22 +117,8 @@ export function VariantRow({
       }`}
     >
       <button
+        type="button"
         onClick={onPick}
-        onContextMenu={(e) =>
-          open(e, {
-            kind: "subtitle",
-            label: titleText,
-            download: track.url
-              ? () =>
-                  saveSubtitleToDisk(track.url!, {
-                    title: track.title || titleText,
-                    lang: track.lang,
-                    format: subExt(track),
-                    label: tr("Subtitle"),
-                  })
-              : undefined,
-          })
-        }
         className="flex min-w-0 flex-1 items-start gap-2.5 px-2.5 py-2 text-start"
       >
         <span
@@ -112,10 +141,10 @@ export function VariantRow({
                 {tr("Yours")}
               </span>
             )}
-            {!isImported && isBestMatch && (
+            {!isImported && (isSynced || isBestMatch) && (
               <span className="flex shrink-0 items-center gap-1 rounded-full bg-accent/15 px-1.5 py-px text-[9px] font-bold uppercase tracking-[0.12em] text-accent ring-1 ring-accent/30">
                 <Crosshair size={9} strokeWidth={2.6} />
-                {tr("Best match")}
+                {isSynced ? tr("Synced") : tr("Best match")}
               </span>
             )}
           </div>
@@ -168,14 +197,52 @@ export function VariantRow({
           </button>
         </HoverTooltip>
       )}
-      <span
-        aria-hidden
-        className={`flex w-7 shrink-0 items-center justify-center pe-1 text-[11px] font-medium tabular-nums ${
-          selected ? "text-accent" : "text-ink-muted"
-        }`}
+      <button
+        type="button"
+        onClick={(event) => {
+          const rect = event.currentTarget.getBoundingClientRect();
+          openAt({ x: rect.right, y: rect.bottom }, contextTarget);
+        }}
+        title={
+          compatibilityPercent == null
+            ? `${tr("Match estimate")}: ${tr("Unknown")}`
+            : `${tr("Match estimate")}: ${compatibilityPercent}%`
+        }
+        aria-label={
+          compatibilityPercent == null
+            ? `${rank}, ${tr("Match estimate")} ${tr("Unknown")}`
+            : `${rank}, ${tr("Match estimate")} ${compatibilityPercent}%`
+        }
+        className="flex w-20 shrink-0 items-center justify-end gap-1.5 rounded-e-lg pe-2 text-[10.5px] font-medium tabular-nums outline-none transition-colors hover:bg-raised focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent"
       >
-        {rank}
-      </span>
+        <span aria-hidden className={selected ? "text-accent" : "text-ink-muted"}>
+          {rank}
+        </span>
+        {compatibilityPercent != null && (
+          <span
+            aria-hidden
+            className={
+              compatibilityPercent >= 90
+                ? "text-accent"
+                : compatibilityPercent >= 70
+                  ? "text-ink"
+                  : "text-ink-subtle"
+            }
+          >
+            {compatibilityPercent}%
+          </span>
+        )}
+        {compatibilityPercent == null && (
+          <span aria-hidden className="text-ink-subtle">
+            —
+          </span>
+        )}
+        <Info
+          aria-hidden
+          size={11}
+          className="text-ink-subtle opacity-0 transition-opacity group-hover/row:opacity-100 group-focus-within/row:opacity-100"
+        />
+      </button>
     </div>
   );
 }

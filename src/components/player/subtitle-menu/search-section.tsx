@@ -513,6 +513,9 @@ export function SearchSection(props: SubtitleMenuProps) {
                 encoding: r.encoding,
                 release: releaseOf(r),
                 provider: providerLabel(r),
+                fps: r.fps,
+                downloads: r.downloads,
+                author: r.author,
               })
             }
           />

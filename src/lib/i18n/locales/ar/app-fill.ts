@@ -1,4 +1,12 @@
 const appFill: Record<string, string> = {
+  "Sync options": "خيارات المزامنة",
+  "Needs an external subtitle": "يتطلب ترجمة خارجية",
+  "Better match": "تطابق أفضل",
+  "Use it": "استخدامها",
+  "Searching…": "جارٍ البحث…",
+  "Not the one? Search every source again": "ليست المطلوبة؟ ابحث في كل المصادر مجددًا",
+  Appearance: "المظهر",
+  "Manual offset": "إزاحة يدوية",
   "Ad {n}": "إعلان {n}",
   "Starts at": "يبدأ عند",
   "Ends at": "ينتهي عند",

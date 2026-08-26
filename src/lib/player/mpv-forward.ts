@@ -4,6 +4,7 @@ import {
   emptySnapshot,
   type PlayerBridge,
   type PlayerCapabilities,
+  type PlayerSeekPrecision,
   type PlayerSnapshot,
 } from "./bridge";
 import { isWindowsDesktop } from "@/lib/platform";
@@ -80,8 +81,9 @@ export function createForwardingMpvBridge(): ForwardingBridge {
     pause() {
       void set("pause", true);
     },
-    seek(sec) {
-      void cmd(["seek", sec, "absolute", "exact"]);
+    seek(sec, precision: PlayerSeekPrecision = "exact") {
+      const flags = precision === "keyframes" ? "absolute+keyframes" : "absolute+exact";
+      void cmd(["seek", sec, flags]);
     },
     setVolume(v) {
       void set("volume", Math.round(v * 100));

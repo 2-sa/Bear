@@ -126,7 +126,7 @@ export function usePlaybackControls(params: {
       sendCommand({ action: "seek", positionSeconds: target });
       return;
     }
-    bridgeRef.current?.seek(target);
+    bridgeRef.current?.seek(target, "keyframes");
   };
 
   const seekTo = useCallback(
@@ -143,7 +143,7 @@ export function usePlaybackControls(params: {
         sendCommand({ action: "seek", positionSeconds: target });
         return;
       }
-      bridgeRef.current?.seek(target);
+      bridgeRef.current?.seek(target, "keyframes");
     },
     [castDevice, canControl, inRoom, isHost, sendCommand, seekCast, bridgeRef],
   );

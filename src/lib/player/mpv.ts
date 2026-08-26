@@ -17,6 +17,7 @@ import {
   emptySnapshot,
   type PlayerBridge,
   type PlayerCapabilities,
+  type PlayerSeekPrecision,
   type PlayerSnapshot,
   type PlayerSource,
   type TrackInfo,
@@ -241,6 +242,7 @@ export function createMpvBridge(mpvOptions?: MpvOptions): PlayerBridge {
   let svpFilterFailed = false;
   let secondarySid: string | null = null;
   let bufferPolicyQueue = Promise.resolve();
+  let observedPaused: boolean | null = null;
   const applyDefaultVodBufferPhase = (
     profile: "standard" | "high-bitrate",
     phase: BufferPhase,
@@ -271,8 +273,12 @@ export function createMpvBridge(mpvOptions?: MpvOptions): PlayerBridge {
       url: string;
       release?: string;
       provider?: string;
+      fps?: number;
+      downloads?: number;
+      author?: string;
       matchScore?: number;
       matchConfidence?: SubtitleLoadMetadata["matchConfidence"];
+      matchReasons?: string[];
       subId?: string;
     }
   >();
@@ -408,6 +414,7 @@ export function createMpvBridge(mpvOptions?: MpvOptions): PlayerBridge {
       if (name === "path" && typeof data === "string") observedMediaPath = data;
       if (name === "duration" && typeof data === "number") snap.durationSec = data;
       if (name === "pause" && typeof data === "boolean") {
+        observedPaused = data;
         snap.status = data ? "paused" : "playing";
       }
       if (name === "eof-reached" && data === true) snap.status = "ended";
@@ -474,8 +481,12 @@ export function createMpvBridge(mpvOptions?: MpvOptions): PlayerBridge {
             url: external && externalFilename ? extMeta?.url : undefined,
             release: extMeta?.release,
             provider: extMeta?.provider,
+            fps: extMeta?.fps,
+            downloads: extMeta?.downloads,
+            author: extMeta?.author,
             matchScore: extMeta?.matchScore,
             matchConfidence: extMeta?.matchConfidence,
+            matchReasons: extMeta?.matchReasons,
             subId: extMeta?.subId,
           };
           if (type === "audio") audio.push(info);
@@ -525,7 +536,7 @@ export function createMpvBridge(mpvOptions?: MpvOptions): PlayerBridge {
       emit();
     } else if (raw.event === "file-loaded") {
       markPlaybackTrace(activeTraceId, "file-loaded");
-      snap.status = "playing";
+      snap.status = observedPaused === true ? "paused" : "playing";
       snap.errorCode = null;
       snap.errorMessage = null;
       emit();
@@ -537,7 +548,7 @@ export function createMpvBridge(mpvOptions?: MpvOptions): PlayerBridge {
       ) {
         return;
       }
-      snap.status = "playing";
+      snap.status = observedPaused === true ? "paused" : "playing";
       snap.firstFrameReady = true;
       if (currentIsLive === false && currentStartupProfile && steadyBufferLoadId !== mediaLoadId) {
         steadyBufferLoadId = mediaLoadId;
@@ -651,6 +662,11 @@ export function createMpvBridge(mpvOptions?: MpvOptions): PlayerBridge {
           try {
             suppressEndFileUntil = Date.now() + 1500;
             await invoke("mpv_command", { cmd: ["stop"] });
+            secondarySid = null;
+            await Promise.all([
+              invoke("mpv_set_property", { name: "sid", value: "no" }),
+              invoke("mpv_set_property", { name: "secondary-sid", value: "no" }),
+            ]);
             if (!nextIsLive) {
               await applyDefaultVodBufferPhase(nextStartupProfile, "startup", activeLoadId);
             }
@@ -724,11 +740,12 @@ export function createMpvBridge(mpvOptions?: MpvOptions): PlayerBridge {
     pause() {
       invoke("mpv_set_property", { name: "pause", value: true }).catch(() => {});
     },
-    seek(sec) {
+    seek(sec, precision: PlayerSeekPrecision = "exact") {
       snap.subText = "";
       snap.subStartSec = 0;
       emit();
-      invoke("mpv_command", { cmd: ["seek", sec, "absolute", "exact"] }).catch(() => {});
+      const flags = precision === "keyframes" ? "absolute+keyframes" : "absolute+exact";
+      invoke("mpv_command", { cmd: ["seek", sec, flags] }).catch(() => {});
     },
     frameStep(dir) {
       invoke("mpv_command", { cmd: [dir > 0 ? "frame-step" : "frame-back-step"] }).catch(() => {});
@@ -859,8 +876,12 @@ export function createMpvBridge(mpvOptions?: MpvOptions): PlayerBridge {
           url,
           release: metadata?.release,
           provider: metadata?.provider,
+          fps: metadata?.fps,
+          downloads: metadata?.downloads,
+          author: metadata?.author,
           matchScore: metadata?.matchScore,
           matchConfidence: metadata?.matchConfidence,
+          matchReasons: metadata?.matchReasons,
           subId: metadata?.subId,
         });
         await invoke("mpv_sub_add", {

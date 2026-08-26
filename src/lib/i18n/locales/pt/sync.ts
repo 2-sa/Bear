@@ -1,4 +1,7 @@
 const sync: Record<string, string> = {
+  "Live sync": "Sincronização ao vivo",
+  Guided: "Guiada",
+  "Open guided live sync": "Abrir sincronização ao vivo guiada",
   "Watch together": "Assistir juntos",
   "Invite via link": "Convidar por link",
   "Back": "Voltar",

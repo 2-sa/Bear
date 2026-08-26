@@ -8,7 +8,41 @@ function meaningfulRelease(value: string | undefined): string | undefined {
   return trimmed;
 }
 
-export function providerLabel(r: Pick<SubResult, "source" | "title">): string {
+const UPSTREAM_PROVIDERS: Array<[RegExp, string]> = [
+  [/(?:^|[^a-z])sub[ ._-]*dl(?:[^a-z]|$)|subdl\.com|subdl\.strem\./i, "SubDL"],
+  [/(?:^|[^a-z])sub[ ._-]*source(?:[^a-z]|$)|subsource\.(?:net|strem\.)/i, "Subsource"],
+];
+
+export function inferSubtitleUpstreamProvider(
+  ...values: Array<string | null | undefined>
+): string | undefined {
+  for (const value of values) {
+    if (!value) continue;
+    for (const [pattern, label] of UPSTREAM_PROVIDERS) {
+      if (pattern.test(value)) return label;
+    }
+  }
+  return undefined;
+}
+
+export function subtitleFpsFromMetadata(
+  explicit: number | string | null | undefined,
+  ...labels: Array<string | null | undefined>
+): number | undefined {
+  const numeric = typeof explicit === "number" ? explicit : Number(explicit);
+  if (Number.isFinite(numeric) && numeric >= 10 && numeric <= 120) return numeric;
+
+  for (const label of labels) {
+    const match = label?.match(
+      /(?:^|[^\d])((?:1[0-9]|[2-9][0-9]|1[01][0-9])(?:\.\d{1,3})?)\s*fps\b/i,
+    );
+    const fps = Number(match?.[1]);
+    if (Number.isFinite(fps) && fps >= 10 && fps <= 120) return fps;
+  }
+  return undefined;
+}
+
+export function providerLabel(r: Pick<SubResult, "source" | "title" | "upstreamProvider">): string {
   switch (r.source) {
     case "opensubtitles":
       return "OpenSubtitles";
@@ -25,7 +59,10 @@ export function providerLabel(r: Pick<SubResult, "source" | "title">): string {
     case "jimaku":
       return "Jimaku";
     case "addon":
-      return r.title || "Addon";
+      if (r.upstreamProvider && r.title && r.upstreamProvider !== r.title) {
+        return `${r.upstreamProvider} · ${r.title}`;
+      }
+      return r.upstreamProvider || r.title || "Addon";
     default:
       return r.source;
   }
@@ -57,7 +94,7 @@ function filenameFromUrl(url: string): string | undefined {
 }
 
 export function subtitleTitleOf(
-  r: Pick<SubResult, "source" | "title" | "displayTitle" | "release" | "url">,
+  r: Pick<SubResult, "source" | "title" | "displayTitle" | "release" | "url" | "upstreamProvider">,
 ): string {
   return releaseOf(r) ?? filenameFromUrl(r.url) ?? r.displayTitle ?? providerLabel(r);
 }

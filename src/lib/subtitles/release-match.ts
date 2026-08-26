@@ -30,6 +30,34 @@ export function subtitleConfidenceRank(confidence: SubtitleMatchConfidence): num
   }
 }
 
+function clampPercent(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, Math.round(value)));
+}
+
+/**
+ * Turns release evidence into a stable, absolute compatibility estimate.
+ * The confidence bands deliberately do not overlap, so a weak best result
+ * cannot look stronger than a well-supported source/cut match.
+ */
+export function releaseCompatibilityPercent(
+  confidence: SubtitleMatchConfidence,
+  score: number,
+): number {
+  const evidence = Math.max(0, score);
+  switch (confidence) {
+    case "exact":
+      return 100;
+    case "high":
+      return clampPercent(75 + (Math.min(evidence, 240) / 240) * 24, 75, 99);
+    case "medium":
+      return clampPercent(50 + (Math.min(evidence, 120) / 120) * 24, 50, 74);
+    case "low":
+      return clampPercent(20 + (Math.min(evidence, 100) / 100) * 29, 20, 49);
+    case "incompatible":
+      return clampPercent((Math.min(evidence, 100) / 100) * 19, 0, 19);
+  }
+}
+
 const KNOWN_GROUPS = [
   "EVO",
   "RARBG",
@@ -222,6 +250,8 @@ export function releaseAffinity(stream: ReleaseTags, subText: string): AffinityR
   let score = 0;
   const matchSourceRank = sourceRank(stream.source, sub.source);
   let incompatible = false;
+  let episodeMatch = false;
+  let editionMatch = false;
 
   if (
     stream.season != null &&
@@ -234,6 +264,7 @@ export function releaseAffinity(stream: ReleaseTags, subText: string): AffinityR
       stream.season === sub.season && stream.episode >= sub.episode && stream.episode <= subEnd;
     if (sameEpisode) {
       score += 80;
+      episodeMatch = true;
       reasons.push(`S${stream.season}E${stream.episode} matches`);
     } else {
       score -= 300;
@@ -270,6 +301,7 @@ export function releaseAffinity(stream: ReleaseTags, subText: string): AffinityR
       reasons.push(`${sub.resolution}`);
     } else {
       score -= 4;
+      reasons.push(`subtitle is ${sub.resolution}, video is ${stream.resolution}`);
     }
   }
 
@@ -287,6 +319,7 @@ export function releaseAffinity(stream: ReleaseTags, subText: string): AffinityR
     const shared = subEd.filter((e) => streamEd.includes(e));
     if (shared.length) {
       score += 25;
+      editionMatch = true;
       reasons.push(`${shared[0]} edition`);
     } else {
       score -= 25;
@@ -308,11 +341,12 @@ export function releaseAffinity(stream: ReleaseTags, subText: string): AffinityR
   if (stream.repack === sub.repack && stream.repack) score += 4;
 
   const groupMatch = !!stream.group && !!sub.group && stream.group === sub.group;
+  const corroboratedSource = matchSourceRank === 3 && (episodeMatch || editionMatch);
   const confidence: Exclude<SubtitleMatchConfidence, "exact"> = incompatible
     ? "incompatible"
-    : groupMatch || matchSourceRank === 3
+    : groupMatch || corroboratedSource
       ? "high"
-      : matchSourceRank === 2
+      : matchSourceRank >= 2
         ? "medium"
         : "low";
 

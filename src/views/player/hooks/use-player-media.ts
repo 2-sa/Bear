@@ -143,14 +143,15 @@ export function usePlayerMedia(params: {
     volumeRestoredRef.current = true;
   }, [bridgeReady, bridgeKey, snap.status]);
 
-  const { resolvedImdbId, resolvedImdbVerified, resolutionSettled } = useTrackAutoload({
-    bridgeRef,
-    src,
-    snap,
-    engine,
-    settings,
-    authKey,
-  });
+  const { resolvedImdbId, resolvedImdbVerified, resolutionSettled, subtitleSearchActive } =
+    useTrackAutoload({
+      bridgeRef,
+      src,
+      snap,
+      engine,
+      settings,
+      authKey,
+    });
 
   const autoSync = useAutoSync({ bridgeRef, src, snap, engine, settings });
   const {
@@ -324,6 +325,7 @@ export function usePlayerMedia(params: {
 
   return {
     resolvedImdbId,
+    subtitleSearchActive,
     subAssNative: suppressHtmlSubs,
     captureExitSnapshot,
     download,

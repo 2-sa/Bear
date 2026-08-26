@@ -392,26 +392,33 @@ export function PlayerView({ src }: { src: PlayerSrc }) {
         : { ...src, url: liveUrl, historyUrl: liveHistoryUrl, streamRef: liveStreamRef },
     [src, liveUrl, liveHistoryUrl, liveStreamRef],
   );
-  const { resolvedImdbId, subAssNative, captureExitSnapshot, download, subDropToast } =
-    usePlayerMedia({
-      src: activeMediaSrc,
-      snap,
-      engine,
-      settings,
-      authKey,
-      bridgeRef,
-      bridgeReady,
-      bridgeKey,
-      svpActive,
-      videoMountRef,
-      toggleFullscreen,
-      castActiveRef: cast.castActiveRef,
-      season,
-      episode,
-    });
+  const {
+    resolvedImdbId,
+    subtitleSearchActive,
+    subAssNative,
+    captureExitSnapshot,
+    download,
+    subDropToast,
+  } = usePlayerMedia({
+    src: activeMediaSrc,
+    snap,
+    engine,
+    settings,
+    authKey,
+    bridgeRef,
+    bridgeReady,
+    bridgeKey,
+    svpActive,
+    videoMountRef,
+    toggleFullscreen,
+    castActiveRef: cast.castActiveRef,
+    season,
+    episode,
+  });
 
   const contentAdvisory = useContentAdvisory(
     settings.contentAdvisoryToast,
+    (snap.status === "playing" || snap.status === "paused") && !subtitleSearchActive,
     resolvedImdbId ?? src.imdbId ?? (src.meta.id.startsWith("tt") ? src.meta.id : null),
     src.url,
     src.meta,
@@ -668,7 +675,7 @@ export function PlayerView({ src }: { src: PlayerSrc }) {
       sendCommand,
     });
 
-  const textSync = useTextSync(bridgeRef.current, src.meta.id);
+  const textSync = useTextSync(bridgeRef.current, src.meta.id, rememberSubChoice);
   const [syncToast, setSyncToast] = useState<ToastInfo | null>(null);
   const syncToastTimerRef = useRef<number | null>(null);
   const showSyncToast = useCallback((kind: "ok" | "error", text: string) => {

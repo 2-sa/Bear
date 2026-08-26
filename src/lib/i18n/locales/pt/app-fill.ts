@@ -3,6 +3,8 @@ const appFill: Record<string, string> = {
   "Downloading speech model {pct}%": "Baixando modelo de voz {pct}%",
   "Downloading speech model": "Baixando modelo de voz",
   "Subtitles synced": "Legendas sincronizadas",
+  "Subtitles already aligned": "As legendas já estão alinhadas",
+  "Not enough dialogue to sync": "Diálogo insuficiente para sincronizar",
   "Subtitles may be off": "As legendas podem estar dessincronizadas",
   "Different subtitle version": "Versão de legenda diferente",
   "Couldn't auto-sync": "Não foi possível sincronizar automaticamente",
@@ -11,6 +13,25 @@ const appFill: Record<string, string> = {
   "Sync manually": "Sincronizar manualmente",
   "Adjusted timing by": "Tempo ajustado em",
   "Timing looks aligned": "O tempo parece alinhado",
+  "Variable timing corrected": "Tempo variável corrigido",
+  Delay: "Atraso",
+  "Timing rate": "Ritmo do tempo",
+  "No timing change was needed. This subtitle already matches the audio.":
+    "Não foi necessário alterar o tempo. Esta legenda já corresponde ao áudio.",
+  "Bear couldn't analyze the audio for this source. Try again or adjust it manually.":
+    "O Bear não conseguiu analisar o áudio desta fonte. Tente novamente ou ajuste manualmente.",
+  "There isn't enough readable dialogue in this subtitle to measure its timing.":
+    "Não há diálogo legível suficiente nesta legenda para medir o tempo.",
+  "This subtitle appears to be for a different cut. Try another match.":
+    "Esta legenda parece ser de uma versão diferente. Tente outra correspondência.",
+  "The timing checks disagreed, so Bear left the subtitle unchanged.":
+    "As verificações de tempo discordaram, por isso o Bear não alterou a legenda.",
+  "The timing difference was too large to correct safely. Try another subtitle.":
+    "A diferença de tempo era demasiado grande para corrigir com segurança. Tente outra legenda.",
+  "There wasn't enough matching dialogue to make a safe correction.":
+    "Não houve diálogo correspondente suficiente para fazer uma correção segura.",
+  "Bear couldn't find a reliable timing correction for this subtitle.":
+    "O Bear não encontrou uma correção de tempo fiável para esta legenda.",
   "Looks right": "Parece certo",
   "Still off": "Ainda fora de sincronia",
   "This subtitle looks like a different version of the video.": "Esta legenda parece ser de uma versão diferente do vídeo.",

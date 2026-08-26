@@ -1,4 +1,7 @@
 const sync: Record<string, string> = {
+  "Live sync": "المزامنة المباشرة",
+  Guided: "موجّهة",
+  "Open guided live sync": "فتح المزامنة المباشرة الموجّهة",
   "Watch together": "المشاهدة معًا",
   "Invite via link": "الدعوة عبر رابط",
   "Back": "رجوع",

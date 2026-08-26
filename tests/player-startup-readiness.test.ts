@@ -17,6 +17,7 @@ const bridgeLoad = read("src/views/player/hooks/use-bridge-load.ts");
 const autoRetry = read("src/views/player/hooks/use-auto-retry.ts");
 const sync = read("src/views/player/hooks/use-stremio-sync.ts");
 const nativeMpv = read("src-tauri/src/mpv.rs");
+const controls = read("src/views/player/hooks/use-playback-controls.ts");
 
 test("player snapshots expose a resettable first-frame readiness signal", () => {
   assert.match(bridge, /firstFrameReady: boolean/);
@@ -37,6 +38,14 @@ test("mpv uses PlaybackRestart rather than FileLoaded as first-frame readiness",
   assert.doesNotMatch(fileLoaded, /firstFrameReady = true/);
   assert.match(playbackRestart, /firstFrameReady = true/);
   assert.match(loader, /snap\.firstFrameReady/);
+});
+
+test("seek restart preserves mpv pause state and user seeks use fast keyframes", () => {
+  assert.match(mpv, /observedPaused = data/);
+  assert.match(mpv, /snap\.status = observedPaused === true \? "paused" : "playing"/);
+  assert.match(mpv, /"absolute\+keyframes"/);
+  assert.match(mpv, /"absolute\+exact"/);
+  assert.match(controls, /seek\(target, "keyframes"\)/);
 });
 
 test("cinematic loader cannot hide from playback time before the first frame", () => {
@@ -64,6 +73,20 @@ test("startup subtitle downloads no longer block the initial media load", () => 
   const coldStart = mpv.indexOf('await invoke("mpv_start"');
   const deferredSubtitles = mpv.indexOf("void addSeedSubtitles", coldStart);
   assert.ok(coldStart >= 0 && deferredSubtitles > coldStart);
+});
+
+test("mpv starts each media load without an automatically selected embedded subtitle", () => {
+  const retainedStop = mpv.indexOf('await invoke("mpv_command", { cmd: ["stop"] })');
+  const retainedSidReset = mpv.indexOf('name: "sid", value: "no"', retainedStop);
+  const retainedLoad = mpv.indexOf('"loadfile",', retainedStop);
+  assert.ok(
+    retainedStop >= 0 && retainedSidReset > retainedStop && retainedSidReset < retainedLoad,
+  );
+
+  const nativeSidReset = nativeMpv.indexOf('mpv.set_property("sid", "no")');
+  const nativeLoad = nativeMpv.indexOf('&["loadfile", &args.url, "replace"]');
+  assert.ok(nativeSidReset >= 0 && nativeSidReset < nativeLoad);
+  assert.match(nativeMpv, /mpv\.set_property\("secondary-sid", "no"\)/);
 });
 
 test("mpv capability probing is shared for the application lifetime", () => {

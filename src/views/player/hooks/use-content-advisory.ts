@@ -89,6 +89,7 @@ async function resolveTitleAndYear(
 
 export function useContentAdvisory(
   enabled: boolean,
+  ready: boolean,
   imdbId: string | null,
   srcKey: string,
   meta?: Meta | null,
@@ -97,7 +98,7 @@ export function useContentAdvisory(
 
   useEffect(() => {
     setData(EMPTY);
-    if (!enabled || !meta) return;
+    if (!enabled || !ready || !meta) return;
     let cancelled = false;
 
     const load = async () => {
@@ -130,12 +131,17 @@ export function useContentAdvisory(
       }
     };
 
-    void load();
+    // Advisory lookups may try several public pages. Keep them outside the startup and
+    // subtitle-discovery critical path, then begin only after the player is otherwise idle.
+    const timer = window.setTimeout(() => {
+      if (!cancelled) void load();
+    }, 1_200);
 
     return () => {
       cancelled = true;
+      window.clearTimeout(timer);
     };
-  }, [enabled, imdbId, srcKey, meta]);
+  }, [enabled, ready, imdbId, srcKey, meta]);
 
   return { categories: data.categories, playKey: srcKey, mpaRating: data.mpaRating };
 }
