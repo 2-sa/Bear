@@ -1,6 +1,6 @@
 use axum::body::Body;
 use axum::extract::{Path, State};
-use axum::http::{HeaderMap, HeaderName, HeaderValue, StatusCode};
+use axum::http::{header, HeaderMap, HeaderName, HeaderValue, Method, StatusCode};
 use axum::response::{IntoResponse, Response};
 use axum::routing::get;
 use axum::Router;
@@ -8,8 +8,10 @@ use futures_util::StreamExt;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::net::SocketAddr;
+use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
+use tokio::io::{AsyncReadExt, AsyncSeekExt};
 use tokio::net::TcpListener;
 use tokio::sync::{watch, RwLock};
 use uuid::Uuid;
@@ -43,9 +45,17 @@ struct PreparedPrefix {
 }
 
 #[derive(Clone)]
+struct LocalFile {
+    path: PathBuf,
+    created_at: Instant,
+}
+
+#[derive(Clone)]
 pub struct ProxyState {
     sessions: Arc<RwLock<HashMap<String, Session>>>,
+    local_files: Arc<RwLock<HashMap<String, LocalFile>>>,
     port: u16,
+    local_port: u16,
     client: reqwest::Client,
     hls: HlsState,
 }
@@ -82,7 +92,9 @@ impl ProxyState {
     pub fn placeholder() -> Self {
         ProxyState {
             sessions: Arc::new(RwLock::new(HashMap::new())),
+            local_files: Arc::new(RwLock::new(HashMap::new())),
             port: 0,
+            local_port: 0,
             client: reqwest::Client::new(),
             hls: HlsState::new(),
         }
@@ -96,6 +108,20 @@ impl ProxyState {
             .local_addr()
             .map_err(|e| format!("local_addr: {}", e))?
             .port();
+        let (local_listener, local_port) =
+            match TcpListener::bind(SocketAddr::from(([127, 0, 0, 1], 0))).await {
+                Ok(listener) => {
+                    let port = listener
+                        .local_addr()
+                        .map_err(|e| format!("local media local_addr: {e}"))?
+                        .port();
+                    (Some(listener), port)
+                }
+                Err(error) => {
+                    eprintln!("[stream-proxy] local media bind failed: {error}");
+                    (None, 0)
+                }
+            };
         let client = reqwest::Client::builder()
             .pool_idle_timeout(std::time::Duration::from_secs(60))
             .build()
@@ -103,7 +129,9 @@ impl ProxyState {
         let hls = HlsState::new();
         let state = ProxyState {
             sessions: Arc::new(RwLock::new(HashMap::new())),
+            local_files: Arc::new(RwLock::new(HashMap::new())),
             port,
+            local_port,
             client,
             hls: hls.clone(),
         };
@@ -116,12 +144,52 @@ impl ProxyState {
             .route("/health", get(handle_health))
             .with_state(state.clone());
         let app = proxy_routes.merge(crate::cast_hls::router(hls));
+        let local_media = Router::new()
+            .route(
+                "/trailer/{id}",
+                get(handle_local_file).head(handle_local_file),
+            )
+            .with_state(state.clone());
         tokio::spawn(async move {
             if let Err(e) = axum::serve(listener, app).await {
                 eprintln!("[stream-proxy] server error: {}", e);
             }
         });
+        if let Some(local_listener) = local_listener {
+            tokio::spawn(async move {
+                if let Err(e) = axum::serve(local_listener, local_media).await {
+                    eprintln!("[stream-proxy] local media server error: {e}");
+                }
+            });
+        }
         Ok(state)
+    }
+
+    pub async fn register_local_file(&self, path: PathBuf) -> Result<String, String> {
+        if self.local_port == 0 {
+            return Err("local media server is unavailable".to_string());
+        }
+        let path = tokio::fs::canonicalize(path)
+            .await
+            .map_err(|e| format!("local media path: {e}"))?;
+        let metadata = tokio::fs::metadata(&path)
+            .await
+            .map_err(|e| format!("local media metadata: {e}"))?;
+        if !metadata.is_file() {
+            return Err("local media path is not a file".to_string());
+        }
+        let size = metadata.len();
+        let id = Uuid::new_v4().to_string();
+        self.local_files.write().await.insert(
+            id.clone(),
+            LocalFile {
+                path,
+                created_at: Instant::now(),
+            },
+        );
+        let url = format!("http://127.0.0.1:{}/trailer/{}.mp4", self.local_port, id);
+        eprintln!("[stream-proxy] serving local trailer bytes={size} url={url}");
+        Ok(url)
     }
 
     pub async fn register(&self, args: RegisterArgs) -> RegisterResult {
@@ -291,6 +359,12 @@ impl ProxyState {
             }
             stale.len()
         };
+        removed += {
+            let mut map = self.local_files.write().await;
+            let before = map.len();
+            map.retain(|_, file| now.duration_since(file.created_at) <= PROXY_MAX_AGE);
+            before - map.len()
+        };
         removed += self.hls.evict_idle(HLS_IDLE).await;
         removed
     }
@@ -332,6 +406,112 @@ pub(crate) fn reachable_ip_for(target_host: &str) -> Option<String> {
 
 async fn handle_health() -> &'static str {
     "ok"
+}
+
+async fn handle_local_file(
+    State(state): State<ProxyState>,
+    Path(id_with_ext): Path<String>,
+    method: Method,
+    headers: HeaderMap,
+) -> Response {
+    let id = id_with_ext.trim_end_matches(".mp4");
+    let path = {
+        let files = state.local_files.read().await;
+        match files.get(id) {
+            Some(file) => file.path.clone(),
+            None => return (StatusCode::NOT_FOUND, "trailer not found").into_response(),
+        }
+    };
+    let mut file = match tokio::fs::File::open(&path).await {
+        Ok(file) => file,
+        Err(_) => return (StatusCode::NOT_FOUND, "trailer file missing").into_response(),
+    };
+    let len = match file.metadata().await {
+        Ok(metadata) => metadata.len(),
+        Err(error) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("trailer metadata: {error}"),
+            )
+                .into_response();
+        }
+    };
+    let requested_range = headers
+        .get(header::RANGE)
+        .and_then(|value| value.to_str().ok());
+    let (status, start, end) = match requested_range {
+        Some(raw) => match parse_file_range(raw, len) {
+            Some((start, end)) => (StatusCode::PARTIAL_CONTENT, start, end),
+            None => {
+                let mut response =
+                    (StatusCode::RANGE_NOT_SATISFIABLE, Body::empty()).into_response();
+                response.headers_mut().insert(
+                    header::CONTENT_RANGE,
+                    HeaderValue::from_str(&format!("bytes */{len}")).unwrap(),
+                );
+                return response;
+            }
+        },
+        None => (StatusCode::OK, 0, len),
+    };
+    if start > 0 && file.seek(std::io::SeekFrom::Start(start)).await.is_err() {
+        return (StatusCode::INTERNAL_SERVER_ERROR, "trailer seek failed").into_response();
+    }
+    let content_len = end - start;
+    let mut response_headers = HeaderMap::new();
+    response_headers.insert(header::ACCEPT_RANGES, HeaderValue::from_static("bytes"));
+    response_headers.insert(header::CONTENT_TYPE, HeaderValue::from_static("video/mp4"));
+    response_headers.insert(
+        header::CONTENT_LENGTH,
+        HeaderValue::from_str(&content_len.to_string()).unwrap(),
+    );
+    response_headers.insert(
+        header::ACCESS_CONTROL_ALLOW_ORIGIN,
+        HeaderValue::from_static("*"),
+    );
+    response_headers.insert(
+        header::ACCESS_CONTROL_EXPOSE_HEADERS,
+        HeaderValue::from_static("Content-Length, Content-Range, Accept-Ranges"),
+    );
+    if status == StatusCode::PARTIAL_CONTENT {
+        response_headers.insert(
+            header::CONTENT_RANGE,
+            HeaderValue::from_str(&format!("bytes {}-{}/{len}", start, end - 1)).unwrap(),
+        );
+    }
+    if method == Method::HEAD {
+        return (status, response_headers, Body::empty()).into_response();
+    }
+    let stream = tokio_util::io::ReaderStream::with_capacity(file.take(content_len), 64 * 1024);
+    (status, response_headers, Body::from_stream(stream)).into_response()
+}
+
+fn parse_file_range(raw: &str, len: u64) -> Option<(u64, u64)> {
+    if len == 0 {
+        return None;
+    }
+    let spec = raw.trim().strip_prefix("bytes=")?;
+    if spec.contains(',') {
+        return None;
+    }
+    let (start, end) = spec.split_once('-')?;
+    if start.trim().is_empty() {
+        let suffix = end.trim().parse::<u64>().ok()?.min(len);
+        if suffix == 0 {
+            return None;
+        }
+        return Some((len - suffix, len));
+    }
+    let start = start.trim().parse::<u64>().ok()?;
+    if start >= len {
+        return None;
+    }
+    let end = if end.trim().is_empty() {
+        len
+    } else {
+        end.trim().parse::<u64>().ok()?.saturating_add(1).min(len)
+    };
+    (end > start).then_some((start, end))
 }
 
 fn split_playlist_url(url: &str) -> Option<(String, String, Option<String>)> {
@@ -829,7 +1009,7 @@ pub async fn proxy_gc_idle(state: tauri::State<'_, ProxyState>) -> Result<usize,
 }
 
 #[cfg(test)]
-mod prebuffer_tests {
+mod tests {
     use super::*;
 
     #[test]
@@ -848,5 +1028,21 @@ mod prebuffer_tests {
         assert_eq!(requested_prefix_len(&headers, 1024, 4096), None);
         headers.insert("range", HeaderValue::from_static("bytes=20-40"));
         assert_eq!(requested_prefix_len(&headers, 1024, 4096), None);
+    }
+
+    #[test]
+    fn parses_media_byte_ranges() {
+        assert_eq!(parse_file_range("bytes=0-", 100), Some((0, 100)));
+        assert_eq!(parse_file_range("bytes=10-19", 100), Some((10, 20)));
+        assert_eq!(parse_file_range("bytes=-10", 100), Some((90, 100)));
+        assert_eq!(parse_file_range("bytes=99-200", 100), Some((99, 100)));
+    }
+
+    #[test]
+    fn rejects_invalid_media_byte_ranges() {
+        assert_eq!(parse_file_range("bytes=100-", 100), None);
+        assert_eq!(parse_file_range("bytes=20-10", 100), None);
+        assert_eq!(parse_file_range("bytes=0-1,4-5", 100), None);
+        assert_eq!(parse_file_range("items=0-1", 100), None);
     }
 }
