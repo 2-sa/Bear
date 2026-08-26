@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from "react";
+import { safeExternalUrl } from "./link-out-activation";
 
 let current: string | null = null;
 const subs = new Set<() => void>();
@@ -15,9 +16,9 @@ function subscribe(fn: () => void): () => void {
 }
 
 export function openLinkOut(url: string): void {
-  const trimmed = (url || "").trim();
-  if (!trimmed) return;
-  current = trimmed;
+  const safeUrl = safeExternalUrl(url || "");
+  if (!safeUrl) return;
+  current = safeUrl;
   emit();
 }
 
