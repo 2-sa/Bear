@@ -44,7 +44,13 @@ const TOOLS: Tool[] = [
   { icon: Music2, label: "Spotify", open: "[spotify]", close: "[/spotify]", embed: "spotify" },
 ];
 
-export function AboutEditor({ value, onChange }: { value: string; onChange: (next: string) => void }) {
+export function AboutEditor({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (next: string) => void;
+}) {
   const ref = useRef<HTMLTextAreaElement>(null);
   const [preview, setPreview] = useState(false);
   const [embed, setEmbed] = useState<EmbedKind | null>(null);

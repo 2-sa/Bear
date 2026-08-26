@@ -36,7 +36,9 @@ test("delegated primary and middle clicks prevent WebView navigation and route t
         target: {
           closest: (selector: string) => {
             assert.equal(selector, "a");
-            return { getAttribute: (name: string) => (name === "href" ? "https://example.com/path" : null) };
+            return {
+              getAttribute: (name: string) => (name === "href" ? "https://example.com/path" : null),
+            };
           },
         } as unknown as EventTarget,
         preventDefault: () => {
@@ -95,10 +97,7 @@ test("the global confirmation owns back navigation and modal focus", () => {
   assert.match(interstitialSource, /pushBackHandler\(/);
   assert.match(interstitialSource, /isBackKey\(e\)/);
   assert.match(interstitialSource, /addEventListener\("keydown", onKey, true\)/);
-  assert.match(
-    interstitialSource,
-    /addEventListener\("harbor:local-back", onLocalBack, true\)/,
-  );
+  assert.match(interstitialSource, /addEventListener\("harbor:local-back", onLocalBack, true\)/);
   assert.match(interstitialSource, /role="dialog"/);
   assert.match(interstitialSource, /aria-modal="true"/);
 });

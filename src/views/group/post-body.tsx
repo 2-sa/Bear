@@ -1,4 +1,11 @@
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type MouseEvent as ReactMouseEvent,
+} from "react";
 import { renderBbcode } from "@/lib/social/bbcode";
 import { handleLinkOutActivation } from "@/lib/social/link-out-activation";
 import { scanMentions } from "@/lib/social/mentions";
@@ -12,12 +19,20 @@ import {
 } from "@/views/profile/user-hover-card";
 
 function mentionAt(target: EventTarget | null): { el: HTMLElement; handle: string } | null {
-  const el = (target as HTMLElement | null)?.closest?.("[data-harbor-mention]") as HTMLElement | null;
+  const el = (target as HTMLElement | null)?.closest?.(
+    "[data-harbor-mention]",
+  ) as HTMLElement | null;
   const handle = el?.getAttribute("data-harbor-mention");
   return el && handle ? { el, handle } : null;
 }
 
-export function PostBody({ body, onOpenProfile }: { body: string; onOpenProfile?: (handle: string) => void }) {
+export function PostBody({
+  body,
+  onOpenProfile,
+}: {
+  body: string;
+  onOpenProfile?: (handle: string) => void;
+}) {
   const { openMeta, openManga } = useView();
   const [card, setCard] = useState<{ handle: string; anchor: DOMRect } | null>(null);
   const openTimer = useRef<number | null>(null);
@@ -42,10 +57,13 @@ export function PostBody({ body, onOpenProfile }: { body: string; onOpenProfile?
     }, HOVER_CARD_CLOSE_MS);
   };
 
-  useEffect(() => () => {
-    clearOpen();
-    clearClose();
-  }, []);
+  useEffect(
+    () => () => {
+      clearOpen();
+      clearClose();
+    },
+    [],
+  );
 
   useEffect(() => {
     if (!card) return;
@@ -78,7 +96,13 @@ export function PostBody({ body, onOpenProfile }: { body: string; onOpenProfile?
       const name = cardEl?.getAttribute("data-harbor-media-title") ?? "";
       const poster = cardEl?.getAttribute("data-harbor-media-poster") || undefined;
       if (kind === "manga") openManga(mediaId);
-      else openMeta({ id: mediaId, type: kind === "series" || kind === "anime" ? "series" : "movie", name, poster });
+      else
+        openMeta({
+          id: mediaId,
+          type: kind === "series" || kind === "anime" ? "series" : "movie",
+          name,
+          poster,
+        });
       return;
     }
     handleLinkOutActivation(e, openLinkOut);

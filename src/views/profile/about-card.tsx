@@ -24,7 +24,10 @@ export function AboutCard({
   const copyFont = userFont ? { fontFamily: `"${userFont}", inherit` } : undefined;
 
   return (
-    <section aria-label={t("About")} className="rounded-[14px] bg-surface p-5 ring-1 ring-edge-soft">
+    <section
+      aria-label={t("About")}
+      className="rounded-[14px] bg-surface p-5 ring-1 ring-edge-soft"
+    >
       {!hideTitle && <SectionHeader icon={<ScrollText size={20} />} label={t("About")} />}
       {html ? (
         <div

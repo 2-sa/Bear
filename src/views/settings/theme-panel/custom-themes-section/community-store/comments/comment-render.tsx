@@ -63,7 +63,10 @@ function render(nodes: CNode[]): React.ReactNode {
         );
       case "code":
         return (
-          <code key={i} className="rounded-[6px] bg-canvas/70 px-1.5 py-0.5 font-mono text-[12.5px] text-ink ring-1 ring-edge-soft">
+          <code
+            key={i}
+            className="rounded-[6px] bg-canvas/70 px-1.5 py-0.5 font-mono text-[12.5px] text-ink ring-1 ring-edge-soft"
+          >
             {render(n.children)}
           </code>
         );
@@ -106,5 +109,9 @@ function render(nodes: CNode[]): React.ReactNode {
 
 export function CommentBody({ text }: { text: string }) {
   const nodes = useMemo(() => parseComment(text), [text]);
-  return <div className="break-words text-[13.5px] leading-relaxed text-ink-muted [word-break:break-word]">{render(nodes)}</div>;
+  return (
+    <div className="break-words text-[13.5px] leading-relaxed text-ink-muted [word-break:break-word]">
+      {render(nodes)}
+    </div>
+  );
 }

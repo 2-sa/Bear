@@ -69,10 +69,7 @@ export function LinkOutInterstitial() {
         >
           You're leaving Harbor
         </h1>
-        <p
-          id="link-out-description"
-          className="mt-2 text-[14px] leading-relaxed text-ink-muted"
-        >
+        <p id="link-out-description" className="mt-2 text-[14px] leading-relaxed text-ink-muted">
           This link goes to an external site that Harbor does not control or vouch for. Triple-check
           the address before you continue, and never enter your Harbor password anywhere but Harbor.
         </p>
@@ -81,7 +78,9 @@ export function LinkOutInterstitial() {
             Destination
           </span>
           <span className="truncate text-[17px] font-semibold text-ink">{host}</span>
-          <span className="mt-1 break-all font-mono text-[12px] leading-snug text-ink-subtle">{url}</span>
+          <span className="mt-1 break-all font-mono text-[12px] leading-snug text-ink-subtle">
+            {url}
+          </span>
         </div>
         <div className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-danger/12 px-3 py-1.5 text-[12px] font-medium text-danger">
           <TriangleAlert size={14} strokeWidth={2.2} /> Only continue if you fully trust this link
