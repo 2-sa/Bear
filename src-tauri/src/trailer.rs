@@ -77,11 +77,13 @@ fn cached_info(path: &Path, quality: &str, size: u64, stream_url: Option<String>
 
 struct YtDlpOutput {
     success: bool,
+    #[cfg(target_os = "linux")]
     exit_code: Option<i32>,
     stdout: Vec<u8>,
     stderr: Vec<u8>,
 }
 
+#[cfg(target_os = "linux")]
 fn yt_dlp_failure(source: &str, label: &str, output: &YtDlpOutput) -> String {
     let stderr = String::from_utf8_lossy(&output.stderr);
     let stdout = String::from_utf8_lossy(&output.stdout);
@@ -177,7 +179,6 @@ async fn run_yt_dlp(
             .map_err(|error| format!("yt-dlp {label}: {error}"))?;
         Ok(YtDlpOutput {
             success: output.status.success(),
-            exit_code: output.status.code(),
             stdout: output.stdout,
             stderr: output.stderr,
         })

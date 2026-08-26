@@ -1,6 +1,8 @@
 use axum::body::Body;
 use axum::extract::{Path, State};
-use axum::http::{header, HeaderMap, HeaderName, HeaderValue, Method, StatusCode};
+#[cfg(target_os = "linux")]
+use axum::http::{header, Method};
+use axum::http::{HeaderMap, HeaderName, HeaderValue, StatusCode};
 use axum::response::{IntoResponse, Response};
 use axum::routing::get;
 use axum::Router;
@@ -8,9 +10,11 @@ use futures_util::StreamExt;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::net::SocketAddr;
+#[cfg(target_os = "linux")]
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
+#[cfg(target_os = "linux")]
 use tokio::io::{AsyncReadExt, AsyncSeekExt};
 use tokio::net::TcpListener;
 use tokio::sync::{watch, RwLock};
@@ -45,6 +49,7 @@ struct PreparedPrefix {
 }
 
 #[derive(Clone)]
+#[cfg(target_os = "linux")]
 struct LocalFile {
     path: PathBuf,
     created_at: Instant,
@@ -53,8 +58,10 @@ struct LocalFile {
 #[derive(Clone)]
 pub struct ProxyState {
     sessions: Arc<RwLock<HashMap<String, Session>>>,
+    #[cfg(target_os = "linux")]
     local_files: Arc<RwLock<HashMap<String, LocalFile>>>,
     port: u16,
+    #[cfg(target_os = "linux")]
     local_port: u16,
     client: reqwest::Client,
     hls: HlsState,
@@ -92,8 +99,10 @@ impl ProxyState {
     pub fn placeholder() -> Self {
         ProxyState {
             sessions: Arc::new(RwLock::new(HashMap::new())),
+            #[cfg(target_os = "linux")]
             local_files: Arc::new(RwLock::new(HashMap::new())),
             port: 0,
+            #[cfg(target_os = "linux")]
             local_port: 0,
             client: reqwest::Client::new(),
             hls: HlsState::new(),
@@ -108,6 +117,7 @@ impl ProxyState {
             .local_addr()
             .map_err(|e| format!("local_addr: {}", e))?
             .port();
+        #[cfg(target_os = "linux")]
         let (local_listener, local_port) =
             match TcpListener::bind(SocketAddr::from(([127, 0, 0, 1], 0))).await {
                 Ok(listener) => {
@@ -129,8 +139,10 @@ impl ProxyState {
         let hls = HlsState::new();
         let state = ProxyState {
             sessions: Arc::new(RwLock::new(HashMap::new())),
+            #[cfg(target_os = "linux")]
             local_files: Arc::new(RwLock::new(HashMap::new())),
             port,
+            #[cfg(target_os = "linux")]
             local_port,
             client,
             hls: hls.clone(),
@@ -144,6 +156,7 @@ impl ProxyState {
             .route("/health", get(handle_health))
             .with_state(state.clone());
         let app = proxy_routes.merge(crate::cast_hls::router(hls));
+        #[cfg(target_os = "linux")]
         let local_media = Router::new()
             .route(
                 "/trailer/{id}",
@@ -155,6 +168,7 @@ impl ProxyState {
                 eprintln!("[stream-proxy] server error: {}", e);
             }
         });
+        #[cfg(target_os = "linux")]
         if let Some(local_listener) = local_listener {
             tokio::spawn(async move {
                 if let Err(e) = axum::serve(local_listener, local_media).await {
@@ -165,6 +179,7 @@ impl ProxyState {
         Ok(state)
     }
 
+    #[cfg(target_os = "linux")]
     pub async fn register_local_file(&self, path: PathBuf) -> Result<String, String> {
         if self.local_port == 0 {
             return Err("local media server is unavailable".to_string());
@@ -359,12 +374,13 @@ impl ProxyState {
             }
             stale.len()
         };
-        removed += {
+        #[cfg(target_os = "linux")]
+        {
             let mut map = self.local_files.write().await;
             let before = map.len();
             map.retain(|_, file| now.duration_since(file.created_at) <= PROXY_MAX_AGE);
-            before - map.len()
-        };
+            removed += before - map.len();
+        }
         removed += self.hls.evict_idle(HLS_IDLE).await;
         removed
     }
@@ -408,6 +424,7 @@ async fn handle_health() -> &'static str {
     "ok"
 }
 
+#[cfg(target_os = "linux")]
 async fn handle_local_file(
     State(state): State<ProxyState>,
     Path(id_with_ext): Path<String>,
@@ -486,6 +503,7 @@ async fn handle_local_file(
     (status, response_headers, Body::from_stream(stream)).into_response()
 }
 
+#[cfg(any(target_os = "linux", test))]
 fn parse_file_range(raw: &str, len: u64) -> Option<(u64, u64)> {
     if len == 0 {
         return None;
