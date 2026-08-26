@@ -301,7 +301,9 @@ export const SANDBOX_SOURCE = String.raw`(function () {
         meta: {
           id: String(provider.id),
           name: String(provider.name),
-          hasTags: typeof provider.tags === "function"
+          hasTags: typeof provider.tags === "function",
+          methods: ["popular", "search", "detail", "chapters", "content", "pageUrls", "tags"]
+            .filter(function (name) { return typeof provider[name] === "function"; })
         }
       });
     } catch (err) {

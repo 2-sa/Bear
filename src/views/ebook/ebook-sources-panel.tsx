@@ -1,0 +1,577 @@
+import {
+  AlertCircle,
+  ArrowRight,
+  Blocks,
+  BookOpen,
+  Check,
+  ChevronLeft,
+  Download,
+  FileText,
+  Folder,
+  FolderOpen,
+  Loader2,
+  PackageOpen,
+  Plus,
+  RefreshCw,
+  ShieldCheck,
+  Trash2,
+  X,
+} from "lucide-react";
+import { createPortal } from "react-dom";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  addEBookRepo,
+  browseEBookRepo,
+  installEBookPlugin,
+  installedEBookPlugins,
+  loadEBookExtensions,
+  ebookRepoUrls,
+  removeEBookPlugin,
+  removeEBookRepo,
+  setEBookPluginEnabled,
+  subscribeEBookExtensions,
+  type EBookPluginManifest,
+  type EBookPluginRepo,
+} from "@/lib/ebook/extensions";
+import {
+  addEBookFolder,
+  addEBookHtmlSource,
+  listEBookSources,
+  parseEBookSourceConfig,
+  removeEBookSource,
+  subscribeEBookSources,
+  type EBookSource,
+} from "@/lib/ebook/sources";
+import { CARD, INPUT, PRIMARY_BTN } from "@/views/manga/manga-sources-panel/shared";
+import { PluginGuide } from "@/views/manga/manga-sources-panel/plugin-guide";
+
+const EXAMPLE = `{
+  "name": "My eBook Source",
+  "baseUrl": "https://example.test",
+  "popularPath": "/ebooks?sort=popular&page={page}",
+  "searchPath": "/search?q={query}&page={page}",
+  "list": {
+    "item": "article.ebook",
+    "title": "a.title",
+    "link": "a.title@href",
+    "cover": "img@src"
+  },
+  "detail": {
+    "title": "h1",
+    "cover": "img.cover@src",
+    "description": ".description",
+    "author": ".author",
+    "status": ".status"
+  },
+  "chapters": {
+    "item": "a.chapter",
+    "link": "@href",
+    "title": ".name",
+    "chapter": "@data-number",
+    "volume": ".volume",
+    "date": "time@datetime",
+    "views": ".views"
+  },
+  "content": { "body": ".chapter-content" }
+}`;
+
+function SectionLabel({ children }: { children: ReactNode }) {
+  return (
+    <p className="mt-2 px-1 text-[12.5px] font-bold uppercase tracking-[0.12em] text-ink-subtle">
+      {children}
+    </p>
+  );
+}
+
+function SourceIcon({ source }: { source: EBookSource }) {
+  const [failed, setFailed] = useState(false);
+  return (
+    <span className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-xl bg-canvas text-ink-muted ring-1 ring-edge-soft">
+      {source.iconUrl && !failed ? (
+        <img
+          src={source.iconUrl}
+          alt=""
+          className="h-7 w-7 object-contain"
+          onError={() => setFailed(true)}
+        />
+      ) : source.kind === "local" ? (
+        <FolderOpen size={20} />
+      ) : (
+        <FileText size={20} />
+      )}
+    </span>
+  );
+}
+
+function SourceRow({ source }: { source: EBookSource }) {
+  const [removing, setRemoving] = useState(false);
+  return (
+    <div
+      className={`overflow-hidden transition-all duration-300 ${removing ? "max-h-0 scale-95 opacity-0" : "max-h-28"}`}
+    >
+      <div className={CARD}>
+        <div className="flex items-center gap-4 px-5 py-4">
+          <SourceIcon source={source} />
+          <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+            <span className="truncate text-[16px] font-semibold text-ink">{source.name}</span>
+            <span className="truncate text-[13px] text-ink-subtle">{source.location}</span>
+          </span>
+          <span className="rounded-md bg-raised px-2 py-0.5 text-[11px] font-bold text-ink-muted ring-1 ring-edge-soft">
+            {source.kind === "local" ? "Folder" : "Site"}
+          </span>
+          <button
+            type="button"
+            aria-label={`Remove ${source.name}`}
+            onClick={() => {
+              setRemoving(true);
+              window.setTimeout(() => removeEBookSource(source.id), 240);
+            }}
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-raised text-ink-subtle ring-1 ring-edge-soft transition-all hover:text-danger active:scale-95"
+          >
+            <Trash2 size={18} />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function LocalFolderTutorial({ onClose, onChoose }: { onClose: () => void; onChoose: () => void }) {
+  return createPortal(
+    <div
+      className="animate-fade-in fixed inset-0 z-[80] grid place-items-center bg-black/60 p-6 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="animate-modal-in flex w-full max-w-md flex-col gap-5 rounded-2xl border border-edge bg-surface p-6 shadow-xl"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-4">
+          <h2 className="font-display text-[21px] font-medium tracking-tight text-ink">
+            Add a local folder
+          </h2>
+          <button
+            type="button"
+            aria-label="Close"
+            onClick={onClose}
+            className="grid h-9 w-9 place-items-center rounded-xl border border-edge-soft text-ink-subtle hover:bg-elevated hover:text-ink"
+          >
+            <X size={18} />
+          </button>
+        </div>
+        <p className="text-[14px] leading-relaxed text-ink-muted">
+          Pick one library folder. Each subfolder is one eBook. Put its chapters inside as TXT,
+          Markdown, HTML, or EPUB files and optionally add a cover image.
+        </p>
+        <div className="flex flex-col gap-2 rounded-xl bg-canvas p-4 text-[13.5px] ring-1 ring-edge-soft">
+          <span className="flex items-center gap-2 text-ink-muted">
+            <FolderOpen size={16} /> My eBooks
+          </span>
+          <span className="ms-6 flex items-center gap-2 font-semibold text-ink">
+            <Folder size={16} className="text-accent" /> Lord of Mysteries
+          </span>
+          <span className="ms-12 flex items-center gap-2 text-ink-muted">
+            <FileText size={16} /> Volume 1.epub
+          </span>
+          <span className="ms-12 flex items-center gap-2 text-ink-muted">
+            <FileText size={16} /> Chapter 2.txt
+          </span>
+          <span className="ms-12 flex items-center gap-2 text-ink-muted">
+            <BookOpen size={16} /> cover.jpg
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            onClose();
+            onChoose();
+          }}
+          className={PRIMARY_BTN}
+        >
+          <FolderOpen size={18} /> Choose folder
+        </button>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
+function LocalFolder() {
+  const [tutorial, setTutorial] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const choose = async () => {
+    try {
+      const { open } = await import("@tauri-apps/plugin-dialog");
+      const path = await open({ directory: true, multiple: false, title: "Choose eBook folder" });
+      if (typeof path === "string" && !addEBookFolder(path)) setError("Could not add that folder");
+    } catch {
+      setError("Folder selection is available in the Bear app");
+    }
+  };
+  return (
+    <>
+      <div className={`group transition-all hover:ring-edge ${CARD}`}>
+        <button
+          type="button"
+          onClick={() => setTutorial(true)}
+          className="flex w-full items-center gap-4 px-5 py-4 text-start active:scale-[0.99]"
+        >
+          <span className="grid h-12 w-12 place-items-center rounded-xl bg-canvas text-ink-muted ring-1 ring-edge-soft">
+            <FolderOpen size={20} />
+          </span>
+          <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+            <span className="text-[16px] font-semibold text-ink">Local folder</span>
+            <span className="truncate text-[13px] text-ink-muted">
+              Read eBook files you already have
+            </span>
+          </span>
+          <span className="grid h-9 w-9 place-items-center rounded-lg bg-raised text-ink-muted ring-1 ring-edge-soft">
+            <Plus size={18} />
+          </span>
+        </button>
+        {error && <p className="px-5 pb-4 text-[13px] font-medium text-danger">{error}</p>}
+      </div>
+      {tutorial && <LocalFolderTutorial onClose={() => setTutorial(false)} onChoose={choose} />}
+    </>
+  );
+}
+
+function CustomSource() {
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [added, setAdded] = useState(false);
+  const add = () => {
+    try {
+      if (!addEBookHtmlSource(parseEBookSourceConfig(value)))
+        throw new Error("Could not save source");
+      setError(null);
+      setAdded(true);
+      window.setTimeout(() => {
+        setAdded(false);
+        setOpen(false);
+        setValue("");
+      }, 650);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Invalid source config");
+    }
+  };
+  return (
+    <div className={`${CARD} overflow-hidden`}>
+      <button
+        type="button"
+        onClick={() => setOpen((current) => !current)}
+        className="flex w-full items-center gap-4 px-5 py-4 text-start active:scale-[0.99]"
+      >
+        <span className="grid h-12 w-12 place-items-center rounded-xl bg-canvas text-ink-muted ring-1 ring-edge-soft">
+          <FileText size={20} />
+        </span>
+        <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <span className="text-[16px] font-semibold text-ink">Custom source</span>
+          <span className="text-[13px] text-ink-muted">
+            Connect a server-rendered eBook site with JSON selectors
+          </span>
+        </span>
+        <span className="grid h-9 w-9 place-items-center rounded-lg bg-raised text-ink-muted ring-1 ring-edge-soft">
+          <Plus size={18} className={`transition-transform ${open ? "rotate-45" : ""}`} />
+        </span>
+      </button>
+      {open && (
+        <div className="harbor-rise flex flex-col gap-3 border-t border-edge-soft p-5">
+          <p className="text-[13px] leading-relaxed text-ink-muted">
+            Bear performs plain HTTP requests and CSS-selector parsing. It does not bypass logins,
+            paywalls, or access controls.
+          </p>
+          <textarea
+            value={value}
+            onChange={(event) => setValue(event.target.value)}
+            placeholder={EXAMPLE}
+            spellCheck={false}
+            className="h-64 w-full resize-y rounded-xl border border-edge bg-canvas p-4 font-mono text-[12.5px] leading-relaxed text-ink outline-none placeholder:text-ink-subtle/65 focus:border-accent/55"
+          />
+          <button
+            type="button"
+            onClick={() => setValue(EXAMPLE)}
+            className="self-start text-[12.5px] font-medium text-accent"
+          >
+            Use template
+          </button>
+          {error && <p className="text-[13px] font-medium text-danger">{error}</p>}
+          <button type="button" onClick={add} className={PRIMARY_BTN}>
+            {added ? <Check size={18} /> : <Plus size={18} />}
+            {added ? "Source added" : "Add source"}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PluginRow({ item, repoUrl }: { item: EBookPluginManifest; repoUrl: string }) {
+  const installed = installedEBookPlugins().find((plugin) => plugin.id === item.id);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const action = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      if (!installed) await installEBookPlugin(item, repoUrl);
+      else await removeEBookPlugin(item.id);
+    } catch {
+      setError("Install failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="flex items-center gap-3.5 px-5 py-3.5">
+      <span className="grid h-10 w-10 place-items-center rounded-xl bg-canvas text-[12px] font-bold text-ink-muted ring-1 ring-edge-soft">
+        {item.name
+          .replace(/[^a-z0-9]/gi, "")
+          .slice(0, 2)
+          .toUpperCase()}
+      </span>
+      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <span className="truncate text-[15px] font-semibold text-ink">{item.name}</span>
+        <span className="text-[12.5px] text-ink-muted">
+          {item.lang} · v{item.version}
+          {error && <span className="text-danger"> · {error}</span>}
+        </span>
+      </span>
+      {installed && (
+        <button
+          type="button"
+          role="switch"
+          aria-checked={installed.enabled}
+          onClick={() => void setEBookPluginEnabled(installed.id, !installed.enabled)}
+          className={`relative h-6 w-10 rounded-full ${installed.enabled ? "bg-ink" : "bg-edge"}`}
+        >
+          <span
+            className={`absolute top-0.5 h-5 w-5 rounded-full bg-canvas transition-transform ${installed.enabled ? "start-[18px]" : "start-0.5"}`}
+          />
+        </button>
+      )}
+      <button
+        type="button"
+        disabled={busy}
+        onClick={() => void action()}
+        className={`flex h-9 min-w-[104px] items-center justify-center gap-1.5 rounded-xl px-4 text-[13.5px] font-semibold disabled:opacity-60 ${installed ? "bg-raised text-ink-subtle ring-1 ring-edge-soft hover:text-danger" : "bg-accent text-canvas"}`}
+      >
+        {busy ? (
+          <Loader2 size={15} className="animate-spin" />
+        ) : installed ? (
+          <Trash2 size={15} />
+        ) : (
+          <Download size={15} />
+        )}
+        {installed ? "Remove" : "Install"}
+      </button>
+    </div>
+  );
+}
+
+function RepoCard({ url }: { url: string }) {
+  const [repo, setRepo] = useState<EBookPluginRepo | null>(null);
+  const [state, setState] = useState<"loading" | "ready" | "error">("loading");
+  const [attempt, setAttempt] = useState(0);
+  useEffect(() => {
+    let cancelled = false;
+    setState("loading");
+    void browseEBookRepo(url)
+      .then((value) => {
+        if (!cancelled) {
+          setRepo(value);
+          setState("ready");
+        }
+      })
+      .catch(() => !cancelled && setState("error"));
+    return () => {
+      cancelled = true;
+    };
+  }, [url, attempt]);
+  return (
+    <div className={`${CARD} overflow-hidden`}>
+      <div className="flex items-center gap-3.5 px-5 py-3.5">
+        <span className="grid h-10 w-10 place-items-center rounded-xl bg-canvas text-ink-muted ring-1 ring-edge-soft">
+          <PackageOpen size={18} />
+        </span>
+        <span className="min-w-0 flex-1 truncate text-[15.5px] font-semibold text-ink">
+          {repo?.name ?? new URL(url).host}
+        </span>
+        {state === "error" && (
+          <button
+            type="button"
+            aria-label="Retry"
+            onClick={() => setAttempt((value) => value + 1)}
+            className="grid h-9 w-9 place-items-center rounded-lg bg-raised text-ink-subtle ring-1 ring-edge-soft"
+          >
+            <RefreshCw size={16} />
+          </button>
+        )}
+        <button
+          type="button"
+          aria-label="Remove repository"
+          onClick={() => void removeEBookRepo(url)}
+          className="grid h-9 w-9 place-items-center rounded-lg bg-raised text-ink-subtle ring-1 ring-edge-soft hover:text-danger"
+        >
+          <Trash2 size={16} />
+        </button>
+      </div>
+      {state === "loading" && (
+        <div className="flex items-center justify-center gap-2 border-t border-edge-soft py-8 text-[13.5px] text-ink-subtle">
+          <Loader2 size={17} className="animate-spin" /> Loading extensions…
+        </div>
+      )}
+      {state === "error" && (
+        <div className="flex items-center justify-center gap-2 border-t border-edge-soft py-8 text-[13.5px] text-ink-muted">
+          <AlertCircle size={16} className="text-danger" /> Could not reach this repository.
+        </div>
+      )}
+      {state === "ready" &&
+        repo &&
+        (repo.plugins.length ? (
+          <div className="divide-y divide-edge-soft border-t border-edge-soft">
+            {repo.plugins.map((item) => (
+              <PluginRow key={item.id} item={item} repoUrl={url} />
+            ))}
+          </div>
+        ) : (
+          <div className="border-t border-edge-soft py-8 text-center text-[13.5px] text-ink-muted">
+            This repository lists no eBook extensions.
+          </div>
+        ))}
+    </div>
+  );
+}
+
+function Extensions() {
+  const [url, setUrl] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const add = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      await addEBookRepo(url.trim());
+      setUrl("");
+    } catch {
+      setError("Could not load that eBook extension repository");
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="flex flex-col gap-3">
+      <SectionLabel>Extensions</SectionLabel>
+      <div className={`flex flex-col gap-3 px-5 py-4 ${CARD}`}>
+        <div className="flex items-center gap-2.5">
+          <span className="grid h-9 w-9 place-items-center rounded-xl bg-canvas text-ink-muted ring-1 ring-edge-soft">
+            <ShieldCheck size={18} />
+          </span>
+          <span className="text-[15.5px] font-semibold text-ink">Bring your own extensions</span>
+        </div>
+        <p className="text-[13.5px] leading-relaxed text-ink-muted">
+          eBook extensions use Bear’s isolated worker, HTTP bridge, and HTML parser—the same
+          sandbox used by Manga extensions. Only add repositories you trust.
+        </p>
+      </div>
+      <div className={`flex flex-col gap-2.5 px-5 py-4 ${CARD}`}>
+        <div className="flex items-center gap-2 text-[13.5px] font-semibold text-ink">
+          <Blocks size={16} /> Add a repository
+        </div>
+        <div className="flex gap-2.5">
+          <input
+            value={url}
+            onChange={(event) => setUrl(event.target.value)}
+            onKeyDown={(event) => event.key === "Enter" && !busy && void add()}
+            placeholder="https://example.com/ebooks.json"
+            className={`${INPUT} min-w-0 flex-1`}
+          />
+          <button
+            type="button"
+            onClick={() => void add()}
+            disabled={busy || !url.trim()}
+            className="flex h-12 items-center gap-2 rounded-xl bg-accent px-5 text-[14.5px] font-semibold text-canvas disabled:opacity-60"
+          >
+            {busy ? <Loader2 size={17} className="animate-spin" /> : <Plus size={17} />} Add
+          </button>
+        </div>
+        {error && <p className="text-[13px] font-medium text-danger">{error}</p>}
+      </div>
+      {ebookRepoUrls().length ? (
+        ebookRepoUrls().map((item) => <RepoCard key={item} url={item} />)
+      ) : (
+        <p className="px-1 text-[13.5px] text-ink-subtle">
+          No repositories yet. Add one above to browse eBook extensions.
+        </p>
+      )}
+    </div>
+  );
+}
+
+export function EBookSourcesView({ onBack }: { onBack: () => void }) {
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    void loadEBookExtensions();
+    const bump = () => setTick((value) => value + 1);
+    const sources = subscribeEBookSources(bump);
+    const extensions = subscribeEBookExtensions(bump);
+    return () => {
+      sources();
+      extensions();
+    };
+  }, []);
+  const sources = useMemo(() => listEBookSources(), [tick]);
+  const total = sources.length + installedEBookPlugins().length;
+  return (
+    <div
+      className="mx-auto flex w-full max-w-2xl flex-col gap-6"
+      style={{ animation: "harbor-view-in 0.4s cubic-bezier(0.32,0.72,0.24,1) both" }}
+    >
+      <div className="flex items-center justify-between gap-3">
+        <button
+          type="button"
+          onClick={onBack}
+          className="inline-flex items-center gap-1.5 rounded-xl bg-elevated px-4 py-2.5 text-[15px] font-medium text-ink shadow-[0_2px_8px_-2px_rgba(0,0,0,0.4)] ring-1 ring-edge-soft hover:bg-raised active:scale-[0.97]"
+        >
+          <ChevronLeft size={19} /> Back
+        </button>
+        {total > 0 && (
+          <button
+            type="button"
+            onClick={onBack}
+            className="inline-flex items-center gap-2 rounded-xl bg-accent px-5 py-2.5 text-[15px] font-semibold text-canvas active:scale-[0.97]"
+          >
+            Done <span className="text-canvas/80">· {total}</span>
+            <ArrowRight size={18} />
+          </button>
+        )}
+      </div>
+      <div className="flex flex-col gap-2.5">
+        <h1 className="font-display text-[34px] font-medium tracking-tight text-ink">
+          eBook sources
+        </h1>
+        <p className="max-w-xl text-[15.5px] leading-relaxed text-ink-muted">
+          Bear does not host eBooks or sources. Open your own folder, connect a custom source, or
+          install extensions from a repository you trust—and mix as many as you like.
+        </p>
+      </div>
+      {sources.length > 0 && (
+        <div className="flex flex-col gap-3">
+          <SectionLabel>Your sources</SectionLabel>
+          {sources.map((source) => (
+            <SourceRow key={source.id} source={source} />
+          ))}
+        </div>
+      )}
+      <div className="flex flex-col gap-3">
+        <SectionLabel>Bring your own</SectionLabel>
+        <LocalFolder />
+        <CustomSource />
+      </div>
+      <Extensions />
+      <PluginGuide kind="ebook" />
+    </div>
+  );
+}
+

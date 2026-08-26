@@ -46,6 +46,7 @@ export type AnilistMediaEntry = {
   id: number;
   status: MediaListStatus;
   progress: number;
+  progressVolumes?: number;
   score: number;
   media: AnilistMedia;
 };

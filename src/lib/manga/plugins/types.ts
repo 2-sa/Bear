@@ -33,7 +33,7 @@ export type InstalledPlugin = {
   config?: Record<string, unknown>;
 };
 
-export type PluginMeta = { id: string; name: string; hasTags: boolean };
+export type PluginMeta = { id: string; name: string; hasTags: boolean; methods?: string[] };
 
 export type PluginHttpResponseType = "text" | "json" | "base64";
 
@@ -54,9 +54,7 @@ export type PluginHttpResult = {
   body: string;
 };
 
-export type HNode =
-  | { t: string; a: Record<string, string>; x: string; c: HNode[] }
-  | { x: string };
+export type HNode = { t: string; a: Record<string, string>; x: string; c: HNode[] } | { x: string };
 
 export type ToWorker =
   | { type: "init"; source: string; config: Record<string, unknown> }

@@ -138,6 +138,23 @@ const EXAMPLE_REPO = `{
 }
 `;
 
+const EBOOK_EXAMPLE_REPO = `{
+  "type": "ebook",
+  "name": "My eBook Repo",
+  "plugins": [
+    {
+      "id": "example-source",
+      "name": "Example Source",
+      "version": "1.3.0",
+      "lang": "en",
+      "nsfw": false,
+      "icon": "https://example-ebook-host.test/icon.png",
+      "entry": "example.plugin.js"
+    }
+  ]
+}
+`;
+
 const API_REFERENCE = String.raw`# Bear manga source plugin API
 
 Bear ships zero sources and hosts nothing. Every source is a plugin you install from a
@@ -351,10 +368,199 @@ function CodeBlock({ code }: { code: string }) {
   );
 }
 
-export function PluginGuide() {
+function asEBook(text: string): string {
+  return text
+    .replaceAll("MangaProvider", "EBookProvider")
+    .replaceAll("MangaSummary", "EBookSummary")
+    .replaceAll("MangaChapter", "EBookChapter")
+    .replaceAll("MangaTag", "EBookTag")
+    .replaceAll("MANGA_PAGE", "EBOOK_PAGE")
+    .replaceAll("manga", "ebook")
+    .replaceAll("Manga", "eBook");
+}
+
+function asEBookPlugin(text: string): string {
+  const converted = asEBook(text)
+    .replace(
+      "Covers and page images MUST be absolute http(s) or Harbor drops them.",
+      "Covers MUST be absolute http(s) or Harbor drops them.",
+    )
+    .replace(
+      "function cardToSummary(el) {",
+      `function cleanTitle(value) {
+  return (value || "")
+    .replace(/[^\\p{L}\\p{N}'’]+/gu, " ")
+    .replace(/\\s+(?:kol|كول)$/iu, "")
+    .replace(/\\s+/g, " ")
+    .trim();
+}
+
+function cardToSummary(el) {`,
+    )
+    .replace(
+      '  const href = link.attr("href") || "";',
+      `  const rawTitle = (link.attr("title") || el.querySelector(".title")?.text() || "").trim();
+  const href = link.attr("href") || "";`,
+    )
+    .replace(
+      '    title: (link.attr("title") || el.querySelector(".title")?.text() || "").trim(),',
+      "    title: cleanTitle(rawTitle),",
+    )
+    .replace(
+      '    cover: abs(img?.attr("data-src") || img?.attr("src")),',
+      `    cover: abs(img?.attr("data-src") || img?.attr("src")),
+    // Customize these selectors/markers for the site. Harbor drops true entries.
+    isFanMade:
+      !!el.querySelector("[data-edition='fan'], .fan-edition") ||
+      /(?:fan[ -]?made|fan edition|نسخة\\s*الفان)/iu.test(rawTitle),`,
+    )
+    .replace(
+      '      title: root.querySelector("h1")?.text() || id,',
+      '      title: cleanTitle(root.querySelector("h1")?.text() || id),',
+    )
+    .replace(
+      '      lastChapter: root.querySelector(".chapter-list li a")?.text(),',
+      `      chapters: Number(root.attr("data-chapters")) || undefined,
+      volumes: Number(root.attr("data-volumes")) || undefined,`,
+    )
+    .replace(
+      "  async chapters(id) {",
+      `  // Flat shape: return the source's explicit volume on every chapter. "0" is a
+  // valid first volume. Never derive a volume from words in the chapter title.
+  // Harbor also accepts [{ volume: "0", chapters: [...] }, ...].
+  async chapters(id) {`,
+    )
+    .replace(
+      '.map((a) => {\n        const href = a.attr("href") || "";',
+      `.map((a, position) => {
+        const href = a.attr("href") || "";`,
+    )
+    .replace(
+      '          volume: a.attr("data-volume") || null,',
+      `          // Keep the site's value stable: "0", "1", "2", and so on.
+          volume: a.attr("data-volume") ?? undefined,`,
+    )
+    .replace(
+      '          chapter: a.attr("data-number") || null,',
+      `          chapter: a.attr("data-number") || undefined,
+          // Zero-based reading position. Reverse newest-first source lists before mapping.
+          position,`,
+    )
+    .replace(
+      '          publishAt: a.querySelector(".date")?.attr("datetime") || undefined,',
+      `          publishAt: a.querySelector(".date")?.attr("datetime") || undefined,
+          // Use a number or the source's text count, such as "1.2K".
+          views: a.querySelector(".views")?.text().replace(/\\s*views?$/i, "").trim() || undefined,`,
+    );
+  const start = converted.indexOf("  async pageUrls(chapterId) {");
+  const end = converted.indexOf("\n\n  // Optional.", start);
+  if (start < 0 || end < 0) return converted;
+  return `${converted.slice(0, start)}  async content(chapterId) {
+    const doc = await getDoc("/" + chapterId);
+    return doc.querySelector(".chapter-content")?.text() || "";
+  },${converted.slice(end)}`;
+}
+
+const EBOOK_API_REFERENCE = String.raw`# Harbor eBook source plugin API
+
+An eBook plugin is one JavaScript file running in Harbor's isolated worker. It has no DOM,
+fetch, storage, files, or Tauri access. Networking and HTML parsing go through harbor.
+
+    type EBookProvider = {
+      id: string;
+      name: string;
+      popular(offset: number, tagId?: string): Promise<EBookSummary[]>;
+      search(query: string, offset: number, tagId?: string): Promise<EBookSummary[]>;
+      detail(id: string): Promise<EBookSummary | null>;
+      chapters(id: string): Promise<Array<EBookChapter | EBookVolume>>;
+      content(chapterId: string): Promise<string | { text?: string; images?: string[] }>;
+      tags?(): Promise<EBookTag[]>;
+    };
+
+    type EBookChapter = {
+      id: string;
+      chapter?: string;
+      title?: string;
+      position?: number;
+      volume?: string;
+      publishAt?: string;
+      views?: number | string;
+    };
+
+    type EBookVolume = { volume: string; chapters: EBookChapter[] };
+
+EBookSummary requires id and title. It may include altTitle, cover, year, status,
+description, author or authors, genres, chapters, volumes, siteUrl, and isFanMade. Covers
+and siteUrl must be absolute HTTP(S) URLs. Set isFanMade: true from the source site's own
+edition badge or metadata and Harbor will discard that entry. If a site only marks fan
+editions in titles, detect that site's marker in the plugin and set isFanMade rather than
+making Harbor guess. Return the canonical title; Harbor also normalizes punctuation used
+as word separators and removes trailing source branding such as "kol"/"كول" before
+metadata matching.
+
+EBookChapter requires id. chapter is the chapter number or source label. position is the
+zero-based reading position, where lower values are earlier. Supply position for every
+chapter or omit it from every chapter. When every chapter has a position, Harbor uses that
+exact order. Without positions, Harbor sorts numbered chapters numerically, followed by
+unnumbered chapters in natural title order. views accepts a number or the source's text
+count. publishAt accepts the source's date string.
+
+Return volume data in one of these two forms:
+
+    // Flat: repeat the explicit source volume on every chapter.
+    [{ id: "v0-c1", volume: "0", chapter: "1", position: 0, title: "Chapter 1", views: 1200 }]
+
+    // Nested: put each source volume around its chapters.
+    [{
+      volume: "0",
+      chapters: [{ id: "v0-c1", chapter: "1", position: 0, title: "Chapter 1", views: "1.2K" }]
+    }]
+
+Volume "0" is valid. Keep volume identifiers stable and return every source volume,
+including volumes with one chapter or more than 1000 chapters. Do not derive volume data
+from chapter titles. Omit volume only when the source has no volume structure. Do not
+return volume headers as fake chapters.
+
+Harbor groups chapters by the supplied volume and sorts numbered volumes numerically.
+content() returns readable text, or an object containing text and/or absolute HTTP(S)
+image URLs.
+
+Use harbor.http(url, opts) for requests and harbor.parseHtml(html) for selector parsing.
+harbor.http supports method, headers, body, responseType (text, json, or base64), and
+timeoutMs. Private, loopback, and link-local hosts are blocked; cookies and sensitive
+headers are stripped. harbor.parseHtml exposes querySelector, querySelectorAll, text(),
+and attr(name). Script, style, and iframe nodes are removed.
+
+Register a top-level plugin object or call harbor.register(provider). Host repo.json and
+the plugin file on HTTPS, then paste the manifest URL into eBook > Sources > Extensions.
+
+    {
+      "type": "ebook",
+      "name": "My eBook Repo",
+      "plugins": [{
+        "id": "my-source",
+        "name": "My Source",
+        "version": "1.3.0",
+        "lang": "en",
+        "nsfw": false,
+        "entry": "my-source.plugin.js"
+      }]
+    }
+
+The provider id must match the manifest id. repo.json contains installation metadata
+only. Return volumes, chapters, dates, and views from example.plugin.js. Source files are
+limited to 2 MB. Harbor validates popular, search, detail, chapters, and content during
+installation. Existing image-based plugins using pageUrls remain supported for
+compatibility.`;
+
+export function PluginGuide({ kind = "manga" }: { kind?: "manga" | "ebook" }) {
   const t = useT();
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState("");
+  const ebook = kind === "ebook";
+  const examplePlugin = ebook ? asEBookPlugin(EXAMPLE_PLUGIN) : EXAMPLE_PLUGIN;
+  const exampleRepo = ebook ? EBOOK_EXAMPLE_REPO : EXAMPLE_REPO;
+  const apiReference = ebook ? EBOOK_API_REFERENCE : API_REFERENCE;
 
   const copy = (what: string, text: string) => {
     void navigator.clipboard?.writeText(text);
@@ -394,7 +600,7 @@ export function PluginGuide() {
                 n={1}
                 title={t("Write one JavaScript file")}
                 body={t(
-                  "Implement the MangaProvider object: popular, search, detail, chapters, pageUrls, and optional tags. Nothing else.",
+                  `Implement the ${ebook ? "EBookProvider" : "MangaProvider"} object: popular, search, detail, chapters, ${ebook ? "content" : "pageUrls"}, and optional tags. Nothing else.`,
                 )}
               />
               <Step
@@ -427,7 +633,7 @@ export function PluginGuide() {
                 </span>
                 <button
                   type="button"
-                  onClick={() => copy("plugin", EXAMPLE_PLUGIN)}
+                  onClick={() => copy("plugin", examplePlugin)}
                   className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[12.5px] font-medium text-ink-subtle transition-colors hover:text-ink"
                 >
                   {copied === "plugin" ? (
@@ -438,7 +644,7 @@ export function PluginGuide() {
                   {copied === "plugin" ? t("Copied") : t("Copy")}
                 </button>
               </div>
-              <CodeBlock code={EXAMPLE_PLUGIN} />
+              <CodeBlock code={examplePlugin} />
             </div>
 
             <div className="flex flex-col gap-2.5">
@@ -448,7 +654,7 @@ export function PluginGuide() {
                 </span>
                 <button
                   type="button"
-                  onClick={() => copy("repo", EXAMPLE_REPO)}
+                  onClick={() => copy("repo", exampleRepo)}
                   className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[12.5px] font-medium text-ink-subtle transition-colors hover:text-ink"
                 >
                   {copied === "repo" ? (
@@ -459,13 +665,22 @@ export function PluginGuide() {
                   {copied === "repo" ? t("Copied") : t("Copy")}
                 </button>
               </div>
-              <CodeBlock code={EXAMPLE_REPO} />
+              <CodeBlock code={exampleRepo} />
+              {ebook && (
+                <p className="text-[12px] leading-relaxed text-ink-subtle">
+                  {t(
+                    "repo.json identifies and versions the plugin. Filtering, title cleanup, volumes, chapters, dates, and views are returned by example.plugin.js.",
+                  )}
+                </p>
+              )}
             </div>
 
             <div className="flex flex-wrap gap-2.5">
               <button
                 type="button"
-                onClick={() => saveFile("harbor-manga-plugin-api.md", API_REFERENCE, "text/markdown")}
+                onClick={() =>
+                  saveFile(`harbor-${kind}-plugin-api.md`, apiReference, "text/markdown")
+                }
                 className="inline-flex h-11 items-center gap-2 rounded-xl bg-accent px-5 text-[14px] font-semibold text-canvas transition-all hover:opacity-90 active:scale-95"
               >
                 <Download size={17} strokeWidth={2.2} />
@@ -473,7 +688,7 @@ export function PluginGuide() {
               </button>
               <button
                 type="button"
-                onClick={() => saveFile("example.plugin.js", EXAMPLE_PLUGIN, "text/javascript")}
+                onClick={() => saveFile("example.plugin.js", examplePlugin, "text/javascript")}
                 className="inline-flex h-11 items-center gap-2 rounded-xl bg-raised px-5 text-[14px] font-semibold text-ink-muted ring-1 ring-edge-soft transition-all hover:text-ink active:scale-95"
               >
                 <Download size={16} />
@@ -481,7 +696,7 @@ export function PluginGuide() {
               </button>
               <button
                 type="button"
-                onClick={() => saveFile("repo.json", EXAMPLE_REPO, "application/json")}
+                onClick={() => saveFile("repo.json", exampleRepo, "application/json")}
                 className="inline-flex h-11 items-center gap-2 rounded-xl bg-raised px-5 text-[14px] font-semibold text-ink-muted ring-1 ring-edge-soft transition-all hover:text-ink active:scale-95"
               >
                 <Download size={16} />

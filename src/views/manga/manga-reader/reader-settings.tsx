@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Check, Maximize, Minus, Plus, RotateCcw } from "lucide-react";
 import type { ReactNode } from "react";
 import { t, useT } from "@/lib/i18n";
 import type { ReaderNavPos, ReaderPrefs } from "./reader-types";
+import { ReaderSettingsFrame } from "./reader-settings-frame";
 
 const ICON = "/reader-icons";
 
@@ -29,7 +30,9 @@ const MODES: Array<{ v: ReaderPrefs["mode"]; label: string; icon?: string; glyph
   {
     v: "long-h",
     label: t("Horizontal"),
-    glyph: <img src={`${ICON}/layout-long.png`} alt="" className="h-12 w-12 rotate-90 object-contain" />,
+    glyph: (
+      <img src={`${ICON}/layout-long.png`} alt="" className="h-12 w-12 rotate-90 object-contain" />
+    ),
   },
   { v: "paged", label: t("Single"), icon: "layout-single" },
   { v: "double", label: t("Double"), icon: "layout-double" },
@@ -58,231 +61,190 @@ export function ReaderSettings({
 }) {
   const t = useT();
   const [cat, setCat] = useState<Cat>("mode");
-  const [shown, setShown] = useState(false);
-  const [closing, setClosing] = useState(false);
-  useEffect(() => {
-    const r = requestAnimationFrame(() => setShown(true));
-    return () => cancelAnimationFrame(r);
-  }, []);
-  useEffect(() => {
-    if (!closing) return;
-    const t = window.setTimeout(onClose, 180);
-    return () => window.clearTimeout(t);
-  }, [closing, onClose]);
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setClosing(true);
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, []);
-  const visible = shown && !closing;
 
   return (
-    <>
-      <div
-        aria-hidden
-        onClick={() => setClosing(true)}
-        className={`fixed inset-0 z-[87] bg-black/45 backdrop-blur-[2px] transition-opacity duration-200 ease-out ${visible ? "opacity-100" : "opacity-0"}`}
-      />
-      <div className="pointer-events-none absolute inset-x-0 bottom-24 z-[88] flex flex-col items-center px-4">
-        <div
-          style={{ transformOrigin: "bottom center" }}
-          className={`pointer-events-auto w-fit max-w-full overflow-hidden rounded-3xl border border-edge-soft bg-raised/95 shadow-[0_24px_60px_-16px_rgba(0,0,0,0.75)] backdrop-blur-2xl transition-all duration-200 ease-out ${visible ? "translate-y-0 scale-100 opacity-100" : "translate-y-4 scale-[0.96] opacity-0"}`}
-        >
-        <div className="border-b border-edge-soft/70 px-6 py-4">
-          <div key={cat} className="reader-tab-in">
-          {cat === "mode" && (
-            <div className="flex flex-col gap-4">
-              <CardRow>
-                {MODES.map((m) => (
-                  <IconCard
-                    key={m.v}
-                    icon={m.icon}
-                    glyph={m.glyph}
-                    label={m.label}
-                    selected={prefs.mode === m.v}
-                    onClick={() => onChange({ mode: m.v })}
-                  />
-                ))}
-              </CardRow>
-              {prefs.mode === "double" && (
-                <GapRow value={prefs.doubleGap} onChange={(g) => onChange({ doubleGap: g })} />
+    <ReaderSettingsFrame categories={CATS} category={cat} onCategory={setCat} onClose={onClose}>
+      {cat === "mode" && (
+        <div className="flex flex-col gap-4">
+          <CardRow>
+            {MODES.map((m) => (
+              <IconCard
+                key={m.v}
+                icon={m.icon}
+                glyph={m.glyph}
+                label={m.label}
+                selected={prefs.mode === m.v}
+                onClick={() => onChange({ mode: m.v })}
+              />
+            ))}
+          </CardRow>
+          {prefs.mode === "double" && (
+            <GapRow value={prefs.doubleGap} onChange={(g) => onChange({ doubleGap: g })} />
+          )}
+        </div>
+      )}
+      {cat === "direction" && (
+        <div className="flex flex-col gap-4">
+          <CardRow>
+            {DIRECTIONS.map((d) => (
+              <IconCard
+                key={String(d.v)}
+                icon={d.icon}
+                label={d.label}
+                selected={prefs.rtl === d.v}
+                onClick={() => onChange({ rtl: d.v })}
+              />
+            ))}
+          </CardRow>
+          <ToggleRow
+            label={t("Auto next chapter")}
+            on={prefs.autoNextChapter}
+            onToggle={() => onChange({ autoNextChapter: !prefs.autoNextChapter })}
+          />
+          <ToggleRow
+            label={t("Chapter-finished hint")}
+            on={!prefs.hideChapterEndHint}
+            onToggle={() => onChange({ hideChapterEndHint: !prefs.hideChapterEndHint })}
+          />
+        </div>
+      )}
+      {cat === "fit" && (
+        <CardRow>
+          <IconCard
+            icon="fit-width"
+            label={t("Fit width")}
+            selected={prefs.fit === "width"}
+            onClick={() => onChange({ fit: "width" })}
+          />
+          <IconCard
+            icon="fit-height"
+            label={t("Fit height")}
+            selected={prefs.fit === "height"}
+            onClick={() => onChange({ fit: "height" })}
+          />
+          <IconCard
+            glyph={<Maximize size={30} strokeWidth={1.6} />}
+            label={t("Original")}
+            selected={prefs.fit === "original"}
+            onClick={() => onChange({ fit: "original" })}
+          />
+        </CardRow>
+      )}
+      {cat === "nav" && (
+        <div className="flex flex-col gap-4">
+          <CardRow>
+            {NAV_POS.map((n) => (
+              <IconCard
+                key={n.v}
+                glyph={<PosGlyph pos={n.v} />}
+                label={n.label}
+                selected={prefs.navPos === n.v}
+                onClick={() => onChange({ navPos: n.v })}
+              />
+            ))}
+          </CardRow>
+          <div className="flex flex-col gap-1 border-t border-edge-soft/60 pt-3">
+            <ToggleRow
+              label={t("Focus mode")}
+              on={prefs.focusMode}
+              onToggle={() => onChange({ focusMode: !prefs.focusMode })}
+            />
+            <p className="max-w-[452px] text-[11.5px] leading-snug text-ink-subtle">
+              {t(
+                "Hide the top and bottom bars while reading. Arrows, page number, and bookmark stay; the bars return when your cursor reaches the screen edge.",
               )}
-            </div>
-          )}
-          {cat === "direction" && (
-            <div className="flex flex-col gap-4">
-              <CardRow>
-                {DIRECTIONS.map((d) => (
-                  <IconCard
-                    key={String(d.v)}
-                    icon={d.icon}
-                    label={d.label}
-                    selected={prefs.rtl === d.v}
-                    onClick={() => onChange({ rtl: d.v })}
-                  />
-                ))}
-              </CardRow>
-              <ToggleRow
-                label={t("Auto next chapter")}
-                on={prefs.autoNextChapter}
-                onToggle={() => onChange({ autoNextChapter: !prefs.autoNextChapter })}
-              />
-              <ToggleRow
-                label={t("Chapter-finished hint")}
-                on={!prefs.hideChapterEndHint}
-                onToggle={() => onChange({ hideChapterEndHint: !prefs.hideChapterEndHint })}
-              />
-            </div>
-          )}
-          {cat === "fit" && (
-            <CardRow>
-              <IconCard
-                icon="fit-width"
-                label={t("Fit width")}
-                selected={prefs.fit === "width"}
-                onClick={() => onChange({ fit: "width" })}
-              />
-              <IconCard
-                icon="fit-height"
-                label={t("Fit height")}
-                selected={prefs.fit === "height"}
-                onClick={() => onChange({ fit: "height" })}
-              />
-              <IconCard
-                glyph={<Maximize size={30} strokeWidth={1.6} />}
-                label={t("Original")}
-                selected={prefs.fit === "original"}
-                onClick={() => onChange({ fit: "original" })}
-              />
-            </CardRow>
-          )}
-          {cat === "nav" && (
-            <div className="flex flex-col gap-4">
-              <CardRow>
-                {NAV_POS.map((n) => (
-                  <IconCard
-                    key={n.v}
-                    glyph={<PosGlyph pos={n.v} />}
-                    label={n.label}
-                    selected={prefs.navPos === n.v}
-                    onClick={() => onChange({ navPos: n.v })}
-                  />
-                ))}
-              </CardRow>
-              <div className="flex flex-col gap-1 border-t border-edge-soft/60 pt-3">
-                <ToggleRow
-                  label={t("Focus mode")}
-                  on={prefs.focusMode}
-                  onToggle={() => onChange({ focusMode: !prefs.focusMode })}
-                />
-                <p className="max-w-[452px] text-[11.5px] leading-snug text-ink-subtle">
-                  {t("Hide the top and bottom bars while reading. Arrows, page number, and bookmark stay; the bars return when your cursor reaches the screen edge.")}
-                </p>
-              </div>
-            </div>
-          )}
-          {cat === "background" && (
-            <div className="flex items-center gap-3">
-              {BGS.map((b) => (
-                <button
-                  key={b.v}
-                  type="button"
-                  onClick={() => onChange({ bg: b.v })}
-                  aria-label={b.label}
-                  className={`flex w-24 flex-col items-center gap-2 rounded-2xl border p-3 transition duration-150 active:scale-[0.96] ${prefs.bg === b.v ? "border-accent bg-accent/10" : "border-edge-soft bg-elevated/40 hover:border-edge hover:bg-elevated"}`}
-                >
-                  <span
-                    className="grid h-12 w-12 place-items-center rounded-full ring-1 ring-black/20"
-                    style={{ background: b.color }}
-                  >
-                    {prefs.bg === b.v && (
-                      <Check
-                        size={18}
-                        strokeWidth={3}
-                        style={{ color: b.v === "light" ? "#0b0b0d" : "#fff" }}
-                      />
-                    )}
-                  </span>
-                  <span className="text-[12px] font-medium text-ink">{b.label}</span>
-                </button>
-              ))}
-            </div>
-          )}
-          {cat === "zoom" && (
-            <div className="flex w-full flex-col gap-4 py-1">
-              <div className="flex items-center justify-between">
-                <span className="text-[14px] font-semibold text-ink">{t("Zoom")}</span>
-                <div className="flex items-center gap-3">
-                  <span className="text-[16px] font-bold tabular-nums text-ink">
-                    {Math.round(prefs.zoom * 100)}%
-                  </span>
-                  {prefs.zoom !== 1 && (
-                    <button
-                      type="button"
-                      onClick={() => onChange({ zoom: 1 })}
-                      className="flex items-center gap-1 text-[11px] font-semibold text-ink-subtle transition duration-150 hover:text-ink active:scale-95"
-                    >
-                      <RotateCcw size={12} strokeWidth={2.4} />
-                      {t("Reset")}
-                    </button>
-                  )}
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <ZoomStep onClick={() => onChange({ zoom: Math.max(0.5, +(prefs.zoom - 0.1).toFixed(2)) })}>
-                  <Minus size={17} />
-                </ZoomStep>
-                <input
-                  type="range"
-                  min={0.5}
-                  max={3}
-                  step={0.1}
-                  value={prefs.zoom}
-                  onChange={(e) => onChange({ zoom: Number(e.target.value) })}
-                  aria-label={t("Zoom")}
-                  className="reader-slider flex-1"
-                />
-                <ZoomStep onClick={() => onChange({ zoom: Math.min(3, +(prefs.zoom + 0.1).toFixed(2)) })}>
-                  <Plus size={17} />
-                </ZoomStep>
-              </div>
-              <div className="grid grid-cols-5 gap-2">
-                {[0.5, 1, 1.5, 2, 3].map((z) => (
-                  <button
-                    key={z}
-                    type="button"
-                    onClick={() => onChange({ zoom: z })}
-                    className={`rounded-xl py-2 text-[12.5px] font-semibold tabular-nums transition duration-150 active:scale-95 ${
-                      Math.abs(prefs.zoom - z) < 0.001
-                        ? "bg-accent/15 text-accent ring-1 ring-accent/40"
-                        : "bg-elevated/50 text-ink-muted ring-1 ring-edge-soft hover:bg-elevated hover:text-ink"
-                    }`}
-                  >
-                    {Math.round(z * 100)}%
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+            </p>
           </div>
         </div>
-
-        <div className="flex items-stretch gap-1 px-3 py-2.5">
-          {CATS.map((c) => (
-            <ToolButton
-              key={c.id}
-              icon={c.icon}
-              label={c.label}
-              active={cat === c.id}
-              onClick={() => setCat(c.id)}
-            />
+      )}
+      {cat === "background" && (
+        <div className="flex items-center gap-3">
+          {BGS.map((b) => (
+            <button
+              key={b.v}
+              type="button"
+              onClick={() => onChange({ bg: b.v })}
+              aria-label={b.label}
+              className={`flex w-24 flex-col items-center gap-2 rounded-2xl border p-3 transition duration-150 active:scale-[0.96] ${prefs.bg === b.v ? "border-accent bg-accent/10" : "border-edge-soft bg-elevated/40 hover:border-edge hover:bg-elevated"}`}
+            >
+              <span
+                className="grid h-12 w-12 place-items-center rounded-full ring-1 ring-black/20"
+                style={{ background: b.color }}
+              >
+                {prefs.bg === b.v && (
+                  <Check
+                    size={18}
+                    strokeWidth={3}
+                    style={{ color: b.v === "light" ? "#0b0b0d" : "#fff" }}
+                  />
+                )}
+              </span>
+              <span className="text-[12px] font-medium text-ink">{b.label}</span>
+            </button>
           ))}
         </div>
-      </div>
-      </div>
-    </>
+      )}
+      {cat === "zoom" && (
+        <div className="flex w-full flex-col gap-4 py-1">
+          <div className="flex items-center justify-between">
+            <span className="text-[14px] font-semibold text-ink">{t("Zoom")}</span>
+            <div className="flex items-center gap-3">
+              <span className="text-[16px] font-bold tabular-nums text-ink">
+                {Math.round(prefs.zoom * 100)}%
+              </span>
+              {prefs.zoom !== 1 && (
+                <button
+                  type="button"
+                  onClick={() => onChange({ zoom: 1 })}
+                  className="flex items-center gap-1 text-[11px] font-semibold text-ink-subtle transition duration-150 hover:text-ink active:scale-95"
+                >
+                  <RotateCcw size={12} strokeWidth={2.4} />
+                  {t("Reset")}
+                </button>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <ZoomStep
+              onClick={() => onChange({ zoom: Math.max(0.5, +(prefs.zoom - 0.1).toFixed(2)) })}
+            >
+              <Minus size={17} />
+            </ZoomStep>
+            <input
+              type="range"
+              min={0.5}
+              max={3}
+              step={0.1}
+              value={prefs.zoom}
+              onChange={(e) => onChange({ zoom: Number(e.target.value) })}
+              aria-label={t("Zoom")}
+              className="reader-slider flex-1"
+            />
+            <ZoomStep
+              onClick={() => onChange({ zoom: Math.min(3, +(prefs.zoom + 0.1).toFixed(2)) })}
+            >
+              <Plus size={17} />
+            </ZoomStep>
+          </div>
+          <div className="grid grid-cols-5 gap-2">
+            {[0.5, 1, 1.5, 2, 3].map((z) => (
+              <button
+                key={z}
+                type="button"
+                onClick={() => onChange({ zoom: z })}
+                className={`rounded-xl py-2 text-[12.5px] font-semibold tabular-nums transition duration-150 active:scale-95 ${
+                  Math.abs(prefs.zoom - z) < 0.001
+                    ? "bg-accent/15 text-accent ring-1 ring-accent/40"
+                    : "bg-elevated/50 text-ink-muted ring-1 ring-edge-soft hover:bg-elevated hover:text-ink"
+                }`}
+              >
+                {Math.round(z * 100)}%
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </ReaderSettingsFrame>
   );
 }
 
@@ -319,37 +281,6 @@ function IconCard({
         {glyph ?? <img src={`${ICON}/${icon}.png`} alt="" className="h-12 w-12 object-contain" />}
       </span>
       <span className="text-[12px] font-medium text-ink">{label}</span>
-    </button>
-  );
-}
-
-function ToolButton({
-  icon,
-  label,
-  active,
-  onClick,
-}: {
-  icon: string;
-  label: string;
-  active: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      onMouseDown={(e) => e.preventDefault()}
-      aria-pressed={active}
-      className={`flex min-w-[68px] flex-1 flex-col items-center gap-1 rounded-2xl px-2 py-2 transition duration-150 active:scale-[0.94] ${active ? "bg-accent/15" : "hover:bg-elevated/70"}`}
-    >
-      <img
-        src={`${ICON}/${icon}.png`}
-        alt=""
-        className={`h-[26px] w-[26px] object-contain transition ${active ? "opacity-100" : "opacity-65"}`}
-      />
-      <span className={`text-[10.5px] font-medium ${active ? "text-accent" : "text-ink-muted"}`}>
-        {label}
-      </span>
     </button>
   );
 }
