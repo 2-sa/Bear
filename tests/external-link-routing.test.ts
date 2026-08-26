@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { renderBbcode } from "../src/lib/social/bbcode.ts";
-import { handleLinkOutActivation } from "../src/lib/social/link-out-activation.ts";
+import { handleLinkOutActivation, safeExternalUrl } from "../src/lib/social/link-out-activation.ts";
 
 const interstitialSource = readFileSync(
   new URL("../src/components/link-out-interstitial.tsx", import.meta.url),
@@ -26,6 +26,34 @@ test("bbcode link safety policy remains unchanged", () => {
   assert.doesNotMatch(renderBbcode("https://bit.ly/harbor-test"), /<a /);
 });
 
+test("external link routing accepts only HTTP(S) destinations", () => {
+  assert.equal(safeExternalUrl(" https://example.com/path "), "https://example.com/path");
+  assert.equal(safeExternalUrl("http://example.com/path"), "http://example.com/path");
+  assert.equal(safeExternalUrl("javascript:alert(1)"), null);
+  assert.equal(safeExternalUrl("file:///C:/Windows/System32/calc.exe"), null);
+  assert.equal(safeExternalUrl("not a URL"), null);
+});
+
+test("unsafe delegated links are consumed without being opened", () => {
+  let prevented = false;
+  const opened: string[] = [];
+  const handled = handleLinkOutActivation(
+    {
+      target: {
+        closest: () => ({ getAttribute: () => "javascript:alert(1)" }),
+      } as unknown as EventTarget,
+      preventDefault: () => {
+        prevented = true;
+      },
+    },
+    (href) => opened.push(href),
+  );
+
+  assert.equal(handled, true);
+  assert.equal(prevented, true);
+  assert.deepEqual(opened, []);
+});
+
 test("delegated primary and middle clicks prevent WebView navigation and route the exact URL", () => {
   for (const button of [0, 1]) {
     const opened: string[] = [];
@@ -36,7 +64,9 @@ test("delegated primary and middle clicks prevent WebView navigation and route t
         target: {
           closest: (selector: string) => {
             assert.equal(selector, "a");
-            return { getAttribute: (name: string) => (name === "href" ? "https://example.com/path" : null) };
+            return {
+              getAttribute: (name: string) => (name === "href" ? "https://example.com/path" : null),
+            };
           },
         } as unknown as EventTarget,
         preventDefault: () => {
@@ -95,10 +125,7 @@ test("the global confirmation owns back navigation and modal focus", () => {
   assert.match(interstitialSource, /pushBackHandler\(/);
   assert.match(interstitialSource, /isBackKey\(e\)/);
   assert.match(interstitialSource, /addEventListener\("keydown", onKey, true\)/);
-  assert.match(
-    interstitialSource,
-    /addEventListener\("harbor:local-back", onLocalBack, true\)/,
-  );
+  assert.match(interstitialSource, /addEventListener\("harbor:local-back", onLocalBack, true\)/);
   assert.match(interstitialSource, /role="dialog"/);
   assert.match(interstitialSource, /aria-modal="true"/);
 });

@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from "react";
+import { safeExternalUrl } from "./link-out-activation";
 
 export type LinkOutJourney = { url: string; generation: number };
 export type LinkOutOpenCallbacks = {
@@ -42,7 +43,9 @@ export function createLinkOutStore() {
 const linkOutStore = createLinkOutStore();
 
 export function openLinkOut(url: string): void {
-  linkOutStore.open(url);
+  const safeUrl = safeExternalUrl(url || "");
+  if (!safeUrl) return;
+  linkOutStore.open(safeUrl);
 }
 
 export function closeLinkOut(): void {
