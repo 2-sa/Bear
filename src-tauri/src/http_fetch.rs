@@ -131,7 +131,7 @@ fn is_followable_redirect(status: reqwest::StatusCode) -> bool {
 
 fn apply_redirect_method(
     method: &mut reqwest::Method,
-    body: &mut Option<String>,
+    body: &mut Option<Vec<u8>>,
     status: reqwest::StatusCode,
 ) {
     use reqwest::{Method, StatusCode};
@@ -177,6 +177,7 @@ pub struct HarborFetchArgs {
     pub method: Option<String>,
     pub headers: Option<HashMap<String, String>>,
     pub body: Option<String>,
+    pub body_base64: Option<String>,
     pub timeout_ms: Option<u64>,
     pub response_type: Option<String>,
 }
@@ -261,7 +262,14 @@ async fn harbor_fetch_inner(
         headers.push(("Accept-Language".to_string(), "en-US,en;q=0.9".to_string()));
     }
 
-    let mut body: Option<String> = args.body;
+    let mut body = match args.body_base64 {
+        Some(value) => Some(
+            base64::engine::general_purpose::STANDARD
+                .decode(value)
+                .map_err(|error| format!("request base64: {error}"))?,
+        ),
+        None => args.body.map(String::into_bytes),
+    };
     let mut redirect_count = 0usize;
 
     let res = loop {

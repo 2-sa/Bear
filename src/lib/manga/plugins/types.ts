@@ -54,6 +54,21 @@ export type PluginHttpResult = {
   body: string;
 };
 
+export type PluginGrpcOpts = {
+  headers?: Record<string, string>;
+  timeoutMs?: number;
+  mode?: "grpc" | "grpc-web";
+  allowReferer?: string;
+  allowCookie?: string;
+};
+
+export type PluginGrpcResult = PluginHttpResult & {
+  messages: string[];
+  trailers: Record<string, string>;
+  grpcStatus?: number;
+  grpcMessage?: string;
+};
+
 export type HNode = { t: string; a: Record<string, string>; x: string; c: HNode[] } | { x: string };
 
 export type ToWorker =
@@ -69,6 +84,11 @@ export type FromWorker =
   | { type: "result"; id: string; value: unknown }
   | { type: "error"; id: string; error: string }
   | { type: "http"; id: string; payload: { url: string; opts: PluginHttpOpts } }
+  | {
+      type: "grpc";
+      id: string;
+      payload: { url: string; requestBase64: string; opts: PluginGrpcOpts };
+    }
   | { type: "parse"; id: string; payload: { html: string } }
   | { type: "log"; level: string; args: unknown[] }
   | { type: "pong" };

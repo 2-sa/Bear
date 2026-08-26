@@ -104,7 +104,24 @@ type HarborFetchResponse = {
   headers?: Record<string, string>;
 };
 
-async function tauriHarborFetch(input: string, init?: RequestInit): Promise<Response> {
+function bytesToBase64(bytes: Uint8Array): string {
+  let binary = "";
+  for (let offset = 0; offset < bytes.length; offset += 0x8000)
+    binary += String.fromCharCode(...bytes.subarray(offset, offset + 0x8000));
+  return btoa(binary);
+}
+
+function base64ToBytes(value: string): Uint8Array {
+  const binary = atob(value);
+  return Uint8Array.from(binary, (character) => character.charCodeAt(0));
+}
+
+async function tauriHarborFetch(
+  input: string,
+  init?: RequestInit,
+  responseType?: "base64",
+  timeoutMs = 30000,
+): Promise<Response> {
   const headers: Record<string, string> = {};
   if (init?.headers) {
     const h = new Headers(init.headers as HeadersInit);
@@ -112,12 +129,18 @@ async function tauriHarborFetch(input: string, init?: RequestInit): Promise<Resp
       headers[k] = v;
     });
   }
+  const binaryBody =
+    init?.body instanceof ArrayBuffer
+      ? new Uint8Array(init.body)
+      : ArrayBuffer.isView(init?.body)
+        ? new Uint8Array(init.body.buffer, init.body.byteOffset, init.body.byteLength)
+        : undefined;
   const body =
     typeof init?.body === "string"
       ? init.body
       : init?.body instanceof URLSearchParams
         ? init.body.toString()
-        : init?.body
+        : init?.body && !binaryBody
           ? JSON.stringify(init.body)
           : undefined;
   const resp = await invoke<HarborFetchResponse>("harbor_fetch", {
@@ -126,10 +149,12 @@ async function tauriHarborFetch(input: string, init?: RequestInit): Promise<Resp
       method: init?.method ?? "GET",
       headers,
       body,
-      timeoutMs: 30000,
+      bodyBase64: binaryBody ? bytesToBase64(binaryBody) : undefined,
+      timeoutMs,
+      responseType,
     },
   });
-  return new Response(resp.body, {
+  return new Response(responseType === "base64" ? base64ToBytes(resp.body) : resp.body, {
     status: resp.status,
     headers: resp.headers ?? (resp.contentType ? { "content-type": resp.contentType } : {}),
   });
@@ -153,7 +178,11 @@ function normalizeAbort(p: Promise<Response>): Promise<Response> {
 
 const HARBOR_FETCH_DEADLINE_MS = 35000;
 
-function withDeadline(p: Promise<Response>, signal?: AbortSignal | null): Promise<Response> {
+function withDeadline(
+  p: Promise<Response>,
+  signal?: AbortSignal | null,
+  deadlineMs = HARBOR_FETCH_DEADLINE_MS,
+): Promise<Response> {
   if (signal?.aborted) return Promise.reject(new DOMException("Aborted", "AbortError"));
   return new Promise<Response>((resolve, reject) => {
     let settled = false;
@@ -167,7 +196,7 @@ function withDeadline(p: Promise<Response>, signal?: AbortSignal | null): Promis
     const timer = setTimeout(
       () =>
         finish(() => reject(new DOMException("harbor_fetch exceeded deadline", "TimeoutError"))),
-      HARBOR_FETCH_DEADLINE_MS,
+      deadlineMs,
     );
     cleanups.push(() => clearTimeout(timer));
     if (signal) {
@@ -213,3 +242,21 @@ export const safeFetch: typeof fetch = (input, init) => {
   }
   return fetch(input, init);
 };
+
+export function safeFetchBytes(
+  input: RequestInfo | URL,
+  init?: RequestInit,
+  timeoutMs = 30000,
+): Promise<Response> {
+  const target = typeof input === "string" ? input : input instanceof URL ? input.href : null;
+  if (!isTauri || !target) return safeFetch(input, init);
+  if (isBlockedUrl(target)) {
+    noteBlocked();
+    return Promise.reject(new TrackerBlockedError(new URL(target).hostname));
+  }
+  return withDeadline(
+    tauriHarborFetch(target, init, "base64", timeoutMs),
+    init?.signal,
+    timeoutMs + 5_000,
+  );
+}

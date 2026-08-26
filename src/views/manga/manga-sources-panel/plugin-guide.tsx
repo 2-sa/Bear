@@ -144,8 +144,8 @@ const EBOOK_EXAMPLE_REPO = `{
   "plugins": [
     {
       "id": "example-source",
-      "name": "Example Source",
-      "version": "1.4.0",
+      "name": "Example eBook Source",
+      "version": "1.5.0",
       "lang": "en",
       "nsfw": false,
       "icon": "https://example-ebook-host.test/icon.png",
@@ -219,6 +219,7 @@ Bear sanitizes everything you return. Hard rules:
 ## 3. The host bridge (the "harbor" object)
 
     harbor.http(url, opts)     // mediated network request
+    harbor.grpc(url, bytes, opts) // binary gRPC request
     harbor.parseHtml(html)     // parse HTML into a queryable tree
     harbor.register(provider)  // register your provider (alternative to a global)
     harbor.log(...args)        // debug log
@@ -242,6 +243,21 @@ Host rules for harbor.http:
   user-agent.
 - Cookies are never sent. The response body is capped at 8 MB.
 - At most 6 in-flight harbor.http calls per plugin. Batch with care.
+
+harbor.grpc(url, request, opts) sends one framed Protobuf request. request may be a
+Uint8Array, ArrayBuffer, byte array, or base64 string. The plugin remains responsible for
+encoding and decoding its source's Protobuf schema.
+
+    { headers?: Record<string, string>,
+      timeoutMs?: number,
+      mode?: "grpc" | "grpc-web" } // default "grpc"
+
+It returns { status, ok, headers, body, messages, trailers, grpcStatus, grpcMessage }.
+body is the first response message as Uint8Array; messages contains every response frame,
+so unary and server-streaming methods are supported. Bear requests identity encoding and
+rejects compressed, malformed, oversized, or incomplete frames. Standard binary gRPC is
+for Tauri desktop/mobile; web deployments require a CORS-enabled binary gRPC-Web endpoint.
+The same URL, 8 MB, timeout, header, and six-request concurrency protections apply.
 
 harbor.parseHtml(html) => Promise<HDocument>. The host strips script, style, and iframe
 tags before you see the tree, so you CANNOT read data hidden in a script tag this way. For
@@ -381,9 +397,36 @@ function asEBook(text: string): string {
 
 function asEBookPlugin(text: string): string {
   const converted = asEBook(text)
+    .replace("Bear ebook source plugin", "Bear eBook source plugin")
     .replace(
       "Covers and page images MUST be absolute http(s) or Harbor drops them.",
       "Covers MUST be absolute http(s) or Harbor drops them.",
+    )
+    .replace(
+      `async function getDoc(path) {
+  const res = await harbor.http(BASE + path, { responseType: "text" });
+  if (!res.ok) throw new Error("http " + res.status + " for " + path);
+  return harbor.parseHtml(res.body);
+}`,
+      `async function getDoc(path) {
+  const res = await harbor.http(BASE + path, { responseType: "text" });
+  if (!res.ok) throw new Error("http " + res.status + " for " + path);
+  return harbor.parseHtml(res.body);
+}
+
+// Binary gRPC source helper. Pass the raw Protobuf message—not a five-byte gRPC
+// frame. Bundle the source's generated Protobuf encode/decode functions into this
+// file, then use the decoded values in popular/search/detail/chapters/content.
+async function grpcMessages(methodPath, requestBytes, decodeMessage) {
+  const res = await harbor.grpc(BASE + methodPath, requestBytes, {
+    mode: "grpc", // use "grpc-web" only for a gRPC-Web endpoint
+    timeoutMs: 20000,
+  });
+  if (!res.ok) {
+    throw new Error("gRPC " + (res.grpcStatus ?? res.status) + ": " + (res.grpcMessage || methodPath));
+  }
+  return res.messages.map(decodeMessage);
+}`,
     )
     .replace(
       "function cardToSummary(el) {",
@@ -609,11 +652,59 @@ Harbor groups chapters by the supplied volume and sorts numbered volumes numeric
 content() returns readable text, or an object containing text and/or absolute HTTP(S)
 image URLs.
 
-Use harbor.http(url, opts) for requests and harbor.parseHtml(html) for selector parsing.
+Use harbor.http(url, opts), harbor.grpc(url, protobufBytes, opts) for binary gRPC, and
+harbor.parseHtml(html) for selector parsing.
 harbor.http supports method, headers, body, responseType (text, json, or base64), and
 timeoutMs. Private, loopback, and link-local hosts are blocked; cookies and sensitive
 headers are stripped. harbor.parseHtml exposes querySelector, querySelectorAll, text(),
 and attr(name). Script, style, and iframe nodes are removed.
+
+## Binary gRPC transport
+
+Use the full RPC method URL, such as
+https://source.example/package.Service/ListBooks. request is one raw Protobuf message;
+Bear adds the five-byte gRPC frame. The plugin must bundle the source's generated or
+handwritten Protobuf encoder and decoder because Bear cannot infer a source's schema.
+
+    type GrpcOptions = {
+      headers?: Record<string, string>;
+      timeoutMs?: number;             // clamped to 1,000-45,000 ms
+      mode?: "grpc" | "grpc-web";     // defaults to "grpc"
+    };
+
+    type GrpcResult = {
+      status: number;                 // HTTP status
+      ok: boolean;                    // HTTP success and successful gRPC status
+      headers: Record<string, string>;
+      body: Uint8Array;               // first decoded gRPC frame payload
+      messages: Uint8Array[];         // every payload, in server order
+      trailers: Record<string, string>;
+      grpcStatus?: number;
+      grpcMessage?: string;
+    };
+
+    const request = BookListRequest.encode({ offset: 0, limit: 48 }).finish();
+    const result = await harbor.grpc(
+      "https://source.example/books.BookService/ListBooks",
+      request,
+      { mode: "grpc", timeoutMs: 20000 },
+    );
+    if (!result.ok) throw new Error(result.grpcMessage || "gRPC " + result.grpcStatus);
+    const books = result.messages.map((bytes) => BookListReply.decode(bytes));
+
+request accepts Uint8Array, ArrayBuffer, a byte array, or base64. body and messages are
+Uint8Array values inside the plugin. Unary calls normally return one message; server
+streaming returns every message in messages. Bear currently requests identity encoding
+and rejects compressed, malformed, incomplete, or responses larger than 8 MB. Native
+Tauri builds use binary gRPC. Browser builds require a CORS-enabled binary gRPC-Web
+endpoint and mode: "grpc-web"; browsers cannot call an ordinary HTTP/2 gRPC endpoint.
+Transport failures reject the Promise. A server gRPC error resolves with ok: false and
+grpcStatus/grpcMessage when supplied by the endpoint.
+
+The same six in-flight request limit, URL protection, header filtering, and timeouts used
+by harbor.http apply to harbor.grpc. Authorization, cookies, private/loopback hosts, and
+tracker hosts remain blocked. repo.json needs no transport field: it only identifies and
+versions the plugin, while example.plugin.js chooses harbor.http or harbor.grpc.
 
 Register a top-level plugin object or call harbor.register(provider). Host repo.json and
 the plugin file on HTTPS, then paste the manifest URL into eBook > Sources > Extensions.
@@ -622,9 +713,9 @@ the plugin file on HTTPS, then paste the manifest URL into eBook > Sources > Ext
       "type": "ebook",
       "name": "My eBook Repo",
       "plugins": [{
-        "id": "my-source",
-        "name": "My Source",
-        "version": "1.4.0",
+      "id": "my-source",
+      "name": "My Source",
+      "version": "1.5.0",
         "lang": "en",
         "nsfw": false,
         "entry": "my-source.plugin.js"
@@ -692,7 +783,9 @@ export function PluginGuide({ kind = "manga" }: { kind?: "manga" | "ebook" }) {
                 n={2}
                 title={t("Use the harbor bridge")}
                 body={t(
-                  "Reach the network with harbor.http(url, opts) and parse HTML with harbor.parseHtml(html). There is no fetch, DOM, or storage in the sandbox.",
+                  ebook
+                    ? "Reach HTTP sources with harbor.http(url, opts), binary gRPC sources with harbor.grpc(url, protobufBytes, opts), and parse HTML with harbor.parseHtml(html). There is no fetch, DOM, or storage in the sandbox."
+                    : "Reach the network with harbor.http(url, opts) and parse HTML with harbor.parseHtml(html). There is no fetch, DOM, or storage in the sandbox.",
                 )}
               />
               <Step

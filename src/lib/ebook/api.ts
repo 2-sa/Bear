@@ -1079,15 +1079,6 @@ function sourceFallback(ebook: EBook): EBook {
   return {
     ...ebook,
     title: localized || alternatives[0] || ebook.title,
-    authors: [],
-    cover: undefined,
-    banner: undefined,
-    description: "",
-    year: undefined,
-    status: undefined,
-    genres: ebook.genres,
-    score: undefined,
-    siteUrl: undefined,
   };
 }
 
@@ -1119,23 +1110,25 @@ export function mergeEBookMetadata(sources: EBook[], metadata: EBook[]): EBook[]
       wikidataId: meta.wikidataId ?? source.wikidataId,
       isbn: meta.isbn ?? source.isbn,
       title: keepArabicSource ? source.title : meta.title || source.title,
-      altTitle: meta.altTitle,
-      authors: meta.authors,
-      cover: keepArabicSource ? source.cover || meta.cover : meta.cover,
-      banner: meta.banner,
-      description: keepArabicSource ? source.description || meta.description : meta.description,
+      altTitle: meta.altTitle ?? source.altTitle,
+      authors: meta.authors.length ? meta.authors : source.authors,
+      cover: keepArabicSource ? source.cover || meta.cover : meta.cover || source.cover,
+      banner: meta.banner ?? source.banner,
+      description: keepArabicSource
+        ? source.description || meta.description
+        : meta.description || source.description,
       genres:
         keepArabicSource && source.genres.length
           ? source.genres
           : metadataGenres.length
             ? metadataGenres
             : ebook.genres,
-      year: meta.year,
-      status: meta.status,
+      year: meta.year ?? source.year,
+      status: meta.status ?? source.status,
       chapters: source.chapters,
       volumes: source.volumes,
-      score: meta.score,
-      siteUrl: meta.siteUrl,
+      score: meta.score ?? source.score,
+      siteUrl: meta.siteUrl ?? source.siteUrl,
     };
   });
 }

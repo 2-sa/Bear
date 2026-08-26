@@ -347,6 +347,45 @@ function CustomSource() {
   );
 }
 
+function InstalledSourceRow({ item }: { item: ReturnType<typeof installedEBookPlugins>[number] }) {
+  return (
+    <div className="flex items-center gap-3.5 px-5 py-3.5">
+      <span className="grid h-10 w-10 place-items-center rounded-xl bg-canvas text-[12px] font-bold text-ink-muted ring-1 ring-edge-soft">
+        {item.name
+          .replace(/[^a-z0-9]/gi, "")
+          .slice(0, 2)
+          .toUpperCase()}
+      </span>
+      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <span className="truncate text-[15px] font-semibold text-ink">{item.name}</span>
+        <span className="text-[12.5px] text-ink-muted">
+          {item.lang} · v{item.version}
+        </span>
+      </span>
+      <button
+        type="button"
+        role="switch"
+        aria-label={`Enable ${item.name}`}
+        aria-checked={item.enabled}
+        onClick={() => void setEBookPluginEnabled(item.id, !item.enabled)}
+        className={`relative h-6 w-10 rounded-full ${item.enabled ? "bg-ink" : "bg-edge"}`}
+      >
+        <span
+          className={`absolute top-0.5 h-5 w-5 rounded-full bg-canvas transition-transform ${item.enabled ? "start-[18px]" : "start-0.5"}`}
+        />
+      </button>
+      <button
+        type="button"
+        aria-label={`Remove ${item.name}`}
+        onClick={() => void removeEBookPlugin(item.id)}
+        className="grid h-9 w-9 place-items-center rounded-lg bg-raised text-ink-subtle ring-1 ring-edge-soft hover:text-danger"
+      >
+        <Trash2 size={16} />
+      </button>
+    </div>
+  );
+}
+
 function PluginRow({ item, repoUrl }: { item: EBookPluginManifest; repoUrl: string }) {
   const installed = installedEBookPlugins().find((plugin) => plugin.id === item.id);
   const [busy, setBusy] = useState(false);
@@ -413,7 +452,8 @@ function PluginRow({ item, repoUrl }: { item: EBookPluginManifest; repoUrl: stri
 function RepoCard({ url }: { url: string }) {
   const [repo, setRepo] = useState<EBookPluginRepo | null>(null);
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
-  const [attempt, setAttempt] = useState(0);
+  const [updating, setUpdating] = useState(false);
+  const [updateError, setUpdateError] = useState(false);
   useEffect(() => {
     let cancelled = false;
     setState("loading");
@@ -428,7 +468,29 @@ function RepoCard({ url }: { url: string }) {
     return () => {
       cancelled = true;
     };
-  }, [url, attempt]);
+  }, [url]);
+  const update = async () => {
+    setUpdating(true);
+    setUpdateError(false);
+    try {
+      const next = await browseEBookRepo(url);
+      const installed = new Map(
+        installedEBookPlugins()
+          .filter((item) => item.repoUrl === url)
+          .map((item) => [item.id, item]),
+      );
+      for (const item of next.plugins) {
+        const current = installed.get(item.id);
+        if (current && current.version !== item.version) await installEBookPlugin(item, url);
+      }
+      setRepo(next);
+      setState("ready");
+    } catch {
+      setUpdateError(true);
+    } finally {
+      setUpdating(false);
+    }
+  };
   return (
     <div className={`${CARD} overflow-hidden`}>
       <div className="flex items-center gap-3.5 px-5 py-3.5">
@@ -438,16 +500,16 @@ function RepoCard({ url }: { url: string }) {
         <span className="min-w-0 flex-1 truncate text-[15.5px] font-semibold text-ink">
           {repo?.name ?? new URL(url).host}
         </span>
-        {state === "error" && (
-          <button
-            type="button"
-            aria-label="Retry"
-            onClick={() => setAttempt((value) => value + 1)}
-            className="grid h-9 w-9 place-items-center rounded-lg bg-raised text-ink-subtle ring-1 ring-edge-soft"
-          >
-            <RefreshCw size={16} />
-          </button>
-        )}
+        <button
+          type="button"
+          aria-label="Update repository"
+          title="Update repository"
+          disabled={updating || state === "loading"}
+          onClick={() => void update()}
+          className="grid h-9 w-9 place-items-center rounded-lg bg-raised text-ink-subtle ring-1 ring-edge-soft hover:text-accent disabled:opacity-50"
+        >
+          <RefreshCw size={16} className={updating ? "animate-spin" : ""} />
+        </button>
         <button
           type="button"
           aria-label="Remove repository"
@@ -457,6 +519,11 @@ function RepoCard({ url }: { url: string }) {
           <Trash2 size={16} />
         </button>
       </div>
+      {updateError && (
+        <p className="border-t border-edge-soft px-5 py-2.5 text-[13px] font-medium text-danger">
+          Repository update failed.
+        </p>
+      )}
       {state === "loading" && (
         <div className="flex items-center justify-center gap-2 border-t border-edge-soft py-8 text-[13.5px] text-ink-subtle">
           <Loader2 size={17} className="animate-spin" /> Loading extensions…
@@ -562,7 +629,8 @@ export function EBookSourcesView({ onBack }: { onBack: () => void }) {
     };
   }, []);
   const sources = useMemo(() => listEBookSources(), [tick]);
-  const total = sources.length + installedEBookPlugins().length;
+  const installed = useMemo(() => installedEBookPlugins(), [tick]);
+  const total = sources.length + installed.length;
   return (
     <div
       className="mx-auto flex w-full max-w-2xl flex-col gap-6"
@@ -596,6 +664,16 @@ export function EBookSourcesView({ onBack }: { onBack: () => void }) {
           install extensions from a repository you trust—and mix as many as you like.
         </p>
       </div>
+      {installed.length > 0 && (
+        <div className="flex flex-col gap-3">
+          <SectionLabel>Installed sources</SectionLabel>
+          <div className={`${CARD} divide-y divide-edge-soft overflow-hidden`}>
+            {installed.map((source) => (
+              <InstalledSourceRow key={source.id} item={source} />
+            ))}
+          </div>
+        </div>
+      )}
       {sources.length > 0 && (
         <div className="flex flex-col gap-3">
           <SectionLabel>Your sources</SectionLabel>
