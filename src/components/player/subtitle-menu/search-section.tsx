@@ -80,16 +80,20 @@ export function SearchSection(props: SubtitleMenuProps) {
   const { authKey } = useAuth();
   const playbackContext = useSubtitleContext();
 
-  const playingTarget = useMemo<TitleTarget>(
-    () => ({
+  const playingTarget = useMemo<TitleTarget>(() => {
+    // Context coords are authoritative when present; long-running anime
+    // intentionally carry no season (undefined beats the raw prop).
+    const hasCoords = playbackContext?.searchEpisode != null;
+    const s = hasCoords ? playbackContext!.searchSeason : (season ?? undefined);
+    const e = hasCoords ? playbackContext!.searchEpisode : (episode ?? undefined);
+    return {
       imdbId: metaImdbId ?? "",
-      type: season != null && episode != null ? "series" : "movie",
+      type: s != null && e != null ? "series" : "movie",
       title: metaTitle ?? "",
-      season: season ?? undefined,
-      episode: episode ?? undefined,
-    }),
-    [metaImdbId, metaTitle, season, episode],
-  );
+      season: s ?? undefined,
+      episode: e ?? undefined,
+    };
+  }, [metaImdbId, metaTitle, season, episode, playbackContext]);
 
   const playingKey = playingKeyOf(metaImdbId, metaTitle, season, episode);
   const restorableRef = useRef(savedState && savedState.playingKey === playingKey ? savedState : null);
@@ -99,8 +103,10 @@ export function SearchSection(props: SubtitleMenuProps) {
   const [isOverride, setIsOverride] = useState(restorable?.isOverride ?? false);
   const [query, setQuery] = useState(
     restorable?.query ??
-      (metaTitle && season != null && episode != null
-        ? `${metaTitle} S${String(season).padStart(2, "0")}E${String(episode).padStart(2, "0")}`
+      (metaTitle && playingTarget.season != null && playingTarget.episode != null
+        ? `${metaTitle} S${String(playingTarget.season).padStart(2, "0")}E${String(
+            playingTarget.episode,
+          ).padStart(2, "0")}`
         : (metaTitle ?? "")),
   );
   const [suggestions, setSuggestions] = useState<TitleCandidate[]>([]);
@@ -122,6 +128,7 @@ export function SearchSection(props: SubtitleMenuProps) {
   const [addonsLoading, setAddonsLoading] = useState(true);
   const initialSearchDone = useRef(false);
   const searchSeq = useRef(0);
+  const coordsTouchedRef = useRef(false);
   const [pendingSources, setPendingSources] = useState(0);
 
   const latestStateRef = useRef<Omit<SavedSearchState, "scrollTop">>({
@@ -223,6 +230,17 @@ export function SearchSection(props: SubtitleMenuProps) {
   };
 
   useEffect(() => {
+    if (!playbackContext || isOverride || coordsTouchedRef.current) return;
+    const s = playbackContext.searchSeason;
+    const e = playbackContext.searchEpisode;
+    if (s == null && e == null) return;
+    if (s === target.season && e === target.episode) return;
+    const next = { ...target, season: s, episode: e };
+    setTarget(next);
+    if (initialSearchDone.current) void run(next);
+  }, [playbackContext, isOverride, target]);
+
+  useEffect(() => {
     if (addons === null || addonsLoading || initialSearchDone.current) return;
     if (!target.imdbId && !target.title) return;
     initialSearchDone.current = true;
@@ -244,7 +262,7 @@ export function SearchSection(props: SubtitleMenuProps) {
     }
     setSuggestLoading(true);
     const id = window.setTimeout(() => {
-      searchTitleCandidates(query)
+      searchTitleCandidates(query, metaImdbId)
         .then((c) => setSuggestions(c.slice(0, 8)))
         .catch(() => setSuggestions([]))
         .finally(() => setSuggestLoading(false));
@@ -278,8 +296,8 @@ export function SearchSection(props: SubtitleMenuProps) {
     }
     setLoading(true);
     setResults(null);
-    const cands = await searchTitleCandidates(query).catch(() => []);
-    const best = bestCandidate(cands, parsed);
+    const cands = await searchTitleCandidates(query, metaImdbId).catch(() => []);
+    const best = bestCandidate(cands, parsed, metaImdbId);
     const next: TitleTarget = best
       ? {
           imdbId: best.imdbId,
@@ -302,6 +320,7 @@ export function SearchSection(props: SubtitleMenuProps) {
   };
 
   const changeEp = (patch: Partial<Pick<TitleTarget, "season" | "episode">>) => {
+    coordsTouchedRef.current = true;
     const next = { ...target, ...patch };
     setTarget(next);
     void run(next);
@@ -310,9 +329,12 @@ export function SearchSection(props: SubtitleMenuProps) {
   const clearOverride = () => {
     setTarget(playingTarget);
     setIsOverride(false);
+    coordsTouchedRef.current = false;
     setQuery(
-      metaTitle && season != null && episode != null
-        ? `${metaTitle} S${String(season).padStart(2, "0")}E${String(episode).padStart(2, "0")}`
+      metaTitle && playingTarget.season != null && playingTarget.episode != null
+        ? `${metaTitle} S${String(playingTarget.season).padStart(2, "0")}E${String(
+            playingTarget.episode,
+          ).padStart(2, "0")}`
         : (metaTitle ?? ""),
     );
     setSuggestOpen(false);
