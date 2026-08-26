@@ -1,3 +1,5 @@
+import { parseExternalLink } from "./external-link-policy";
+
 type LinkOutActivationEvent = {
   button?: number;
   target: EventTarget | null;
@@ -8,6 +10,11 @@ type LinkTarget = {
   closest?(selector: string): { getAttribute(name: string): string | null } | null;
 };
 
+export function safeExternalUrl(value: string): string | null {
+  const parsed = parseExternalLink(value);
+  return parsed.ok ? parsed.link.href : null;
+}
+
 export function handleLinkOutActivation(
   event: LinkOutActivationEvent,
   open: (href: string) => void,
@@ -17,6 +24,7 @@ export function handleLinkOutActivation(
   const href = anchor?.getAttribute("href");
   if (!href) return false;
   event.preventDefault();
-  open(href);
+  const safeHref = safeExternalUrl(href);
+  if (safeHref) open(safeHref);
   return true;
 }
