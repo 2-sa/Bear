@@ -75,7 +75,11 @@ export function fetchTrailer(
   );
   const timeout = new Promise<null>((resolve) => {
     setTimeout(() => {
-      console.error("[harbor::trailer] fetch timed out", { videoId, quality, timeoutMs: TIMEOUT_MS });
+      console.error("[harbor::trailer] fetch timed out", {
+        videoId,
+        quality,
+        timeoutMs: TIMEOUT_MS,
+      });
       resolve(null);
     }, TIMEOUT_MS);
   });
@@ -129,17 +133,15 @@ export function resolveTrailerId(meta: Meta, tmdbKey: string): Promise<string | 
   const lookup = isTmdb
     ? tmdbTrailerList(tmdbKey, meta.id).then((ids) => ids[0] ?? null)
     : fetchMeta(narrowMediaType(meta.type), meta.id).then((full) => {
-        return (
-          full?.trailers?.[0]?.source ??
-          full?.trailerStreams?.[0]?.ytId ??
-          null
-        );
+        return full?.trailers?.[0]?.source ?? full?.trailerStreams?.[0]?.ytId ?? null;
       });
-  const p = lookup.catch(() => null).then((id) => {
-    lruSet(trailerIdCache, meta.id, id, TRAILER_CACHE_MAX);
-    trailerIdInflight.delete(meta.id);
-    return id;
-  });
+  const p = lookup
+    .catch(() => null)
+    .then((id) => {
+      lruSet(trailerIdCache, meta.id, id, TRAILER_CACHE_MAX);
+      trailerIdInflight.delete(meta.id);
+      return id;
+    });
   trailerIdInflight.set(meta.id, p);
   return p;
 }
