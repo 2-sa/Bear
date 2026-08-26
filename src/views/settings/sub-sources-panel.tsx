@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import wyzieLogo from "@/assets/wyzie.png";
 import { useAuth } from "@/lib/auth";
 import type { Addon } from "@/lib/addons";
@@ -91,122 +91,20 @@ function KeyedSourceRow({
   placeholder: string;
   help: React.ReactNode;
 }) {
-  const t = useT();
-  const [reveal, setReveal] = useState(false);
-  const [focused, setFocused] = useState(false);
-  const [initialValue, setInitialValue] = useState(keyValue);
-  useEffect(() => {
-    setInitialValue(keyValue);
-  }, [keyValue]);
-  const dirty = keyValue.trim() !== initialValue.trim();
-  const showSave = dirty;
-
-  const onKeyRef = useRef(onKey);
-  onKeyRef.current = onKey;
-  const stateRef = useRef({ dirty, value: keyValue });
-  stateRef.current = { dirty, value: keyValue };
-
-  useEffect(() => {
-    if (!dirty) return;
-    const t = window.setTimeout(() => {
-      if (stateRef.current.dirty) onKeyRef.current(stateRef.current.value);
-    }, 700);
-    return () => window.clearTimeout(t);
-  }, [dirty, keyValue]);
-
-  useEffect(() => {
-    return () => {
-      if (stateRef.current.dirty) onKeyRef.current(stateRef.current.value);
-    };
-  }, []);
-
   return (
     <div className="flex flex-col gap-2.5">
       <ToggleRow label={label} sub={sub} value={on} onChange={onToggle} leading={leading} />
       {on && (
         <div className="ms-1 flex flex-col gap-1.5 rounded-xl border border-edge-soft bg-canvas/40 p-3">
-          <div className="relative">
-            <input
-              type={reveal ? "text" : "password"}
-              value={keyValue}
-              onChange={(e) => {
-                const v = e.target.value;
-                stateRef.current.value = v;
-                onKey(v);
-              }}
-              onFocus={() => setFocused(true)}
-              onBlur={() => {
-                setFocused(false);
-                if (stateRef.current.dirty) onKeyRef.current(stateRef.current.value);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && dirty) {
-                  e.preventDefault();
-                  onKeyRef.current(stateRef.current.value);
-                }
-              }}
-              placeholder={placeholder}
-              spellCheck={false}
-              autoComplete="off"
-              className={`h-10 w-full rounded-lg border px-3.5 text-[13px] text-ink placeholder:text-ink-subtle focus:outline-none ${
-                focused
-                  ? "border-ink bg-elevated/40"
-                  : "border-edge-soft bg-elevated/40 hover:border-edge"
-              }`}
-            />
-            {keyValue.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setReveal((v) => !v)}
-                aria-label={reveal ? t("Hide") : t("Show")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-subtle transition-colors hover:bg-canvas/40 hover:text-ink"
-              >
-                {reveal ? (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
-                    <path
-                      d="M3 12s3.5-7 9-7 9 7 9 7-3.5 7-9 7-9-7-9-7z"
-                      stroke="currentColor"
-                      strokeWidth="1.6"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <circle cx="12" cy="12" r="2.7" stroke="currentColor" strokeWidth="1.6" />
-                    <path d="M4 4l16 16" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-                  </svg>
-                ) : (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
-                    <path
-                      d="M3 12s3.5-7 9-7 9 7 9 7-3.5 7-9 7-9-7-9-7z"
-                      stroke="currentColor"
-                      strokeWidth="1.6"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <circle cx="12" cy="12" r="2.7" stroke="currentColor" strokeWidth="1.6" />
-                  </svg>
-                )}
-              </button>
-            )}
-            <div
-              className={`absolute right-3 top-1/2 -translate-y-1/2 flex items-center transition-all ${
-                showSave ? "opacity-100" : "w-0 overflow-hidden opacity-0"
-              }`}
-            >
-              <button
-                type="button"
-                onClick={() => onKeyRef.current(stateRef.current.value)}
-                disabled={!showSave}
-                className="relative flex h-10 items-center justify-center overflow-hidden rounded-xl px-4 text-[13.5px] font-semibold transition-all bg-ink text-canvas hover:scale-[1.02] active:scale-[0.97]"
-              >
-                <span className="flex items-center gap-1.5">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M20 6 9 17l-5-5" />
-                  </svg>
-                  {t("Save")}
-                </span>
-              </button>
-            </div>
-          </div>
+          <input
+            type="password"
+            value={keyValue}
+            onChange={(e) => onKey(e.target.value)}
+            placeholder={placeholder}
+            spellCheck={false}
+            autoComplete="off"
+            className="h-10 w-full rounded-lg border border-edge-soft bg-elevated/40 px-3.5 text-[13px] text-ink placeholder:text-ink-subtle focus:border-edge focus:outline-none"
+          />
           <span className="text-[11.5px] leading-snug text-ink-subtle">{help}</span>
         </div>
       )}
