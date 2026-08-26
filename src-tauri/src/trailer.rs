@@ -325,11 +325,7 @@ pub async fn fetch_trailer(
         return Err("downloaded file is too small".to_string());
     }
 
-    eprintln!(
-        "[harbor::trailer] verified download path={} bytes={} quality={quality}",
-        file_path.display(),
-        size_bytes
-    );
+    eprintln!("[harbor::trailer] verified download bytes={size_bytes} quality={quality}");
 
     sweep_cache();
     let stream_url = trailer_stream_url(&proxy_state, &file_path).await?;
