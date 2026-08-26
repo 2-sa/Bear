@@ -781,6 +781,10 @@ pub async fn mpv_start(
             if high_bitrate { "32MiB" } else { "16MiB" },
         );
     }
+    // mpv may auto-select an embedded subtitle as soon as loadfile runs. Keep
+    // both subtitle slots empty until Harbor applies the user's language choice.
+    let _ = mpv.set_property("sid", "no");
+    let _ = mpv.set_property("secondary-sid", "no");
     if want_embed {
         let _ = mpv.set_property("sub-visibility", "no");
         let _ = mpv.set_property("secondary-sub-visibility", "no");

@@ -1,4 +1,5 @@
 const coverage: Record<string, string> = {
+  "Release compatibility": "توافق الإصدار",
   "Play from": "التشغيل من",
   end: "النهاية",
   "m:ss": "د:ث",
@@ -436,6 +437,16 @@ const coverage: Record<string, string> = {
   "so pick one you'll keep.": "لذا اختر واحدًا ستحتفظ به.",
   something: "شيء ما",
   speed: "السرعة",
+  "Subtitles appear early": "تظهر الترجمة مبكرًا",
+  "Subtitles appear late": "تظهر الترجمة متأخرة",
+  "More timing controls": "المزيد من عناصر التحكم بالتوقيت",
+  "Moved subtitles 0.25 seconds later.": "تم تأخير الترجمة 0.25 ثانية.",
+  "Moved subtitles 0.25 seconds earlier.": "تم تقديم الترجمة 0.25 ثانية.",
+  Synced: "متزامنة",
+  "When a subtitle runs early or late, Harbor measures the speech and corrects the timing on its own.":
+    "عندما تظهر الترجمة مبكرًا أو متأخرًا، يقيس Harbor الكلام ويصحح التوقيت تلقائيًا.",
+  "Downloaded subtitles can arrive after playback starts. Harbor switches from a temporary track when a stronger release match becomes available.":
+    "قد تصل الترجمات المحمّلة بعد بدء التشغيل. يستبدل Harbor المسار المؤقت عند توفر تطابق أقوى مع الإصدار.",
   "this season": "هذا الموسم",
   title: "عنوان",
   titles: "عناوين",
@@ -444,6 +455,24 @@ const coverage: Record<string, string> = {
   watched: "تمت مشاهدته",
   yourhandle: "معرّفك",
   yourname: "اسمك",
+  "Only embedded subtitles are available right now.": "لا تتوفر الآن سوى الترجمات المضمّنة.",
+  "Search all sources again": "إعادة البحث في كل المصادر",
+  "Aligned here": "تمت المحاذاة هنا",
+  Aligned: "تمت المحاذاة",
+  "Drift fixed": "تم إصلاح الانحراف",
+  "Align to now": "محاذاة مع الوقت الحالي",
+  "Play until you hear a line. Tap that same line below, then choose Align to now.":
+    "شغّل حتى تسمع جملة. اضغط على الجملة نفسها أدناه، ثم اختر «محاذاة مع الوقت الحالي».",
+  "Timing is aligned. If it becomes early or late later, repeat this at another line.":
+    "تمت محاذاة التوقيت. إذا بدأت الترجمة بالتقدم أو التأخر لاحقًا، كرر العملية عند جملة أخرى.",
+  "Timing and drift are corrected. Check playback, then save.":
+    "تم تصحيح التوقيت والانحراف. تحقق من التشغيل، ثم احفظ.",
+  "Tap the first line of the section you want to fix.":
+    "اضغط على أول جملة في المقطع الذي تريد إصلاحه.",
+  "Now tap the last line of that section.": "اضغط الآن على آخر جملة في ذلك المقطع.",
+  "Play until you hear a line inside this section, tap it, then choose Align to now.":
+    "شغّل حتى تسمع جملة داخل هذا المقطع، واضغط عليها، ثم اختر «محاذاة مع الوقت الحالي».",
+  "Sync point {n}": "نقطة المزامنة {n}",
   "{label} details": "تفاصيل {label}",
   "{n} / {max}": "{n} / {max}",
   "{n} / {max} titles": "{n} / {max} عنوان",

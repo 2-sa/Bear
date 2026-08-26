@@ -271,7 +271,7 @@ export const DEFAULT: Settings = {
   communitySyncOptOut: false,
   subtitlesOffByDefault: false,
   preferEmbeddedSubs: false,
-  subtitleAutoUpgrade: false,
+  subtitleAutoUpgrade: true,
   subtitlePreselect: false,
   betaUpdates: false,
   autoSkipIntro: false,

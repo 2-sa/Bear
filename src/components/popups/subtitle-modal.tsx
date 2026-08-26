@@ -26,6 +26,7 @@ type Props = {
   onSelect: (id: string | null) => void;
   onSelectSecondary: (id: string | null) => void;
   onDelay: (sec: number) => void;
+  onEnterSync: () => void;
   onAddSubtitle: SubtitleAddHandler;
   onClose: () => void;
 };
@@ -35,6 +36,7 @@ export function SubtitleModal({
   onSelect,
   onSelectSecondary,
   onDelay,
+  onEnterSync,
   onAddSubtitle,
   onClose,
 }: Props) {
@@ -60,6 +62,7 @@ export function SubtitleModal({
             onSelect={onSelect}
             onSelectSecondary={onSelectSecondary}
             onDelay={onDelay}
+            onEnterSync={onEnterSync}
             onAddSubtitle={onAddSubtitle}
             metaImdbId={state.metaImdbId}
             metaTitle={state.metaTitle}

@@ -1,4 +1,5 @@
 const coverage: Record<string, string> = {
+  "Release compatibility": "Compatibilidade da versão",
   "Play from": "Tocar de",
   end: "fim",
   "m:ss": "m:ss",
@@ -441,6 +442,16 @@ const coverage: Record<string, string> = {
   "so pick one you'll keep.": "então escolha um que você vá manter.",
   something: "algo",
   speed: "velocidade",
+  "Subtitles appear early": "As legendas aparecem adiantadas",
+  "Subtitles appear late": "As legendas aparecem atrasadas",
+  "More timing controls": "Mais controles de sincronização",
+  "Moved subtitles 0.25 seconds later.": "Legendas atrasadas em 0,25 segundos.",
+  "Moved subtitles 0.25 seconds earlier.": "Legendas adiantadas em 0,25 segundos.",
+  Synced: "Sincronizada",
+  "When a subtitle runs early or late, Harbor measures the speech and corrects the timing on its own.":
+    "Quando uma legenda fica adiantada ou atrasada, o Harbor mede a fala e corrige o tempo automaticamente.",
+  "Downloaded subtitles can arrive after playback starts. Harbor switches from a temporary track when a stronger release match becomes available.":
+    "As legendas baixadas podem chegar depois do início da reprodução. O Harbor troca a faixa temporária quando uma correspondência melhor com a versão fica disponível.",
   "this season": "esta temporada",
   title: "título",
   titles: "títulos",
@@ -449,6 +460,25 @@ const coverage: Record<string, string> = {
   watched: "assistido",
   yourhandle: "seuidentificador",
   yourname: "seunome",
+  "Only embedded subtitles are available right now.":
+    "Apenas legendas incorporadas estão disponíveis agora.",
+  "Search all sources again": "Pesquisar todas as fontes novamente",
+  "Aligned here": "Alinhado aqui",
+  Aligned: "Alinhado",
+  "Drift fixed": "Desvio corrigido",
+  "Align to now": "Alinhar com agora",
+  "Play until you hear a line. Tap that same line below, then choose Align to now.":
+    "Reproduza até ouvir uma fala. Toque na mesma fala abaixo e escolha Alinhar com agora.",
+  "Timing is aligned. If it becomes early or late later, repeat this at another line.":
+    "O tempo está alinhado. Se adiantar ou atrasar depois, repita em outra fala.",
+  "Timing and drift are corrected. Check playback, then save.":
+    "O tempo e o desvio foram corrigidos. Verifique a reprodução e salve.",
+  "Tap the first line of the section you want to fix.":
+    "Toque na primeira fala da seção que deseja corrigir.",
+  "Now tap the last line of that section.": "Agora toque na última fala dessa seção.",
+  "Play until you hear a line inside this section, tap it, then choose Align to now.":
+    "Reproduza até ouvir uma fala nessa seção, toque nela e escolha Alinhar com agora.",
+  "Sync point {n}": "Ponto de sincronização {n}",
   "{label} details": "Detalhes de {label}",
   "{n} / {max}": "{n} / {max}",
   "{n} / {max} titles": "{n} / {max} títulos",

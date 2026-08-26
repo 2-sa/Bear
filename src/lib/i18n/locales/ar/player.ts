@@ -445,6 +445,14 @@ const player: Record<string, string> = {
   "Next and Previous follow your queue": "التالي والسابق يتبعان قائمة انتظارك",
   "Next and Previous follow this show": "التالي والسابق يتبعان هذا المسلسل",
   "Subtitle FPS": "معدل إطارات الترجمة",
+  "Automatic correction": "التصحيح التلقائي",
+  "Measure this subtitle against speech and correct delay and gradual drift together.":
+    "قِس هذه الترجمة مقابل الكلام وصحّح التأخير والانحراف التدريجي معًا.",
+  "Detect timing drift": "اكتشاف انحراف التوقيت",
+  "Timing analysis active": "تحليل التوقيت نشط",
+  "Automatic timing correction requires an external text subtitle.":
+    "يتطلب تصحيح التوقيت التلقائي ترجمة نصية خارجية.",
+  "Manual source FPS": "معدل إطارات المصدر يدويًا",
   "Subtitle source FPS": "معدل إطارات مصدر الترجمة",
   "Choose the frame rate the subtitle was authored for.":
     "اختر معدل الإطارات الذي أُنشئت الترجمة على أساسه.",
@@ -475,6 +483,20 @@ const player: Record<string, string> = {
   "Drag the corner to resize. Left and right change width; up and down change height; Home resets the size.":
     "اسحب الزاوية لتغيير الحجم. يغيّر السهمان الأيسر والأيمن العرض؛ ويغيّر السهمان الأعلى والأسفل الارتفاع؛ ويعيد Home الحجم إلى الافتراضي.",
   "Couldn't switch subtitles. Try again.": "تعذّر تبديل الترجمة. حاول مرة أخرى.",
+  "Subtitle details": "تفاصيل الترجمة",
+  "Open subtitle details": "فتح تفاصيل الترجمة",
+  Provider: "المزوّد",
+  Format: "التنسيق",
+  Quality: "الجودة",
+  Author: "الناشر",
+  Release: "الإصدار",
+  "Not provided": "غير متوفر",
+  "Match estimate": "تقدير التطابق",
+  "Match evidence": "أدلة التطابق",
+  "This is a metadata-based release estimate, not a measured timing score.":
+    "هذا تقدير مبني على بيانات الإصدار، وليس قياسًا لمزامنة التوقيت.",
+  "Couldn't save the synced subtitle. Try again.": "تعذّر حفظ الترجمة المتزامنة. حاول مرة أخرى.",
+  "Saving...": "جارٍ الحفظ...",
 };
 
 export default player;

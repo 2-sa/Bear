@@ -138,8 +138,12 @@ export function createHtml5Bridge(): PlayerBridge {
       url: t.url,
       release: t.metadata?.release,
       provider: t.metadata?.provider,
+      fps: t.metadata?.fps,
+      downloads: t.metadata?.downloads,
+      author: t.metadata?.author,
       matchScore: t.metadata?.matchScore,
       matchConfidence: t.metadata?.matchConfidence,
+      matchReasons: t.metadata?.matchReasons,
       subId: t.metadata?.subId,
     }));
   };

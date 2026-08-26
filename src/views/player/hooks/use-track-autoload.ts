@@ -96,6 +96,7 @@ export function useTrackAutoload(params: {
 
   const refetchRef = useRef<(() => Promise<number>) | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [initialSearches, setInitialSearches] = useState(0);
   const [refreshReady, setRefreshReady] = useState(false);
   const [lastAdded, setLastAdded] = useState<number | null>(null);
   const lastAddedTimer = useRef<number | null>(null);
@@ -110,6 +111,7 @@ export function useTrackAutoload(params: {
     setRefreshReady(false);
     setLastAdded(null);
     setRefreshing(false);
+    setInitialSearches(0);
     clearLastAddedTimer();
   }, [src.url]);
 
@@ -119,7 +121,7 @@ export function useTrackAutoload(params: {
       return;
     }
     publishSubtitleSearch({
-      status: refreshing ? "searching" : "idle",
+      status: refreshing || initialSearches > 0 ? "searching" : "idle",
       lastAdded,
       hints: streamHintsOf(src),
       refresh: () => {
@@ -143,7 +145,7 @@ export function useTrackAutoload(params: {
       },
     });
     return () => publishSubtitleSearch(null);
-  }, [refreshReady, refreshing, lastAdded, src]);
+  }, [refreshReady, refreshing, initialSearches, lastAdded, src]);
 
   useEffect(() => {
     if (!resolutionSettled) return;
@@ -222,8 +224,11 @@ export function useTrackAutoload(params: {
         episode: searchEpisode,
         langs,
       });
-      const { videoHash, videoSize } = settings.subtitleAutoSync ? await resolveVideoHash(src) : {};
-      if (videoHash) console.info("[subs/autoload] moviehash ready", { videoSize });
+      const movieHashStageKey = `${key}|moviehash`;
+      const shouldResolveMovieHash =
+        settings.subtitleAutoSync && !autoSubStagesRef.current.has(movieHashStageKey);
+      if (shouldResolveMovieHash) autoSubStagesRef.current.add(movieHashStageKey);
+      const movieHashPromise = shouldResolveMovieHash ? resolveVideoHash(src) : null;
       const b = bridgeRef.current;
       if (!b || autoSubLoadKeyRef.current !== key) {
         console.warn("[subs/autoload] no bridge ready, skipping");
@@ -238,17 +243,17 @@ export function useTrackAutoload(params: {
         candidateIds,
         season: searchSeason,
         episode: searchEpisode,
-        videoHash,
-        videoSize,
       };
       refetchRef.current = async () => {
         const bridge = bridgeRef.current;
         if (!bridge || autoSubLoadKeyRef.current !== key) return 0;
+        const movieHash = settings.subtitleAutoSync ? await resolveVideoHash(src) : {};
         const skipUrls = new Set(
           (snapRef.current.subtitleTracks ?? []).map((t) => t.url ?? "").filter(Boolean),
         );
         const r = await fetchSubtitlesIntoPlayer({
           ...base,
+          ...movieHash,
           bridge,
           deep: true,
           skipUrls,
@@ -258,18 +263,70 @@ export function useTrackAutoload(params: {
         return r.added;
       };
       setRefreshReady(true);
-      const res = await fetchSubtitlesIntoPlayer({
-        ...base,
-        bridge: b,
-        providers:
-          stage === "core"
-            ? { addons: false }
-            : stage === "addons"
-              ? { opensubtitles: false, wyzie: false, addons: true, extras: false }
-              : undefined,
-        isActive: () => autoSubLoadKeyRef.current === key,
-      });
-      console.info(`[subs/autoload] ${stage} stage found ${res.found}, added ${res.added} tracks`);
+      setInitialSearches((count) => count + 1);
+      try {
+        const res = await fetchSubtitlesIntoPlayer({
+          ...base,
+          bridge: b,
+          providers:
+            stage === "core"
+              ? { addons: false }
+              : stage === "addons"
+                ? { opensubtitles: false, wyzie: false, addons: true, extras: false }
+                : undefined,
+          isActive: () => autoSubLoadKeyRef.current === key,
+        });
+        console.info(
+          `[subs/autoload] ${stage} stage found ${res.found}, added ${res.added} tracks`,
+        );
+      } finally {
+        if (autoSubLoadKeyRef.current === key) {
+          setInitialSearches((count) => Math.max(0, count - 1));
+        }
+      }
+
+      // MovieHash improves exact-file matching, but remote range reads can be slow. Never
+      // make the normal progressive search wait for it. Once ready, query only the built-in
+      // hash-aware providers and merge any new exact matches into the existing track list.
+      if (movieHashPromise) {
+        void movieHashPromise
+          .then(async ({ videoHash, videoSize }) => {
+            if (!videoHash || autoSubLoadKeyRef.current !== key) return;
+            console.info("[subs/autoload] moviehash ready", { videoSize });
+            const bridge = bridgeRef.current;
+            if (!bridge) return;
+            const skipUrls = new Set(
+              (snapRef.current.subtitleTracks ?? [])
+                .map((track) => track.url ?? "")
+                .filter(Boolean),
+            );
+            setInitialSearches((count) => count + 1);
+            try {
+              const result = await fetchSubtitlesIntoPlayer({
+                ...base,
+                bridge,
+                videoHash,
+                videoSize,
+                providers: {
+                  opensubtitles: false,
+                  wyzie: false,
+                  addons: false,
+                  extras: true,
+                },
+                skipUrls,
+                isActive: () => autoSubLoadKeyRef.current === key,
+              });
+              console.info(
+                `[subs/autoload] moviehash stage found ${result.found}, added ${result.added} tracks`,
+              );
+            } finally {
+              if (autoSubLoadKeyRef.current === key) {
+                setInitialSearches((count) => Math.max(0, count - 1));
+              }
+            }
+          })
+          .catch((error) => console.warn("[subs/autoload] moviehash enrichment failed", error));
+      }
     })();
   }, [
     resolvedImdbId,
@@ -654,7 +711,12 @@ export function useTrackAutoload(params: {
     if (selected) bridgeRef.current?.setSubtitleTrack(null);
   }, [src.meta.id, snap.subtitleTracks, settings]);
 
-  return { resolvedImdbId, resolvedImdbVerified, resolutionSettled };
+  return {
+    resolvedImdbId,
+    resolvedImdbVerified,
+    resolutionSettled,
+    subtitleSearchActive: refreshing || initialSearches > 0,
+  };
 }
 
 function blockWords(s: Settings): string[] {

@@ -1,4 +1,5 @@
 const coverage: Record<string, string> = {
+  "Release compatibility": "Совместимость релиза",
   "Play from": "Играть с",
   end: "конец",
   "m:ss": "м:сс",
@@ -442,6 +443,16 @@ const coverage: Record<string, string> = {
   "so pick one you'll keep.": "поэтому выберите тот, который оставите.",
   something: "что-то",
   speed: "скорость",
+  "Subtitles appear early": "Субтитры появляются раньше",
+  "Subtitles appear late": "Субтитры появляются позже",
+  "More timing controls": "Дополнительные настройки синхронизации",
+  "Moved subtitles 0.25 seconds later.": "Субтитры сдвинуты на 0,25 секунды позже.",
+  "Moved subtitles 0.25 seconds earlier.": "Субтитры сдвинуты на 0,25 секунды раньше.",
+  Synced: "Синхронизировано",
+  "When a subtitle runs early or late, Harbor measures the speech and corrects the timing on its own.":
+    "Когда субтитры опережают или отстают, Harbor анализирует речь и автоматически корректирует тайминг.",
+  "Downloaded subtitles can arrive after playback starts. Harbor switches from a temporary track when a stronger release match becomes available.":
+    "Загруженные субтитры могут появиться после начала воспроизведения. Harbor заменит временную дорожку, когда станет доступно более точное совпадение с релизом.",
   "this season": "этот сезон",
   title: "наименование",
   titles: "наименований",
@@ -450,6 +461,24 @@ const coverage: Record<string, string> = {
   watched: "просмотрено",
   yourhandle: "вашникнейм",
   yourname: "вашеимя",
+  "Only embedded subtitles are available right now.": "Сейчас доступны только встроенные субтитры.",
+  "Search all sources again": "Повторить поиск во всех источниках",
+  "Aligned here": "Выровнено здесь",
+  Aligned: "Выровнено",
+  "Drift fixed": "Дрейф исправлен",
+  "Align to now": "Выровнять по текущему моменту",
+  "Play until you hear a line. Tap that same line below, then choose Align to now.":
+    "Дождитесь нужной реплики, нажмите на неё ниже и выберите выравнивание по текущему моменту.",
+  "Timing is aligned. If it becomes early or late later, repeat this at another line.":
+    "Время выровнено. Если позже субтитры начнут опережать или отставать, повторите это на другой реплике.",
+  "Timing and drift are corrected. Check playback, then save.":
+    "Время и дрейф исправлены. Проверьте воспроизведение и сохраните.",
+  "Tap the first line of the section you want to fix.":
+    "Нажмите на первую реплику участка, который нужно исправить.",
+  "Now tap the last line of that section.": "Теперь нажмите на последнюю реплику участка.",
+  "Play until you hear a line inside this section, tap it, then choose Align to now.":
+    "Дождитесь реплики внутри участка, нажмите на неё и выберите выравнивание по текущему моменту.",
+  "Sync point {n}": "Точка синхронизации {n}",
   "{label} details": "Подробности: {label}",
   "{n} / {max}": "{n} / {max}",
   "{n} / {max} titles": "{n} / {max} наименований",

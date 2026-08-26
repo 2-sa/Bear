@@ -12,14 +12,15 @@ import {
 } from "./autosync/sub-sources";
 import { langScore, normalizeLang } from "./language";
 import {
-  detectSource,
-  parseRelease,
   releaseAffinity,
   subtitleConfidenceRank,
-  type ReleaseTags,
   type SubtitleMatchConfidence,
 } from "./release-match";
+import { streamTagsOf, type StreamHints } from "./stream-hints";
 import { SUBTITLE_PROVIDER_TIMEOUT_MS, withSubtitleTimeout } from "./autoload";
+
+export { streamTagsOf } from "./stream-hints";
+export type { StreamHints } from "./stream-hints";
 
 export type SearchOptions = {
   onPartial?: (results: SubResult[], stillFetching: number) => void;
@@ -29,15 +30,6 @@ export type SearchOptions = {
   preferredLangs: string[];
   streamHints?: StreamHints;
   extra?: ProviderCtx;
-};
-
-export type StreamHints = {
-  release?: string | null;
-  source?: string | null;
-  resolution?: string | null;
-  season?: number | null;
-  episode?: number | null;
-  preferHearingImpaired?: boolean;
 };
 
 export async function searchSubtitles(
@@ -109,26 +101,6 @@ export async function searchSubtitles(
   const ranked = dedupAndRank(all, opts.preferredLangs, opts.streamHints);
   dinfo(`[subs] total ${ranked.length} after dedup/rank from ${tasks.length} sources`);
   return ranked;
-}
-
-export function streamTagsOf(hints: StreamHints): ReleaseTags {
-  const parsed = parseRelease(hints.release);
-  return {
-    ...parsed,
-    source: detectSource(hints.source) ?? parsed.source,
-    resolution: normalizeResolution(hints.resolution) ?? parsed.resolution,
-    season: hints.season ?? parsed.season,
-    episode: hints.episode ?? parsed.episode,
-    episodeEnd: hints.episode ?? parsed.episodeEnd,
-  };
-}
-
-function normalizeResolution(raw: string | null | undefined): string | null {
-  if (!raw) return null;
-  const s = raw.toLowerCase();
-  if (s === "4k" || s === "uhd" || s.includes("2160")) return "2160p";
-  const m = s.match(/(2160|1080|720|576|480)/);
-  return m ? `${m[1]}p` : null;
 }
 
 export function subtitleText(r: SubResult): string {

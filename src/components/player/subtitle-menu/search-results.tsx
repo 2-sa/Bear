@@ -4,6 +4,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Loader2,
+  Info,
   Plus,
   Save,
   X,
@@ -15,6 +16,8 @@ import { saveSubtitleToDisk } from "@/lib/subtitles/save-to-disk";
 import { markAddedSub, useAddedSubs } from "@/lib/subtitles/added-subs";
 import { wasLimitReached } from "@/lib/subtitles/limit-signal";
 import type { SubResult } from "@/lib/subtitles/types";
+import { parseRelease } from "@/lib/subtitles/release-match";
+import { providerLabel } from "@/lib/subtitles/provider-label";
 import { useT } from "@/lib/i18n";
 
 const PAGE_SIZE = 30;
@@ -141,7 +144,7 @@ function ResultRow({
   onAdd: () => void | Promise<boolean | void>;
 }) {
   const t = useT();
-  const { open } = useContextMenu();
+  const { openAt } = useContextMenu();
   const addedSubs = useAddedSubs();
   const added = addedSubs.has(result.url);
   const [busy, setBusy] = useState(false);
@@ -227,11 +230,38 @@ function ResultRow({
     result.displayTitle ||
     result.title ||
     lang;
-  const sourceLabel = result.title && result.title !== primaryName ? result.title : null;
+  const providerName = providerLabel(result);
+  const releaseTags = parseRelease(result.release || primaryName);
+  const quality = [
+    releaseTags.resolution,
+    releaseTags.source?.toUpperCase(),
+    ...releaseTags.hdr.map((tag) => tag.toUpperCase()),
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  const contextTarget = {
+    kind: "subtitle" as const,
+    label: primaryName,
+    details: {
+      language: result.langName || lang,
+      source: result.source,
+      provider: providerName,
+      format: result.format?.toUpperCase(),
+      fps: result.fps,
+      quality: quality || undefined,
+      release: result.release,
+      author: result.author,
+      downloads: result.downloads,
+      flags: [
+        result.hearingImpaired ? t("HI/SDH") : null,
+        result.forced ? t("Forced") : null,
+      ].filter((flag): flag is string => flag != null),
+    },
+    download,
+  };
 
   return (
     <div
-      onContextMenu={(e) => open(e, { kind: "subtitle", label: primaryName, download })}
       className={`group flex w-full items-start gap-3 px-4 py-2.5 transition-colors duration-300 ${
         added ? "bg-emerald-400/12" : addStatus ? "bg-red-400/10" : "hover:bg-canvas/60"
       }`}
@@ -281,13 +311,7 @@ function ResultRow({
             )}
           </span>
           <span className="flex items-center gap-2 text-[11.5px] text-ink-subtle">
-            <span className={`font-semibold capitalize ${sourceColor}`}>{result.source}</span>
-            {sourceLabel && (
-              <>
-                <span aria-hidden>·</span>
-                <span className="truncate">{sourceLabel}</span>
-              </>
-            )}
+            <span className={`truncate font-semibold ${sourceColor}`}>{providerName}</span>
             {result.format && (
               <>
                 <span aria-hidden>·</span>
@@ -312,6 +336,19 @@ function ResultRow({
             )}
           </span>
         </div>
+      </button>
+      <button
+        type="button"
+        aria-label={t("Open subtitle details")}
+        title={t("Subtitle details")}
+        onClick={(event) => {
+          event.stopPropagation();
+          const rect = event.currentTarget.getBoundingClientRect();
+          openAt({ x: rect.right, y: rect.bottom }, contextTarget);
+        }}
+        className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-ink-subtle transition-colors hover:bg-elevated hover:text-ink focus-visible:ring-2 focus-visible:ring-accent"
+      >
+        <Info size={13} strokeWidth={2} />
       </button>
       <span
         role="button"

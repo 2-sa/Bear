@@ -403,6 +403,14 @@ const player: Record<string, string> = {
   "Next and Previous follow your queue": "«Следующее» и «Предыдущее» следуют вашей очереди",
   "Next and Previous follow this show": "«Следующее» и «Предыдущее» следуют этому шоу",
   "Subtitle FPS": "Частота кадров субтитров",
+  "Automatic correction": "Автоматическая коррекция",
+  "Measure this subtitle against speech and correct delay and gradual drift together.":
+    "Сопоставьте субтитры с речью и исправьте задержку и постепенный дрейф вместе.",
+  "Detect timing drift": "Определить дрейф тайминга",
+  "Timing analysis active": "Анализ тайминга выполняется",
+  "Automatic timing correction requires an external text subtitle.":
+    "Для автоматической коррекции тайминга нужны внешние текстовые субтитры.",
+  "Manual source FPS": "Исходная частота кадров вручную",
   "Subtitle source FPS": "Исходная частота кадров субтитров",
   "Choose the frame rate the subtitle was authored for.":
     "Выберите частоту кадров, для которой были созданы субтитры.",
@@ -434,6 +442,21 @@ const player: Record<string, string> = {
   "Drag the corner to resize. Left and right change width; up and down change height; Home resets the size.":
     "Перетащите угол для изменения размера. Стрелки влево и вправо меняют ширину, вверх и вниз — высоту, а Home сбрасывает размер.",
   "Couldn't switch subtitles. Try again.": "Не удалось переключить субтитры. Повторите попытку.",
+  "Subtitle details": "Сведения о субтитрах",
+  "Open subtitle details": "Открыть сведения о субтитрах",
+  Provider: "Провайдер",
+  Format: "Формат",
+  Quality: "Качество",
+  Author: "Автор",
+  Release: "Релиз",
+  "Not provided": "Не указано",
+  "Match estimate": "Оценка соответствия",
+  "Match evidence": "Данные о соответствии",
+  "This is a metadata-based release estimate, not a measured timing score.":
+    "Это оценка по метаданным релиза, а не измерение синхронизации.",
+  "Couldn't save the synced subtitle. Try again.":
+    "Не удалось сохранить синхронизированные субтитры. Повторите попытку.",
+  "Saving...": "Сохранение...",
 };
 
 export default player;

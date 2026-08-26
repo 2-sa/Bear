@@ -23,6 +23,8 @@ export type SubResult = {
   forced?: boolean;
   release?: string;
   downloads?: number;
+  author?: string;
+  upstreamProvider?: string;
   hash?: string;
 };
 
@@ -31,8 +33,12 @@ export type SubtitleLoadMetadata = {
   encoding?: string;
   release?: string;
   provider?: string;
+  fps?: number;
+  downloads?: number;
+  author?: string;
   matchScore?: number;
   matchConfidence?: SubtitleMatchConfidence;
+  matchReasons?: string[];
   subId?: string;
 };
 

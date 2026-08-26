@@ -3,10 +3,33 @@ import assert from "node:assert/strict";
 // @ts-expect-error Node test types are intentionally outside the browser-only tsconfig.
 import test from "node:test";
 import {
+  inferSubtitleUpstreamProvider,
+  providerLabel,
+  subtitleFpsFromMetadata,
   subtitleContextTitle,
   subtitleStreamDescriptor,
   subtitleTitleOf,
 } from "../src/lib/subtitles/provider-label.ts";
+
+test("addon subtitles expose a detectable upstream provider without hiding AIOStreams", () => {
+  assert.equal(
+    providerLabel({
+      source: "addon",
+      title: "AIOStreams | ElfHosted",
+      upstreamProvider: "SubDL",
+    }),
+    "SubDL · AIOStreams | ElfHosted",
+  );
+  assert.equal(
+    inferSubtitleUpstreamProvider("https://subsource.strem.top/download/123"),
+    "Subsource",
+  );
+});
+
+test("addon subtitle metadata only reports frame rate when it is explicit", () => {
+  assert.equal(subtitleFpsFromMetadata(undefined, "Movie.2024.23.976fps.BluRay"), 23.976);
+  assert.equal(subtitleFpsFromMetadata(undefined, "Movie.2024.2160p.BluRay"), undefined);
+});
 
 test("loaded addon subtitles use their release as the visible track title", () => {
   assert.equal(

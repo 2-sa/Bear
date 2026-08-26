@@ -13,6 +13,7 @@ type Props = {
   hasSecondary: boolean;
   delaySec: number;
   delayNonZero: boolean;
+  onEnterSync?: () => void;
   onOpenStyleBar?: () => void;
   onClose: () => void;
 };
@@ -39,8 +40,10 @@ export function MenuHeader(p: Props) {
       <div className="flex items-center gap-1">
         <SyncControl
           canAutoSync={canAutoSync}
+          canLiveSync={p.selectedTrack != null}
           delaySec={p.delaySec}
           delayNonZero={p.delayNonZero}
+          onLiveSync={p.onEnterSync}
           onClose={p.onClose}
         />
         <SubtitleFpsControl
