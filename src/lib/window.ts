@@ -5,6 +5,12 @@ import { useEffect, useState } from "react";
 import { getWindowFullscreen } from "@/lib/fullscreen-state";
 import { isMacDesktop } from "@/lib/platform";
 import { IN_APP_EXTERNAL_PAGES_ENABLED } from "@/lib/security-policy";
+import {
+  openExternalUrlStrict as dispatchExternalUrlStrict,
+  type ExternalUrlOpenAdapter,
+} from "@/lib/social/external-system-opener";
+
+export type { ExternalUrlOpenAdapter } from "@/lib/social/external-system-opener";
 
 const win: Window | null = isTauri() ? getCurrentWindow() : null;
 
@@ -102,6 +108,23 @@ export function openUrl(url: string) {
   }
 }
 
+function defaultExternalUrlOpenAdapter(): ExternalUrlOpenAdapter {
+  return {
+    isTauri: isTauri(),
+    openTauri: tauriOpenUrl,
+    openWeb: (href, target, features) => {
+      window.open(href, target, features);
+    },
+  };
+}
+
+export async function openExternalUrlStrict(
+  rawUrl: string,
+  adapter: ExternalUrlOpenAdapter = defaultExternalUrlOpenAdapter(),
+): Promise<void> {
+  return dispatchExternalUrlStrict(rawUrl, adapter);
+}
+
 // Hosts that aggressively block iframe embedding (X-Frame-Options DENY,
 // bot/captcha challenges, etc.). For these, skip the viewport — open
 // in the user's real browser instead, like a normal link.
@@ -137,8 +160,6 @@ export function openInAppBrowser(url: string, title?: string) {
     return;
   }
   if (typeof window !== "undefined") {
-    window.dispatchEvent(
-      new CustomEvent("harbor:open-embed-viewport", { detail: { url, title } }),
-    );
+    window.dispatchEvent(new CustomEvent("harbor:open-embed-viewport", { detail: { url, title } }));
   }
 }
