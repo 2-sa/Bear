@@ -19,7 +19,6 @@ import {
   Wallpaper,
 } from "lucide-react";
 import { useEffect, useRef } from "react";
-import { readText as readClipboardText } from "@tauri-apps/plugin-clipboard-manager";
 import { useActiveAddon } from "@/lib/active-addon";
 import { copyText } from "@/components/player/copy-link-button";
 import { magnetFromHash } from "@/lib/debrid/types";
@@ -41,6 +40,16 @@ import { MyListSubmenu } from "./context-menu/my-list-submenu";
 
 const MENU_WIDTH = 220;
 const MENU_HEIGHT = 120;
+
+async function readClipboardText(): Promise<string> {
+  if (typeof window !== "undefined" && "__TAURI_INTERNALS__" in window) {
+    try {
+      const { readText } = await import("@tauri-apps/plugin-clipboard-manager");
+      return await readText();
+    } catch {}
+  }
+  return navigator.clipboard.readText();
+}
 
 function isEditableTarget(el: EventTarget | null): el is HTMLElement {
   if (!(el instanceof HTMLElement)) return false;
