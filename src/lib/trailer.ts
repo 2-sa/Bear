@@ -5,6 +5,7 @@ import { tmdbTrailerList } from "@/lib/providers/tmdb";
 
 export type TrailerInfo = {
   file_path: string;
+  stream_url?: string | null;
   quality: string;
   duration_seconds: number;
   title: string;
@@ -15,7 +16,7 @@ export type Quality = "360p" | "720p" | "1080p" | "best";
 export type TrailerQualityPref = "auto" | Quality;
 
 const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
-const TIMEOUT_MS = 90000;
+const TIMEOUT_MS = 270000;
 const CACHE_MAX = 64;
 
 const cache = new Map<string, Promise<TrailerInfo | null>>();
@@ -66,9 +67,17 @@ export function fetchTrailer(
     cache.set(key, hit);
     return hit;
   }
-  const extract = invoke<TrailerInfo>("fetch_trailer", { videoId, quality }).catch(() => null);
+  const extract = invoke<TrailerInfo>("fetch_trailer", { videoId, quality }).catch(
+    (error: unknown) => {
+      console.error("[harbor::trailer] fetch failed", { videoId, quality, error });
+      return null;
+    },
+  );
   const timeout = new Promise<null>((resolve) => {
-    setTimeout(() => resolve(null), TIMEOUT_MS);
+    setTimeout(() => {
+      console.error("[harbor::trailer] fetch timed out", { videoId, quality, timeoutMs: TIMEOUT_MS });
+      resolve(null);
+    }, TIMEOUT_MS);
   });
   const p = Promise.race([extract, timeout]).then((result) => {
     if (result === null) cache.delete(key);
@@ -104,7 +113,7 @@ export function prefetchTrailer(videoId: string, quality: Quality = "360p"): voi
 }
 
 export function trailerSrc(info: TrailerInfo): string {
-  return convertFileSrc(info.file_path);
+  return info.stream_url ?? convertFileSrc(info.file_path);
 }
 
 const TRAILER_CACHE_MAX = 500;
