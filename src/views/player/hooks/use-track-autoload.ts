@@ -14,6 +14,7 @@ import { buildStreamIds } from "@/lib/streams/stream-ids";
 import type { PlayerSrc } from "@/lib/view";
 import type { Settings } from "@/lib/settings";
 import { canStartSubtitleAutoload, subtitleSearchImdbId } from "@/lib/subtitles/autoload";
+import { resolveAnimeSearchCoords } from "@/lib/subtitles/anime-numbering";
 import { pickDesiredSubtitleTrack } from "@/lib/subtitles/track-selection";
 import { markAddedSub } from "@/lib/subtitles/added-subs";
 import { markImportedSub } from "@/lib/player/imported-subs";
@@ -203,23 +204,42 @@ export function useTrackAutoload(params: {
       searchImdbId ?? null,
       src.meta.behaviorHints?.defaultVideoId ?? null,
     );
-    const animeIds = candidateIds.some((i) => i.startsWith("kitsu:") || i.startsWith("mal:"));
-    const imdbEpAligned =
-      !animeIds ||
-      src.episode?.imdbEpisode == null ||
-      src.episode.episode === src.episode.imdbEpisode;
-    const searchSeason = imdbEpAligned
-      ? (src.episode?.imdbSeason ?? src.episode?.season)
-      : src.episode?.season;
-    const searchEpisode = imdbEpAligned
-      ? (src.episode?.imdbEpisode ?? src.episode?.episode)
-      : src.episode?.episode;
     autoSubLoadKeyRef.current = key;
     autoSubStagesRef.current.add(stageKey);
     void (async () => {
+      const coords = await resolveAnimeSearchCoords({
+        isAnime: subIsAnime,
+        metaId: src.meta.id,
+        imdbId: searchImdbId,
+        imdbVerified: resolvedImdbVerified,
+        episode: src.episode,
+      });
+      const animeIds = candidateIds.some((i) => i.startsWith("kitsu:") || i.startsWith("mal:"));
+      const imdbEpAligned =
+        !animeIds ||
+        src.episode?.imdbEpisode == null ||
+        src.episode.episode === src.episode.imdbEpisode;
+      const searchSeason = coords
+        ? coords.season
+        : imdbEpAligned
+          ? src.episode?.imdbSeason ?? src.episode?.season
+          : src.episode?.season;
+      const searchEpisode = coords
+        ? coords.episode
+        : imdbEpAligned
+          ? src.episode?.imdbEpisode ?? src.episode?.episode
+          : src.episode?.episode;
+      publishSubtitleContext({
+        candidateIds,
+        stremioId: src.meta.id ?? null,
+        filename: subtitleStreamDescriptor(src.streamRef) ?? null,
+        searchSeason,
+        searchEpisode,
+      });
       console.info(`[subs/autoload] starting ${stage} stage`, {
         imdbId: searchImdbId,
         candidateIds,
+        numbering: coords?.mode ?? "default",
         season: searchSeason,
         episode: searchEpisode,
         langs,

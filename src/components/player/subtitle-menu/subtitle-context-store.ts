@@ -4,6 +4,13 @@ export type SubtitleContentContext = {
   candidateIds: string[];
   stremioId: string | null;
   filename: string | null;
+  /**
+   * Anime-aware search coordinates for the playing episode: seasonal anime
+   * carry season + within-season episode, long-running anime only the
+   * absolute episode number.
+   */
+  searchSeason?: number;
+  searchEpisode?: number;
 };
 
 let current: SubtitleContentContext | null = null;
@@ -15,7 +22,9 @@ function same(a: SubtitleContentContext | null, b: SubtitleContentContext | null
   return (
     a.stremioId === b.stremioId &&
     a.filename === b.filename &&
-    a.candidateIds.join("|") === b.candidateIds.join("|")
+    a.candidateIds.join("|") === b.candidateIds.join("|") &&
+    a.searchSeason === b.searchSeason &&
+    a.searchEpisode === b.searchEpisode
   );
 }
 
