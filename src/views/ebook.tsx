@@ -19,11 +19,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Poster } from "@/components/poster";
 import { Row } from "@/components/row";
 import { useAnilist } from "@/lib/anilist/provider";
+import { useUiLanguage } from "@/lib/i18n";
 import {
   EBOOK_CATEGORIES,
+  browsePopularEBooks,
   ebookDetail,
-  fetchEBookMetadata,
-  groupEBookSeries,
   mergeEBookMetadata,
   recommendedEBooks,
   type EBook,
@@ -40,7 +40,6 @@ import {
 import {
   listEBookProviders,
   loadSourceEBookPage,
-  searchSourceEBooks,
   sourceEBookChapters,
   sourceEBookContent,
   sourceEBookDetail,
@@ -82,9 +81,43 @@ function labelNumber(value: string): number | undefined {
   return Number.isFinite(number) ? number : undefined;
 }
 
+function updateSourceItems(current: EBook[] | null, incoming: EBook[], replace = false): EBook[] {
+  const key = (ebook: EBook) =>
+    (ebook.seriesTitle || ebook.title)
+      .normalize("NFKD")
+      .toLowerCase()
+      .replace(/[^\p{L}\p{N}]+/gu, " ")
+      .trim();
+  const groups = [...(current ?? [])];
+  for (const ebook of incoming) {
+    const incomingIds = new Set((ebook.books ?? [ebook]).map((book) => book.id));
+    const index = groups.findIndex((existing) =>
+      (existing.books ?? [existing]).some((book) => incomingIds.has(book.id)),
+    );
+    const fallback = index < 0 ? groups.findIndex((existing) => key(existing) === key(ebook)) : index;
+    if (fallback < 0) {
+      groups.push(ebook);
+      continue;
+    }
+    const existing = groups[fallback];
+    const books = new Map(
+      [...(existing.books ?? [existing]), ...(ebook.books ?? [ebook])].map((book) => [
+        book.id,
+        book,
+      ]),
+    );
+    groups[fallback] = {
+      ...(replace ? ebook : existing),
+      books: books.size > 1 ? [...books.values()] : undefined,
+    };
+  }
+  return groups;
+}
+
 export function EBookView() {
   const { ebookId, openEBook, topKind } = useView();
   const { isConnected, session } = useAnilist();
+  const uiLanguage = useUiLanguage();
   const [sourceItems, setSourceItems] = useState<EBook[] | null>(null);
   const [providers, setProviders] = useState<EBookProvider[]>([]);
   const [providerId, setProviderId] = useState("");
@@ -98,40 +131,30 @@ export function EBookView() {
   const [screen, setScreen] = useState<"browse" | "sources">("browse");
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [popular, setPopular] = useState<EBook[] | null>(null);
   const searchSeq = useRef(0);
+  const searchTimer = useRef<number | undefined>(undefined);
   const sourceSeq = useRef(0);
+  const providerIdRef = useRef("");
   const cursorRef = useRef<EBookCursor>({});
   const loadingMoreRef = useRef(false);
-  const metadataRef = useRef<EBook[]>([]);
-
-  const enrich = useCallback(
-    (items: EBook[], sourceId: number, searchId: number, search: boolean) => {
-      const apply = (metadata: EBook[]) => {
-        if (sourceId !== sourceSeq.current || searchId !== searchSeq.current) return;
-        metadataRef.current.push(...metadata);
-        const update = (current: EBook[] | null) =>
-          current ? mergeEBookMetadata(current, metadataRef.current) : current;
-        if (search) setResults(update);
-        else setSourceItems(update);
-      };
-      void (async () => {
-        void fetchEBookMetadata(items)
-          .then(apply)
-          .catch(() => {});
-        for (let start = 0; start < items.length; start += 6) {
-          const details = (
-            await Promise.all(
-              items.slice(start, start + 6).map((ebook) => sourceEBookDetail(ebook.id)),
-            )
-          ).filter((ebook): ebook is EBook => !!ebook);
-          if (sourceId !== sourceSeq.current || searchId !== searchSeq.current) return;
-          apply(await fetchEBookMetadata(details));
-        }
-      })().catch(() => {});
-    },
-    [],
+  const currentItems = useMemo(() => {
+    const items = new Map<string, EBook>();
+    for (const ebook of sourceItems ?? [])
+      for (const book of ebook.books ?? [ebook]) items.set(book.id, ebook);
+    return items;
+  }, [sourceItems]);
+  const displaySaved = useMemo(
+    () => saved.map((ebook) => currentItems.get(ebook.id) ?? mergeEBookMetadata([ebook], [])[0]),
+    [currentItems, saved],
   );
-
+  const displayFavorites = useMemo(
+    () =>
+      favorites.map(
+        (ebook) => currentItems.get(ebook.id) ?? mergeEBookMetadata([ebook], [])[0],
+      ),
+    [currentItems, favorites],
+  );
   const loadAnilistLibrary = useCallback(() => {
     if (!isConnected || !session) {
       return;
@@ -143,43 +166,69 @@ export function EBookView() {
 
   useEffect(loadAnilistLibrary, [loadAnilistLibrary]);
 
-  const loadSources = useCallback(() => {
+  useEffect(() => {
+    let active = true;
+    void browsePopularEBooks()
+      .catch(() => [])
+      .then((allTime) => {
+        if (!active) return;
+        setPopular(allTime);
+      });
+    return () => {
+      active = false;
+    };
+  }, [uiLanguage]);
+
+  const loadSources = useCallback((requestedProvider?: string) => {
     const seq = ++sourceSeq.current;
     cursorRef.current = {};
-    metadataRef.current = [];
     setHasMore(false);
     setSourceItems(null);
     void listEBookProviders()
       .then((list) => {
         if (seq !== sourceSeq.current) return null;
         setProviders(list);
-        const selected = list.some((source) => source.id === providerId)
-          ? providerId
+        const requested = requestedProvider ?? providerIdRef.current;
+        const selected = list.some((source) => source.id === requested)
+          ? requested
           : (list[0]?.id ?? "");
+        providerIdRef.current = selected;
         setProviderId(selected);
-        return loadSourceEBookPage(undefined, selected);
+        return loadSourceEBookPage(undefined, selected, {}, {
+          onSource: (items) => {
+            if (seq === sourceSeq.current)
+              setSourceItems((current) => updateSourceItems(current, items));
+          },
+          onMetadata: (items) => {
+            if (seq === sourceSeq.current)
+              setSourceItems((current) => updateSourceItems(current, items, true));
+          },
+        });
       })
       .then((page) => {
         if (!page || seq !== sourceSeq.current) return;
         cursorRef.current = page.cursor;
         setHasMore(page.hasMore);
-        setSourceItems(mergeEBookMetadata(page.items, []));
-        enrich(page.items, seq, searchSeq.current, false);
+        void page.enriched.then((items) => {
+          if (seq === sourceSeq.current)
+            setSourceItems((current) => updateSourceItems(current, items, true));
+        });
       })
       .catch(() => {
         if (seq === sourceSeq.current) setSourceItems([]);
       });
-  }, [enrich, providerId]);
+  }, []);
 
   useEffect(() => {
     loadSources();
     const sources = subscribeEBookSources(loadSources);
     const extensions = subscribeEBookExtensions(loadSources);
     return () => {
+      window.clearTimeout(searchTimer.current);
       sources();
       extensions();
     };
-  }, [loadSources]);
+  }, [loadSources, uiLanguage]);
 
   useEffect(() => {
     const update = () => {
@@ -195,37 +244,20 @@ export function EBookView() {
       setSelected(null);
       return;
     }
-    const cached = [...saved, ...favorites, ...(sourceItems ?? [])].find(
-      (ebook) => ebook.id === ebookId,
-    );
+    const cached =
+      currentItems.get(ebookId) ??
+      [...displayFavorites, ...displaySaved].find((ebook) => ebook.id === ebookId);
     setSelected(cached ?? null);
     const source = ebookId.startsWith("source:");
     void (source ? sourceEBookDetail(ebookId) : ebookDetail(ebookId))
-      .then(async (detail) => {
+      .then((detail) => {
         if (!detail) return;
-        const matches = source ? await fetchEBookMetadata([detail]) : [];
-        const fresh = matches.filter(
-          (match) =>
-            !metadataRef.current.some(
-              (cached) => cached.id === match.id && cached.seriesTitle === match.seriesTitle,
-            ),
-        );
-        if (fresh.length) {
-          metadataRef.current.push(...fresh);
-          const update = (items: EBook[] | null) =>
-            items ? mergeEBookMetadata(items, metadataRef.current) : items;
-          setSourceItems(update);
-          setResults(update);
-        }
         setSelected((current) => {
-          const merged = source
-            ? mergeEBookMetadata([detail], [...matches, ...(current ? [current] : [])])[0]
-            : detail;
-          return current?.books?.length ? { ...merged, title: current.title } : merged;
+          return current?.books?.length ? { ...detail, books: current.books } : detail;
         });
       })
       .catch(() => {});
-  }, [ebookId, saved, favorites, sourceItems]);
+  }, [currentItems, ebookId, displayFavorites, displaySaved, uiLanguage]);
 
   useEffect(() => {
     const onBack = (event: Event) => {
@@ -243,31 +275,43 @@ export function EBookView() {
   }, [ebookId, openEBook, screen, topKind]);
 
   const search = (value: string) => {
+    const wasSearching = query.trim().length >= 2;
     setQuery(value);
     const seq = ++searchSeq.current;
-    ++sourceSeq.current;
+    window.clearTimeout(searchTimer.current);
     if (value.trim().length < 2) {
       setResults(null);
-      loadSources();
+      if (wasSearching) loadSources();
       return;
     }
     cursorRef.current = {};
-    metadataRef.current = [];
     setHasMore(false);
     setResults(null);
-    const sourceId = sourceSeq.current;
-    void loadSourceEBookPage(value, providerId)
-      .then((page) => {
-        if (seq === searchSeq.current) {
-          cursorRef.current = page.cursor;
-          setHasMore(page.hasMore);
-          setResults(mergeEBookMetadata(page.items, []));
-          enrich(page.items, sourceId, seq, true);
-        }
+    searchTimer.current = window.setTimeout(() => {
+      void loadSourceEBookPage(value.trim(), providerId, {}, {
+        onSource: (items) => {
+          if (seq === searchSeq.current)
+            setResults((current) => updateSourceItems(current, items));
+        },
+        onMetadata: (items) => {
+          if (seq === searchSeq.current)
+            setResults((current) => updateSourceItems(current, items, true));
+        },
       })
-      .catch(() => {
-        if (seq === searchSeq.current) setResults([]);
-      });
+        .then((page) => {
+          if (seq === searchSeq.current) {
+            cursorRef.current = page.cursor;
+            setHasMore(page.hasMore);
+            void page.enriched.then((items) => {
+              if (seq === searchSeq.current)
+                setResults((current) => updateSourceItems(current, items, true));
+            });
+          }
+        })
+        .catch(() => {
+          if (seq === searchSeq.current) setResults([]);
+        });
+    }, 300);
   };
 
   const loadMore = useCallback(() => {
@@ -278,7 +322,18 @@ export function EBookView() {
     const current = term ? results : sourceItems;
     loadingMoreRef.current = true;
     setLoadingMore(true);
-    void loadSourceEBookPage(term, providerId, cursorRef.current)
+    void loadSourceEBookPage(term, providerId, cursorRef.current, {
+      onSource: (items) => {
+        if (sourceId !== sourceSeq.current || searchId !== searchSeq.current) return;
+        if (term) setResults((currentItems) => updateSourceItems(currentItems, items));
+        else setSourceItems((currentItems) => updateSourceItems(currentItems, items));
+      },
+      onMetadata: (items) => {
+        if (sourceId !== sourceSeq.current || searchId !== searchSeq.current) return;
+        if (term) setResults((currentItems) => updateSourceItems(currentItems, items, true));
+        else setSourceItems((currentItems) => updateSourceItems(currentItems, items, true));
+      },
+    })
       .then((page) => {
         if (sourceId !== sourceSeq.current || searchId !== searchSeq.current) return;
         cursorRef.current = page.cursor;
@@ -288,17 +343,20 @@ export function EBookView() {
         const fresh = page.items.filter((ebook) => !known.has(ebook.id));
         setHasMore(page.hasMore && fresh.length > 0);
         const bare = mergeEBookMetadata(fresh, []);
-        const update = (items: EBook[] | null) => groupEBookSeries([...(items ?? []), ...bare]);
-        if (term) setResults(update);
-        else setSourceItems(update);
-        enrich(fresh, sourceId, searchId, !!term);
+        if (term) setResults((items) => updateSourceItems(items, bare));
+        else setSourceItems((items) => updateSourceItems(items, bare));
+        void page.enriched.then((items) => {
+          if (sourceId !== sourceSeq.current || searchId !== searchSeq.current) return;
+          if (term) setResults((currentItems) => updateSourceItems(currentItems, items, true));
+          else setSourceItems((currentItems) => updateSourceItems(currentItems, items, true));
+        });
       })
       .catch(() => setHasMore(false))
       .finally(() => {
         loadingMoreRef.current = false;
         setLoadingMore(false);
       });
-  }, [enrich, hasMore, providerId, query, results, sourceItems]);
+  }, [hasMore, providerId, query, results, sourceItems]);
 
   if (ebookId) {
     return (
@@ -333,41 +391,38 @@ export function EBookView() {
   const refreshing = query.trim().length >= 2 ? results === null : sourceItems === null;
   const rails: Rail[] =
     query.trim().length >= 2
-      ? [
-          {
-            title: `Results for “${query.trim()}”`,
-            subtitle: category || categoryGroup || "All eBooks",
-            items: results,
-            onEndReached: loadMore,
-            loadingMore,
-          },
-        ]
+      ? []
       : [
-          ...(favorites.length
+          ...(displayFavorites.length
             ? [
                 {
                   title: "Favorites",
                   subtitle: "Stories you love",
-                  items: favorites.filter((item) => item.source === "source"),
+                  items: displayFavorites.filter((item) => item.source === "source"),
                 },
               ]
             : []),
-          ...(saved.length
+          ...(displaySaved.length
             ? [
                 {
                   title: "Bookmarks",
                   subtitle: "Saved for later",
-                  items: saved.filter((item) => item.source === "source"),
+                  items: displaySaved.filter((item) => item.source === "source"),
                 },
               ]
             : []),
           {
-            title: category || categoryGroup || "Browse",
+            title: "Trending eBooks",
             subtitle:
-              providers.find((source) => source.id === providerId)?.name ?? "Installed sources",
-            items: catalog,
-            onEndReached: loadMore,
-            loadingMore,
+              providers.find((source) => source.id === providerId)?.name ?? "Installed source",
+            items: sourceItems?.slice(0, 18) ?? sourceItems,
+            hideEmpty: true,
+          },
+          {
+            title: "Most Popular eBooks",
+            subtitle: "Most read and saved of all time",
+            items: popular,
+            hideEmpty: true,
           },
         ];
 
@@ -407,6 +462,19 @@ export function EBookView() {
       </section>
 
       <div className="mx-auto flex max-w-[1500px] flex-col gap-9 px-12 pt-8">
+        {rails.map((rail) => (
+          <EBookRail
+            key={`${rail.title}:${providerId}`}
+            {...rail}
+            onOpen={(ebook) => openEBook(String(ebook.id))}
+          />
+        ))}
+        <div className="mb-[-1rem] mt-1">
+          <h2 className="text-[22px] font-medium tracking-tight text-ink">Browse eBooks</h2>
+          <p className="text-[13px] text-ink-subtle">
+            {providers.find((source) => source.id === providerId)?.name ?? "Installed sources"}
+          </p>
+        </div>
         <div className="flex max-w-3xl flex-col gap-3">
           <div className="flex items-center gap-3">
             <label className="flex h-12 min-w-0 flex-1 items-center gap-3 rounded-2xl border border-edge-soft bg-elevated/45 px-4 text-ink-muted focus-within:border-edge focus-within:bg-elevated/70">
@@ -435,9 +503,11 @@ export function EBookView() {
               providers={providers}
               activeId={providerId}
               onSelect={(id) => {
+                providerIdRef.current = id;
                 setProviderId(id);
                 setQuery("");
                 setResults(null);
+                loadSources(id);
               }}
               onManage={() => setScreen("sources")}
             />
@@ -490,13 +560,13 @@ export function EBookView() {
             )}
           </div>
         </div>
-        {rails.map((rail) => (
-          <EBookRail
-            key={`${rail.title}:${providerId}:${query}`}
-            {...rail}
-            onOpen={(ebook) => openEBook(String(ebook.id))}
-          />
-        ))}
+        <EBookGrid
+          items={query.trim().length >= 2 ? results : catalog}
+          loadingMore={loadingMore}
+          hasMore={hasMore}
+          onEndReached={loadMore}
+          onOpen={(ebook) => openEBook(String(ebook.id))}
+        />
       </div>
     </main>
   );
@@ -669,42 +739,97 @@ function EBookRail({
                 className="aspect-[2/3] animate-pulse rounded-xl bg-elevated/60 motion-reduce:animate-none"
               />
             ))
-          : items.map((ebook) => (
-              <button
-                key={ebook.id}
-                type="button"
-                onClick={() => onOpen(ebook)}
-                className="group flex w-full flex-col gap-2 text-start"
-              >
-                <div className="transition-transform duration-300 group-hover:-translate-y-1.5 motion-reduce:transition-none">
-                  <Poster
-                    src={ebook.cover}
-                    seed={`ebook:${ebook.id}`}
-                    ratio="portrait"
-                    lazy
-                    className="harbor-card-ring rounded-xl shadow-[0_12px_30px_-18px_rgba(0,0,0,0.8)]"
-                  />
-                </div>
-                <p className="line-clamp-2 text-[13px] font-medium leading-snug text-ink">
-                  {ebook.title}
-                </p>
-                <p className="text-[11.5px] text-ink-subtle">
-                  {[
-                    ebook.books?.length ? `${ebook.books.length} books` : null,
-                    ebook.books
-                      ? `${new Set(ebook.books.map((book) => book.source)).size} sources`
-                      : null,
-                    ebook.year,
-                    ebook.volumes ? `${ebook.volumes} vols` : null,
-                  ]
-                    .filter(Boolean)
-                    .join(" · ")}
-                </p>
-              </button>
-            ))}
+          : items.map((ebook) => <EBookCard key={ebook.id} ebook={ebook} onOpen={onOpen} />)}
       </Row>
       {loadingMore && <Loader2 size={18} className="animate-spin text-ink-subtle" />}
     </section>
+  );
+}
+
+function EBookGrid({
+  items,
+  loadingMore,
+  hasMore,
+  onEndReached,
+  onOpen,
+}: {
+  items: EBook[] | null;
+  loadingMore: boolean;
+  hasMore: boolean;
+  onEndReached: () => void;
+  onOpen: (ebook: EBook) => void;
+}) {
+  const sentinel = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const element = sentinel.current;
+    if (!element || !hasMore) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => entry?.isIntersecting && onEndReached(),
+      { rootMargin: "800px 0px" },
+    );
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [hasMore, onEndReached]);
+
+  if (items?.length === 0)
+    return <p className="py-10 text-center text-[14px] text-ink-muted">No eBooks found.</p>;
+  return (
+    <section>
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-x-4 gap-y-7">
+        {items === null
+          ? Array.from({ length: 12 }, (_, index) => (
+              <div
+                key={index}
+                className="aspect-[2/3] animate-pulse rounded-xl bg-elevated/60 motion-reduce:animate-none"
+              />
+            ))
+          : items.map((ebook) => <EBookCard key={ebook.id} ebook={ebook} onOpen={onOpen} />)}
+      </div>
+      <div ref={sentinel} className="h-4" />
+      {loadingMore && (
+        <div className="flex justify-center py-6">
+          <Loader2 size={22} className="animate-spin text-ink-subtle motion-reduce:animate-none" />
+        </div>
+      )}
+      {!hasMore && items && items.length > 0 && (
+        <p className="py-6 text-center text-[12.5px] text-ink-subtle">
+          That is everything from this source.
+        </p>
+      )}
+    </section>
+  );
+}
+
+function EBookCard({ ebook, onOpen }: { ebook: EBook; onOpen: (ebook: EBook) => void }) {
+  return (
+    <button
+      type="button"
+      onClick={() => onOpen(ebook)}
+      className="group flex w-full min-w-0 flex-col gap-2 text-start"
+    >
+      <div className="transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0.24,1)] group-hover:-translate-y-2 motion-reduce:transition-none motion-reduce:group-hover:translate-y-0">
+        <Poster
+          src={ebook.cover}
+          seed={`ebook:${ebook.id}`}
+          ratio="portrait"
+          lazy
+          className="harbor-card-ring rounded-xl shadow-[0_12px_30px_-18px_rgba(0,0,0,0.8)]"
+        />
+      </div>
+      <p className="line-clamp-2 min-h-9 text-[13px] font-medium leading-snug text-ink">
+        {ebook.title}
+      </p>
+      <p className="text-[11.5px] text-ink-subtle">
+        {[
+          ebook.books?.length ? `${ebook.books.length} books` : null,
+          ebook.books ? `${new Set(ebook.books.map((book) => book.source)).size} sources` : null,
+          ebook.year,
+          ebook.volumes ? `${ebook.volumes} vols` : null,
+        ]
+          .filter(Boolean)
+          .join(" · ")}
+      </p>
+    </button>
   );
 }
 
@@ -1061,15 +1186,21 @@ function EBookDetails({
     content: EBookChapterContent | null;
     error?: string;
   } | null>(null);
-  useEffect(() => setSaved(ebook ? ebookInLibrary(ebook.id) : false), [ebook]);
-  useEffect(() => setFavorite(ebook ? ebookIsFavorite(ebook.id) : false), [ebook]);
+  const ebookId = ebook?.id;
+  const sourceKey = (ebook?.books ?? (ebook ? [ebook] : []))
+    .filter((book) => book.source === "source")
+    .map((book) => book.id)
+    .join("\0");
+  const genreKey = ebook?.genres.join("\0");
+  useEffect(() => setSaved(ebookId ? ebookInLibrary(ebookId) : false), [ebookId]);
+  useEffect(() => setFavorite(ebookId ? ebookIsFavorite(ebookId) : false), [ebookId]);
   useEffect(() => {
     if (!ebook) return;
     setRecommendations(null);
     void recommendedEBooks(ebook)
       .then(setRecommendations)
       .catch(() => setRecommendations([]));
-  }, [ebook]);
+  }, [ebookId, ebook?.anilistId, genreKey]);
   useEffect(() => {
     setReading(null);
     if (!ebook) return;
@@ -1090,8 +1221,8 @@ function EBookDetails({
         .toLowerCase()
         .replace(/[^\p{L}\p{N}]+/gu, " ")
         .trim();
-    void searchSourceEBooks(ebook.title)
-      .then((items) => {
+    void loadSourceEBookPage(ebook.title)
+      .then(({ items }) => {
         if (!active) return;
         const matches = items.filter((item) => key(item.title) === key(ebook.title));
         setSourceOptions(matches);
@@ -1102,7 +1233,7 @@ function EBookDetails({
     return () => {
       active = false;
     };
-  }, [ebook]);
+  }, [ebookId, ebook?.source, ebook?.title, sourceKey]);
   useEffect(() => {
     let active = true;
     if (!sourceRoute) {
@@ -1120,19 +1251,24 @@ function EBookDetails({
     };
   }, [sourceRoute]);
   const volumeGroups = useMemo(() => {
-    const groups = new Map<string, EBookChapter[]>();
+    const groups = new Map<string, { title?: string; chapters: EBookChapter[] }>();
     for (const chapter of chapters ?? []) {
       const volume = chapter.volume?.trim() ?? "";
-      groups.set(volume, [...(groups.get(volume) ?? []), chapter]);
+      const group = groups.get(volume) ?? { chapters: [] };
+      groups.set(volume, {
+        title: group.title ?? (chapter.volumeTitle?.trim() || undefined),
+        chapters: [...group.chapters, chapter],
+      });
     }
     return [...groups]
-      .map(([volume, items]) => {
+      .map(([volume, group]) => {
         const number = labelNumber(volume);
+        const base = number === undefined ? volume || "Chapters" : `Volume ${number}`;
         return {
           volume,
-          label: number === undefined ? volume || "Chapters" : `Volume ${number}`,
+          label: group.title || base,
           number,
-          chapters: items,
+          chapters: group.chapters,
         };
       })
       .sort((left, right) => {
@@ -1378,4 +1514,3 @@ function EBookDetails({
     </main>
   );
 }
-

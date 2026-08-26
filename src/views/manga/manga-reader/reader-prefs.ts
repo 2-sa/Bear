@@ -17,9 +17,9 @@ export const DEFAULT_PREFS: ReaderPrefs = {
   hideChapterEndHint: false,
 };
 
-export function loadPrefs(): ReaderPrefs {
+export function loadPrefs(key = PREFS_KEY): ReaderPrefs {
   try {
-    return { ...DEFAULT_PREFS, ...JSON.parse(localStorage.getItem(PREFS_KEY) || "{}") };
+    return { ...DEFAULT_PREFS, ...JSON.parse(localStorage.getItem(key) || "{}") };
   } catch {
     return DEFAULT_PREFS;
   }

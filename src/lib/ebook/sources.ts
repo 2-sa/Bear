@@ -20,6 +20,7 @@ export type EBookHtmlSourceConfig = {
     title?: string;
     chapter?: string;
     volume?: string;
+    volumeTitle?: string;
     date?: string;
     views?: string;
   };
@@ -131,4 +132,3 @@ export function addEBookHtmlSource(config: EBookHtmlSourceConfig): boolean {
 export function removeEBookSource(id: string): void {
   write(read().filter((source) => source.id !== id));
 }
-

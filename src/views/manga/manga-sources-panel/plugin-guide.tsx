@@ -145,7 +145,7 @@ const EBOOK_EXAMPLE_REPO = `{
     {
       "id": "example-source",
       "name": "Example Source",
-      "version": "1.3.0",
+      "version": "1.4.0",
       "lang": "en",
       "nsfw": false,
       "icon": "https://example-ebook-host.test/icon.png",
@@ -407,6 +407,18 @@ function cardToSummary(el) {`,
       "    title: cleanTitle(rawTitle),",
     )
     .replace(
+      "    title: cleanTitle(rawTitle),",
+      `    title: cleanTitle(rawTitle),
+    // Metadata hints are optional. Exact IDs beat title matching when the source has them.
+    seriesTitle: el.attr("data-series-title") || undefined,
+    altTitles: (el.attr("data-alt-titles") || "").split("|").filter(Boolean),
+    isbn: el.attr("data-isbn") || undefined,
+    googleBooksId: el.attr("data-google-books-id") || undefined,
+    openLibraryId: el.attr("data-open-library-id") || undefined,
+    wikidataId: el.attr("data-wikidata-id") || undefined,
+    anilistId: Number(el.attr("data-anilist-id")) || undefined,`,
+    )
+    .replace(
       '    cover: abs(img?.attr("data-src") || img?.attr("src")),',
       `    cover: abs(img?.attr("data-src") || img?.attr("src")),
     // Customize these selectors/markers for the site. Harbor drops true entries.
@@ -417,6 +429,18 @@ function cardToSummary(el) {`,
     .replace(
       '      title: root.querySelector("h1")?.text() || id,',
       '      title: cleanTitle(root.querySelector("h1")?.text() || id),',
+    )
+    .replace(
+      '      title: cleanTitle(root.querySelector("h1")?.text() || id),',
+      `      title: cleanTitle(root.querySelector("h1")?.text() || id),
+      // Send every identifier the site exposes. Omit unknown values; never invent IDs.
+      seriesTitle: root.querySelector(".series-title")?.text(),
+      altTitles: root.querySelectorAll(".alt-title").map((node) => node.text()).filter(Boolean),
+      isbn: root.attr("data-isbn") || undefined,
+      googleBooksId: root.attr("data-google-books-id") || undefined,
+      openLibraryId: root.attr("data-open-library-id") || undefined,
+      wikidataId: root.attr("data-wikidata-id") || undefined,
+      anilistId: Number(root.attr("data-anilist-id")) || undefined,`,
     )
     .replace(
       '      lastChapter: root.querySelector(".chapter-list li a")?.text(),',
@@ -438,7 +462,9 @@ function cardToSummary(el) {`,
     .replace(
       '          volume: a.attr("data-volume") || null,',
       `          // Keep the site's value stable: "0", "1", "2", and so on.
-          volume: a.attr("data-volume") ?? undefined,`,
+          volume: a.attr("data-volume") ?? undefined,
+          // Optional exact source title, e.g. "المجلد الأول: طبيعة الشيطان لا تتغير".
+          volumeTitle: a.attr("data-volume-title") || undefined,`,
     )
     .replace(
       '          chapter: a.attr("data-number") || null,',
@@ -483,11 +509,40 @@ fetch, storage, files, or Tauri access. Networking and HTML parsing go through h
       title?: string;
       position?: number;
       volume?: string;
+      volumeTitle?: string;
       publishAt?: string;
       views?: number | string;
     };
 
-    type EBookVolume = { volume: string; chapters: EBookChapter[] };
+    type EBookVolume = {
+      volume: string;
+      volumeTitle?: string;
+      chapters: EBookChapter[];
+    };
+
+    type EBookSummary = {
+      id: string;
+      title: string;
+      seriesTitle?: string;
+      altTitle?: string;
+      altTitles?: string[];
+      author?: string;
+      authors?: string[];
+      anilistId?: number;
+      googleBooksId?: string;
+      openLibraryId?: string;
+      wikidataId?: string;
+      isbn?: string;
+      cover?: string;
+      description?: string;
+      year?: number;
+      status?: string;
+      genres?: string[];
+      chapters?: number;
+      volumes?: number;
+      siteUrl?: string;
+      isFanMade?: boolean;
+    };
 
 EBookSummary requires id and title. It may include altTitle, cover, year, status,
 description, author or authors, genres, chapters, volumes, siteUrl, and isFanMade. Covers
@@ -497,6 +552,24 @@ editions in titles, detect that site's marker in the plugin and set isFanMade ra
 making Harbor guess. Return the canonical title; Harbor also normalizes punctuation used
 as word separators and removes trailing source branding such as "kol"/"كول" before
 metadata matching.
+
+Before Harbor renders a source result, it resolves metadata in this order:
+
+1. anilistId, when supplied by the source.
+2. AniList exact normalized title, seriesTitle, and alternate-title matching.
+3. googleBooksId or isbn, then Google Books exact title and alternate-title matching.
+4. openLibraryId or isbn, then Open Library exact title and alternate-title matching.
+5. wikidataId, then Wikidata exact label and alias matching.
+
+Return identifiers only when they are explicitly present in the source. anilistId is the
+numeric AniList media ID. openLibraryId is the work ID with or without the /works/ prefix.
+googleBooksId is the Google Books volume ID and wikidataId is a Q-prefixed Wikidata item ID.
+isbn accepts ISBN-10 or ISBN-13; separators are allowed. seriesTitle groups separate books
+or volumes under one canonical work. altTitle accepts one alias; altTitles accepts all
+known language/native aliases. Better source hints mean fewer metadata requests and avoid
+wrong matches. Harbor preserves the source id and chapter route while replacing display
+metadata with the resolved canonical record. If no metadata provider matches, Harbor
+shows the clean source record unchanged.
 
 EBookChapter requires id. chapter is the chapter number or source label. position is the
 zero-based reading position, where lower values are earlier. Supply position for every
@@ -508,18 +581,29 @@ count. publishAt accepts the source's date string.
 Return volume data in one of these two forms:
 
     // Flat: repeat the explicit source volume on every chapter.
-    [{ id: "v0-c1", volume: "0", chapter: "1", position: 0, title: "Chapter 1", views: 1200 }]
+    [{
+      id: "v0-c1",
+      volume: "0",
+      volumeTitle: "Volume One: The Beginning",
+      chapter: "1",
+      position: 0,
+      title: "Chapter 1",
+      views: 1200
+    }]
 
     // Nested: put each source volume around its chapters.
     [{
       volume: "0",
+      volumeTitle: "Volume One: The Beginning",
       chapters: [{ id: "v0-c1", chapter: "1", position: 0, title: "Chapter 1", views: "1.2K" }]
     }]
 
 Volume "0" is valid. Keep volume identifiers stable and return every source volume,
 including volumes with one chapter or more than 1000 chapters. Do not derive volume data
 from chapter titles. Omit volume only when the source has no volume structure. Do not
-return volume headers as fake chapters.
+return volume headers as fake chapters. volumeTitle is optional and must contain the
+source's real volume name. Harbor displays it in the volume picker; volumes without a
+title keep the generated Volume N label.
 
 Harbor groups chapters by the supplied volume and sorts numbered volumes numerically.
 content() returns readable text, or an object containing text and/or absolute HTTP(S)
@@ -540,7 +624,7 @@ the plugin file on HTTPS, then paste the manifest URL into eBook > Sources > Ext
       "plugins": [{
         "id": "my-source",
         "name": "My Source",
-        "version": "1.3.0",
+        "version": "1.4.0",
         "lang": "en",
         "nsfw": false,
         "entry": "my-source.plugin.js"
@@ -548,7 +632,8 @@ the plugin file on HTTPS, then paste the manifest URL into eBook > Sources > Ext
     }
 
 The provider id must match the manifest id. repo.json contains installation metadata
-only. Return volumes, chapters, dates, and views from example.plugin.js. Source files are
+only. Return book metadata hints, volumes, chapters, dates, and views from
+example.plugin.js. Source files are
 limited to 2 MB. Harbor validates popular, search, detail, chapters, and content during
 installation. Existing image-based plugins using pageUrls remain supported for
 compatibility.`;

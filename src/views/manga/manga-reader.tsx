@@ -35,6 +35,10 @@ export function MangaReader({
   manga,
   startPage,
   startScroll,
+  pagesOverride,
+  prefsKey = PREFS_KEY,
+  disableMangaPersistence = false,
+  onPageChange,
   onExit,
   onChangeIndex,
 }: {
@@ -43,6 +47,10 @@ export function MangaReader({
   manga: { id: string; title: string; cover?: string };
   startPage?: number;
   startScroll?: number;
+  pagesOverride?: MangaPage[];
+  prefsKey?: string;
+  disableMangaPersistence?: boolean;
+  onPageChange?: (page: number) => void;
   onExit: () => void;
   onChangeIndex: (i: number) => void;
 }) {
@@ -52,7 +60,7 @@ export function MangaReader({
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [reloadTick, setReloadTick] = useState(0);
-  const [prefs, setPrefs] = useState<ReaderPrefs>(loadPrefs);
+  const [prefs, setPrefs] = useState<ReaderPrefs>(() => loadPrefs(prefsKey));
   const [currentPage, setCurrentPage] = useState(0);
   const [bookSpread, setBookSpread] = useState("");
   const [chromeOpen, setChromeOpen] = useState(true);
@@ -107,7 +115,7 @@ export function MangaReader({
     setPrefs((p) => {
       const next = { ...p, ...patch };
       try {
-        localStorage.setItem(PREFS_KEY, JSON.stringify(next));
+        localStorage.setItem(prefsKey, JSON.stringify(next));
       } catch {
         /* noop */
       }
@@ -120,7 +128,7 @@ export function MangaReader({
       const z = Math.max(lo, Math.min(3, Math.round((p.zoom + delta) * 100) / 100));
       const next = { ...p, zoom: z };
       try {
-        localStorage.setItem(PREFS_KEY, JSON.stringify(next));
+        localStorage.setItem(prefsKey, JSON.stringify(next));
       } catch {
         /* noop */
       }
@@ -138,6 +146,15 @@ export function MangaReader({
     settled.current = false;
     pageEls.current = [];
     scrollRef.current?.scrollTo({ top: 0, left: 0 });
+    if (pagesOverride) {
+      setPages(pagesOverride);
+      setFailed(!pagesOverride.length);
+      setLoading(false);
+      setCurrentPage(Math.max(0, Math.min(pagesOverride.length - 1, startPage ?? 0)));
+      didSeek.current = true;
+      settled.current = true;
+      return;
+    }
     downloadedPages(chapter.id)
       .then((local) => local ?? chapterPages(chapter.id))
       .then((urls) => {
@@ -205,7 +222,7 @@ export function MangaReader({
     return () => {
       cancelled = true;
     };
-  }, [chapter.id, reloadTick]);
+  }, [chapter.id, pagesOverride, reloadTick, startPage]);
 
   useEffect(() => {
     const bump = () => {
@@ -263,7 +280,10 @@ export function MangaReader({
     return () => obs.disconnect();
   }, [paged, horizontal, loading, failed, pages]);
 
-  useEffect(() => clearMangaReading, []);
+  useEffect(
+    () => (disableMangaPersistence ? undefined : clearMangaReading),
+    [disableMangaPersistence],
+  );
 
   const label = chapterLabel(chapter);
   const recordBookPage = useReaderProgress({
@@ -280,7 +300,12 @@ export function MangaReader({
     book,
     settled,
     scrollRef,
+    disabled: disableMangaPersistence,
   });
+
+  useEffect(() => {
+    if (settled.current && total > 0) onPageChange?.(currentPage);
+  }, [currentPage, onPageChange, total]);
 
   const { goToPage, nextPage, prevPage } = useReaderPaging({
     paged,
@@ -352,8 +377,12 @@ export function MangaReader({
   const footerVisible = focus ? edge.bottom : chromeOpen;
   const controlsVisible = focus ? edge.top || edge.bottom : chromeOpen;
   const bookResume = useMemo(
-    () => startPage ?? resumePageForChapter(pid, manga.id, manga.title, chapter.id, chapter.chapter) ?? 0,
-    [chapter.id, startPage, pid, manga.id, manga.title],
+    () =>
+      startPage ??
+      (disableMangaPersistence
+        ? 0
+        : (resumePageForChapter(pid, manga.id, manga.title, chapter.id, chapter.chapter) ?? 0)),
+    [chapter.id, startPage, pid, manga.id, manga.title, disableMangaPersistence],
   );
   const pageRef = useRef(currentPage);
   pageRef.current = currentPage;
@@ -432,18 +461,19 @@ export function MangaReader({
       }
       return;
     }
-    recordMangaProgress(pid, {
-      id: manga.id,
-      title: manga.title,
-      cover: manga.cover,
-      sourceId: activeMangaSourceId(),
-      chapterId: bm.chapterId,
-      chapterNumber: bm.chapterNumber,
-      chapterLabel: bm.chapterLabel,
-      page: bm.page,
-      totalPages: bm.totalPages,
-      updatedAt: Date.now(),
-    });
+    if (!disableMangaPersistence)
+      recordMangaProgress(pid, {
+        id: manga.id,
+        title: manga.title,
+        cover: manga.cover,
+        sourceId: activeMangaSourceId(),
+        chapterId: bm.chapterId,
+        chapterNumber: bm.chapterNumber,
+        chapterLabel: bm.chapterLabel,
+        page: bm.page,
+        totalPages: bm.totalPages,
+        updatedAt: Date.now(),
+      });
     didSeek.current = false;
     onChangeIndex(targetIdx);
   };
@@ -701,7 +731,7 @@ export function MangaReader({
         />
       )}
 
-      {controlsVisible && !loading && !failed && (
+      {!disableMangaPersistence && controlsVisible && !loading && !failed && (
         <button
           type="button"
           onClick={() => setBookmarksOpen((v) => !v)}

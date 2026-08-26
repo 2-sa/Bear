@@ -44,6 +44,7 @@ import {
 } from "@/lib/ebook/sources";
 import { CARD, INPUT, PRIMARY_BTN } from "@/views/manga/manga-sources-panel/shared";
 import { PluginGuide } from "@/views/manga/manga-sources-panel/plugin-guide";
+import { googleBooksApiKey, setGoogleBooksApiKey } from "@/lib/ebook/api";
 
 const EXAMPLE = `{
   "name": "My eBook Source",
@@ -80,6 +81,45 @@ function SectionLabel({ children }: { children: ReactNode }) {
     <p className="mt-2 px-1 text-[12.5px] font-bold uppercase tracking-[0.12em] text-ink-subtle">
       {children}
     </p>
+  );
+}
+
+function MetadataProviders() {
+  const [key, setKey] = useState(googleBooksApiKey);
+  const [saved, setSaved] = useState(false);
+  return (
+    <div className="flex flex-col gap-3">
+      <SectionLabel>Metadata</SectionLabel>
+      <div className={`${CARD} flex flex-col gap-3 p-5`}>
+        <div>
+          <p className="text-[15px] font-semibold text-ink">Google Books</p>
+          <p className="text-[13px] text-ink-muted">
+            Add a Google Books API key for book titles, covers, authors, and descriptions. Wikidata
+            works automatically as the final metadata fallback.
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <input
+            type="password"
+            value={key}
+            onChange={(event) => setKey(event.target.value)}
+            placeholder="Google Books API key"
+            className={`${INPUT} min-w-0 flex-1`}
+          />
+          <button
+            type="button"
+            className={PRIMARY_BTN}
+            onClick={() => {
+              setGoogleBooksApiKey(key);
+              setSaved(true);
+              window.setTimeout(() => setSaved(false), 1200);
+            }}
+          >
+            <Check size={17} /> {saved ? "Saved" : "Save"}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -569,9 +609,9 @@ export function EBookSourcesView({ onBack }: { onBack: () => void }) {
         <LocalFolder />
         <CustomSource />
       </div>
+      <MetadataProviders />
       <Extensions />
       <PluginGuide kind="ebook" />
     </div>
   );
 }
-

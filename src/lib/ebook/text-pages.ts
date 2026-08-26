@@ -25,11 +25,22 @@ function wrap(text: string, measure: (value: string) => number): string[] {
   return lines;
 }
 
-export function createEBookPages(
+function canvasUrl(canvas: HTMLCanvasElement): Promise<string> {
+  return new Promise((resolve) =>
+    canvas.toBlob(
+      (blob) => resolve(blob ? URL.createObjectURL(blob) : canvas.toDataURL("image/png")),
+      "image/png",
+    ),
+  );
+}
+
+export async function createEBookPages(
   content: EBookChapterContent,
   direction: "ltr" | "rtl",
-): MangaPage[] {
+): Promise<MangaPage[]> {
   const canvas = document.createElement("canvas");
+  canvas.width = WIDTH;
+  canvas.height = HEIGHT;
   const context = canvas.getContext("2d");
   if (!context) return (content.images ?? []).map((url) => ({ url }));
   context.font = `${FONT}px Georgia, serif`;
@@ -51,9 +62,10 @@ export function createEBookPages(
     context.textBaseline = "top";
     const x = direction === "rtl" ? WIDTH - PAD : PAD;
     page.forEach((line, index) => context.fillText(line, x, PAD + index * LINE));
-    pages.push({ url: canvas.toDataURL("image/png") });
+    pages.push({ url: await canvasUrl(canvas) });
+    if (pages.length % 4 === 0)
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
   }
   pages.push(...(content.images ?? []).map((url) => ({ url })));
   return pages;
 }
-

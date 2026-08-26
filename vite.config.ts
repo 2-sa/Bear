@@ -90,6 +90,22 @@ export default defineConfig({
     port: 1420,
     strictPort: true,
     watch: { ignored: ["**/src-tauri/**"] },
+    proxy: Object.fromEntries(
+      [
+        "graphql.anilist.co",
+        "openlibrary.org",
+        "covers.openlibrary.org",
+        "www.googleapis.com",
+        "www.wikidata.org",
+      ].map((host) => [
+        `/api-proxy/${host}`,
+        {
+          target: `https://${host}`,
+          changeOrigin: true,
+          rewrite: (path: string) => path.replace(`/api-proxy/${host}`, ""),
+        },
+      ]),
+    ),
   },
   resolve: {
     alias: { "@": "/src" },

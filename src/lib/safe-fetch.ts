@@ -23,11 +23,21 @@ const PROXY_HOSTS = new Set([
   "www.premiumize.me",
   "openlibrary.org",
   "covers.openlibrary.org",
+  "graphql.anilist.co",
+  "www.googleapis.com",
+  "www.wikidata.org",
   "api.deezer.com",
   "api.igdb.com",
   "images.igdb.com",
   "store.steampowered.com",
   "cdn.cloudflare.steamstatic.com",
+]);
+const DEV_PROXY_HOSTS = new Set([
+  "graphql.anilist.co",
+  "openlibrary.org",
+  "covers.openlibrary.org",
+  "www.googleapis.com",
+  "www.wikidata.org",
 ]);
 
 const PROXY_SUFFIXES = [
@@ -71,7 +81,9 @@ function rewriteForWeb(url: string, init?: RequestInit): { url: string; init?: R
   const proxiable =
     PROXY_HOSTS.has(parsed.hostname) || PROXY_SUFFIXES.some((s) => parsed.hostname.endsWith(s));
   if (!proxiable) return { url, init };
-  if (!webProxyAvailable()) return { url, init };
+  const localDev = /^(?:localhost|127\.0\.0\.1)$/i.test(window.location.hostname);
+  if (!webProxyAvailable() && !(localDev && DEV_PROXY_HOSTS.has(parsed.hostname)))
+    return { url, init };
 
   const proxied = `/api-proxy/${parsed.hostname}${parsed.pathname}${parsed.search}`;
   if (!init?.headers) return { url: proxied, init };
