@@ -7,6 +7,10 @@ import { torrentsDisabled } from "@/lib/torrent/stremio-stream";
 import { useAuth } from "@/lib/auth";
 import type { Meta } from "@/lib/cinemeta";
 import { useDebridClients } from "@/lib/debrid/registry";
+import {
+  cachedDebridPreparationSignature,
+  prepareCachedDebridStreams,
+} from "@/lib/debrid/playback-preparation";
 import { useTogether } from "@/lib/together/provider";
 import { buildMatchScores, matchBadge, MATCH_CLOSE } from "@/lib/together/source-match";
 import { HostSourceBanner } from "@/components/host-source-banner";
@@ -57,7 +61,7 @@ import { CachedTip } from "./play-picker/cached-tip";
 import { StremioLayout } from "./play-picker/stremio-layout";
 import { SourceDrawer } from "./play-picker/source-drawer";
 import { TierStrip } from "./play-picker/tier-strip";
-import { usePickHandler } from "./play-picker/use-pick-handler";
+import { usePickHandler, type ResolvingSelection } from "./play-picker/use-pick-handler";
 import { useActiveKid } from "@/lib/profiles";
 import { useAutoCandidates } from "./play-picker/use-auto-candidates";
 import { useAutoFire } from "./play-picker/use-auto-fire";
@@ -72,6 +76,7 @@ import { localPlayerSrc } from "@/lib/local-library/player-src";
 import { downloadableSeasonPacks } from "@/lib/download/season-pack";
 import { LocalStreamList } from "./play-picker/local-stream-card";
 import { SubtitleSelectStep } from "./play-picker/subtitle-select-step";
+import { prefetchResumeStart } from "@/lib/player/resume-start";
 
 const TIER_ORDER: Tier[] = ["4K_DV", "4K_HDR", "4K", "1080p_HDR", "1080p", "720p", "SD", "ROUGH"];
 
@@ -124,6 +129,22 @@ export function PlayPicker({
     prefetchSegments(meta, episode);
   }, [meta, episode]);
   const imdbId = resolvedImdb.id;
+  useEffect(() => {
+    if (!authKey || (!settings.resumePlayback && !settings.resumePrompt)) return;
+    prefetchResumeStart({
+      metaId: meta.id,
+      authKey,
+      imdbId,
+      imdbVerified: resolvedImdb.verified,
+    });
+  }, [
+    authKey,
+    imdbId,
+    meta.id,
+    resolvedImdb.verified,
+    settings.resumePlayback,
+    settings.resumePrompt,
+  ]);
   const streamIds = useStreamIds(meta, episode, imdbId);
   const localMatches = useMemo(() => {
     const m = meta.id.match(/^tmdb:(?:movie|tv):(\d+)$/);
@@ -155,7 +176,7 @@ export function PlayPicker({
     () => (seasonLogo ? { ...meta, logo: seasonLogo } : meta),
     [meta, seasonLogo],
   );
-  const [resolving, setResolving] = useState<{ stream: ScoredStream } | null>(null);
+  const [resolving, setResolving] = useState<ResolvingSelection | null>(null);
   const [failedStreams, setFailedStreams] = useState<Set<ScoredStream>>(new Set());
   const [selectedTier, setSelectedTier] = useState<Tier | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -336,6 +357,36 @@ export function PlayPicker({
     if (!hostMatch) return base;
     return base.slice().sort((a, b) => (hostMatch.get(b) ?? 0) - (hostMatch.get(a) ?? 0));
   }, [filteredPicker, addonOrderMode, result, addons, hostMatch]);
+
+  const playbackPreparationHint = useMemo(
+    () =>
+      episode ? { season: episode.season ?? null, episode: episode.episode ?? null } : undefined,
+    [episode?.season, episode?.episode],
+  );
+  const playbackPreparationSignature = useMemo(
+    () => cachedDebridPreparationSignature(displayStreams, debrids, playbackPreparationHint),
+    [displayStreams, debrids, playbackPreparationHint],
+  );
+  const playbackPreparationInput = useRef({
+    streams: displayStreams,
+    debrids,
+    hint: playbackPreparationHint,
+  });
+  playbackPreparationInput.current = {
+    streams: displayStreams,
+    debrids,
+    hint: playbackPreparationHint,
+  };
+
+  useEffect(() => {
+    if (!settings.instantPlaybackPreparation || isDownload || !playbackPreparationSignature) {
+      return;
+    }
+    const ac = new AbortController();
+    const { streams, debrids: clients, hint } = playbackPreparationInput.current;
+    void prepareCachedDebridStreams(streams, clients, hint, ac.signal);
+    return () => ac.abort();
+  }, [settings.instantPlaybackPreparation, isDownload, playbackPreparationSignature]);
 
   const langHiddenCount = useMemo(() => {
     if (!result || preferredLangs.length === 0) return 0;
@@ -568,6 +619,8 @@ export function PlayPicker({
     isTorrentioStream,
     expectHostSource,
     hostSource: hostSourceForMedia,
+    preferredSourceEntry: lastSeriesSource,
+    preferredSourceMatched: sameSourceMatch != null || previousMatch != null,
     season: !isAnimeMetaId ? (episode?.season ?? null) : null,
     episode: !isAnimeMetaId ? (episode?.episode ?? null) : null,
     addonQuorum,
@@ -717,6 +770,7 @@ export function PlayPicker({
         meta={metaForDisplay}
         episode={episode}
         resolving={resolving != null}
+        p2p={resolving?.p2p === true}
         attemptIdx={autoAttemptIdx}
         download={isDownload}
         onCancel={() => {
