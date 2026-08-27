@@ -12,6 +12,7 @@ export type EBookReaderPrefs = {
   brightness: number;
   focusMode: boolean;
   mouseLineTrack: boolean;
+  lineTrackColor: string;
   font: "literary" | "arabic" | "classic";
 };
 
@@ -20,6 +21,8 @@ export type EBookBookmark = {
   bookId: string;
   chapterId: string;
   chapterTitle: string;
+  chapterLabel?: string;
+  volumeLabel?: string;
   line: number;
   preview: string;
   createdAt: number;
@@ -28,6 +31,8 @@ export type EBookBookmark = {
 export type EBookAnnotation = {
   id: string;
   chapterId: string;
+  chapterLabel?: string;
+  volumeLabel?: string;
   ranges: Array<{ line: number; start: number; end: number }>;
   text: string;
   color: string;
@@ -52,6 +57,7 @@ const DEFAULTS: EBookReaderPrefs = {
   brightness: 100,
   focusMode: false,
   mouseLineTrack: false,
+  lineTrackColor: "#ff9f4d",
   font: "literary",
 };
 
