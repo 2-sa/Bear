@@ -710,6 +710,7 @@ const appFill: Record<string, string> = {
   Characters: "الشخصيات",
   "Characters · {n}": "الشخصيات · {n}",
   "Related Anime": "أنمي ذو صلة",
+  "Sequels & Prequels": "الأجزاء اللاحقة والسابقة",
   Adaptations: "الاقتباسات",
   Awards: "الجوائز",
   "Awards & Recognition": "الجوائز والتقدير",

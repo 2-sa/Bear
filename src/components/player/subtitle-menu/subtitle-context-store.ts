@@ -8,7 +8,7 @@ export type SubtitleContentContext = {
    * Anime-aware search coordinates for the playing episode: seasonal anime
    * carry season + within-season episode, long-running anime only the
    * absolute episode number.
-  */
+   */
   searchSeason?: number;
   searchEpisode?: number;
 };

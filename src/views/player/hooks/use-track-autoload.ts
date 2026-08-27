@@ -222,12 +222,12 @@ export function useTrackAutoload(params: {
       const searchSeason = coords
         ? coords.season
         : imdbEpAligned
-          ? src.episode?.imdbSeason ?? src.episode?.season
+          ? (src.episode?.imdbSeason ?? src.episode?.season)
           : src.episode?.season;
       const searchEpisode = coords
         ? coords.episode
         : imdbEpAligned
-          ? src.episode?.imdbEpisode ?? src.episode?.episode
+          ? (src.episode?.imdbEpisode ?? src.episode?.episode)
           : src.episode?.episode;
       publishSubtitleContext({
         candidateIds,

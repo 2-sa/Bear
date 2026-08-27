@@ -8,10 +8,7 @@ import {
   type AniZipMapping,
 } from "@/lib/providers/anizip";
 import { kitsuMainTvSeries } from "@/lib/providers/kitsu";
-import {
-  selectSiblingWindows,
-  type AnimeListWindow,
-} from "@/lib/streams/anime-identity-core";
+import { selectSiblingWindows, type AnimeListWindow } from "@/lib/streams/anime-identity-core";
 
 const SIDE_ENTRY_TYPES = new Set(["ova", "ona", "special", "music"]);
 
@@ -159,8 +156,8 @@ export async function loadAnidbMaps(): Promise<AnidbMapCache> {
 
         // Season windows: which provider season of the shared series this
         // AniDB entry occupies. Absolute entries ("a") are skipped here.
-        const seasonAttr = /\bdefaulttvdbseason="(\d+)"/.exec(attrs)
-          ?? /\btmdbseason="(\d+)"/.exec(attrs);
+        const seasonAttr =
+          /\bdefaulttvdbseason="(\d+)"/.exec(attrs) ?? /\btmdbseason="(\d+)"/.exec(attrs);
         if (!seasonAttr) continue;
         const season = Number(seasonAttr[1]);
         if (!Number.isFinite(season)) continue;
@@ -197,8 +194,7 @@ export async function findSiblingAnidbEntries(
   excludeAnidbId?: number | null,
 ): Promise<number[]> {
   const maps = await loadAnidbMaps();
-  const bucket =
-    provider === "tvdb" ? maps.byTvdb?.[providerId] : maps.byImdb?.[providerId];
+  const bucket = provider === "tvdb" ? maps.byTvdb?.[providerId] : maps.byImdb?.[providerId];
   return selectSiblingWindows(bucket, season, excludeAnidbId);
 }
 
@@ -293,7 +289,8 @@ export async function imdbToKitsu(imdbId: string): Promise<number | null> {
   if (typeof az?.mappings?.kitsu_id === "number") {
     return preferMainTv(az.mappings.kitsu_id, (az.mappings as { type?: string }).type);
   }
-  if (typeof az?.mappings?.anidb_id === "number") return externalToKitsu("anidb", az.mappings.anidb_id);
+  if (typeof az?.mappings?.anidb_id === "number")
+    return externalToKitsu("anidb", az.mappings.anidb_id);
   const maps = await loadAnidbMaps();
   if (!imdbAnidbIndex) {
     const idx: Record<string, number> = {};
@@ -313,7 +310,8 @@ export async function tmdbTvToKitsu(tmdbId: number): Promise<number | null> {
   if (typeof az?.mappings?.kitsu_id === "number") {
     return preferMainTv(az.mappings.kitsu_id, (az.mappings as { type?: string }).type);
   }
-  if (typeof az?.mappings?.anidb_id === "number") return externalToKitsu("anidb", az.mappings.anidb_id);
+  if (typeof az?.mappings?.anidb_id === "number")
+    return externalToKitsu("anidb", az.mappings.anidb_id);
   return null;
 }
 

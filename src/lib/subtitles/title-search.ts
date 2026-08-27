@@ -42,7 +42,10 @@ export function parseTitleQuery(raw: string): ParsedQuery {
     year = y[1];
     s = s.replace(YEAR_RX, " ");
   }
-  const title = s.replace(/[()[\]{}]/g, " ").replace(/\s+/g, " ").trim();
+  const title = s
+    .replace(/[()[\]{}]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
   return { title, year, season, episode };
 }
 
@@ -76,7 +79,9 @@ export async function searchTitleCandidates(
   if (cached) return rankCandidates(cached, parsed, preferImdbId);
   // Franchise suffixes ("… World- Season 2 Part 2") pollute the catalog
   // search and can rank re-edits/side entries above the actual series.
-  const { movies, series } = await searchCinemeta(stripFranchiseSuffix(parsed.title) || parsed.title);
+  const { movies, series } = await searchCinemeta(
+    stripFranchiseSuffix(parsed.title) || parsed.title,
+  );
   const seen = new Set<string>();
   const list: TitleCandidate[] = [];
   for (const m of [...series, ...movies]) {

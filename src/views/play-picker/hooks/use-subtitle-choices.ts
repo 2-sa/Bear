@@ -82,12 +82,12 @@ export function useSubtitleChoices(src: PlayerSrc) {
             season: coords
               ? coords.season
               : imdbEpAligned
-                ? src.episode?.imdbSeason ?? src.episode?.season
+                ? (src.episode?.imdbSeason ?? src.episode?.season)
                 : src.episode?.season,
             episode: coords
               ? coords.episode
               : imdbEpAligned
-                ? src.episode?.imdbEpisode ?? src.episode?.episode
+                ? (src.episode?.imdbEpisode ?? src.episode?.episode)
                 : src.episode?.episode,
             langs: preferredLangs,
             filename: subtitleStreamDescriptor(src.streamRef),

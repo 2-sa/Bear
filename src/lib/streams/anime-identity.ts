@@ -27,7 +27,8 @@ async function baseKitsuId(metaId: string): Promise<number | null> {
   const match = ANIME_META_RX.exec(metaId);
   if (match) {
     if (match[1] === "kitsu") return Number(match[2]);
-    if (match[1] === "mal") return externalToKitsu("myanimelist", Number(match[2])).catch(() => null);
+    if (match[1] === "mal")
+      return externalToKitsu("myanimelist", Number(match[2])).catch(() => null);
     return externalToKitsu(match[1], Number(match[2])).catch(() => null);
   }
   if (/^tt\d+/.test(metaId)) return imdbToKitsu(metaId).catch(() => null);

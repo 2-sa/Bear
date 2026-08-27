@@ -147,10 +147,7 @@ export function PlayPicker({
     settings.resumePrompt,
   ]);
   const streamIds = useStreamIds(meta, episode, imdbId);
-  const animeAbsoluteEpisode = useMemo(
-    () => animeAbsoluteFromStreamIds(streamIds),
-    [streamIds],
-  );
+  const animeAbsoluteEpisode = useMemo(() => animeAbsoluteFromStreamIds(streamIds), [streamIds]);
   const localMatches = useMemo(() => {
     const m = meta.id.match(/^tmdb:(?:movie|tv):(\d+)$/);
     const tmdbId = m ? parseInt(m[1], 10) : null;
@@ -822,7 +819,11 @@ export function PlayPicker({
 
       <div className="relative mx-auto flex min-h-full w-full max-w-5xl flex-col gap-12 px-12 pb-32 pt-32">
         <PickerNav onBack={backToDetail} onRefresh={refresh} refreshing={loading} />
-          <PickerHeader meta={metaForDisplay} episode={episode} absoluteEpisode={animeAbsoluteEpisode} />
+        <PickerHeader
+          meta={metaForDisplay}
+          episode={episode}
+          absoluteEpisode={animeAbsoluteEpisode}
+        />
 
         {!isDownload && (
           <LocalStreamList

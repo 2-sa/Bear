@@ -172,7 +172,9 @@ function RelationCard({
           </span>
         )}
       </span>
-      <span className="truncate text-[12px] font-semibold leading-tight text-ink">{entry.name}</span>
+      <span className="truncate text-[12px] font-semibold leading-tight text-ink">
+        {entry.name}
+      </span>
       <span className="flex items-center gap-1.5 text-[10px] leading-none text-ink-subtle">
         <span className="font-medium uppercase tracking-[0.08em] text-ink-muted">
           {t(entry.kind === "prequel" ? "Prequel" : "Sequel")}

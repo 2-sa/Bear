@@ -211,7 +211,9 @@ export async function runPipeline(
 
   const { kept: parsed, extraRejected: animeRejected } = applyAnimeEpisodeFilter(preParsed, input);
   if (animeRejected.length > 0) {
-    dlog(`[pipeline] anime episode filter: dropped ${animeRejected.length} stream(s) not matching ep ${input.animeAbsoluteEpisode}`);
+    dlog(
+      `[pipeline] anime episode filter: dropped ${animeRejected.length} stream(s) not matching ep ${input.animeAbsoluteEpisode}`,
+    );
   }
 
   const hashes = [

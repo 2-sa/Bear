@@ -16,7 +16,9 @@ export type AnimeEpisodeCoords = {
  * mapping. The IMDb/TVDB-aligned pair (when the episode object carries one)
  * is tried before the raw provider pair.
  */
-export function animeCoordPairs(episode: AnimeEpisodeCoords | null | undefined): Array<[number, number]> {
+export function animeCoordPairs(
+  episode: AnimeEpisodeCoords | null | undefined,
+): Array<[number, number]> {
   const out: Array<[number, number]> = [];
   const push = (s: unknown, e: unknown) => {
     if (

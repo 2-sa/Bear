@@ -30,8 +30,7 @@ export type AnimeEpisodeCoords = {
   absoluteNumber?: number | null;
 };
 
-const posInt = (v: unknown): v is number =>
-  typeof v === "number" && Number.isFinite(v) && v > 0;
+const posInt = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v) && v > 0;
 
 /**
  * AniZip keys episodes by entry-relative number. A single entry spanning two

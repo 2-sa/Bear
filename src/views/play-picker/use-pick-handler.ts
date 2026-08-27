@@ -348,7 +348,9 @@ export function usePickHandler({
         imdbIdVerified: imdbIdVerified === true,
         episode,
         url: playUrl,
-        title: episode ? episode.name || `Episode ${absoluteEpisode ?? episode.episode}` : meta.name,
+        title: episode
+          ? episode.name || `Episode ${absoluteEpisode ?? episode.episode}`
+          : meta.name,
         subtitle: episode
           ? absoluteEpisode != null
             ? `${meta.name} · E${absoluteEpisode}`

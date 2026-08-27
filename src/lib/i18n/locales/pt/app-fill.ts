@@ -443,6 +443,7 @@ const appFill: Record<string, string> = {
   Characters: "Personagens",
   "Characters · {n}": "Personagens · {n}",
   "Related Anime": "Animes relacionados",
+  "Sequels & Prequels": "Sequências e prequelas",
   Adaptations: "Adaptações",
   Statistics: "Estatísticas",
   "Deletes every episode cached for this source": "Exclui todos os episódios em cache desta fonte",

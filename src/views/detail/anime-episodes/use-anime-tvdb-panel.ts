@@ -179,7 +179,8 @@ export function useAnimeTvdbPanel(
     if (!ordering) return null;
     const lang = tmdbLanguageIso();
     const pool = franchiseEpisodes ?? episodes;
-    const franchiseWide = franchiseEpisodes != null;    const byPair = new Map<string, KitsuEpisode>();
+    const franchiseWide = franchiseEpisodes != null;
+    const byPair = new Map<string, KitsuEpisode>();
     const byAbs = new Map<number, KitsuEpisode>();
     const byTvdbId = new Map<number, KitsuEpisode>();
     const currentByPair = new Map<string, KitsuEpisode>();

@@ -22,11 +22,7 @@ export function PickerNav({
   const groupLeft = controlsInBar || settings.pickerRefreshNextToBack;
   return (
     <div className="-mb-9">
-      <div
-        className={`flex items-center gap-3 ${
-          groupLeft ? "justify-start" : "justify-between"
-        }`}
-      >
+      <div className={`flex items-center gap-3 ${groupLeft ? "justify-start" : "justify-between"}`}>
         <button
           type="button"
           onClick={onBack}
