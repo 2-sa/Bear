@@ -4,11 +4,11 @@ import {
   BookOpen,
   Check,
   ChevronDown,
-  ChevronLeft,
   Copy,
   Gauge,
   Headphones,
   Highlighter,
+  Languages,
   Link2,
   MessageSquareText,
   Moon,
@@ -16,6 +16,8 @@ import {
   Play,
   Search,
   Settings2,
+  SkipBack,
+  SkipForward,
   Sun,
   Trash2,
   Type,
@@ -36,6 +38,7 @@ import {
   type EBookAnnotation,
   type EBookReaderPrefs,
 } from "@/lib/ebook/reader-state";
+import { translateEBookChapter } from "@/lib/ebook/translation";
 
 type Props = {
   profile: string;
@@ -70,8 +73,35 @@ const paper = {
 
 const inks = ["#f2c867", "#efa862", "#e89991", "#d184a5", "#bba4d9", "#9fc8dd", "#8fc9c2", "#b4cfa2"];
 const trackerColors = ["#ff9f4d", "#f2c867", "#e89991", "#d184a5", "#bba4d9", "#60a5fa", "#8fc9c2", "#b4cfa2"];
+const trackerGutter = 8;
+const trackerRect = (rect: DOMRect) => ({
+  top: rect.top - 2,
+  left: rect.left - trackerGutter,
+  width: rect.width + trackerGutter * 2,
+  height: rect.height + 4,
+});
 const marks = /[\u0300-\u036f\u0610-\u061a\u064b-\u065f\u0670\u06d6-\u06ed]/g;
 const stripMarks = (value: string) => value.normalize("NFD").replace(marks, "").toLocaleLowerCase();
+const textDirection = (text: string, fallback: "ltr" | "rtl") => {
+  const rtl = text.match(/[\u0600-\u06ff\u0750-\u077f]/g)?.length ?? 0;
+  const ltr = text.match(/[A-Za-z]/g)?.length ?? 0;
+  return rtl || ltr ? (rtl > ltr ? "rtl" : "ltr") : fallback;
+};
+const formatEta = (milliseconds: number) => {
+  const seconds = Math.max(1, Math.ceil(milliseconds / 1000));
+  return seconds < 60 ? `${seconds}s` : `${Math.ceil(seconds / 60)}m`;
+};
+
+function TranslationSpinner() {
+  return (
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2.5" opacity=".2" />
+      <path d="M12 3a9 9 0 0 1 9 9" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+        <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur=".8s" repeatCount="indefinite" />
+      </path>
+    </svg>
+  );
+}
 const referenceRanges = (text: string, phrase: string) => {
   let normalized = "";
   const offsets: number[] = [];
@@ -121,10 +151,19 @@ export function HarborReader({
   const shownVolume =
     volumes.find((volume) => volume.volume === sidebarVolume) ?? currentVolume;
   const shownChapters = shownVolume?.chapters ?? [];
+  const bookChapters = useMemo(() => volumes.flatMap((volume) => volume.chapters), [volumes]);
+  const chapterIndex = bookChapters.findIndex((item) => item.id === chapter.id);
+  const previousChapter = chapterIndex > 0 ? bookChapters[chapterIndex - 1] : undefined;
+  const nextChapter = chapterIndex >= 0 ? bookChapters[chapterIndex + 1] : undefined;
   const [query, setQuery] = useState("");
   const [showFutureResults, setShowFutureResults] = useState(false);
   const [current, setCurrent] = useState(0);
   const [speaking, setSpeaking] = useState(false);
+  const [readerText, setReaderText] = useState(content.text ?? "");
+  const [translating, setTranslating] = useState(false);
+  const [translated, setTranslated] = useState(Boolean(content.translated));
+  const [translationError, setTranslationError] = useState("");
+  const [translationProgress, setTranslationProgress] = useState({ percent: 0, etaMs: null as number | null });
   const [chrome, setChrome] = useState(true);
   const [bookmarks, setBookmarks] = useState(() => loadEBookBookmarks(profile, bookId));
   const [annotations, setAnnotations] = useState(() => loadEBookAnnotations(profile, bookId));
@@ -145,15 +184,22 @@ export function HarborReader({
   const progressId = `${chapter.id}:harbor`;
   const paragraphs = useMemo(
     () =>
-      (content.text ?? "")
+      readerText
         .replace(/\r/g, "")
         .split(/\n{2,}/)
         .map((value) => value.replace(/\n/g, " ").trim())
         .filter(Boolean),
-    [content.text],
+    [readerText],
   );
   const colors = paper[prefs.background];
-  const effectiveDirection = prefs.direction === "auto" ? direction : prefs.direction;
+  const effectiveDirection = prefs.direction === "auto" ? textDirection(readerText, direction) : prefs.direction;
+
+  useEffect(() => {
+    setReaderText(content.text ?? "");
+    setTranslated(Boolean(content.translated));
+    setTranslationError("");
+    setTranslationProgress({ percent: 0, etaMs: null });
+  }, [content.text, content.translated]);
 
   const updateTrace = useCallback((mouseY?: number) => {
     if (mouseY != null) {
@@ -168,7 +214,7 @@ export function HarborReader({
         const paragraph = blocks.current[smartTarget.current];
         if (!paragraph) return;
         const paragraphRect = paragraph.getBoundingClientRect();
-        const next = { top: paragraphRect.top - 2, left: paragraphRect.left, width: paragraphRect.width, height: paragraphRect.height + 4 };
+        const next = trackerRect(paragraphRect);
         setTrace((previous) => previous && Math.abs(previous.top - next.top) < 1 && previous.left === next.left && previous.width === next.width && previous.height === next.height ? previous : next);
         return;
       }
@@ -212,7 +258,7 @@ export function HarborReader({
         setCurrent(line);
         saveEBookProgress(profile, bookId, progressId, line);
       }
-      const next = { top: paragraphRect.top - 2, left: paragraphRect.left, width: paragraphRect.width, height: paragraphRect.height + 4 };
+      const next = trackerRect(paragraphRect);
       setTrace((previous) => previous && Math.abs(previous.top - next.top) < 1 && previous.left === next.left && previous.width === next.width && previous.height === next.height ? previous : next);
     });
   }, [bookId, profile, progressId]);
@@ -262,6 +308,24 @@ export function HarborReader({
       cancelAnimationFrame(frame);
     };
   }, [bookId, profile, progressId, updateTrace]);
+
+  useEffect(() => {
+    const page = article.current;
+    if (!page) return;
+    let frame = 0;
+    const observer = new ResizeObserver(() => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        if (tracedLine.current >= 0) smartTarget.current = tracedLine.current;
+        updateTrace();
+      });
+    });
+    observer.observe(page);
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(frame);
+    };
+  }, [updateTrace]);
 
   useEffect(() => {
     const root = scroller.current;
@@ -396,6 +460,28 @@ export function HarborReader({
   const stopSpeech = () => {
     window.speechSynthesis?.cancel();
     setSpeaking(false);
+  };
+
+  const translateChapter = async () => {
+    if (translated || translating || !content.text) return;
+    setTranslating(true);
+    setTranslationError("");
+    try {
+      setReaderText(await translateEBookChapter(content.text, true, setTranslationProgress));
+      setTranslated(true);
+    } catch (error) {
+      setTranslationError(error instanceof Error ? error.message : "DeepSeek translation failed");
+    } finally {
+      setTranslating(false);
+    }
+  };
+
+  const selectChapter = (target?: EBookChapter) => {
+    if (!target) return;
+    stopSpeech();
+    setSelection(null);
+    setEditing(null);
+    onSelectChapter(target);
   };
 
   const speakFrom = (index = current) => {
@@ -672,10 +758,13 @@ export function HarborReader({
         className={`absolute inset-x-0 bottom-5 z-30 mx-auto flex w-fit items-center gap-1 rounded-full border p-1.5 shadow-2xl backdrop-blur-xl transition duration-300 ${chrome ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"}`}
         style={{ background: `${colors.desk}e8`, borderColor: `${colors.muted}45` }}
       >
-        <button className="reader-icon" onClick={() => goTo(current - 1)} aria-label="Previous passage"><ChevronLeft size={19} /></button>
-        <button className="reader-icon" onClick={() => addBookmark()} aria-label="Bookmark current passage"><Highlighter size={18} /></button>
+        <button className="reader-icon" disabled={!previousChapter} onClick={() => selectChapter(previousChapter)} aria-label="Previous chapter" title="Previous chapter"><SkipBack size={21} strokeWidth={2} fill="currentColor" /></button>
+        <button className="reader-icon" onClick={() => addBookmark()} aria-label="Bookmark current passage"><Bookmark size={18} /></button>
+        <button className={`reader-icon ${translated ? "reader-icon-accent" : translationError ? "text-red-400" : ""}`} disabled={translating || translated} onClick={() => void translateChapter()} aria-label={translated ? "Chapter translated with DeepSeek" : "Translate chapter with DeepSeek"} title={translationError || (translated ? "Translated with DeepSeek" : "Translate with DeepSeek")}>{translating ? <TranslationSpinner /> : translated ? <Check size={18} /> : <Languages size={18} />}</button>
+        {translating && <div className="flex items-center gap-1 whitespace-nowrap pe-2 text-[11px] tabular-nums" style={{ color: colors.muted }}><strong className="text-current">≈{translationProgress.percent}%</strong><span>·</span><span>{translationProgress.etaMs == null ? "Estimating…" : `≈${formatEta(translationProgress.etaMs)} left`}</span></div>}
         <button className="reader-icon reader-icon-accent" onClick={speaking ? stopSpeech : () => speakFrom()} aria-label={speaking ? "Stop reading" : "Read aloud"}>{speaking ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" />}</button>
         <div className="px-3 text-xs tabular-nums" style={{ color: colors.muted }}>{Math.round(((current + 1) / Math.max(1, paragraphs.length)) * 100)}%</div>
+        <button className="reader-icon" disabled={!nextChapter} onClick={() => selectChapter(nextChapter)} aria-label="Next chapter" title="Next chapter"><SkipForward size={21} strokeWidth={2} fill="currentColor" /></button>
       </div>
 
       {chaptersOpen && (
@@ -709,11 +798,12 @@ export function HarborReader({
       )}
 
       {panel && (
-        <div className="absolute inset-y-0 end-0 z-40 w-full max-w-[390px] border-s p-5 shadow-2xl backdrop-blur-2xl" style={{ background: `${colors.page}f7`, borderColor: `${colors.muted}35` }}>
-          <div className="mb-6 flex items-center justify-between">
+        <div className="absolute inset-y-0 end-0 z-40 flex w-full max-w-[390px] flex-col border-s p-5 shadow-2xl backdrop-blur-2xl" style={{ background: `${colors.page}f7`, borderColor: `${colors.muted}35` }}>
+          <div className="mb-6 flex shrink-0 items-center justify-between">
             <h2 className="text-lg font-semibold">{panel === "settings" ? "Reading settings" : panel === "search" ? "Search chapter" : panel === "annotations" ? "Notes & highlights" : "Bookmarks"}</h2>
             <button className="reader-icon" onClick={() => setPanel(null)} aria-label="Close panel"><X size={18} /></button>
           </div>
+          <div className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {panel === "settings" && <Settings prefs={prefs} patch={patchPrefs} colors={colors} onUseLegacy={onUseLegacy} />}
           {panel === "search" && (
             <div>
@@ -748,10 +838,11 @@ export function HarborReader({
               })}
             </div>
           )}
+          </div>
         </div>
       )}
       {editing && <AnnotationEditor annotation={editing} bookTitle={bookTitle} direction={effectiveDirection} onChange={setEditing} onSave={() => storeAnnotation(editing)} onDelete={() => { setAnnotations(removeEBookAnnotation(profile, bookId, editing.id)); setEditing(null); }} onClose={() => setEditing(null)} />}
-      <style>{`.reader-icon{display:grid;width:42px;height:42px;place-items:center;border-radius:999px;color:inherit;transition:.16s ease}.reader-icon:hover{background:rgba(127,127,127,.16);transform:translateY(-1px)}.reader-icon:active{transform:scale(.92)}.reader-icon-accent{background:var(--color-accent);color:#111}.reader-current{border-radius:4px}.reader-annotation{color:inherit;border-radius:3px;padding:.04em .02em;cursor:pointer}.reader-annotation:hover{outline:1px solid color-mix(in srgb,var(--color-accent) 60%,transparent)}`}</style>
+      <style>{`.reader-icon{display:grid;width:42px;height:42px;place-items:center;border-radius:999px;color:inherit;transition:.16s ease}.reader-icon:hover{background:rgba(127,127,127,.16);transform:translateY(-1px)}.reader-icon:active{transform:scale(.92)}.reader-icon:disabled{pointer-events:none;opacity:.28}.reader-icon-accent{background:var(--color-accent);color:#111}.reader-current{border-radius:4px}.reader-annotation{color:inherit;border-radius:3px;padding:.04em .02em;cursor:pointer}.reader-annotation:hover{outline:1px solid color-mix(in srgb,var(--color-accent) 60%,transparent)}`}</style>
     </div>
   );
 }

@@ -4,11 +4,13 @@ import {
   Blocks,
   BookOpen,
   Check,
+  ChevronDown,
   ChevronLeft,
   Download,
   FileText,
   Folder,
   FolderOpen,
+  Languages,
   Loader2,
   PackageOpen,
   Plus,
@@ -18,7 +20,7 @@ import {
   X,
 } from "lucide-react";
 import { createPortal } from "react-dom";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   addEBookRepo,
   browseEBookRepo,
@@ -45,6 +47,12 @@ import {
 import { CARD, INPUT, PRIMARY_BTN } from "@/views/manga/manga-sources-panel/shared";
 import { PluginGuide } from "@/views/manga/manga-sources-panel/plugin-guide";
 import { googleBooksApiKey, setGoogleBooksApiKey } from "@/lib/ebook/api";
+import deepseekLogo from "@/assets/ai-logos/deepseek.png";
+import {
+  loadEBookTranslationSettings,
+  saveEBookTranslationSettings,
+  type EBookTranslationSettings,
+} from "@/lib/ebook/translation";
 
 const EXAMPLE = `{
   "name": "My eBook Source",
@@ -118,6 +126,198 @@ function MetadataProviders() {
             <Check size={17} /> {saved ? "Saved" : "Save"}
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function TranslationSelect({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  options: Array<{ value: string; label: string; sub?: string }>;
+  onChange: (value: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const root = useRef<HTMLDivElement>(null);
+  const selected = options.find((option) => option.value === value) ?? options[0];
+  useEffect(() => {
+    if (!open) return;
+    const close = (event: PointerEvent) => {
+      if (!root.current?.contains(event.target as Node)) setOpen(false);
+    };
+    const escape = (event: KeyboardEvent) => event.key === "Escape" && setOpen(false);
+    window.addEventListener("pointerdown", close);
+    window.addEventListener("keydown", escape);
+    return () => {
+      window.removeEventListener("pointerdown", close);
+      window.removeEventListener("keydown", escape);
+    };
+  }, [open]);
+  return (
+    <label className="flex min-w-0 flex-col gap-1.5">
+      <span className="text-[12px] font-semibold uppercase tracking-[0.12em] text-ink-subtle">
+        {label}
+      </span>
+      <div ref={root} className="relative">
+        <button
+          type="button"
+          aria-haspopup="listbox"
+          aria-expanded={open}
+          onClick={() => setOpen((current) => !current)}
+          className={`flex h-12 w-full items-center gap-3 rounded-xl border px-3.5 text-start outline-none transition-all ${
+            open
+              ? "border-accent/70 bg-accent/5 shadow-[0_0_0_3px_rgba(255,159,77,0.10)]"
+              : "border-edge bg-canvas hover:border-accent/40"
+          }`}
+        >
+          <span className="h-2 w-2 shrink-0 rounded-full bg-accent shadow-[0_0_10px_rgba(255,159,77,0.55)]" />
+          <span className="min-w-0 flex-1 truncate text-[14px] font-semibold text-ink">
+            {selected.label}
+          </span>
+          <ChevronDown
+            size={16}
+            className={`shrink-0 text-ink-subtle transition-transform duration-200 ${open ? "rotate-180 text-accent" : ""}`}
+          />
+        </button>
+        {open && (
+          <div
+            role="listbox"
+            className="harbor-rise absolute inset-x-0 top-[calc(100%+7px)] z-40 overflow-hidden rounded-xl border border-edge bg-canvas/95 p-1.5 shadow-[0_20px_55px_-18px_rgba(0,0,0,0.82)] backdrop-blur-xl"
+          >
+            {options.map((option) => {
+              const active = option.value === value;
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  role="option"
+                  aria-selected={active}
+                  onClick={() => {
+                    onChange(option.value);
+                    setOpen(false);
+                  }}
+                  className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-start transition-colors ${
+                    active
+                      ? "bg-accent/14 text-ink"
+                      : "text-ink-muted hover:bg-elevated hover:text-ink"
+                  }`}
+                >
+                  <span
+                    className={`h-1.5 w-1.5 shrink-0 rounded-full ${active ? "bg-accent" : "bg-edge"}`}
+                  />
+                  <span className="min-w-0 flex-1">
+                    <span className={`block truncate text-[13.5px] ${active ? "font-semibold" : "font-medium"}`}>
+                      {option.label}
+                    </span>
+                    {option.sub && (
+                      <span className="mt-0.5 block truncate text-[11.5px] text-ink-subtle">
+                        {option.sub}
+                      </span>
+                    )}
+                  </span>
+                  {active && <Check size={16} className="shrink-0 text-accent" />}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </label>
+  );
+}
+
+function Translation() {
+  const [settings, setSettings] = useState(loadEBookTranslationSettings);
+  const [saved, setSaved] = useState(false);
+  const patch = (next: Partial<EBookTranslationSettings>) =>
+    setSettings((current) => ({ ...current, ...next }));
+  const save = () => {
+    saveEBookTranslationSettings({ ...settings, apiKey: settings.apiKey.trim() });
+    setSaved(true);
+    window.setTimeout(() => setSaved(false), 1200);
+  };
+  return (
+    <div className="flex flex-col gap-3">
+      <SectionLabel>Translation</SectionLabel>
+      <div className={`${CARD} flex flex-col gap-4 p-5`}>
+        <div className="flex items-center gap-3.5">
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-white ring-1 ring-black/10">
+            <img src={deepseekLogo} alt="" className="h-7 w-7 object-contain" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="flex items-center gap-2 text-[15px] font-semibold text-ink">
+              <Languages size={17} /> DeepSeek chapter translation
+            </span>
+            <span className="text-[13px] leading-relaxed text-ink-muted">
+              Sends only the chapter you open to DeepSeek. Volumes, chapters, and metadata stay
+              unchanged.
+            </span>
+          </span>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={settings.enabled}
+            onClick={() => patch({ enabled: !settings.enabled })}
+            className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${settings.enabled ? "bg-accent" : "bg-edge"}`}
+          >
+            <span
+              className={`absolute top-1 h-5 w-5 rounded-full bg-canvas shadow-sm transition-transform ${settings.enabled ? "start-6" : "start-1"}`}
+            />
+          </button>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <TranslationSelect
+            label="Model"
+            value={settings.model}
+            onChange={(model) => patch({ model })}
+            options={[
+              {
+                value: "deepseek-v4-flash",
+                label: "DeepSeek V4 Flash",
+                sub: "Fast · recommended for chapters",
+              },
+              { value: "deepseek-v4-pro", label: "DeepSeek V4 Pro", sub: "Higher quality · slower" },
+            ]}
+          />
+          <TranslationSelect
+            label="Translate to"
+            value={settings.targetLanguage}
+            onChange={(targetLanguage) =>
+              patch({
+                targetLanguage:
+                  targetLanguage as EBookTranslationSettings["targetLanguage"],
+              })
+            }
+            options={[
+              { value: "en", label: "English", sub: "English" },
+              { value: "ar", label: "Arabic", sub: "العربية" },
+              { value: "pt", label: "Portuguese", sub: "Português" },
+              { value: "ru", label: "Russian", sub: "Русский" },
+            ]}
+          />
+        </div>
+        <div className="flex gap-2">
+          <input
+            type="password"
+            value={settings.apiKey}
+            onChange={(event) => patch({ apiKey: event.target.value })}
+            placeholder="DeepSeek API key (sk-...)"
+            autoComplete="off"
+            className={`${INPUT} min-w-0 flex-1`}
+          />
+          <button type="button" onClick={save} className={`${PRIMARY_BTN} px-5`}>
+            <Check size={17} /> {saved ? "Saved" : "Save"}
+          </button>
+        </div>
+        <p className="text-[12.5px] leading-relaxed text-ink-subtle">
+          Translation runs when a chapter opens and uses one API request. If it fails or is
+          truncated, Bear keeps the original chapter.
+        </p>
       </div>
     </div>
   );
@@ -688,6 +888,7 @@ export function EBookSourcesView({ onBack }: { onBack: () => void }) {
         <CustomSource />
       </div>
       <MetadataProviders />
+      <Translation />
       <Extensions />
       <PluginGuide kind="ebook" />
     </div>

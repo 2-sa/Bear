@@ -376,6 +376,34 @@ export function EBookView() {
     );
   }
 
+  if (!providers.length && sourceItems !== null) {
+    return (
+      <main className="animate-fade-in mx-auto flex min-h-[86vh] max-w-2xl flex-col items-center justify-center gap-6 px-12 pt-[9vh] text-center">
+        <img
+          src="/nosources.png"
+          alt=""
+          className="w-full max-w-[380px] object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.5)]"
+        />
+        <div className="flex flex-col gap-3">
+          <h1 className="font-display text-[32px] font-medium leading-tight text-ink">
+            Add an eBook source
+          </h1>
+          <p className="mx-auto max-w-md text-balance text-[14px] leading-relaxed text-ink-muted">
+            Bear does not host any eBooks or sources. Install a source plugin from a repository
+            you trust, connect a custom source, or open a folder you already have.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setScreen("sources")}
+          className="mt-1 flex h-11 items-center gap-2 rounded-xl bg-ink px-6 text-[14px] font-semibold text-canvas transition-transform hover:scale-[1.02] active:scale-[0.97]"
+        >
+          Set up a source
+        </button>
+      </main>
+    );
+  }
+
   const matchesCategory = (ebook: EBook) => {
     const wanted = category || categoryGroup;
     if (!wanted) return true;

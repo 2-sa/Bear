@@ -26,6 +26,7 @@ const PROXY_HOSTS = new Set([
   "graphql.anilist.co",
   "www.googleapis.com",
   "www.wikidata.org",
+  "api.deepseek.com",
   "api.deezer.com",
   "api.igdb.com",
   "images.igdb.com",
@@ -38,6 +39,7 @@ const DEV_PROXY_HOSTS = new Set([
   "covers.openlibrary.org",
   "www.googleapis.com",
   "www.wikidata.org",
+  "api.deepseek.com",
 ]);
 
 const PROXY_SUFFIXES = [
@@ -89,7 +91,7 @@ function rewriteForWeb(url: string, init?: RequestInit): { url: string; init?: R
   if (!init?.headers) return { url: proxied, init };
   const out = new Headers(init.headers as HeadersInit);
   const auth = out.get("authorization");
-  if (auth) {
+  if (auth && !localDev) {
     out.delete("authorization");
     out.set("x-harbor-auth", auth);
   }
@@ -239,6 +241,23 @@ export const safeFetch: typeof fetch = (input, init) => {
   if (typeof input === "string") {
     const r = rewriteForWeb(input, init);
     return fetch(r.url, r.init);
+  }
+  return fetch(input, init);
+};
+
+export const safeFetchStream: typeof fetch = (input, init) => {
+  const target = typeof input === "string" ? input : input instanceof URL ? input.href : null;
+  if (target && isBlockedUrl(target)) {
+    noteBlocked();
+    return Promise.reject(new TrackerBlockedError(new URL(target).hostname));
+  }
+  if (isTauri)
+    return normalizeAbort(
+      tauriFetchImpl(input as unknown as string, init as RequestInit) as Promise<Response>,
+    );
+  if (typeof input === "string") {
+    const rewritten = rewriteForWeb(input, init);
+    return fetch(rewritten.url, rewritten.init);
   }
   return fetch(input, init);
 };

@@ -97,6 +97,7 @@ export default defineConfig({
         "covers.openlibrary.org",
         "www.googleapis.com",
         "www.wikidata.org",
+        "api.deepseek.com",
       ].map((host) => [
         `/api-proxy/${host}`,
         {
