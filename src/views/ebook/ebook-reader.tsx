@@ -9,7 +9,7 @@ import {
 } from "@/lib/ebook/reader-state";
 import { useProfiles } from "@/lib/profiles";
 import { MangaReader } from "@/views/manga/manga-reader";
-import { HarborReader } from "./harbor-reader";
+import { HarborReader, type EBookReaderVolume } from "./harbor-reader";
 
 const PREFS = "harbor.ebook.manga-reader.v1";
 
@@ -25,6 +25,8 @@ export function EBookReader({
   chapter,
   content,
   error,
+  volumes,
+  onSelectChapter,
   onClose,
 }: {
   bookId: string;
@@ -32,6 +34,8 @@ export function EBookReader({
   chapter: EBookChapter;
   content: EBookChapterContent | null;
   error?: string;
+  volumes: EBookReaderVolume[];
+  onSelectChapter: (chapter: EBookChapter) => void;
   onClose: () => void;
 }) {
   const { activeId } = useProfiles();
@@ -105,6 +109,8 @@ export function EBookReader({
         chapter={chapter}
         content={content}
         direction={direction}
+        volumes={volumes}
+        onSelectChapter={onSelectChapter}
         onClose={onClose}
         onUseLegacy={() => changeEngine("legacy")}
       />

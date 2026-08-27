@@ -1508,6 +1508,8 @@ function EBookDetails({
           chapter={reading.chapter}
           content={reading.content}
           error={reading.error}
+          volumes={volumeGroups.length ? volumeGroups : [{ volume: "", label: "Chapters", chapters: chapters ?? [reading.chapter] }]}
+          onSelectChapter={readChapter}
           onClose={() => setReading(null)}
         />
       )}

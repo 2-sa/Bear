@@ -42,8 +42,16 @@ type Props = {
   chapter: EBookChapter;
   content: EBookChapterContent;
   direction: "ltr" | "rtl";
+  volumes: EBookReaderVolume[];
+  onSelectChapter: (chapter: EBookChapter) => void;
   onClose: () => void;
   onUseLegacy: () => void;
+};
+
+export type EBookReaderVolume = {
+  volume: string;
+  label: string;
+  chapters: EBookChapter[];
 };
 
 const fontFamily = {
@@ -69,11 +77,21 @@ export function HarborReader({
   chapter,
   content,
   direction,
+  volumes,
+  onSelectChapter,
   onClose,
   onUseLegacy,
 }: Props) {
   const [prefs, setPrefs] = useState<EBookReaderPrefs>(loadEBookReaderPrefs);
   const [panel, setPanel] = useState<"settings" | "search" | "bookmarks" | "annotations" | null>(null);
+  const [chaptersOpen, setChaptersOpen] = useState(false);
+  const currentVolume = volumes.find((volume) =>
+    volume.chapters.some((item) => item.id === chapter.id),
+  ) ?? volumes[0];
+  const [sidebarVolume, setSidebarVolume] = useState(currentVolume?.volume ?? "");
+  const shownVolume =
+    volumes.find((volume) => volume.volume === sidebarVolume) ?? currentVolume;
+  const shownChapters = shownVolume?.chapters ?? [];
   const [query, setQuery] = useState("");
   const [showFutureResults, setShowFutureResults] = useState(false);
   const [current, setCurrent] = useState(0);
@@ -83,10 +101,16 @@ export function HarborReader({
   const [annotations, setAnnotations] = useState(() => loadEBookAnnotations(profile, bookId));
   const [selection, setSelection] = useState<ReaderSelection | null>(null);
   const [editing, setEditing] = useState<EBookAnnotation | null>(null);
+  const [trace, setTrace] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
+  const article = useRef<HTMLElement>(null);
   const blocks = useRef<Array<HTMLElement | null>>([]);
   const speechIndex = useRef(0);
+  const tracedLine = useRef(-1);
+  const smartTarget = useRef<number | null>(null);
   const chromeTimer = useRef<number | undefined>(undefined);
+  const traceFrame = useRef(0);
+  const traceY = useRef<number | null>(null);
   const progressId = `${chapter.id}:harbor`;
   const paragraphs = useMemo(
     () =>
@@ -99,6 +123,68 @@ export function HarborReader({
   );
   const colors = paper[prefs.background];
   const effectiveDirection = prefs.direction === "auto" ? direction : prefs.direction;
+
+  const updateTrace = useCallback((mouseY?: number) => {
+    if (mouseY != null) {
+      traceY.current = mouseY;
+      smartTarget.current = null;
+    }
+    cancelAnimationFrame(traceFrame.current);
+    traceFrame.current = requestAnimationFrame(() => {
+      const page = article.current;
+      if (!page) return;
+      if (mouseY == null && smartTarget.current != null) {
+        const paragraph = blocks.current[smartTarget.current];
+        if (!paragraph) return;
+        const paragraphRect = paragraph.getBoundingClientRect();
+        const next = { top: paragraphRect.top - 2, left: paragraphRect.left, width: paragraphRect.width, height: paragraphRect.height + 4 };
+        setTrace((previous) => previous && Math.abs(previous.top - next.top) < 1 && previous.left === next.left && previous.width === next.width && previous.height === next.height ? previous : next);
+        return;
+      }
+      const pageRect = page.getBoundingClientRect();
+      if (traceY.current == null) {
+        const top = scroller.current?.getBoundingClientRect().top ?? 0;
+        const anchor = blocks.current.find((node) => node && node.getBoundingClientRect().bottom > top + 72);
+        const walker = anchor && document.createTreeWalker(anchor, NodeFilter.SHOW_TEXT);
+        let textNode = walker?.nextNode();
+        while (textNode && !textNode.textContent?.trim()) textNode = walker?.nextNode();
+        if (textNode?.textContent) {
+          const first = document.createRange();
+          const offset = textNode.textContent.search(/\S/);
+          first.setStart(textNode, Math.max(0, offset));
+          first.setEnd(textNode, Math.min(textNode.textContent.length, Math.max(0, offset) + 1));
+          const firstRect = first.getClientRects()[0];
+          if (firstRect) traceY.current = firstRect.top + firstRect.height / 2;
+        }
+      }
+      const y = traceY.current ?? Math.min(window.innerHeight * 0.3, pageRect.bottom - 24);
+      const x = pageRect.left + pageRect.width / 2;
+      const range = (document as Document & { caretRangeFromPoint?: (x: number, y: number) => Range | null }).caretRangeFromPoint?.(x, y);
+      if (!range) return;
+      const paragraph = (range.startContainer.nodeType === Node.ELEMENT_NODE
+        ? range.startContainer as Element
+        : range.startContainer.parentElement)?.closest<HTMLElement>("[data-reader-line]");
+      if (!paragraph) return;
+      let lineRect = range.getClientRects()[0];
+      if (!lineRect && range.startContainer.nodeType === Node.TEXT_NODE) {
+        const probe = range.cloneRange();
+        const length = range.startContainer.textContent?.length ?? 0;
+        if (range.startOffset < length) probe.setEnd(range.startContainer, range.startOffset + 1);
+        else if (range.startOffset > 0) probe.setStart(range.startContainer, range.startOffset - 1);
+        lineRect = probe.getClientRects()[0];
+      }
+      if (!lineRect) return;
+      const paragraphRect = paragraph.getBoundingClientRect();
+      const line = Number(paragraph.dataset.readerLine);
+      if (Number.isInteger(line) && tracedLine.current !== line) {
+        tracedLine.current = line;
+        setCurrent(line);
+        saveEBookProgress(profile, bookId, progressId, line);
+      }
+      const next = { top: paragraphRect.top - 2, left: paragraphRect.left, width: paragraphRect.width, height: paragraphRect.height + 4 };
+      setTrace((previous) => previous && Math.abs(previous.top - next.top) < 1 && previous.left === next.left && previous.width === next.width && previous.height === next.height ? previous : next);
+    });
+  }, [bookId, profile, progressId]);
 
   const patchPrefs = (patch: Partial<EBookReaderPrefs>) => {
     setPrefs((value) => {
@@ -117,15 +203,17 @@ export function HarborReader({
 
   const goTo = useCallback((index: number) => {
     const next = Math.max(0, Math.min(paragraphs.length - 1, index));
+    smartTarget.current = next;
     blocks.current[next]?.scrollIntoView({ block: "center", behavior: "smooth" });
+    tracedLine.current = next;
     setCurrent(next);
   }, [paragraphs.length]);
 
   useEffect(() => {
     const saved = loadEBookProgress(profile, bookId, progressId);
-    const timer = window.setTimeout(() => goTo(saved), 80);
+    const timer = window.setTimeout(() => { goTo(saved); updateTrace(); }, 80);
     return () => window.clearTimeout(timer);
-  }, [bookId, goTo, profile, progressId]);
+  }, [bookId, goTo, profile, progressId, updateTrace]);
 
   useEffect(() => {
     const root = scroller.current;
@@ -134,19 +222,7 @@ export function HarborReader({
     const update = () => {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
-        const top = root.getBoundingClientRect().top + 120;
-        let nearest = 0;
-        let distance = Number.POSITIVE_INFINITY;
-        blocks.current.forEach((node, index) => {
-          if (!node) return;
-          const next = Math.abs(node.getBoundingClientRect().top - top);
-          if (next < distance) {
-            distance = next;
-            nearest = index;
-          }
-        });
-        setCurrent(nearest);
-        saveEBookProgress(profile, bookId, progressId, nearest);
+        updateTrace();
       });
     };
     root.addEventListener("scroll", update, { passive: true });
@@ -154,11 +230,132 @@ export function HarborReader({
       root.removeEventListener("scroll", update);
       cancelAnimationFrame(frame);
     };
-  }, [bookId, profile, progressId]);
+  }, [bookId, profile, progressId, updateTrace]);
+
+  useEffect(() => {
+    const root = scroller.current;
+    if (!root) return;
+    let wheel = 0;
+    let reset = 0;
+    const onWheel = (event: WheelEvent) => {
+      if (Math.abs(event.deltaY) <= Math.abs(event.deltaX) || !paragraphs.length) return;
+      event.preventDefault();
+      wheel += event.deltaY;
+      window.clearTimeout(reset);
+      reset = window.setTimeout(() => { wheel = 0; }, 140);
+      if (Math.abs(wheel) < 32) return;
+      const direction = wheel > 0 ? 1 : -1;
+      wheel = 0;
+      const next = Math.max(0, Math.min(paragraphs.length - 1, (tracedLine.current < 0 ? 0 : tracedLine.current) + direction));
+      const paragraph = blocks.current[next];
+      if (!paragraph || next === tracedLine.current) return;
+      smartTarget.current = next;
+      tracedLine.current = next;
+      setCurrent(next);
+      saveEBookProgress(profile, bookId, progressId, next);
+      const rect = paragraph.getBoundingClientRect();
+      const safeTop = 88;
+      const safeBottom = window.innerHeight - 104;
+      let offset = 0;
+      if (rect.height > safeBottom - safeTop) offset = rect.top - safeTop;
+      else if (rect.bottom > safeBottom) offset = rect.bottom - safeBottom;
+      else if (rect.top < safeTop) offset = rect.top - safeTop;
+      if (offset) root.scrollBy({ top: offset, behavior: "smooth" });
+      updateTrace();
+    };
+    root.addEventListener("wheel", onWheel, { passive: false });
+    return () => {
+      root.removeEventListener("wheel", onWheel);
+      window.clearTimeout(reset);
+    };
+  }, [bookId, paragraphs.length, profile, progressId, updateTrace]);
+
+  useEffect(() => {
+    const root = scroller.current;
+    if (!root) return;
+    let hold = 0;
+    let pointer = -1;
+    let startX = 0;
+    let startY = 0;
+    let startScroll = 0;
+    let ready = false;
+    let dragging = false;
+    let suppressClick = false;
+    const restore = () => {
+      window.clearTimeout(hold);
+      ready = false;
+      root.style.cursor = "";
+      root.style.userSelect = "";
+    };
+    const down = (event: PointerEvent) => {
+      if (event.pointerType !== "mouse" || event.button !== 0 || (event.target as Element).closest("button,input,textarea,select,a,[contenteditable=true]")) return;
+      pointer = event.pointerId;
+      startX = event.clientX;
+      startY = event.clientY;
+      startScroll = root.scrollTop;
+      dragging = false;
+      hold = window.setTimeout(() => {
+        ready = true;
+        root.style.cursor = "grab";
+      }, 100);
+    };
+    const move = (event: PointerEvent) => {
+      if (event.pointerId !== pointer) return;
+      const x = event.clientX - startX;
+      const y = event.clientY - startY;
+      if (!ready && Math.hypot(x, y) > 5) {
+        window.clearTimeout(hold);
+        pointer = -1;
+        return;
+      }
+      if (!ready || Math.abs(y) < 2) return;
+      if (!dragging) {
+        dragging = true;
+        smartTarget.current = tracedLine.current;
+        root.setPointerCapture(pointer);
+        root.style.cursor = "grabbing";
+        root.style.userSelect = "none";
+        window.getSelection()?.removeAllRanges();
+      }
+      event.preventDefault();
+      root.scrollTop = startScroll - y;
+    };
+    const up = (event: PointerEvent) => {
+      if (event.pointerId !== pointer) return;
+      if (dragging) {
+        suppressClick = true;
+        updateTrace();
+        if (root.hasPointerCapture(pointer)) root.releasePointerCapture(pointer);
+      }
+      pointer = -1;
+      dragging = false;
+      restore();
+    };
+    const click = (event: MouseEvent) => {
+      if (!suppressClick) return;
+      suppressClick = false;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    };
+    root.addEventListener("pointerdown", down);
+    root.addEventListener("pointermove", move);
+    root.addEventListener("pointerup", up);
+    root.addEventListener("pointercancel", up);
+    root.addEventListener("click", click, true);
+    return () => {
+      restore();
+      root.removeEventListener("pointerdown", down);
+      root.removeEventListener("pointermove", move);
+      root.removeEventListener("pointerup", up);
+      root.removeEventListener("pointercancel", up);
+      root.removeEventListener("click", click, true);
+    };
+  }, [updateTrace]);
 
   useEffect(() => {
     return () => {
       window.clearTimeout(chromeTimer.current);
+      cancelAnimationFrame(traceFrame.current);
       window.speechSynthesis?.cancel();
     };
   }, []);
@@ -214,6 +411,21 @@ export function HarborReader({
   const hiddenResults = results.length - shownResults.length;
 
   useEffect(() => setShowFutureResults(false), [query]);
+  useEffect(() => {
+    const owner = volumes.find((volume) =>
+      volume.chapters.some((item) => item.id === chapter.id),
+    );
+    if (owner) setSidebarVolume(owner.volume);
+  }, [chapter.id, volumes]);
+  useEffect(() => {
+    if (!chaptersOpen) return;
+    const timer = window.setTimeout(() => document.querySelector<HTMLElement>("[data-current-chapter=true]")?.scrollIntoView({ block: "center" }), 0);
+    return () => window.clearTimeout(timer);
+  }, [chapter.id, chaptersOpen, sidebarVolume]);
+  useEffect(() => {
+    if (!prefs.mouseLineTrack) traceY.current = null;
+    updateTrace();
+  }, [prefs.mouseLineTrack, prefs.fontSize, prefs.lineHeight, prefs.width, updateTrace]);
 
   const captureSelection = (event: React.MouseEvent<HTMLElement>) => {
     const selected = window.getSelection();
@@ -312,9 +524,10 @@ export function HarborReader({
         className={`absolute inset-x-0 top-0 z-30 flex h-16 items-center justify-between border-b px-5 backdrop-blur-xl transition duration-300 ${chrome ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"}`}
         style={{ background: `${colors.desk}df`, borderColor: `${colors.muted}35` }}
       >
-        <button className="reader-icon" onClick={onClose} aria-label="Close reader">
-          <X size={20} />
-        </button>
+        <div className="flex items-center gap-1">
+          <button className="reader-icon" onClick={onClose} aria-label="Close reader"><X size={20} /></button>
+          <button className={`reader-icon ${chaptersOpen ? "reader-icon-accent" : ""}`} onClick={() => { setChaptersOpen((open) => !open); setPanel(null); }} aria-label="Chapters"><BookOpen size={19} /></button>
+        </div>
         <div className="min-w-0 text-center">
           <div className="truncate text-sm font-semibold">{chapter.title || bookTitle}</div>
           <div className="mt-0.5 text-[11px]" style={{ color: colors.muted }}>
@@ -322,15 +535,16 @@ export function HarborReader({
           </div>
         </div>
         <div className="flex items-center gap-1">
-          <button className="reader-icon" onClick={() => setPanel("search")} aria-label="Search chapter"><Search size={18} /></button>
-          <button className="reader-icon" onClick={() => setPanel("annotations")} aria-label="Notes and highlights"><Highlighter size={18} /></button>
-          <button className="reader-icon" onClick={() => setPanel("bookmarks")} aria-label="Bookmarks"><Bookmark size={18} /></button>
-          <button className="reader-icon" onClick={() => setPanel("settings")} aria-label="Reader settings"><Settings2 size={19} /></button>
+          <button className="reader-icon" onClick={() => { setPanel("search"); setChaptersOpen(false); }} aria-label="Search chapter"><Search size={18} /></button>
+          <button className="reader-icon" onClick={() => { setPanel("annotations"); setChaptersOpen(false); }} aria-label="Notes and highlights"><Highlighter size={18} /></button>
+          <button className="reader-icon" onClick={() => { setPanel("bookmarks"); setChaptersOpen(false); }} aria-label="Bookmarks"><Bookmark size={18} /></button>
+          <button className="reader-icon" onClick={() => { setPanel("settings"); setChaptersOpen(false); }} aria-label="Reader settings"><Settings2 size={19} /></button>
         </div>
       </div>
 
       <div ref={scroller} className="absolute inset-0 overflow-y-auto px-4 pb-32 pt-24 sm:px-8">
         <article
+          ref={article}
           dir={effectiveDirection}
           className="relative mx-auto min-h-[calc(100vh-8rem)] rounded-[2px] px-7 py-14 shadow-[0_28px_90px_rgba(0,0,0,.42)] transition-[width,background-color] duration-300 sm:px-14"
           style={{
@@ -342,6 +556,7 @@ export function HarborReader({
             lineHeight: prefs.lineHeight,
           }}
           onMouseUp={captureSelection}
+          onMouseMove={(event) => prefs.mouseLineTrack && updateTrace(event.clientY)}
         >
           <div className="pointer-events-none absolute inset-y-0 start-0 w-px bg-gradient-to-b from-transparent via-black/10 to-transparent" />
           <header className="mb-12 border-b pb-7" style={{ borderColor: `${colors.muted}35` }}>
@@ -358,13 +573,14 @@ export function HarborReader({
               onMouseEnter={() => prefs.mouseLineTrack && setCurrent(index)}
               onDoubleClick={() => { setCurrent(index); addBookmark(index); }}
             >
-              {index === current && <span className="absolute -start-6 top-[.65em] h-1.5 w-1.5 rounded-full bg-accent shadow-[0_0_12px_currentColor]" />}
               {renderText(text, index)}
             </p>
           ))}
           {(content.images ?? []).map((src, index) => <img key={src + index} src={src} className="mx-auto my-10 max-h-[80vh] max-w-full rounded" alt="" />)}
         </article>
       </div>
+
+      {trace && <div dir={effectiveDirection} className="pointer-events-none fixed z-20 rounded-sm border-s-2 border-accent/60 bg-accent/[.10] shadow-[0_0_22px_rgba(255,159,77,.08)] transition-[top,height] duration-100" style={trace}><span className="absolute -start-8 top-1/2 h-2 w-2 -translate-y-1/2 rounded-full bg-accent shadow-[0_0_12px_currentColor]" /></div>}
 
       {selection && !editing && (
         <SelectionToolbar
@@ -392,6 +608,23 @@ export function HarborReader({
         <button className="reader-icon reader-icon-accent" onClick={speaking ? stopSpeech : () => speakFrom()} aria-label={speaking ? "Stop reading" : "Read aloud"}>{speaking ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" />}</button>
         <div className="px-3 text-xs tabular-nums" style={{ color: colors.muted }}>{Math.round(((current + 1) / Math.max(1, paragraphs.length)) * 100)}%</div>
       </div>
+
+      {chaptersOpen && (
+        <aside className="absolute inset-y-0 start-0 z-40 flex w-full max-w-[390px] flex-col border-e p-5 shadow-2xl backdrop-blur-2xl" style={{ background: `${colors.page}f7`, borderColor: `${colors.muted}35` }}>
+          <div className="flex items-center justify-between">
+            <div><div className="text-[10px] font-semibold uppercase tracking-[.2em]" style={{ color: colors.muted }}>Chapters</div><h2 className="mt-1 text-lg font-semibold">{shownVolume?.label ?? "Chapters"}</h2></div>
+            <button className="reader-icon" onClick={() => setChaptersOpen(false)} aria-label="Close chapters"><X size={18} /></button>
+          </div>
+          {volumes.length > 1 && <label className="mt-4 block"><span className="text-[10px] font-semibold uppercase tracking-[.18em]" style={{ color: colors.muted }}>Volume</span><select value={shownVolume?.volume ?? ""} onChange={(event) => setSidebarVolume(event.target.value)} className="mt-2 h-11 w-full rounded-xl border px-3 text-sm outline-none transition focus:border-accent" style={{ background: colors.page, borderColor: `${colors.muted}45`, color: colors.ink }}>{volumes.map((volume) => <option key={volume.volume || "chapters"} value={volume.volume}>{volume.label} · {volume.chapters.length} chapters</option>)}</select></label>}
+          <div className="mt-4 flex items-center justify-between border-y py-3 text-xs" style={{ borderColor: `${colors.muted}25`, color: colors.muted }}><span>{shownChapters.length} chapters</span><span>{shownChapters.some((item) => item.id === chapter.id) ? `${shownChapters.findIndex((item) => item.id === chapter.id) + 1} / ${shownChapters.length}` : "Select a chapter"}</span></div>
+          <div className="mt-3 min-h-0 flex-1 space-y-1 overflow-y-auto pe-1 pb-10">
+            {shownChapters.map((item, index) => {
+              const active = item.id === chapter.id;
+              return <button key={item.id} data-current-chapter={active || undefined} onClick={() => !active && onSelectChapter(item)} className={`group flex w-full items-start gap-3 rounded-xl border px-3 py-3 text-start transition ${active ? "border-accent/50 bg-accent/10" : "border-transparent hover:border-white/10 hover:bg-white/5"}`}><span className={`mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full text-[11px] tabular-nums ${active ? "bg-accent text-black" : "bg-white/5"}`}>{index + 1}</span><span className="min-w-0"><strong className={`line-clamp-2 block text-sm ${active ? "text-accent" : ""}`}>{item.title || `Chapter ${item.chapter ?? index + 1}`}</strong><span className="mt-1 block text-[11px]" style={{ color: colors.muted }}>{item.chapter ? `Chapter ${item.chapter}` : `Position ${index + 1}`}</span></span></button>;
+            })}
+          </div>
+        </aside>
+      )}
 
       {panel && (
         <div className="absolute inset-y-0 end-0 z-40 w-full max-w-[390px] border-s p-5 shadow-2xl backdrop-blur-2xl" style={{ background: `${colors.page}f7`, borderColor: `${colors.muted}35` }}>
@@ -425,7 +658,7 @@ export function HarborReader({
         </div>
       )}
       {editing && <AnnotationEditor annotation={editing} bookTitle={bookTitle} direction={effectiveDirection} onChange={setEditing} onSave={() => storeAnnotation(editing)} onDelete={() => { setAnnotations(removeEBookAnnotation(profile, bookId, editing.id)); setEditing(null); }} onClose={() => setEditing(null)} />}
-      <style>{`.reader-icon{display:grid;width:42px;height:42px;place-items:center;border-radius:999px;color:inherit;transition:.16s ease}.reader-icon:hover{background:rgba(127,127,127,.16);transform:translateY(-1px)}.reader-icon:active{transform:scale(.92)}.reader-icon-accent{background:var(--color-accent);color:#111}.reader-current{background:linear-gradient(90deg,color-mix(in srgb,var(--color-accent) 10%,transparent),transparent 70%);border-radius:4px}.reader-annotation{color:inherit;border-radius:3px;padding:.04em .02em;cursor:pointer}.reader-annotation:hover{outline:1px solid color-mix(in srgb,var(--color-accent) 60%,transparent)}`}</style>
+      <style>{`.reader-icon{display:grid;width:42px;height:42px;place-items:center;border-radius:999px;color:inherit;transition:.16s ease}.reader-icon:hover{background:rgba(127,127,127,.16);transform:translateY(-1px)}.reader-icon:active{transform:scale(.92)}.reader-icon-accent{background:var(--color-accent);color:#111}.reader-current{border-radius:4px}.reader-annotation{color:inherit;border-radius:3px;padding:.04em .02em;cursor:pointer}.reader-annotation:hover{outline:1px solid color-mix(in srgb,var(--color-accent) 60%,transparent)}`}</style>
     </div>
   );
 }
