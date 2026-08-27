@@ -1,6 +1,7 @@
 import { persistCritical } from "@/lib/storage-recovery";
 
 export type EBookReaderPrefs = {
+  engine: "harbor" | "legacy";
   mode: "long" | "long-h" | "paged" | "double" | "book";
   doubleGap: number;
   direction: "auto" | "ltr" | "rtl";
@@ -10,6 +11,8 @@ export type EBookReaderPrefs = {
   background: "dark" | "dim" | "light";
   brightness: number;
   focusMode: boolean;
+  mouseLineTrack: boolean;
+  font: "literary" | "arabic" | "classic";
 };
 
 export type EBookBookmark = {
@@ -24,6 +27,7 @@ export type EBookBookmark = {
 
 const PREFS = "harbor.ebook.reader.v1";
 const DEFAULTS: EBookReaderPrefs = {
+  engine: "harbor",
   mode: "long",
   doubleGap: 16,
   direction: "auto",
@@ -33,6 +37,8 @@ const DEFAULTS: EBookReaderPrefs = {
   background: "dark",
   brightness: 100,
   focusMode: false,
+  mouseLineTrack: false,
+  font: "literary",
 };
 
 const safe = (value: string) => encodeURIComponent(value);
@@ -99,4 +105,3 @@ export function saveEBookProgress(
 ): void {
   persistCritical(progressKey(profile, bookId, chapterId), String(line));
 }
-

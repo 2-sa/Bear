@@ -1,9 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { EBookChapter, EBookChapterContent } from "@/lib/ebook/providers";
 import { createEBookPages } from "@/lib/ebook/text-pages";
-import { loadEBookProgress, saveEBookProgress } from "@/lib/ebook/reader-state";
+import {
+  loadEBookProgress,
+  loadEBookReaderPrefs,
+  saveEBookProgress,
+  saveEBookReaderPrefs,
+} from "@/lib/ebook/reader-state";
 import { useProfiles } from "@/lib/profiles";
 import { MangaReader } from "@/views/manga/manga-reader";
+import { HarborReader } from "./harbor-reader";
 
 const PREFS = "harbor.ebook.manga-reader.v1";
 
@@ -31,12 +37,13 @@ export function EBookReader({
   const { activeId } = useProfiles();
   const profile = activeId ?? "default";
   const direction = textDirection(content?.text ?? "");
+  const [engine, setEngine] = useState(() => loadEBookReaderPrefs().engine);
   const [pages, setPages] = useState<Awaited<ReturnType<typeof createEBookPages>> | null>(null);
   useEffect(() => {
     let cancelled = false;
     let generated: Awaited<ReturnType<typeof createEBookPages>> = [];
     setPages(null);
-    if (content) {
+    if (content && engine === "legacy") {
       void createEBookPages(content, direction).then((next) => {
         generated = next;
         if (cancelled) {
@@ -48,7 +55,7 @@ export function EBookReader({
       cancelled = true;
       generated.forEach((page) => page.url.startsWith("blob:") && URL.revokeObjectURL(page.url));
     };
-  }, [content, direction]);
+  }, [content, direction, engine]);
   const mangaChapter = useMemo(
     () => ({
       id: chapter.id,
@@ -64,7 +71,7 @@ export function EBookReader({
     [bookId, chapter.id, profile],
   );
 
-  if (!content || !pages || error) {
+  if (!content || error || (engine === "legacy" && !pages)) {
     return (
       <div className="fixed inset-0 z-[90] grid place-items-center bg-[#0b0b0d] text-ink">
         <div className="text-center">
@@ -83,23 +90,52 @@ export function EBookReader({
     );
   }
 
+  const changeEngine = (value: "harbor" | "legacy") => {
+    const prefs = { ...loadEBookReaderPrefs(), engine: value };
+    saveEBookReaderPrefs(prefs);
+    setEngine(value);
+  };
+
+  if (engine === "harbor") {
+    return (
+      <HarborReader
+        profile={profile}
+        bookId={bookId}
+        bookTitle={bookTitle}
+        chapter={chapter}
+        content={content}
+        direction={direction}
+        onClose={onClose}
+        onUseLegacy={() => changeEngine("legacy")}
+      />
+    );
+  }
+
   if (!localStorage.getItem(PREFS)) {
     localStorage.setItem(PREFS, JSON.stringify({ rtl: direction === "rtl" }));
   }
 
   return (
-    <MangaReader
-      chapters={[mangaChapter]}
-      index={0}
-      manga={{ id: `ebook:${bookId}`, title: bookTitle }}
-      pagesOverride={pages}
-      prefsKey={PREFS}
-      disableMangaPersistence
-      startPage={loadEBookProgress(profile, bookId, chapter.id)}
-      onPageChange={savePage}
-      onExit={onClose}
-      onChangeIndex={() => undefined}
-    />
+    <>
+      <MangaReader
+        chapters={[mangaChapter]}
+        index={0}
+        manga={{ id: `ebook:${bookId}`, title: bookTitle }}
+        pagesOverride={pages ?? []}
+        prefsKey={PREFS}
+        disableMangaPersistence
+        startPage={loadEBookProgress(profile, bookId, chapter.id)}
+        onPageChange={savePage}
+        onExit={onClose}
+        onChangeIndex={() => undefined}
+      />
+      <button
+        type="button"
+        onClick={() => changeEngine("harbor")}
+        className="fixed bottom-5 left-5 z-[100] rounded-full border border-white/15 bg-black/70 px-4 py-2 text-xs text-white backdrop-blur-xl hover:border-accent hover:text-accent"
+      >
+        Use Bear Reader
+      </button>
+    </>
   );
 }
-
