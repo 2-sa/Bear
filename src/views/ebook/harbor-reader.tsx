@@ -3,8 +3,12 @@ import {
   Bookmark,
   BookOpen,
   ChevronLeft,
+  Copy,
   Gauge,
+  Headphones,
   Highlighter,
+  Link2,
+  MessageSquareText,
   Moon,
   Pause,
   Play,
@@ -18,12 +22,16 @@ import {
 import type { EBookChapter, EBookChapterContent } from "@/lib/ebook/providers";
 import {
   addEBookBookmark,
+  loadEBookAnnotations,
   loadEBookBookmarks,
   loadEBookProgress,
   loadEBookReaderPrefs,
   removeEBookBookmark,
+  removeEBookAnnotation,
+  saveEBookAnnotation,
   saveEBookProgress,
   saveEBookReaderPrefs,
+  type EBookAnnotation,
   type EBookReaderPrefs,
 } from "@/lib/ebook/reader-state";
 
@@ -50,6 +58,10 @@ const paper = {
   light: { desk: "#c8c0b3", page: "#f4eddf", ink: "#29251f", muted: "#776f64" },
 };
 
+const inks = ["#f2c867", "#efa862", "#e89991", "#d184a5", "#bba4d9", "#9fc8dd", "#8fc9c2", "#b4cfa2"];
+const stripMarks = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f\u0610-\u061a\u064b-\u065f\u0670\u06d6-\u06ed]/g, "").toLocaleLowerCase();
+type ReaderSelection = { ranges: EBookAnnotation["ranges"]; text: string; x: number; y: number };
+
 export function HarborReader({
   profile,
   bookId,
@@ -61,12 +73,16 @@ export function HarborReader({
   onUseLegacy,
 }: Props) {
   const [prefs, setPrefs] = useState<EBookReaderPrefs>(loadEBookReaderPrefs);
-  const [panel, setPanel] = useState<"settings" | "search" | "bookmarks" | null>(null);
+  const [panel, setPanel] = useState<"settings" | "search" | "bookmarks" | "annotations" | null>(null);
   const [query, setQuery] = useState("");
+  const [showFutureResults, setShowFutureResults] = useState(false);
   const [current, setCurrent] = useState(0);
   const [speaking, setSpeaking] = useState(false);
   const [chrome, setChrome] = useState(true);
   const [bookmarks, setBookmarks] = useState(() => loadEBookBookmarks(profile, bookId));
+  const [annotations, setAnnotations] = useState(() => loadEBookAnnotations(profile, bookId));
+  const [selection, setSelection] = useState<ReaderSelection | null>(null);
+  const [editing, setEditing] = useState<EBookAnnotation | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const blocks = useRef<Array<HTMLElement | null>>([]);
   const speechIndex = useRef(0);
@@ -188,13 +204,102 @@ export function HarborReader({
   };
 
   const results = useMemo(() => {
-    const term = query.trim().toLocaleLowerCase();
+    const term = stripMarks(query.trim());
     if (!term) return [];
     return paragraphs
       .map((text, index) => ({ text, index }))
-      .filter(({ text }) => text.toLocaleLowerCase().includes(term))
-      .slice(0, 100);
+      .filter(({ text }) => stripMarks(text).includes(term));
   }, [paragraphs, query]);
+  const shownResults = showFutureResults ? results : results.filter((result) => result.index <= current);
+  const hiddenResults = results.length - shownResults.length;
+
+  useEffect(() => setShowFutureResults(false), [query]);
+
+  const captureSelection = (event: React.MouseEvent<HTMLElement>) => {
+    const selected = window.getSelection();
+    if (!selected || selected.isCollapsed || !selected.rangeCount) return setSelection(null);
+    const source = selected.getRangeAt(0);
+    const ranges = blocks.current.flatMap((paragraph, line) => {
+      if (!paragraph || !source.intersectsNode(paragraph)) return [];
+      const range = document.createRange();
+      range.selectNodeContents(paragraph);
+      if (paragraph.contains(source.startContainer)) range.setStart(source.startContainer, source.startOffset);
+      if (paragraph.contains(source.endContainer)) range.setEnd(source.endContainer, source.endOffset);
+      const text = range.toString();
+      if (!text) return [];
+      const before = document.createRange();
+      before.selectNodeContents(paragraph);
+      before.setEnd(range.startContainer, range.startOffset);
+      const start = before.toString().length;
+      return [{ line, start, end: start + text.length }];
+    });
+    if (!ranges.length) return setSelection(null);
+    setSelection({ ranges, text: selected.toString().trim(), x: event.clientX, y: event.clientY - 12 });
+    event.stopPropagation();
+  };
+
+  const draftAnnotation = (reference = false, color = inks[0]): EBookAnnotation | null => selection && ({
+    id: `an${Date.now().toString(36)}`,
+    chapterId: chapter.id,
+    ranges: selection.ranges,
+    text: selection.text,
+    color,
+    density: 58,
+    title: "",
+    body: "",
+    tags: [],
+    reference,
+    createdAt: Date.now(),
+  });
+
+  const storeAnnotation = (annotation: EBookAnnotation) => {
+    setAnnotations(saveEBookAnnotation(profile, bookId, annotation));
+    window.getSelection()?.removeAllRanges();
+    setSelection(null);
+    setEditing(null);
+  };
+
+  const quickHighlight = (color: string) => {
+    const annotation = draftAnnotation(false, color);
+    if (annotation) storeAnnotation(annotation);
+  };
+
+  const renderText = (text: string, line: number) => {
+    const ranges = annotations.flatMap((annotation) => {
+      const direct = annotation.chapterId === chapter.id
+        ? annotation.ranges.filter((range) => range.line === line).map((range) => ({ ...range, annotation }))
+        : [];
+      if (!annotation.reference || !annotation.text) return direct;
+      const found: Array<{ line: number; start: number; end: number; annotation: EBookAnnotation }> = [];
+      const haystack = text.toLocaleLowerCase();
+      const needle = annotation.text.toLocaleLowerCase();
+      let start = 0;
+      while ((start = haystack.indexOf(needle, start)) >= 0) {
+        found.push({ line, start, end: start + needle.length, annotation });
+        start += Math.max(1, needle.length);
+      }
+      return [...direct, ...found];
+    }).sort((a, b) => a.start - b.start || b.end - a.end);
+    if (!ranges.length) return text;
+    const output: React.ReactNode[] = [];
+    let cursor = 0;
+    ranges.forEach(({ start: rawStart, end: rawEnd, annotation }) => {
+      const start = Math.max(cursor, Math.min(text.length, rawStart));
+      const end = Math.max(start, Math.min(text.length, rawEnd));
+      if (start > cursor) output.push(text.slice(cursor, start));
+      if (end > start) output.push(
+        <mark
+          key={`${annotation.id}:${line}:${start}`}
+          className="reader-annotation"
+          style={{ background: `color-mix(in srgb, ${annotation.color} ${annotation.density}%, transparent)` }}
+          onClick={(event) => { event.stopPropagation(); setEditing(annotation); }}
+        >{text.slice(start, end)}</mark>,
+      );
+      cursor = end;
+    });
+    if (cursor < text.length) output.push(text.slice(cursor));
+    return output;
+  };
 
   return (
     <div
@@ -218,6 +323,7 @@ export function HarborReader({
         </div>
         <div className="flex items-center gap-1">
           <button className="reader-icon" onClick={() => setPanel("search")} aria-label="Search chapter"><Search size={18} /></button>
+          <button className="reader-icon" onClick={() => setPanel("annotations")} aria-label="Notes and highlights"><Highlighter size={18} /></button>
           <button className="reader-icon" onClick={() => setPanel("bookmarks")} aria-label="Bookmarks"><Bookmark size={18} /></button>
           <button className="reader-icon" onClick={() => setPanel("settings")} aria-label="Reader settings"><Settings2 size={19} /></button>
         </div>
@@ -235,6 +341,7 @@ export function HarborReader({
             fontSize: `${prefs.fontSize}px`,
             lineHeight: prefs.lineHeight,
           }}
+          onMouseUp={captureSelection}
         >
           <div className="pointer-events-none absolute inset-y-0 start-0 w-px bg-gradient-to-b from-transparent via-black/10 to-transparent" />
           <header className="mb-12 border-b pb-7" style={{ borderColor: `${colors.muted}35` }}>
@@ -252,12 +359,29 @@ export function HarborReader({
               onDoubleClick={() => { setCurrent(index); addBookmark(index); }}
             >
               {index === current && <span className="absolute -start-6 top-[.65em] h-1.5 w-1.5 rounded-full bg-accent shadow-[0_0_12px_currentColor]" />}
-              {text}
+              {renderText(text, index)}
             </p>
           ))}
           {(content.images ?? []).map((src, index) => <img key={src + index} src={src} className="mx-auto my-10 max-h-[80vh] max-w-full rounded" alt="" />)}
         </article>
       </div>
+
+      {selection && !editing && (
+        <SelectionToolbar
+          selection={selection}
+          direction={effectiveDirection}
+          onColor={quickHighlight}
+          onListen={() => {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(selection.text);
+            utterance.lang = effectiveDirection === "rtl" ? "ar" : "en";
+            window.speechSynthesis.speak(utterance);
+          }}
+          onNote={() => setEditing(draftAnnotation(false))}
+          onReference={() => setEditing(draftAnnotation(true))}
+          onCopy={() => void navigator.clipboard.writeText(selection.text)}
+        />
+      )}
 
       <div
         className={`absolute inset-x-0 bottom-5 z-30 mx-auto flex w-fit items-center gap-1 rounded-full border p-1.5 shadow-2xl backdrop-blur-xl transition duration-300 ${chrome ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"}`}
@@ -272,16 +396,24 @@ export function HarborReader({
       {panel && (
         <div className="absolute inset-y-0 end-0 z-40 w-full max-w-[390px] border-s p-5 shadow-2xl backdrop-blur-2xl" style={{ background: `${colors.page}f7`, borderColor: `${colors.muted}35` }}>
           <div className="mb-6 flex items-center justify-between">
-            <h2 className="text-lg font-semibold">{panel === "settings" ? "Reading settings" : panel === "search" ? "Search chapter" : "Bookmarks"}</h2>
+            <h2 className="text-lg font-semibold">{panel === "settings" ? "Reading settings" : panel === "search" ? "Search chapter" : panel === "annotations" ? "Notes & highlights" : "Bookmarks"}</h2>
             <button className="reader-icon" onClick={() => setPanel(null)} aria-label="Close panel"><X size={18} /></button>
           </div>
           {panel === "settings" && <Settings prefs={prefs} patch={patchPrefs} colors={colors} onUseLegacy={onUseLegacy} />}
           {panel === "search" && (
             <div>
               <div className="flex items-center gap-2 rounded-xl border px-3" style={{ borderColor: `${colors.muted}45` }}><Search size={17} /><input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} className="h-11 min-w-0 flex-1 bg-transparent outline-none" placeholder="Find a word or passage" /></div>
+              <div className="mt-3 rounded-xl border px-3 py-2 text-xs" style={{ borderColor: `${colors.muted}25`, color: colors.muted }}>Diacritic-insensitive · results ahead stay sealed</div>
               <div className="mt-4 space-y-2 overflow-y-auto pb-10">
-                {results.map((result) => <button key={result.index} onClick={() => { goTo(result.index); setPanel(null); }} className="w-full rounded-xl border p-3 text-start text-sm transition hover:border-accent/60" style={{ borderColor: `${colors.muted}25` }}>{result.text.slice(0, 170)}</button>)}
+                {shownResults.map((result) => <button key={result.index} onClick={() => { goTo(result.index); setPanel(null); }} className="w-full rounded-xl border p-3 text-start text-sm transition hover:border-accent/60" style={{ borderColor: `${colors.muted}25` }}><span className="mb-1 block text-[10px] uppercase tracking-widest opacity-50">Passage {result.index + 1}</span>{result.text.slice(0, 220)}</button>)}
+                {hiddenResults > 0 && <button onClick={() => setShowFutureResults(true)} className="w-full rounded-xl border border-dashed border-accent/50 p-5 text-sm text-accent"><strong className="block text-base">{hiddenResults} {hiddenResults === 1 ? "match" : "matches"} ahead</strong><span className="mt-1 block text-xs opacity-70">Show them anyway</span></button>}
               </div>
+            </div>
+          )}
+          {panel === "annotations" && (
+            <div className="space-y-2 overflow-y-auto pb-10">
+              {!annotations.length && <p style={{ color: colors.muted }}>Select a passage to add a highlight, note, or reference.</p>}
+              {annotations.map((annotation) => <button key={annotation.id} onClick={() => setEditing(annotation)} className="w-full rounded-xl border p-3 text-start" style={{ borderColor: `${colors.muted}25` }}><span className="mb-2 block h-1 w-10 rounded-full" style={{ background: annotation.color, opacity: annotation.density / 100 }} /><strong className="block text-sm">{annotation.title || (annotation.reference ? "Reference" : annotation.body ? "Note" : "Highlight")}</strong><span className="mt-1 line-clamp-3 block text-xs" style={{ color: colors.muted }}>{annotation.text}</span>{annotation.tags.length > 0 && <span className="mt-2 block text-[10px] uppercase tracking-wider opacity-50">{annotation.tags.join(" · ")}</span>}</button>)}
             </div>
           )}
           {panel === "bookmarks" && (
@@ -292,7 +424,73 @@ export function HarborReader({
           )}
         </div>
       )}
-      <style>{`.reader-icon{display:grid;width:42px;height:42px;place-items:center;border-radius:999px;color:inherit;transition:.16s ease}.reader-icon:hover{background:rgba(127,127,127,.16);transform:translateY(-1px)}.reader-icon:active{transform:scale(.92)}.reader-icon-accent{background:var(--color-accent);color:#111}.reader-current{background:linear-gradient(90deg,color-mix(in srgb,var(--color-accent) 10%,transparent),transparent 70%);border-radius:4px}`}</style>
+      {editing && <AnnotationEditor annotation={editing} bookTitle={bookTitle} direction={effectiveDirection} onChange={setEditing} onSave={() => storeAnnotation(editing)} onDelete={() => { setAnnotations(removeEBookAnnotation(profile, bookId, editing.id)); setEditing(null); }} onClose={() => setEditing(null)} />}
+      <style>{`.reader-icon{display:grid;width:42px;height:42px;place-items:center;border-radius:999px;color:inherit;transition:.16s ease}.reader-icon:hover{background:rgba(127,127,127,.16);transform:translateY(-1px)}.reader-icon:active{transform:scale(.92)}.reader-icon-accent{background:var(--color-accent);color:#111}.reader-current{background:linear-gradient(90deg,color-mix(in srgb,var(--color-accent) 10%,transparent),transparent 70%);border-radius:4px}.reader-annotation{color:inherit;border-radius:3px;padding:.04em .02em;cursor:pointer}.reader-annotation:hover{outline:1px solid color-mix(in srgb,var(--color-accent) 60%,transparent)}`}</style>
+    </div>
+  );
+}
+
+function SelectionToolbar({ selection, direction, onColor, onListen, onNote, onReference, onCopy }: {
+  selection: ReaderSelection;
+  direction: "ltr" | "rtl";
+  onColor: (color: string) => void;
+  onListen: () => void;
+  onNote: () => void;
+  onReference: () => void;
+  onCopy: () => void;
+}) {
+  return (
+    <div
+      dir={direction}
+      className="fixed z-[70] w-max max-w-[calc(100vw-24px)] -translate-x-1/2 -translate-y-full overflow-hidden rounded-2xl border border-white/10 bg-[#101011]/95 text-[#e8e3d9] shadow-[0_22px_70px_rgba(0,0,0,.62)] backdrop-blur-2xl"
+      style={{ left: Math.min(window.innerWidth - 24, Math.max(24, selection.x)), top: Math.max(88, selection.y) }}
+      onMouseDown={(event) => event.preventDefault()}
+    >
+      <div className="flex items-center gap-2 border-b border-white/10 px-3 py-2.5">
+        {inks.map((color) => <button key={color} onClick={() => onColor(color)} className="h-6 w-6 rounded-full border border-white/20 shadow-inner transition hover:scale-110" style={{ background: color }} aria-label={`Highlight ${color}`} />)}
+      </div>
+      <div className="flex items-center overflow-x-auto p-1.5 text-xs">
+        <SelectionAction icon={<Headphones size={15} />} label={direction === "rtl" ? "استماع" : "Listen"} onClick={onListen} />
+        <SelectionAction icon={<MessageSquareText size={15} />} label={direction === "rtl" ? "ملاحظة" : "Note"} onClick={onNote} />
+        <SelectionAction icon={<Link2 size={15} />} label={direction === "rtl" ? "إضافة مرجع" : "Add reference"} onClick={onReference} />
+        <SelectionAction icon={<Copy size={15} />} label={direction === "rtl" ? "نسخ" : "Copy"} onClick={onCopy} />
+      </div>
+    </div>
+  );
+}
+
+function SelectionAction({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick: () => void }) {
+  return <button onClick={onClick} className="flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 transition hover:bg-white/10">{icon}<span>{label}</span></button>;
+}
+
+function AnnotationEditor({ annotation, bookTitle, direction, onChange, onSave, onDelete, onClose }: {
+  annotation: EBookAnnotation;
+  bookTitle: string;
+  direction: "ltr" | "rtl";
+  onChange: (annotation: EBookAnnotation) => void;
+  onSave: () => void;
+  onDelete: () => void;
+  onClose: () => void;
+}) {
+  return (
+    <div className="absolute inset-0 z-[80] grid place-items-center bg-black/65 p-4 backdrop-blur-md" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
+      <div dir={direction} className="grid max-h-[min(760px,92vh)] w-full max-w-[920px] overflow-hidden rounded-2xl border border-white/10 bg-[#111112] text-[#e8e3d9] shadow-[0_34px_100px_rgba(0,0,0,.72)] md:grid-cols-[1fr_280px]">
+        <main className="flex min-h-[500px] flex-col p-8 md:p-10">
+          <div className="text-xs uppercase tracking-[.2em] text-accent">{annotation.reference ? "Reference passage" : "Highlighted passage"}</div>
+          <blockquote className="mt-4 border-s-2 ps-4 text-lg leading-relaxed" style={{ borderColor: annotation.color }}><mark style={{ background: `color-mix(in srgb, ${annotation.color} ${annotation.density}%, transparent)`, color: "inherit" }}>{annotation.text}</mark></blockquote>
+          <input value={annotation.title} onChange={(event) => onChange({ ...annotation, title: event.target.value })} className="mt-8 border-b border-white/10 bg-transparent py-3 text-2xl outline-none placeholder:text-white/25" placeholder="Title (optional)" />
+          <textarea autoFocus value={annotation.body} onChange={(event) => onChange({ ...annotation, body: event.target.value })} className="mt-4 min-h-48 flex-1 resize-none bg-transparent text-lg leading-relaxed outline-none placeholder:text-white/25" placeholder="Write here… nothing will interrupt you." />
+          <div className="border-t border-white/10 pt-3 text-xs text-white/35">{annotation.body.length} characters</div>
+        </main>
+        <aside className="flex flex-col border-t border-white/10 bg-white/[.025] p-5 md:border-s md:border-t-0">
+          <div className="flex items-center justify-between"><strong>{annotation.reference ? "Reference" : "Annotation"}</strong><button className="reader-icon" onClick={onClose}><X size={17} /></button></div>
+          <Setting label="Ink colour"><div className="flex flex-wrap gap-2">{inks.map((color) => <button key={color} onClick={() => onChange({ ...annotation, color })} className={`h-8 w-8 rounded-full border-2 ${annotation.color === color ? "border-white" : "border-transparent"}`} style={{ background: color }} />)}</div></Setting>
+          <Range icon={<Highlighter size={16} />} label="Ink density" value={annotation.density} min={20} max={90} step={5} onChange={(density) => onChange({ ...annotation, density })} />
+          <Setting label="Tags"><input value={annotation.tags.join(", ")} onChange={(event) => onChange({ ...annotation, tags: event.target.value.split(",").map((tag) => tag.trim()).filter(Boolean) })} className="h-10 w-full rounded-lg border border-white/10 bg-white/5 px-3 text-sm outline-none focus:border-accent/60" placeholder="study, character, quote" /></Setting>
+          <div className="mt-auto border-t border-white/10 pt-4 text-xs text-white/40"><div>{bookTitle}</div><div className="mt-1">{annotation.reference ? "Marks every recurrence of this phrase" : "Saved to this passage"}</div></div>
+          <div className="mt-4 flex gap-2"><button onClick={onSave} className="h-11 flex-1 rounded-xl bg-accent font-semibold text-black">Save</button><button onClick={onDelete} className="reader-icon text-red-400" aria-label="Delete"><Trash2 size={17} /></button></div>
+        </aside>
+      </div>
     </div>
   );
 }

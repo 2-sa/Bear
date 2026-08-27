@@ -25,6 +25,20 @@ export type EBookBookmark = {
   createdAt: number;
 };
 
+export type EBookAnnotation = {
+  id: string;
+  chapterId: string;
+  ranges: Array<{ line: number; start: number; end: number }>;
+  text: string;
+  color: string;
+  density: number;
+  title: string;
+  body: string;
+  tags: string[];
+  reference: boolean;
+  createdAt: number;
+};
+
 const PREFS = "harbor.ebook.reader.v1";
 const DEFAULTS: EBookReaderPrefs = {
   engine: "harbor",
@@ -44,6 +58,8 @@ const DEFAULTS: EBookReaderPrefs = {
 const safe = (value: string) => encodeURIComponent(value);
 const bookmarksKey = (profile: string, bookId: string) =>
   `harbor.ebook.bookmarks.v1.${safe(profile)}.${safe(bookId)}`;
+const annotationsKey = (profile: string, bookId: string) =>
+  `harbor.ebook.annotations.v1.${safe(profile)}.${safe(bookId)}`;
 const progressKey = (profile: string, bookId: string, chapterId: string) =>
   `harbor.ebook.progress.v1.${safe(profile)}.${safe(bookId)}.${safe(chapterId)}`;
 
@@ -89,6 +105,41 @@ export function addEBookBookmark(
 export function removeEBookBookmark(profile: string, bookId: string, id: string): EBookBookmark[] {
   const list = loadEBookBookmarks(profile, bookId).filter((item) => item.id !== id);
   persistCritical(bookmarksKey(profile, bookId), JSON.stringify(list));
+  return list;
+}
+
+export function loadEBookAnnotations(profile: string, bookId: string): EBookAnnotation[] {
+  try {
+    const value = JSON.parse(localStorage.getItem(annotationsKey(profile, bookId)) || "[]");
+    return Array.isArray(value) ? value : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveEBookAnnotation(
+  profile: string,
+  bookId: string,
+  annotation: Omit<EBookAnnotation, "id" | "createdAt"> & Partial<Pick<EBookAnnotation, "id" | "createdAt">>,
+): EBookAnnotation[] {
+  const items = loadEBookAnnotations(profile, bookId);
+  const next = {
+    ...annotation,
+    id: annotation.id ?? `an${Date.now().toString(36)}`,
+    createdAt: annotation.createdAt ?? Date.now(),
+  } as EBookAnnotation;
+  const list = [next, ...items.filter((item) => item.id !== next.id)].slice(0, 1000);
+  persistCritical(annotationsKey(profile, bookId), JSON.stringify(list));
+  return list;
+}
+
+export function removeEBookAnnotation(
+  profile: string,
+  bookId: string,
+  id: string,
+): EBookAnnotation[] {
+  const list = loadEBookAnnotations(profile, bookId).filter((item) => item.id !== id);
+  persistCritical(annotationsKey(profile, bookId), JSON.stringify(list));
   return list;
 }
 
