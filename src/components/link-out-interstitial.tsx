@@ -1,6 +1,8 @@
 import { ArrowLeft, ExternalLink, TriangleAlert } from "lucide-react";
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
+import { pushBackHandler } from "@/lib/back-intercept";
+import { isBackKey } from "@/lib/keyboard-navigation/geometry";
 import { closeLinkOut, useLinkOut } from "@/lib/social/link-out";
 import { openUrl } from "@/lib/window";
 
@@ -18,10 +20,27 @@ export function LinkOutInterstitial() {
   useEffect(() => {
     if (!url) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") closeLinkOut();
+      if (!isBackKey(e)) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      closeLinkOut();
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    const onLocalBack = (e: Event) => {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      closeLinkOut();
+    };
+    const removeBackHandler = pushBackHandler(() => {
+      closeLinkOut();
+      return true;
+    });
+    window.addEventListener("keydown", onKey, true);
+    window.addEventListener("harbor:local-back", onLocalBack, true);
+    return () => {
+      removeBackHandler();
+      window.removeEventListener("keydown", onKey, true);
+      window.removeEventListener("harbor:local-back", onLocalBack, true);
+    };
   }, [url]);
 
   if (!url) return null;
@@ -33,15 +52,24 @@ export function LinkOutInterstitial() {
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[300] flex items-center justify-center overflow-y-auto bg-canvas/95 px-6 py-10 backdrop-blur-xl animate-in fade-in duration-200">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="link-out-title"
+      aria-describedby="link-out-description"
+      className="fixed inset-0 z-[300] flex items-center justify-center overflow-y-auto bg-canvas/95 px-6 py-10 backdrop-blur-xl animate-in fade-in duration-200"
+    >
       <div className="w-full max-w-md text-center">
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-elevated ring-1 ring-edge-soft">
           <ExternalLink size={26} className="text-ink-muted" strokeWidth={1.9} />
         </div>
-        <h1 className="mt-6 font-display text-[26px] font-medium tracking-tight text-ink">
+        <h1
+          id="link-out-title"
+          className="mt-6 font-display text-[26px] font-medium tracking-tight text-ink"
+        >
           You're leaving Harbor
         </h1>
-        <p className="mt-2 text-[14px] leading-relaxed text-ink-muted">
+        <p id="link-out-description" className="mt-2 text-[14px] leading-relaxed text-ink-muted">
           This link goes to an external site that Harbor does not control or vouch for. Triple-check
           the address before you continue, and never enter your Harbor password anywhere but Harbor.
         </p>
@@ -50,7 +78,9 @@ export function LinkOutInterstitial() {
             Destination
           </span>
           <span className="truncate text-[17px] font-semibold text-ink">{host}</span>
-          <span className="mt-1 break-all font-mono text-[12px] leading-snug text-ink-subtle">{url}</span>
+          <span className="mt-1 break-all font-mono text-[12px] leading-snug text-ink-subtle">
+            {url}
+          </span>
         </div>
         <div className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-danger/12 px-3 py-1.5 text-[12px] font-medium text-danger">
           <TriangleAlert size={14} strokeWidth={2.2} /> Only continue if you fully trust this link
