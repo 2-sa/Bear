@@ -46,6 +46,16 @@ import { MyListSubmenu } from "./context-menu/my-list-submenu";
 const MENU_WIDTH = 220;
 const SUBTITLE_MENU_WIDTH = 360;
 
+async function readClipboardText(): Promise<string> {
+  if (typeof window !== "undefined" && "__TAURI_INTERNALS__" in window) {
+    try {
+      const { readText } = await import("@tauri-apps/plugin-clipboard-manager");
+      return await readText();
+    } catch {}
+  }
+  return navigator.clipboard.readText();
+}
+
 function isEditableTarget(el: EventTarget | null): el is HTMLElement {
   if (!(el instanceof HTMLElement)) return false;
   if (el instanceof HTMLInputElement) return !el.disabled && !el.readOnly;
@@ -506,7 +516,7 @@ export function ContextMenu() {
     const handlePaste = async () => {
       if (!canPaste || !element) return;
       try {
-        const text = await navigator.clipboard.readText();
+        const text = await readClipboardText();
         if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement) {
           const start = element.selectionStart ?? element.value.length;
           const end = element.selectionEnd ?? element.value.length;
