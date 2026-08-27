@@ -11,6 +11,22 @@ import { parseKitsuId } from "./providers/kitsu";
 import { aniZipByAnilist, aniZipByKitsu, pickEpisodeTitle } from "./providers/anizip";
 import { fetchTvdbProxyImages, pickTvdbImage } from "./providers/tvdb-proxy";
 import { franchiseRoot } from "./providers/anime-franchise-root";
+import { foreignAnimeProviderSeasons } from "./streams/anime-identity";
+
+async function filterForeignAnimeSeasons(
+  metaId: string,
+  imdbId: string | null,
+  nums: number[],
+): Promise<number[]> {
+  try {
+    const foreign = await foreignAnimeProviderSeasons(metaId, imdbId);
+    if (!foreign) return nums;
+    const out = nums.filter((n) => !foreign.has(n));
+    return out.length > 0 ? out : nums;
+  } catch {
+    return nums;
+  }
+}
 
 export function isAnimeId(id: string): boolean {
   return (
@@ -326,12 +342,14 @@ function uniqueAnimeSeasons(eps: PlayEpisode[] | null): number[] {
 export async function fetchSeasonList(meta: Meta, opts: { tmdbKey: string }): Promise<number[]> {
   if (meta.type !== "series" && !isAnimeId(meta.id)) return [];
   if (meta.id.startsWith("tt")) {
-    return uniqueSeasons(await loadCinemetaEpisodes(meta.id));
+    const nums = uniqueSeasons(await loadCinemetaEpisodes(meta.id));
+    return filterForeignAnimeSeasons(meta.id, meta.id, nums);
   }
   if (meta.id.startsWith("tmdb:tv:") && opts.tmdbKey) {
     const detail = await tmdbDetails(opts.tmdbKey, meta).catch(() => null);
     const nums = (detail?.seasons ?? []).map((s) => s.seasonNumber).filter((n) => n >= 1);
-    return [...new Set(nums)].sort((a, b) => a - b);
+    const deduped = [...new Set(nums)].sort((a, b) => a - b);
+    return filterForeignAnimeSeasons(meta.id, null, deduped);
   }
   return uniqueAnimeSeasons(await getNonStandardEpisodes(meta));
 }

@@ -5,6 +5,7 @@ import { readPlayback } from "@/lib/playback-history";
 import type { Settings } from "@/lib/settings";
 import type { PlayEpisode } from "@/lib/view";
 import { resolveAddonRanks } from "./addon-priority";
+import { animeAbsoluteFromScopedId } from "./anime-identity-core";
 import type { PipelineInput } from "./pipeline";
 import type { Stream } from "./types";
 
@@ -80,6 +81,19 @@ export function buildEpisodePipelineInput(params: {
         ? "series"
         : "movie";
   const animeReq = streamIds.some((id) => id.startsWith("kitsu:") || id.startsWith("mal:"));
+  const animeAbsoluteEpisode = animeReq
+    ? (streamIds.map(animeAbsoluteFromScopedId).find((n) => n != null) ?? null)
+    : null;
+  // Split-franchise cours (Bleach TYBW) are numbered entry-relative while addon
+  // streams often use provider coords (cour 4 ep 1 = S17E41). Accept both so the
+  // episode filter keeps streams in either numbering and drops clear mismatches.
+  const animeEpisodeAliases =
+    animeReq &&
+    episode?.imdbEpisode != null &&
+    episode?.episode != null &&
+    episode.imdbEpisode !== episode.episode
+      ? new Set<number>([episode.imdbEpisode])
+      : null;
   const imdbEpAligned =
     !animeReq || episode?.imdbEpisode == null || episode.episode === episode.imdbEpisode;
   const effSeason = imdbEpAligned ? (episode?.imdbSeason ?? episode?.season) : episode?.season;
@@ -104,6 +118,8 @@ export function buildEpisodePipelineInput(params: {
     addons,
     debrids,
     isAnime: animeReq,
+    animeAbsoluteEpisode,
+    animeEpisodeAliases,
     presetStreams: embedded.length > 0 ? embedded : undefined,
     addonTimeoutMs: Math.max(8, Math.min(120, settings.addonTimeoutSec ?? 30)) * 1000,
     addonRanks: resolveAddonRanks(addons, settings.streamPriority),

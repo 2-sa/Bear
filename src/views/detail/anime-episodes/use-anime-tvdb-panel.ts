@@ -19,6 +19,7 @@ import {
   seasonDateRange,
   type TvdbOrder,
 } from "@/lib/providers/tvdb-order";
+import { foreignAnimeProviderSeasons } from "@/lib/streams/anime-identity";
 import type { PickerItem } from "../series-episodes/season-arc-picker";
 
 export type AnimeTvdbPanel = {
@@ -66,6 +67,7 @@ export function useAnimeTvdbPanel(
   preferredSeasonKey?: string,
   intentSeasonKey?: string,
   franchise?: FranchiseEntry[],
+  metaId?: string | null,
 ): AnimeTvdbPanelState {
   const t = useT();
   const [seriesId, setSeriesId] = useState<number | null>(null);
@@ -151,6 +153,27 @@ export function useAnimeTvdbPanel(
     };
   }, [enabled, tvdbKey, seriesId, seasonType]);
 
+  const [foreignSeasons, setForeignSeasons] = useState<Set<number> | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    // metaId first: tt-opened titles carry no kitsu id here.
+    const identitySource = metaId?.trim() || (kitsuId != null ? `kitsu:${kitsuId}` : null);
+    if (!identitySource) {
+      setForeignSeasons(null);
+      return;
+    }
+    void foreignAnimeProviderSeasons(identitySource, imdbId)
+      .then((s) => {
+        if (!cancelled) setForeignSeasons(s);
+      })
+      .catch(() => {
+        if (!cancelled) setForeignSeasons(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [kitsuId, imdbId, metaId]);
+
   const extrasLabel = t("Extras");
   const built = useMemo(() => {
     if (!ordering) return null;
@@ -190,6 +213,7 @@ export function useAnimeTvdbPanel(
     const imdbMap = imdbId ? harborImdbEpisodesCached(imdbId) : undefined;
     for (const s of ordering.seasons) {
       if (s.seasonNumber < 0) continue;
+      if (foreignSeasons?.has(s.seasonNumber)) continue;
       const bucket = ordering.bySeason.get(s.seasonNumber) ?? [];
       if (bucket.length === 0) continue;
       const seenId = new Set<number>();
@@ -319,7 +343,7 @@ export function useAnimeTvdbPanel(
     }
     if (items.length === 0) return null;
     return { items, subset, pool };
-  }, [ordering, episodes, franchiseEpisodes, extrasLabel, franchise, imdbId]);
+  }, [ordering, episodes, franchiseEpisodes, extrasLabel, franchise, foreignSeasons, imdbId]);
 
   useEffect(() => {
     if (!ordering) return;

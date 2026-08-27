@@ -5,6 +5,7 @@ import { fetchAddonStreams, type AddonProgress, type StreamRequest } from "./add
 import type { AddonRankFn } from "./addon-priority";
 import { applyStreamPriority } from "./priority-partition";
 import { enhanceAnimeStreams } from "./anitomy";
+import { partitionByExactAnimeEpisode } from "./anime-identity-core";
 import { fetchLibraryStreams, type LibraryQuery } from "./library";
 import { parseStream } from "./parser";
 import { applyTrust, type Rejection, type TrustOptions } from "./trust";
@@ -68,6 +69,26 @@ function finalizeWithRescue(
   return { picker: newPicker, rejected: rejected.filter((r) => !rescued.has(r.stream)) };
 }
 
+function applyAnimeEpisodeFilter(
+  parsed: ParsedStream[],
+  input: PipelineInput,
+): { kept: ParsedStream[]; extraRejected: Rejection[] } {
+  const expected = input.animeAbsoluteEpisode;
+  if (!input.isAnime || expected == null) return { kept: parsed, extraRejected: [] };
+  const validNums = new Set<number>([expected]);
+  for (const a of input.animeEpisodeAliases ?? []) {
+    if (Number.isFinite(a) && a >= 1) validNums.add(a);
+  }
+  const { keep, drop } = partitionByExactAnimeEpisode(parsed, validNums);
+  return {
+    kept: keep,
+    extraRejected: drop.map((stream) => ({
+      stream,
+      reason: `anime-episode-mismatch:${stream.episode}-vs-${expected}`,
+    })),
+  };
+}
+
 export type PipelineInput = {
   request: StreamRequest;
   query: LibraryQuery;
@@ -76,6 +97,8 @@ export type PipelineInput = {
   trust?: TrustOptions;
   score: ScoreOptions;
   isAnime?: boolean;
+  animeAbsoluteEpisode?: number | null;
+  animeEpisodeAliases?: Set<number> | null;
   presetStreams?: Stream[];
   addonTimeoutMs?: number;
   addonRanks?: AddonRankFn | null;
@@ -102,9 +125,13 @@ export async function runPipeline(
   const debridErrors: DebridError[] = [];
   const priorityActive = input.addonRanks != null;
 
-  const buildPartial = (addonStreams: Stream[]): PipelineResult => {
+  const buildPartial = async (addonStreams: Stream[]): Promise<PipelineResult> => {
     const merged = mergeAndDedupe(library, addonStreams);
-    const parsed = merged.map(parseStream);
+    const pre = merged.map(parseStream);
+    if (input.isAnime && input.animeAbsoluteEpisode != null) {
+      await enhanceAnimeStreams(pre);
+    }
+    const { kept: parsed, extraRejected } = applyAnimeEpisodeFilter(pre, input);
     const { keep, rejected } = applyTrust(parsed, input.trust ?? {});
     const corpus = computeCorpusStats(keep, input.score);
     const scored = keep.map((s) => scoreStream(s, input.score, corpus));
@@ -117,7 +144,7 @@ export async function runPipeline(
     const fin = finalizeWithRescue(picker, rejected, input.trust ?? {}, input.score);
     return {
       picker: applyStreamPriority(fin.picker, priorityActive, input.score.activeDebrids),
-      rejected: fin.rejected,
+      rejected: [...fin.rejected, ...extraRejected],
       raw: { addon: addonStreams, library },
       debridErrors: debridErrors.length > 0 ? debridErrors : undefined,
     };
@@ -128,11 +155,13 @@ export async function runPipeline(
     const now = performance.now();
     if (now - lastPartialAt < 250) return;
     lastPartialAt = now;
-    try {
-      onProgress(buildPartial(addonStreams));
-    } catch {
-      /* swallow */
-    }
+    void buildPartial(addonStreams)
+      .then((result) => {
+        if (!signal.aborted) onProgress(result);
+      })
+      .catch(() => {
+        /* swallow */
+      });
   };
 
   const presets = input.presetStreams ?? [];
@@ -158,7 +187,7 @@ export async function runPipeline(
   const addonStreams = addonSettled.status === "fulfilled" ? addonSettled.value : [];
   const merged = mergeAndDedupe(library, addonStreams);
 
-  const parsed = merged.map(parseStream);
+  const preParsed = merged.map(parseStream);
   const verifiedCacheByHash = new Map<string, ParsedStream["cacheVerified"]>();
   const markCacheVerified = (stream: ParsedStream, slug: DebridStore["slug"]) => {
     if (!stream.infoHash) return;
@@ -177,7 +206,14 @@ export async function runPipeline(
   };
 
   if (input.isAnime) {
-    await enhanceAnimeStreams(parsed);
+    await enhanceAnimeStreams(preParsed);
+  }
+
+  const { kept: parsed, extraRejected: animeRejected } = applyAnimeEpisodeFilter(preParsed, input);
+  if (animeRejected.length > 0) {
+    dlog(
+      `[pipeline] anime episode filter: dropped ${animeRejected.length} stream(s) not matching ep ${input.animeAbsoluteEpisode}`,
+    );
   }
 
   const hashes = [
@@ -268,7 +304,7 @@ export async function runPipeline(
     restoreCacheVerification(fin.picker);
     return {
       picker: applyStreamPriority(fin.picker, priorityActive, input.score.activeDebrids),
-      rejected: fin.rejected,
+      rejected: [...fin.rejected, ...animeRejected],
       raw: { addon: addonStreams, library },
       debridErrors: debridErrors.length > 0 ? debridErrors : undefined,
     };
@@ -300,7 +336,7 @@ export async function runPipeline(
   restoreCacheVerification(fin.picker);
   return {
     picker: applyStreamPriority(fin.picker, priorityActive, input.score.activeDebrids),
-    rejected: fin.rejected,
+    rejected: [...fin.rejected, ...animeRejected],
     raw: { addon: addonStreams, library },
   };
 }

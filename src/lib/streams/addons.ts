@@ -187,6 +187,8 @@ function idScheme(id: string): string {
   return id.startsWith("tt") ? "imdb" : id.split(":")[0];
 }
 
+const SPECIALS_SCOPED_TT_RX = /^tt\d+:0:\d+$/;
+
 function hasStandardIdScheme(id: string): boolean {
   return STANDARD_ID_SCHEMES.some((p) => id.startsWith(p));
 }
@@ -197,8 +199,10 @@ function pickIds(addon: Addon, type: string, ids: string[]): string[] {
   if (accepted.length === 0) return [];
   const animeId = accepted.find((id) => ANIME_SCHEMES.some((s) => id.startsWith(s)));
   const ttId = accepted.find((id) => id.startsWith("tt"));
-  if (animeId && ttId) return [animeId, ttId];
-  return [accepted[0]];
+  if (!animeId || !ttId) return [accepted[0]];
+  // Specials have no reliable kitsu numbering, so both identities stay.
+  if (SPECIALS_SCOPED_TT_RX.test(ttId)) return [animeId, ttId];
+  return [animeId];
 }
 
 function pickIdByDeclaredTypes(
