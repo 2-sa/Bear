@@ -4,7 +4,13 @@ import { invoke } from "@tauri-apps/api/core";
 import { useEffect, useState } from "react";
 import { getWindowFullscreen } from "@/lib/fullscreen-state";
 import { isMacDesktop } from "@/lib/platform";
+import {
+  openExternalUrlStrict as dispatchExternalUrlStrict,
+  type ExternalUrlOpenAdapter,
+} from "@/lib/social/external-system-opener";
 import { IN_APP_EXTERNAL_PAGES_ENABLED } from "@/lib/security-policy";
+
+export type { ExternalUrlOpenAdapter } from "@/lib/social/external-system-opener";
 
 const win: Window | null = isTauri() ? getCurrentWindow() : null;
 

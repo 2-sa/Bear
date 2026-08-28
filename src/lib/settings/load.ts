@@ -32,6 +32,7 @@ const RETIRED_GEMINI = new Set([
 import { DEFAULT, STORAGE_KEY } from "./defaults";
 import type { Settings } from "./types";
 import { adoptLegacyPlaylists, readPlaylists } from "@/lib/iptv/playlists-store";
+import { migrateRelayDefault } from "@/lib/together/relay-version";
 
 const HEX_RE = /^#[0-9a-f]{6}$/i;
 
@@ -322,11 +323,17 @@ export function loadStoredSettings(rawKey: string = STORAGE_KEY): Settings {
           ? parsed.fullscreenClockShowEndTime
           : DEFAULT.fullscreenClockShowEndTime,
       fullscreenClockSizePx: sanitizeFullscreenClockSize(parsed.fullscreenClockSizePx),
-      streaming: { ...DEFAULT.streaming, ...(parsed.streaming ?? {}) },
+      streaming: { ...DEFAULT.streaming, ...parsed.streaming },
       streamingRegions: {
         ...DEFAULT.streamingRegions,
         ...(parsed.streamingRegions ?? {}),
       },
+      subOffsetIndicatorEnabled:
+        typeof parsed.subOffsetIndicatorEnabled === "boolean"
+          ? parsed.subOffsetIndicatorEnabled
+          : DEFAULT.subOffsetIndicatorEnabled,
+      subOffsetIndicatorPosition: sanitizeSubtitleOffsetPosition(parsed.subOffsetIndicatorPosition),
+      subOffsetIndicatorSize: sanitizeSubtitleOffsetSize(parsed.subOffsetIndicatorSize),
       subProvidersEnabled: {
         ...DEFAULT.subProvidersEnabled,
         ...parsed.subProvidersEnabled,

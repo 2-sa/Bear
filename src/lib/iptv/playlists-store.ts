@@ -10,6 +10,21 @@ export type StoredPlaylist = {
   xtream?: { server: string; username: string; password: string };
 };
 
+export const DEFAULT_PLAYLISTS: StoredPlaylist[] = [
+  {
+    id: "iptv-org-arabic",
+    name: "عربي",
+    url: "https://iptv-org.github.io/iptv/languages/ara.m3u",
+    kind: "m3u",
+  },
+  {
+    id: "iptv-org-global",
+    name: "عالمي",
+    url: "https://iptv-org.github.io/iptv/index.m3u",
+    kind: "m3u",
+  },
+];
+
 const STORAGE_KEY = "harbor.iptv.playlists.v1";
 
 let migrated = false;
@@ -123,7 +138,12 @@ export function readPlaylists(): StoredPlaylist[] {
   ensureMigrated();
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw == null) return [];
+    if (raw == null) {
+      const lists = DEFAULT_PLAYLISTS.map((playlist) => ({ ...playlist }));
+      cache = lists;
+      cacheJson = JSON.stringify(lists);
+      return lists;
+    }
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
     const lists = parsed as StoredPlaylist[];
