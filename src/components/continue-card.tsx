@@ -26,6 +26,7 @@ import { fetchSeasonEpisodes } from "@/lib/series-episodes";
 import { aniZipByAnidb, aniZipByAnilist, aniZipByKitsu, aniZipByMal } from "@/lib/providers/anizip";
 import { peekCachedLogo, resolveLogo } from "@/lib/logo";
 import { resolvePreferredAnimeTitle } from "@/lib/anime-title";
+import { stripFranchiseSuffix } from "@/lib/providers/jikan";
 import { getAnimeCwId } from "@/lib/anime-cw-ids";
 import { aniZipLookupKey, applyAniZipEpisode, needsAniZipSyncIds } from "@/lib/cw-anime-episode";
 import { ThreeLiquidGlassSurface } from "@/components/ThreeLiquidGlassSurface";

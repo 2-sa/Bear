@@ -1,4 +1,3 @@
-import { HARBOR_API_BASE } from "@/lib/config/endpoints";
 import type { MangaReadingState } from "@/lib/manga-reading-state";
 
 const IS_TAURI = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
