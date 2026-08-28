@@ -107,4 +107,7 @@ test("Bear-owned defaults survive upstream syncs", async (context) => {
   );
   assert.match(languagePanel, /https:\/\/github\.com\/2-sa\/Bear/);
   assert.doesNotMatch(languagePanel, /https:\/\/github\.com\/harborstremio\/harbor/);
+  assert.match(languagePanel, /<SubtitleStylePanel \/>/);
+  assert.match(languagePanel, /<SubtitleOffsetSettings \/>/);
+  assert.match(languagePanel, /title=\{t\("Metadata language"\)\}/);
 });
