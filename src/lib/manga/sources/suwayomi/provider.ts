@@ -34,7 +34,6 @@ import { registerServerPageHeaders } from "@/lib/manga/plugins/adapter";
 import { langFilterMatches, loadMangaLangFilter } from "@/lib/manga/lang-filter";
 
 const SEARCH_ALL_CONCURRENCY = 4;
-const BROWSE_ALL_CONCURRENCY = 4;
 const BROWSE_SOURCE_TIMEOUT_MS = 8_000;
 
 type SuwayomiProviderOptions = {
@@ -134,37 +133,21 @@ export function makeSuwayomiProvider(
       .filter((m): m is MangaSummary => !!m);
   }
 
-  async function browseAllSources(
-    kind: BrowseKind,
-    offset: number,
-    query: string,
-  ): Promise<MangaSummary[]> {
-    const transport = await pickTransport(client);
-    const sources = await loadSources(client, transport);
-    const lists: MangaSummary[][] = Array.from({ length: sources.length }, () => []);
-    let nextSource = 0;
-    const worker = async () => {
-      while (true) {
-        const index = nextSource++;
-        const source = sources[index];
-        if (!source) return;
-        const requestClient = makeClient(server, 0);
-        lists[index] = await settleWithin(
-          browse(source.id, kind, offset, query, requestClient),
-          [] as MangaSummary[],
-          options.sourceTimeoutMs ?? BROWSE_SOURCE_TIMEOUT_MS,
-        );
-      }
-    };
-    await Promise.all(
-      Array.from({ length: Math.min(BROWSE_ALL_CONCURRENCY, sources.length) }, () => worker()),
-    );
-    const merged: MangaSummary[] = [];
-    const longest = Math.max(0, ...lists.map((list) => list.length));
-    for (let index = 0; index < longest; index++) {
-      for (const list of lists) {
-        if (list[index]) merged.push(list[index]);
-      }
+  let popularCache: { key: string; at: number; items: MangaSummary[] } | null = null;
+  const POPULAR_CACHE_TTL = 5 * 60_000;
+  const POPULAR_PAGES = 3;
+  const POPULAR_SOURCE_CAP = 20;
+  const POPULAR_MAX_TOTAL = 150;
+
+  async function mergedPopular(): Promise<MangaSummary[]> {
+    const filter = loadMangaLangFilter();
+    const cacheKey = `${server.base}|${[...filter].sort().join("+")}`;
+    if (
+      popularCache &&
+      popularCache.key === cacheKey &&
+      Date.now() - popularCache.at < POPULAR_CACHE_TTL
+    ) {
+      return popularCache.items;
     }
     const t = await pickTransport(client);
     const sources = (await loadSources(client, t))
@@ -181,9 +164,14 @@ export function makeSuwayomiProvider(
       while (next < sources.length) {
         const source = sources[next++];
         try {
+          const requestClient = makeClient(server, 0);
           let offset = 0;
           for (let page = 0; page < POPULAR_PAGES; page++) {
-            const items = await browse(source.id, "popular", offset, "");
+            const items = await settleWithin(
+              browse(source.id, "popular", offset, "", requestClient),
+              [] as MangaSummary[],
+              options.sourceTimeoutMs ?? BROWSE_SOURCE_TIMEOUT_MS,
+            );
             if (items.length === 0) break;
             for (const m of items) {
               if (seen.has(m.id)) continue;

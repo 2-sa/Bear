@@ -3,6 +3,7 @@ import type { MangaReadingState } from "@/lib/manga-reading-state";
 const IS_TAURI = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
 const BEAR_LOGO = "bear_logo";
+const STATIC_BUTTONS: Array<{ label: string; url: string }> = [];
 export const DISCORD_PARTY_JOIN_ENABLED = false;
 
 type DiscordConfig = {
@@ -112,7 +113,7 @@ function computeBase(): Base {
         payload: {
           details: "Reading something",
           state: reading.page > 0 ? `Page ${reading.page}/${reading.totalPages}` : undefined,
-          posterUrl: HARBOR_LOGO,
+          posterUrl: BEAR_LOGO,
         },
         key: `read:hide:${reading.page}/${reading.totalPages}`,
       };
@@ -122,7 +123,7 @@ function computeBase(): Base {
       payload: {
         details: reading.title,
         state,
-        posterUrl: (config.showPoster && reading.cover) || HARBOR_LOGO,
+        posterUrl: (config.showPoster && reading.cover) || BEAR_LOGO,
         largeText: reading.title,
       },
       key: `read:${reading.title}|${state}|${reading.cover ?? ""}`,
@@ -130,7 +131,10 @@ function computeBase(): Base {
   }
   if (browse && config.showWhenBrowsing) {
     if (config.hideTitle)
-      return { payload: { details: "Browsing Bear", posterUrl: BEAR_LOGO }, key: "browse:hide" };
+      return {
+        payload: { details: "Browsing Bear", posterUrl: BEAR_LOGO },
+        key: "browse:hide",
+      };
     return {
       payload: {
         details: browse.details ?? "Browsing Bear",
@@ -161,10 +165,10 @@ function compute(): Computed {
     const people = headcount === 1 ? "1 👤" : `${headcount} 👥`;
     payload.details = `Watch Party · ${people}`;
     payload.state = context ?? "In the lobby";
-    if (DISCORD_PARTY_JOIN_ENABLED && party.joinUrl && config.showPartyJoin) {
-      payload.buttonLabel = "Join the Watch Party";
-      payload.buttonUrl = party.joinUrl;
-    }
+    payload.buttons =
+      DISCORD_PARTY_JOIN_ENABLED && party.joinUrl && config.showPartyJoin
+        ? [{ label: "Join the Watch Party", url: party.joinUrl }, ...STATIC_BUTTONS]
+        : STATIC_BUTTONS;
     const live = typeof payload.startTs === "number";
     return {
       payload,
