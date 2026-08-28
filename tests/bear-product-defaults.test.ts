@@ -16,6 +16,9 @@ test("Bear-owned defaults survive upstream syncs", async (context) => {
 
   const { DEFAULT } = await server.ssrLoadModule("/src/lib/settings/defaults.ts");
   const { DEFAULT_THEME } = await server.ssrLoadModule("/src/lib/theme.ts");
+  const { DISCORD_ACCOUNT_LINKING_ENABLED } = await server.ssrLoadModule(
+    "/src/lib/discord-auth.ts",
+  );
   const { DISCORD_PARTY_JOIN_ENABLED } = await server.ssrLoadModule(
     "/src/lib/discord/presence.ts",
   );
@@ -23,6 +26,7 @@ test("Bear-owned defaults survive upstream syncs", async (context) => {
   assert.equal(DEFAULT_THEME.preset, "cool-grey");
   assert.equal(DEFAULT.region, "SA");
   assert.equal(DEFAULT.uiLanguage, "ar");
+  assert.equal(DISCORD_ACCOUNT_LINKING_ENABLED, false);
   assert.equal(DEFAULT.tmdbLanguage, "ar-SA");
   assert.deepEqual(DEFAULT.preferredLanguages, ["Arabic"]);
   assert.deepEqual(DEFAULT.preferredSubLangs, ["Arabic"]);

@@ -2,12 +2,17 @@ import { openUrl } from "@/lib/window";
 
 const TIMEOUT_MS = 300000;
 
+// Account linking depends on the original Harbor identity backend and an
+// externally registered callback. Keep Bear's local Discord Rich Presence,
+// but do not expose this account flow until Bear owns that infrastructure.
+export const DISCORD_ACCOUNT_LINKING_ENABLED = false;
+
 function isTauri(): boolean {
   return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 }
 
 export function canDiscordAuth(): boolean {
-  return isTauri();
+  return DISCORD_ACCOUNT_LINKING_ENABLED && isTauri();
 }
 
 type DiscordAuthEvent = {
