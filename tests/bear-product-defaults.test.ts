@@ -85,6 +85,14 @@ test("Bear-owned defaults survive upstream syncs", async (context) => {
   assert.match(endpointConfig, /HARBOR_ANILIST_BASE[\s\S]*https:\/\/bugs\.harbor\.site/);
   assert.doesNotMatch(anilistConfig, /43455|api\.7mood\.net/);
 
+  for (const workflow of ["app-build.yml", "tauri-build.yml"]) {
+    const contents = readFileSync(
+      new URL(`../.github/workflows/${workflow}`, import.meta.url),
+      "utf8",
+    );
+    assert.doesNotMatch(contents, /harbor-binary-mirror|HARBOR_BINARY_MIRROR_REQUIRED/);
+  }
+
   const discordNative = readFileSync(
     new URL("../src-tauri/src/discord_rp.rs", import.meta.url),
     "utf8",

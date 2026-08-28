@@ -23,10 +23,6 @@ on:
 permissions:
   contents: write
 
-env:
-  HARBOR_BINARY_MIRROR_URL: https://harbor-binary-mirror.xyz7.workers.dev
-  HARBOR_BINARY_MIRROR_REQUIRED: "1"
-
 concurrency:
   group: signed-beta-release-${{ github.ref }}
   cancel-in-progress: false
