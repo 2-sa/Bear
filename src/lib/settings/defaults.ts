@@ -114,7 +114,7 @@ export const DEFAULT: Settings = {
   resumePlayback: true,
   keepFullscreenOnExit: true,
   fullscreenRestorePosition: true,
-  contentAdvisoryToast: false,
+  contentAdvisoryToast: true,
   contentAdvisoryTheme: "colored",
   playerVolumeHud: true,
   playerVolumeHudPosition: "top",
