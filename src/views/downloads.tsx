@@ -88,6 +88,7 @@ export function DownloadsView({ active = false }: { active?: boolean }) {
       : [
           items.length === 1 ? t("1 item") : t("{count} items", { count: items.length }),
           counts.active > 0 ? t("{count} downloading", { count: counts.active }) : null,
+          paused > 0 ? t("{count} paused", { count: paused }) : null,
           totalBps > 0 ? `↓ ${fmtSpeed(totalBps)}` : null,
           savedBytes > 0 ? t("{size} saved", { size: fmtBytes(savedBytes) }) : null,
         ]
