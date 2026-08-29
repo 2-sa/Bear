@@ -244,53 +244,11 @@ export function useTrackAutoload(params: {
         episode: searchEpisode,
         langs,
       });
-      const { videoHash, videoSize } = settings.subtitleAutoSync
-        ? await resolveVideoHash(src)
-        : {};
-      if (videoHash) console.info(`[subs/autoload] moviehash ${videoHash} (${videoSize})`);
-      const streamHints = {
-        release: src.streamRef?.title ?? src.streamRef?.parsedTitle ?? null,
-        source: src.streamRef?.source ?? null,
-        resolution: src.streamRef?.resolution ?? null,
-      };
-      const subExtra =
-        (enabled.subdl === true && settings.subdlApiKey) ||
-        (enabled.subsource === true && settings.subsourceApiKey)
-          ? {
-              userAgent: "Bear",
-              netAllowed: true,
-              subdlApiKey: settings.subdlApiKey || null,
-              subsourceApiKey: settings.subsourceApiKey || null,
-              enabled: { subdl: enabled.subdl === true, subsource: enabled.subsource === true },
-            }
-          : undefined;
-      const results = await searchSubtitles(
-        {
-          imdbId: searchImdbId,
-          stremioId: src.meta.id,
-          candidateIds,
-          type: src.meta.type === "series" ? "series" : "movie",
-          season: searchSeason,
-          episode: searchEpisode,
-          langs,
-          videoHash,
-          videoSize,
-          filename: src.streamRef?.parsedTitle ?? src.streamRef?.title ?? undefined,
-        },
-        {
-          timeoutMs: 7_000,
-          providers: {
-            wyzie: enabled.wyzie ?? true,
-            addons: enabled.addons ?? true,
-            opensubtitles: enabled.opensubtitles ?? true,
-          },
-          addons: readyAddons ?? [],
-          preferredLangs: langs,
-          streamHints,
-          extra: subExtra,
-        },
-      );
-      console.info(`[subs/autoload] search returned ${results.length} subs`);
+      const movieHashStageKey = `${key}|moviehash`;
+      const shouldResolveMovieHash =
+        settings.subtitleAutoSync && !autoSubStagesRef.current.has(movieHashStageKey);
+      if (shouldResolveMovieHash) autoSubStagesRef.current.add(movieHashStageKey);
+      const movieHashPromise = shouldResolveMovieHash ? resolveVideoHash(src) : null;
       const b = bridgeRef.current;
       if (!b || autoSubLoadKeyRef.current !== key) {
         console.warn("[subs/autoload] no bridge ready, skipping");
