@@ -54,6 +54,7 @@ const PRUNABLE_PREFIXES = [
   "harbor.manga.cache.v1.",
   "harbor.manga.cache.v2.",
   "harbor.manga.art.",
+  "harbor.ebook.translation.cache.v1.",
   "harbor.tvdbo.",
   "harbor.playback-history.v1.",
 ];

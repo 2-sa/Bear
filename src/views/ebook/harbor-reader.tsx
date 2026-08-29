@@ -160,6 +160,15 @@ export function HarborReader({
   const [current, setCurrent] = useState(0);
   const [speaking, setSpeaking] = useState(false);
   const [readerText, setReaderText] = useState(content.text ?? "");
+  const originalTitle = chapter.title || bookTitle;
+  const originalText = content.originalText ?? content.text ?? "";
+  const [readerTitle, setReaderTitle] = useState(content.translatedTitle ?? originalTitle);
+  const [translation, setTranslation] = useState(() =>
+    content.translated
+      ? { title: content.translatedTitle ?? originalTitle, text: content.text ?? "" }
+      : null,
+  );
+  const [showOriginal, setShowOriginal] = useState(false);
   const [translating, setTranslating] = useState(false);
   const [translated, setTranslated] = useState(Boolean(content.translated));
   const [translationError, setTranslationError] = useState("");
@@ -196,10 +205,17 @@ export function HarborReader({
 
   useEffect(() => {
     setReaderText(content.text ?? "");
+    setReaderTitle(content.translatedTitle ?? originalTitle);
+    setTranslation(
+      content.translated
+        ? { title: content.translatedTitle ?? originalTitle, text: content.text ?? "" }
+        : null,
+    );
+    setShowOriginal(false);
     setTranslated(Boolean(content.translated));
     setTranslationError("");
     setTranslationProgress({ percent: 0, etaMs: null });
-  }, [content.text, content.translated]);
+  }, [content.text, content.translated, content.translatedTitle, originalTitle]);
 
   const updateTrace = useCallback((mouseY?: number) => {
     if (mouseY != null) {
@@ -463,17 +479,34 @@ export function HarborReader({
   };
 
   const translateChapter = async () => {
-    if (translated || translating || !content.text) return;
+    if (translated || translating || !originalText) return;
     setTranslating(true);
     setTranslationError("");
     try {
-      setReaderText(await translateEBookChapter(content.text, true, setTranslationProgress));
+      const result = await translateEBookChapter(
+        originalText,
+        originalTitle,
+        true,
+        setTranslationProgress,
+      );
+      setTranslation(result);
+      setReaderText(result.text);
+      setReaderTitle(result.title);
+      setShowOriginal(false);
       setTranslated(true);
     } catch (error) {
       setTranslationError(error instanceof Error ? error.message : "DeepSeek translation failed");
     } finally {
       setTranslating(false);
     }
+  };
+
+  const toggleTranslation = () => {
+    if (!translation) return;
+    const original = !showOriginal;
+    setShowOriginal(original);
+    setReaderText(original ? originalText : translation.text);
+    setReaderTitle(original ? originalTitle : translation.title);
   };
 
   const selectChapter = (target?: EBookChapter) => {
@@ -681,7 +714,7 @@ export function HarborReader({
           <button className={`reader-icon ${chaptersOpen ? "reader-icon-accent" : ""}`} onClick={() => { setChaptersOpen((open) => !open); setVolumeMenuOpen(false); setPanel(null); }} aria-label="Chapters"><BookOpen size={19} /></button>
         </div>
         <div className="min-w-0 text-center">
-          <div className="truncate text-sm font-semibold">{chapter.title || bookTitle}</div>
+          <div className="truncate text-sm font-semibold">{readerTitle}</div>
           <div className="mt-0.5 text-[11px]" style={{ color: colors.muted }}>
             {current + 1} / {Math.max(1, paragraphs.length)} · {bookTitle}
           </div>
@@ -714,7 +747,7 @@ export function HarborReader({
           <div className="pointer-events-none absolute inset-y-0 start-0 w-px bg-gradient-to-b from-transparent via-black/10 to-transparent" />
           <header className="mb-12 border-b pb-7" style={{ borderColor: `${colors.muted}35` }}>
             <div className="mb-2 text-xs font-semibold uppercase tracking-[.24em]" style={{ color: colors.muted }}>Bear Reader</div>
-            <h1 className="text-balance text-[1.85em] font-semibold leading-tight">{chapter.title || bookTitle}</h1>
+            <h1 className="text-balance text-[1.85em] font-semibold leading-tight">{readerTitle}</h1>
           </header>
           {paragraphs.map((text, index) => (
             <p
@@ -760,7 +793,7 @@ export function HarborReader({
       >
         <button className="reader-icon" disabled={!previousChapter} onClick={() => selectChapter(previousChapter)} aria-label="Previous chapter" title="Previous chapter"><SkipBack size={21} strokeWidth={2} fill="currentColor" /></button>
         <button className="reader-icon" onClick={() => addBookmark()} aria-label="Bookmark current passage"><Bookmark size={18} /></button>
-        <button className={`reader-icon ${translated ? "reader-icon-accent" : translationError ? "text-red-400" : ""}`} disabled={translating || translated} onClick={() => void translateChapter()} aria-label={translated ? "Chapter translated with DeepSeek" : "Translate chapter with DeepSeek"} title={translationError || (translated ? "Translated with DeepSeek" : "Translate with DeepSeek")}>{translating ? <TranslationSpinner /> : translated ? <Check size={18} /> : <Languages size={18} />}</button>
+        <button className={`reader-icon ${translation ? "reader-icon-accent reader-language-toggle" : translationError ? "text-red-400" : ""}`} disabled={translating} onClick={translation ? toggleTranslation : () => void translateChapter()} aria-label={translation ? (showOriginal ? "Show translation" : "Show original language") : "Translate chapter with DeepSeek"} title={translationError || (translation ? (showOriginal ? "Show translation" : "Show original language") : "Translate with DeepSeek")}>{translating ? <TranslationSpinner /> : <><Languages size={18} />{translation && <span>{showOriginal ? "Translation" : "Original"}</span>}</>}</button>
         {translating && <div className="flex items-center gap-1 whitespace-nowrap pe-2 text-[11px] tabular-nums" style={{ color: colors.muted }}><strong className="text-current">≈{translationProgress.percent}%</strong><span>·</span><span>{translationProgress.etaMs == null ? "Estimating…" : `≈${formatEta(translationProgress.etaMs)} left`}</span></div>}
         <button className="reader-icon reader-icon-accent" onClick={speaking ? stopSpeech : () => speakFrom()} aria-label={speaking ? "Stop reading" : "Read aloud"}>{speaking ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" />}</button>
         <div className="px-3 text-xs tabular-nums" style={{ color: colors.muted }}>{Math.round(((current + 1) / Math.max(1, paragraphs.length)) * 100)}%</div>
@@ -842,7 +875,7 @@ export function HarborReader({
         </div>
       )}
       {editing && <AnnotationEditor annotation={editing} bookTitle={bookTitle} direction={effectiveDirection} onChange={setEditing} onSave={() => storeAnnotation(editing)} onDelete={() => { setAnnotations(removeEBookAnnotation(profile, bookId, editing.id)); setEditing(null); }} onClose={() => setEditing(null)} />}
-      <style>{`.reader-icon{display:grid;width:42px;height:42px;place-items:center;border-radius:999px;color:inherit;transition:.16s ease}.reader-icon:hover{background:rgba(127,127,127,.16);transform:translateY(-1px)}.reader-icon:active{transform:scale(.92)}.reader-icon:disabled{pointer-events:none;opacity:.28}.reader-icon-accent{background:var(--color-accent);color:#111}.reader-current{border-radius:4px}.reader-annotation{color:inherit;border-radius:3px;padding:.04em .02em;cursor:pointer}.reader-annotation:hover{outline:1px solid color-mix(in srgb,var(--color-accent) 60%,transparent)}`}</style>
+      <style>{`.reader-icon{display:grid;width:42px;height:42px;place-items:center;border-radius:999px;color:inherit;transition:.16s ease}.reader-icon:hover{background:rgba(127,127,127,.16);transform:translateY(-1px)}.reader-icon:active{transform:scale(.92)}.reader-icon:disabled{pointer-events:none;opacity:.28}.reader-icon-accent{background:var(--color-accent);color:#111}.reader-language-toggle{display:flex;width:auto;gap:6px;padding:0 12px;font-size:11px;font-weight:700}.reader-current{border-radius:4px}.reader-annotation{color:inherit;border-radius:3px;padding:.04em .02em;cursor:pointer}.reader-annotation:hover{outline:1px solid color-mix(in srgb,var(--color-accent) 60%,transparent)}`}</style>
     </div>
   );
 }

@@ -17,7 +17,13 @@ export type EBookChapter = {
   views?: number | string;
 };
 
-export type EBookChapterContent = { text?: string; images?: string[]; translated?: boolean };
+export type EBookChapterContent = {
+  text?: string;
+  images?: string[];
+  translated?: boolean;
+  originalText?: string;
+  translatedTitle?: string;
+};
 
 type Provider = {
   id: string;
@@ -516,13 +522,22 @@ export async function sourceEBookChapters(route: string): Promise<EBookChapter[]
 export async function sourceEBookContent(
   route: string,
   chapterId: string,
+  chapterTitle = "",
 ): Promise<EBookChapterContent> {
   const found = await providerFor(route);
   const content = found ? await found.provider.content(chapterId) : {};
   if (!content.text) return content;
   try {
-    const text = await translateEBookChapter(content.text);
-    return text === content.text ? content : { ...content, text, translated: true };
+    const translated = await translateEBookChapter(content.text, chapterTitle);
+    return translated.text === content.text
+      ? content
+      : {
+          ...content,
+          text: translated.text,
+          originalText: content.text,
+          translatedTitle: translated.title,
+          translated: true,
+        };
   } catch (error) {
     console.warn("[ebook/translation]", error);
     return content;

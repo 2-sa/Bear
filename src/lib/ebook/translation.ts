@@ -1,8 +1,10 @@
 import { getUiLanguage } from "@/lib/i18n";
 import { safeFetchStream } from "@/lib/safe-fetch";
+import { setItemWithRecovery } from "@/lib/storage-recovery";
 import translationInstructions from "./translation-instructions.md?raw";
 
 const STORAGE_KEY = "harbor.ebook.translation.v1";
+const CACHE_PREFIX = "harbor.ebook.translation.cache.v1.";
 const ENDPOINT = "https://api.deepseek.com/chat/completions";
 
 export type EBookTranslationSettings = {
@@ -13,7 +15,8 @@ export type EBookTranslationSettings = {
 };
 
 const languageName = { en: "English", ar: "Arabic", pt: "Portuguese", ru: "Russian" };
-const pending = new Map<string, Promise<string>>();
+export type EBookTranslation = { title: string; text: string };
+const pending = new Map<string, Promise<EBookTranslation>>();
 
 export type EBookTranslationProgress = {
   percent: number;
@@ -49,32 +52,44 @@ export function saveEBookTranslationSettings(settings: EBookTranslationSettings)
 
 export async function translateEBookChapter(
   source: string,
+  title = "",
   manual = false,
   onProgress?: (progress: EBookTranslationProgress) => void,
-): Promise<string> {
+): Promise<EBookTranslation> {
   const settings = loadEBookTranslationSettings();
-  if (!source.trim() || (!settings.enabled && !manual)) return source;
+  const original = { title, text: source };
+  if (!source.trim()) return original;
+  const cacheKey = `${settings.model}:${settings.targetLanguage}:${hash(translationInstructions)}:${hash(title)}:${hash(source)}`;
+  try {
+    const saved = JSON.parse(localStorage.getItem(`${CACHE_PREFIX}${hash(cacheKey)}`) ?? "null") as EBookTranslation | null;
+    if (saved?.text) {
+      onProgress?.({ percent: 100, etaMs: 0 });
+      return saved;
+    }
+  } catch {}
+  if (!settings.enabled && !manual) return original;
   if (!settings.apiKey.trim()) {
     if (manual) throw new Error("Add a DeepSeek API key in eBook Sources first");
-    return source;
+    return original;
   }
-  const cacheKey = `${settings.model}:${settings.targetLanguage}:${hash(translationInstructions)}:${hash(source)}`;
   let request = pending.get(cacheKey);
   if (!request) {
-    request = requestTranslation(source, settings, onProgress);
+    request = requestTranslation(source, title, settings, onProgress);
     pending.set(cacheKey, request);
     request.catch(() => pending.delete(cacheKey));
   }
   const result = await request;
+  setItemWithRecovery(`${CACHE_PREFIX}${hash(cacheKey)}`, JSON.stringify(result));
   onProgress?.({ percent: 100, etaMs: 0 });
   return result;
 }
 
 async function requestTranslation(
   source: string,
+  title: string,
   settings: EBookTranslationSettings,
   onProgress?: (progress: EBookTranslationProgress) => void,
-): Promise<string> {
+): Promise<EBookTranslation> {
   onProgress?.({ percent: 0, etaMs: null });
   const response = await safeFetchStream(ENDPOINT, {
     method: "POST",
@@ -95,7 +110,7 @@ async function requestTranslation(
         },
         {
           role: "user",
-          content: `target_language: ${languageName[settings.targetLanguage]}\nsource_language: detect\nquality_mode: standard\ntranslation_style: faithful\noutput_formats: plain text\ncustom_instructions: Translate this single chapter and return only the translated chapter text.\n\n<source_document>\n${source}\n</source_document>`,
+          content: `target_language: ${languageName[settings.targetLanguage]}\nsource_language: detect\nquality_mode: standard\ntranslation_style: faithful\noutput_formats: plain text\ncustom_instructions: Translate both the chapter title and chapter body. Preserve the two XML tags exactly and return nothing outside them.\n\n<source_document>\n<chapter_title>${title}</chapter_title>\n<chapter_body>${source}</chapter_body>\n</source_document>`,
         },
       ],
     }),
@@ -148,7 +163,10 @@ async function requestTranslation(
   if (finishReason === "length") throw new Error("DeepSeek translation was truncated");
   if (finishReason && finishReason !== "stop")
     throw new Error(`DeepSeek stopped translation: ${finishReason.replaceAll("_", " ")}`);
-  const translated = output.replace(/^```(?:text)?\s*|\s*```$/gi, "").trim();
+  const translated = output.replace(/^```(?:text|xml)?\s*|\s*```$/gi, "").trim();
   if (!translated) throw new Error("DeepSeek returned no translation");
-  return translated;
+  const translatedTitle = translated.match(/<chapter_title>([\s\S]*?)<\/chapter_title>/i)?.[1].trim();
+  const translatedText = translated.match(/<chapter_body>([\s\S]*?)<\/chapter_body>/i)?.[1].trim();
+  if (!translatedText) throw new Error("DeepSeek returned an incomplete chapter translation");
+  return { title: translatedTitle || title, text: translatedText };
 }

@@ -1327,7 +1327,7 @@ function EBookDetails({
   const readChapter = (chapter: EBookChapter) => {
     if (!sourceRoute) return;
     setReading({ chapter, content: null });
-    void sourceEBookContent(sourceRoute, chapter.id)
+    void sourceEBookContent(sourceRoute, chapter.id, chapter.title)
       .then((content) =>
         setReading((current) =>
           current?.chapter.id === chapter.id ? { chapter, content } : current,
