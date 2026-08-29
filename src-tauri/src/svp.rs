@@ -40,9 +40,9 @@ fn svp_root() -> Option<PathBuf> {
             candidates.push(PathBuf::from(&path).join("Programs").join("SVP 4"));
         }
     }
-    cands
+    candidates
         .into_iter()
-        .find(|d| d.join("SVPManager.exe").exists())
+        .find(|root| root.join("SVPManager.exe").exists())
 }
 
 #[cfg(target_os = "linux")]
@@ -236,8 +236,8 @@ fn preload_vsscript_chain(file: &Path) -> Result<(), String> {
     use windows::core::PCWSTR;
     use windows::Win32::System::LibraryLoader::{LoadLibraryExW, LOAD_WITH_ALTERED_SEARCH_PATH};
 
-    fn wide(p: &Path) -> Vec<u16> {
-        p.as_os_str()
+    fn wide(path: &Path) -> Vec<u16> {
+        path.as_os_str()
             .encode_wide()
             .chain(std::iter::once(0))
             .collect()
@@ -425,10 +425,12 @@ pub fn svp_status() -> SvpStatus {
         };
     }
     let root = svp_root();
-    let ready = root.as_ref().map_or(false, |r| {
-        svpflow_dir(r).is_some() && vsscript_dir(r).is_some()
-    });
-    let (loadable, load_error) = match LAST_LOAD.lock().ok().and_then(|g| g.clone()) {
+    let engine_ready = root
+        .as_ref()
+        .is_some_and(|root| svpflow_plugins(root).is_some() && vsscript_file(Some(root)).is_some());
+    let mpv_ready = mpv_supports_vapoursynth();
+    let ready = engine_ready && mpv_ready;
+    let (loadable, load_error) = match LAST_LOAD.lock().ok().and_then(|guard| guard.clone()) {
         Some(Ok(())) => (Some(true), None),
         Some(Err(message)) => (Some(false), Some(message)),
         None => (None, None),
@@ -493,10 +495,11 @@ fn svp_manager_running() -> bool {
                 let len = entry
                     .szExeFile
                     .iter()
-                    .position(|&c| c == 0)
+                    .position(|&character| character == 0)
                     .unwrap_or(entry.szExeFile.len());
-                let name = String::from_utf16_lossy(&entry.szExeFile[..len]);
-                if name.eq_ignore_ascii_case("SVPManager.exe") {
+                if String::from_utf16_lossy(&entry.szExeFile[..len])
+                    .eq_ignore_ascii_case("SVPManager.exe")
+                {
                     found = true;
                     break;
                 }
@@ -604,22 +607,8 @@ smooth = core.std.AssumeFPS(smooth, fpsnum=int(round(src * num / den * 1000)), f
 smooth.set_output()
 "#;
 
-#[tauri::command]
-pub fn svp_apply(app: tauri::AppHandle, target_fps: String) -> Result<String, String> {
-    let root = svp_root().ok_or_else(|| "SVP is not installed".to_string())?;
-    let flow = svpflow_dir(&root)
-        .ok_or_else(|| "svpflow plugins not found in the SVP install".to_string())?;
-    vsscript_dir(&root)
-        .ok_or_else(|| "VapourSynth (VSScript.dll) not found in the SVP install".to_string())?;
-    prime_svp_env();
-
-    let out_dir = app
-        .path()
-        .app_data_dir()
-        .map_err(|e| e.to_string())?
-        .join("svp");
-    std::fs::create_dir_all(&out_dir).map_err(|e| format!("create dir: {}", e))?;
-    let target = match target_fps.as_str() {
+fn target_value(target_fps: &str) -> &str {
+    match target_fps {
         "double" => "-1",
         "48" => "48",
         "60" => "60",
