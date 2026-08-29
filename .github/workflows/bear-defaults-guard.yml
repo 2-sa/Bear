@@ -40,5 +40,6 @@ jobs:
         run: >-
           node --test
           tests/bear-product-defaults.test.ts
+          tests/security-policy.test.ts
           tests/bear-api-worker.test.ts
           tests/together-relay-default.test.ts
