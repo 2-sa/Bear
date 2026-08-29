@@ -13,6 +13,7 @@ import {
   Loader2,
   RefreshCw,
   Search,
+  Settings,
   SlidersHorizontal,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
@@ -458,9 +459,9 @@ export function EBookView() {
             {providers.find((source) => source.id === providerId)?.name ?? "Installed sources"}
           </p>
         </div>
-        <div className="flex max-w-3xl flex-col gap-3">
-          <div className="flex items-center gap-3">
-            <label className="flex h-12 min-w-0 flex-1 items-center gap-3 rounded-2xl border border-edge-soft bg-elevated/45 px-4 text-ink-muted focus-within:border-edge focus-within:bg-elevated/70">
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="flex h-12 min-w-0 max-w-sm flex-1 items-center gap-3 rounded-2xl border border-edge-soft bg-elevated/45 px-4 text-ink-muted focus-within:border-edge focus-within:bg-elevated/70">
               <Search size={18} />
               <input
                 value={query}
@@ -494,6 +495,15 @@ export function EBookView() {
               }}
               onManage={() => setScreen("sources")}
             />
+            <button
+              type="button"
+              onClick={() => setScreen("sources")}
+              aria-label="Manage eBook sources"
+              title="Manage eBook sources"
+              className="ms-auto me-2 flex items-center gap-2 rounded-lg border border-edge-soft bg-elevated/40 px-3 py-2 text-[13px] text-ink transition-colors hover:bg-elevated/70"
+            >
+              <Settings size={20} className="text-ink" />
+            </button>
           </div>
           <div className="flex flex-wrap items-center gap-2" aria-label="Filter eBooks by category">
             {(["", "Fiction", "Non-fiction"] as const).map((group) => (
