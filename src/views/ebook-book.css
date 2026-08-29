@@ -159,9 +159,11 @@
   gap: 12%;
   color: #4b4235;
   font-family: Georgia, "Times New Roman", serif;
+  opacity: 0;
   text-align: center;
   transform: rotateY(180deg) translateZ(1px);
   backface-visibility: hidden;
+  transition: opacity 180ms ease 420ms;
 }
 
 .bk-left-page-meta strong {
@@ -214,6 +216,7 @@
 
 .bk-content {
   inset: 0;
+  transform-style: preserve-3d;
   border: 1px solid rgba(91, 79, 60, 0.17);
   border-radius: 1px 3px 3px 1px;
   background:
@@ -395,8 +398,14 @@
 
 .group:hover .bk-page .bk-content:nth-child(3),
 .group:focus-visible .bk-page .bk-content:nth-child(3) {
+  z-index: 8;
   transform: rotateY(-118deg) translateZ(3px);
   transition-duration: 1600ms;
+}
+
+.group:hover .bk-left-page-meta,
+.group:focus-visible .bk-left-page-meta {
+  opacity: 1;
 }
 
 .group:hover .bk-page .bk-content:nth-child(4),
@@ -515,6 +524,7 @@
 
 :dir(rtl) .group:hover .bk-page .bk-content:nth-child(3),
 :dir(rtl) .group:focus-visible .bk-page .bk-content:nth-child(3) {
+  z-index: 8;
   transform: rotateY(118deg) translateZ(3px);
 }
 

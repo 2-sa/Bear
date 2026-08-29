@@ -453,7 +453,7 @@ const OPEN_LIBRARY_CACHE_MS = 7 * 24 * 60 * 60 * 1000;
 const openLibraryMetadata = new Map<string, EBook | null>();
 const openLibraryAliases = new Map<string, string[]>();
 
-async function cachedJson<T>(url: string): Promise<T> {
+async function cachedJson<T>(url: string, timeoutMs = 8_000): Promise<T> {
   const cacheUrl = new URL(url);
   cacheUrl.searchParams.delete("key");
   const key = `harbor.ebook.openlibrary.v1.${cacheUrl}`;
@@ -465,7 +465,7 @@ async function cachedJson<T>(url: string): Promise<T> {
     if (cached && Date.now() - cached.at < OPEN_LIBRARY_CACHE_MS) return cached.value;
   } catch {}
   const response = await safeFetch(url, {
-    signal: AbortSignal.timeout(8_000),
+    signal: AbortSignal.timeout(timeoutMs),
     headers:
       cacheUrl.hostname === "query.wikidata.org"
         ? {
@@ -1011,10 +1011,13 @@ export async function browseEBookCategory(category: string): Promise<EBook[]> {
 }
 
 export async function browsePopularEBooks(): Promise<EBook[]> {
-  const data = await cachedJson<{ works?: OpenLibraryDoc[] }>(
-    "https://openlibrary.org/trending/forever.json?limit=18",
-  );
-  return groupEBookSeries((data.works ?? []).map(mapOpenLibrary));
+  const url = new URL("https://openlibrary.org/search.json");
+  url.searchParams.set("q", "language:eng");
+  url.searchParams.set("sort", "readinglog");
+  url.searchParams.set("fields", "key,title,author_name,cover_i,first_publish_year,subject");
+  url.searchParams.set("limit", "18");
+  const data = await cachedJson<{ docs?: OpenLibraryDoc[] }>(url.toString(), 30_000);
+  return groupEBookSeries((data.docs ?? []).map(mapOpenLibrary));
 }
 
 export async function searchEBooks(search: string, category?: string): Promise<EBook[]> {
