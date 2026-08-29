@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
-import { convertFileSrc } from "@tauri-apps/api/core";
+import { convertFileSrc, invoke } from "@tauri-apps/api/core";
 import type { PlayerBridge, PlayerSnapshot } from "@/lib/player/bridge";
 import type { PlayerSrc } from "@/lib/view";
 import type { Settings } from "@/lib/settings";
@@ -26,9 +26,24 @@ import {
 import { resolveSwapCues, type OsConfig } from "@/lib/subtitles/autosync/opensubtitles";
 import { type SyncTransform } from "@/lib/subtitles/autosync/fp-gate";
 import { transformCues } from "@/lib/subtitles/autosync/html5-sync";
-import { DriftMonitor, makeTauriDriftPorts, type DriftDeps } from "@/lib/subtitles/autosync/drift-monitor";
-import { writeTempTextFile } from "@/lib/temp-text-file";
-import { buildContext, isLoopback, outcomeScore, subLanguages, toDriftState } from "./use-auto-sync.helpers";
+import {
+  DriftMonitor,
+  makeTauriDriftPorts,
+  type DriftDeps,
+} from "@/lib/subtitles/autosync/drift-monitor";
+import { resetMpvSubtitleFpsForTransition } from "@/lib/player/mpv-properties";
+import {
+  buildSubtitleTimingMediaKey,
+  isAutoSyncScopeCurrent,
+  runAfterSubtitleFpsReset,
+} from "@/lib/player/subtitle-fps";
+import {
+  buildContext,
+  isLoopback,
+  outcomeScore,
+  subLanguages,
+  toDriftState,
+} from "./use-auto-sync.helpers";
 
 export type AutoSyncStatus =
   | "idle"
@@ -495,21 +510,38 @@ export function useAutoSync(params: {
 
   const applyOffer = useCallback(() => {
     const o = offer;
-    const b = bridgeRef.current;
-    if (!o || !b) return;
-    setOffer(null);
-    if (o.subSwap) {
-      const os = defaultOsConfig(settingsRef.current) ?? { apiKey: "", userAgent: "Bear autosync" };
-      const swap = o.subSwap;
-      void applySwap(b, swap, os).then((ok) => setStatus(ok ? "synced" : "error"));
-      return;
-    }
-    const t = o.candidate;
-    const cues = b.getSelectedTrackCues();
-    if (!t || !cues) return;
-    void applyTransform(b, cues, formatOf(b), t).then(() => {
-      setStatus("synced");
-      startDrift(b, cues);
+    if (!o) return;
+    const statusScope = statusScopeRef.current;
+    const isCurrent = () => isCurrentAutoSyncScope(statusScope);
+    void runWithSubtitleFpsReset(
+      async () => {
+        const b = bridgeRef.current;
+        if (!b || !isCurrent()) return;
+        setOffer(null);
+        if (o.subSwap) {
+          const os = defaultOsConfig(settingsRef.current) ?? {
+            apiKey: "",
+            userAgent: "Bear autosync",
+          };
+          const swap = o.subSwap;
+          const applied = await applySwap(b, swap, os, isCurrent);
+          if (applied) appliedRef.current.changed = true;
+          if (isCurrent()) setStatus(applied ? "synced" : "error");
+          return;
+        }
+        const t = o.candidate;
+        const cues = b.getSelectedTrackCues();
+        if (!t || !cues) return;
+        const applied = await applyTransform(b, cues, formatOf(b), t, isCurrent);
+        if (!applied || !isCurrent()) return;
+        setStatus("synced");
+        startDrift(b, cues);
+      },
+      undefined,
+      isCurrent,
+    ).catch((error) => {
+      dwarn("[auto-sync] offer apply failed", error);
+      if (isCurrent()) setStatus("error");
     });
   }, [
     offer,
@@ -537,9 +569,20 @@ export function useAutoSync(params: {
   };
 }
 
-async function writeSyncedTrack(b: PlayerBridge, text: string, fmt: SubFmt): Promise<void> {
-  const filePath = await writeTempTextFile("bear-beta-subs", `autosync-${Date.now()}.${fmt}`, text);
-  await b.addSubtitle(filePath, undefined, `Synced (${fmt.toUpperCase()})`, true);
+async function writeSyncedTrack(
+  b: PlayerBridge,
+  text: string,
+  fmt: SubFmt,
+  isCurrent: () => boolean,
+): Promise<boolean> {
+  if (!isCurrent()) return false;
+  const pathMod = await import("@tauri-apps/api/path");
+  const dir = await pathMod.join(await pathMod.tempDir(), "harbor-subs");
+  const filePath = await pathMod.join(dir, `autosync-${Date.now()}.${fmt}`);
+  await invoke("save_text_file", { path: filePath, contents: text });
+  if (!isCurrent()) return false;
+  const added = await b.addSubtitle(filePath, undefined, `Synced (${fmt.toUpperCase()})`, true);
+  if (!added || !isCurrent()) return false;
   b.setSubDelay(0);
   return true;
 }
