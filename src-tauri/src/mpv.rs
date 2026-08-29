@@ -528,6 +528,20 @@ fn validate_mpv_media_target(app: &AppHandle, target: &str) -> Result<(), String
     }
 }
 
+fn source_kind(url: &str) -> &'static str {
+    if is_local_network_url(url) {
+        "local-http"
+    } else if url.starts_with("https://") {
+        "https"
+    } else if url.starts_with("http://") {
+        "http"
+    } else if url.starts_with("file://") || !url.contains("://") {
+        "local-file"
+    } else {
+        "other"
+    }
+}
+
 #[tauri::command]
 pub async fn mpv_start(
     app: AppHandle,

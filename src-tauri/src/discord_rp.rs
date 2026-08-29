@@ -221,11 +221,13 @@ pub fn run_loop(app: AppHandle) {
                 }
                 act = act.party(party);
             }
-            if let (Some(label), Some(url)) = (
-                desired.button_label.as_deref(),
-                desired.button_url.as_deref(),
-            ) {
-                act = act.buttons(vec![Button::new(label, url)]);
+            if !desired.buttons.is_empty() {
+                let buttons: Vec<Button> = desired
+                    .buttons
+                    .iter()
+                    .map(|(label, url)| Button::new(label, url))
+                    .collect();
+                act = act.buttons(buttons);
             }
             c.set_activity(act)
         } else {

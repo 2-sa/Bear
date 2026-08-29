@@ -197,11 +197,12 @@ async fn stream_file(
         .and_then(|value| value.to_str().ok())
         .map(|value| parse_range(value, len));
     let (status, start, end) = match parsed {
-        Some((s, e_opt)) => {
-            let e = e_opt.map(|x| x + 1).unwrap_or(len);
-            if e > len || e <= s {
-                return (StatusCode::RANGE_NOT_SATISFIABLE, "range not satisfiable")
-                    .into_response();
+        Some(Ok((start, end))) => (StatusCode::PARTIAL_CONTENT, start, end),
+        Some(Err(())) => {
+            let mut response = (StatusCode::RANGE_NOT_SATISFIABLE, "range not satisfiable")
+                .into_response();
+            if let Ok(value) = HeaderValue::from_str(&format!("bytes */{len}")) {
+                response.headers_mut().insert(header::CONTENT_RANGE, value);
             }
             return response;
         }

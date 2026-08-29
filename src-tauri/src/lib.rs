@@ -17,6 +17,7 @@ mod local_lib;
 mod power;
 mod proc_guard;
 mod proc_mem;
+mod security_policy;
 mod settings_store;
 mod stream_proxy;
 mod streams;
