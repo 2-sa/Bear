@@ -4,6 +4,7 @@ import { downloadShader } from "@/lib/shaders";
 import type { ShaderCatalogEntry } from "@/lib/player/shader-catalog";
 import { useSettings } from "@/lib/settings";
 import { ExtLink, Segmented, ToggleRow } from "../shared";
+import { SettingRow } from "../kit";
 import { BeforeAfter } from "./before-after";
 
 const CONTENT_LABEL: Record<ShaderCatalogEntry["content"], string> = {
@@ -59,20 +60,20 @@ export function ShaderCard({ entry }: { entry: ShaderCatalogEntry }) {
   const variantId = state?.variant ?? entry.variants?.[0]?.id;
 
   return (
-    <div className="flex flex-col gap-3.5 rounded-2xl border border-edge-soft bg-canvas/40 px-4 py-4">
+    <div className="flex flex-col gap-1.5">
       {entry.demo && <BeforeAfter demo={entry.demo} />}
 
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1 rounded-md bg-elevated px-4 py-3.5">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[14px] font-semibold text-ink">{entry.name}</span>
-          <span className="rounded-full bg-elevated/70 px-2 py-[3px] text-[10px] font-semibold uppercase tracking-wider text-ink-subtle ring-1 ring-edge-soft/60">
+          <span className="text-[13.5px] font-semibold text-ink">{entry.name}</span>
+          <span className="rounded-full bg-raised px-2 py-[3px] text-[10.5px] font-semibold uppercase tracking-wider text-ink-subtle">
             {CONTENT_LABEL[entry.content]}
           </span>
-          <span className="rounded-full bg-elevated/70 px-2 py-[3px] text-[10px] font-semibold uppercase tracking-wider text-ink-subtle ring-1 ring-edge-soft/60">
+          <span className="rounded-full bg-raised px-2 py-[3px] text-[10.5px] font-semibold uppercase tracking-wider text-ink-subtle">
             {TIER_LABEL[entry.tier]}
           </span>
           {entry.verify && (
-            <span className="rounded-full bg-accent/15 px-2 py-[3px] text-[10px] font-semibold uppercase tracking-wider text-accent">
+            <span className="rounded-full bg-accent-soft px-2 py-[3px] text-[10.5px] font-semibold uppercase tracking-wider text-accent">
               Verify
             </span>
           )}
@@ -84,7 +85,7 @@ export function ShaderCard({ entry }: { entry: ShaderCatalogEntry }) {
       </div>
 
       {error && (
-        <span className="rounded-lg bg-danger/15 px-3 py-2 text-[12px] text-danger ring-1 ring-danger/30">
+        <span className="rounded-md bg-elevated px-4 py-3.5 text-[12.5px] text-danger">
           {error}
         </span>
       )}
@@ -94,7 +95,7 @@ export function ShaderCard({ entry }: { entry: ShaderCatalogEntry }) {
           type="button"
           onClick={() => install(false)}
           disabled={busy}
-          className="flex h-11 w-fit items-center gap-2 rounded-full bg-ink px-5 text-[14px] font-semibold text-canvas transition-colors hover:bg-ink/90 disabled:cursor-wait disabled:opacity-70"
+          className="harbor-press-pop flex h-11 w-fit items-center gap-2 rounded-md bg-ink px-5 text-[13.5px] font-semibold text-canvas transition-opacity hover:opacity-90 disabled:cursor-wait disabled:opacity-70"
         >
           {busy ? <Loader2 size={16} className="animate-spin motion-reduce:hidden" /> : <Download size={16} strokeWidth={2.2} />}
           {busy ? "Downloading…" : "Download shader"}
@@ -116,24 +117,21 @@ export function ShaderCard({ entry }: { entry: ShaderCatalogEntry }) {
           />
 
           {entry.variants && entry.variants.length > 1 && (
-            <div className="flex flex-col gap-1.5">
-              <span className="text-[11.5px] font-semibold uppercase tracking-[0.14em] text-ink-subtle">Variant</span>
+            <SettingRow
+              label="Variant"
+              desc={entry.variants.find((v) => v.id === variantId)?.sub}
+            >
               <Segmented
                 value={variantId ?? entry.variants[0].id}
                 options={entry.variants.map((v) => ({ value: v.id, label: v.label }))}
                 onChange={(v) => patch({ variant: v })}
               />
-              {entry.variants.find((v) => v.id === variantId)?.sub && (
-                <span className="text-[12px] leading-snug text-ink-subtle">
-                  {entry.variants.find((v) => v.id === variantId)?.sub}
-                </span>
-              )}
-            </div>
+            </SettingRow>
           )}
 
-          <div className="flex items-center justify-between gap-3 pt-0.5">
-            <span className="flex items-center gap-1.5 text-[12px] text-ink-subtle">
-              <Check size={13} className="text-emerald-300" strokeWidth={2.6} />
+          <div className="flex items-center justify-between gap-3 rounded-md bg-elevated px-4 py-3">
+            <span className="flex items-center gap-1.5 text-[12.5px] text-ink-subtle">
+              <Check size={14} className="text-success" strokeWidth={2.6} />
               Installed
             </span>
             <button
@@ -141,7 +139,7 @@ export function ShaderCard({ entry }: { entry: ShaderCatalogEntry }) {
               onClick={() => install(true)}
               disabled={busy}
               className={`flex items-center gap-1.5 text-[11.5px] font-semibold uppercase tracking-[0.14em] transition-colors disabled:opacity-70 ${
-                justUpdated ? "text-emerald-300" : "text-ink-subtle hover:text-ink"
+                justUpdated ? "text-success" : "text-ink-subtle hover:text-ink"
               }`}
             >
               {busy ? (

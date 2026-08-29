@@ -1,6 +1,8 @@
-import { Bookmark, BookmarkCheck, Play, TrendingUp } from "lucide-react";
+import { Check, Plus, TrendingUp } from "lucide-react";
+import { Play } from "@/components/icons/play-filled";
 import { useEffect, useMemo, useState } from "react";
 import { NavArrow } from "@/components/nav-arrow";
+import { PopIcon } from "@/components/pop-icon";
 import { HeroPips } from "./anime-hero/hero-pips";
 import { HeroSlideBadges } from "./anime-hero/hero-slide-badges";
 import { HeroMangaAdaptation } from "./anime-hero/hero-manga-adaptation";
@@ -150,9 +152,9 @@ export function AnimeHero({
             <button
               type="button"
               onClick={() => openMeta(current)}
-              className="inline-flex items-center gap-2 rounded-md bg-accent px-5 py-3 text-[13px] font-bold uppercase tracking-[0.08em] text-canvas transition-colors duration-150 hover:bg-accent/90"
+              className="flex h-12 items-center gap-2.5 rounded-full bg-ink px-7 text-[15px] font-semibold text-canvas transition-transform duration-200 hover:scale-[1.03] active:scale-[0.98]"
             >
-              <Play size={17} fill="currentColor" />
+              <Play size={18} fill="currentColor" />
               {t("Start Watching")}
             </button>
             <button
@@ -163,9 +165,15 @@ export function AnimeHero({
               }}
               aria-label={saved ? t("Remove from saved") : t("Save for later")}
               aria-pressed={saved}
-              className="flex h-12 w-12 items-center justify-center rounded-md border border-edge bg-elevated/45 text-ink transition-colors duration-150 hover:bg-elevated"
+              className={`flex h-12 w-12 items-center justify-center rounded-full transition-[transform,background-color] duration-200 active:scale-[0.98] ${
+                saved ? "bg-ink/15 text-ink hover:bg-ink/20" : "bg-canvas/80 text-ink hover:bg-canvas/95"
+              }`}
             >
-              {saved ? <BookmarkCheck size={18} /> : <Bookmark size={18} />}
+              <PopIcon
+                active={saved}
+                activeIcon={<Check size={18} strokeWidth={2.4} />}
+                inactiveIcon={<Plus size={18} strokeWidth={2} />}
+              />
             </button>
             <span className="ms-1 hidden items-center gap-1.5 text-[13px] text-ink-muted sm:inline-flex">
               {malRating && (

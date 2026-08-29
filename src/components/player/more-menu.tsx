@@ -7,6 +7,7 @@ import { openUrl } from "@/lib/window";
 import { useT } from "@/lib/i18n";
 import { copyText } from "./copy-link-button";
 import { Tooltip } from "./transport/tooltip";
+import { watchOutsideMouseDown } from "@/lib/player/overlay-dismiss";
 
 type MoreRowSpec = {
   key: string;
@@ -40,8 +41,7 @@ export function MoreMenu({ visible, streamUrl, infoHash, selectedSub, onOpenChan
     const close = (e: MouseEvent) => {
       if (!wrap.current?.contains(e.target as Node)) setOpen(false);
     };
-    window.addEventListener("mousedown", close);
-    return () => window.removeEventListener("mousedown", close);
+    return watchOutsideMouseDown(close);
   }, [open]);
 
   const httpUrl = streamUrl && /^https?:\/\//i.test(streamUrl) ? streamUrl : null;
@@ -106,7 +106,7 @@ export function MoreMenu({ visible, streamUrl, infoHash, selectedSub, onOpenChan
           </button>
         </Tooltip>
         {open && (
-          <div className="absolute end-0 top-[calc(100%+10px)] w-64 max-w-[calc(100vw-32px)] overflow-hidden rounded-2xl border border-edge bg-elevated p-1.5 shadow-[0_24px_60px_-18px_rgba(0,0,0,0.8)] backdrop-blur-xl">
+          <div className="absolute end-0 top-[calc(100%+10px)] w-64 max-w-[calc(100vw-32px)] overflow-hidden rounded-md bg-elevated p-1.5 shadow-[0_10px_30px_-12px_rgba(0,0,0,0.6)]">
             {rows.map((r) => (
               <MoreRow key={r.key} spec={r} />
             ))}

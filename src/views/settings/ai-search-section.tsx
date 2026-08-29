@@ -58,7 +58,7 @@ export function AiSearchSection() {
       subtitle={t("Type what you want in plain language and let a model find it. Bring your own API key.")}
     >
       <div className="flex flex-col gap-1.5">
-        <span className="text-[12px] font-semibold uppercase tracking-[0.14em] text-ink-subtle">
+        <span className="text-[12.5px] font-semibold uppercase tracking-[0.14em] text-ink-subtle">
           {t("Provider")}
         </span>
         <Segmented
@@ -132,7 +132,7 @@ export function AiSearchSection() {
       )}
 
       <div className="flex flex-col gap-1.5 px-1">
-        <span className="text-[12px] text-ink-subtle">{t("Custom model id (optional)")}</span>
+        <span className="text-[12.5px] text-ink-subtle">{t("Custom model id (optional)")}</span>
         <form
           className="flex items-center gap-2"
           onSubmit={(e) => {
@@ -149,12 +149,12 @@ export function AiSearchSection() {
             spellCheck={false}
             autoCapitalize="off"
             autoCorrect="off"
-            className="h-10 flex-1 rounded-lg border border-edge-soft bg-canvas/60 px-3 font-mono text-[12.5px] text-ink placeholder:text-ink-subtle focus:border-accent focus:outline-none"
+            className="min-w-0 h-10 flex-1 rounded-md bg-canvas px-3 font-mono text-[12.5px] text-ink placeholder:text-ink-subtle focus:outline-none transition-colors focus:bg-elevated"
           />
           <button
             type="submit"
             disabled={!customDraft.trim()}
-            className="flex h-10 items-center rounded-lg border border-edge px-3.5 text-[12.5px] font-medium text-ink-muted transition-colors hover:bg-elevated hover:text-ink disabled:opacity-40"
+            className="flex h-10 items-center rounded-md px-3.5 text-[12.5px] font-medium text-ink-muted transition-colors hover:bg-elevated hover:text-ink disabled:opacity-40 transition-colors focus:bg-elevated"
           >
             {t("Use model")}
           </button>

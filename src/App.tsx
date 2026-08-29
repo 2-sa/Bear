@@ -80,6 +80,7 @@ import { RemindersRunner } from "@/lib/reminders-runner";
 import { MangaTrackingRunner } from "@/lib/manga-tracking";
 import { RemoteHostMount } from "@/lib/remote/host-mount";
 import { RemoteOpenBridge } from "@/lib/remote/remote-open-bridge";
+import { PlayOnModal } from "@/components/play-on-modal";
 import { GamepadRunner } from "@/components/gamepad-runner";
 import { ProfileIdentitySync } from "@/lib/profile-identity-sync";
 import { HarborAvatarSync } from "@/components/harbor-avatar-sync";
@@ -134,6 +135,11 @@ import { MalProvider } from "@/lib/mal/provider";
 import { SimklProvider } from "@/lib/simkl/provider";
 import { LetterboxdProvider } from "@/lib/stremboxd/provider";
 import { useKeyboardNavigation, tvFocus } from "@/lib/keyboard-navigation";
+import { enterBigPicture, useBigPicture } from "@/lib/big-picture";
+import { BpErrorBoundary } from "@/views/big-picture/bp-error-boundary";
+import { shouldAutoStartBigPicture, shouldOfferBigPicture } from "@/views/big-picture/bp-logic";
+import { BigPictureEntryButton } from "@/views/big-picture/bp-entry-button";
+import { releaseBigPictureFullscreen } from "@/views/big-picture/use-bp-fullscreen";
 import { getNavFocusTarget } from "@/lib/keyboard-navigation/geometry";
 import { SFX } from "@/lib/sfx";
 
@@ -224,6 +230,9 @@ const DownloadsView = lazy(() => importDownloads().then((m) => ({ default: m.Dow
 const MangaView = lazy(() => import("@/views/manga").then((m) => ({ default: m.MangaView })));
 const OnboardingModal = lazy(() =>
   importOnboarding().then((m) => ({ default: m.OnboardingModal })),
+);
+const BigPictureShell = lazy(() =>
+  import("@/views/big-picture/bp-shell").then((m) => ({ default: m.BigPictureShell })),
 );
 
 function useViewPreloader(tmdbKey: string) {
@@ -395,6 +404,7 @@ export function App({ onReady }: { onReady?: () => void }) {
                                                   <MangaTrackingRunner />
                                                   <RemoteHostMount />
                                                   <RemoteOpenBridge />
+                                                  <PlayOnModal />
                                                   <GamepadRunner />
                                                   <DiscordPresence />
                                                   <WatchPresenceRunner />
@@ -702,6 +712,8 @@ function Shell({ onReady }: { onReady?: () => void }) {
   } = useView();
   const { settings, update } = useSettings();
   const { setOpen: setSearchOpen } = useSearch();
+  const bigPicture = useBigPicture().active;
+  const bigPictureBooted = useRef(false);
   const uiScaleRef = useRef(settings.uiScale);
   const { activeProfile } = useProfiles();
   const kid = activeProfile?.kid ?? null;
@@ -758,8 +770,23 @@ function Shell({ onReady }: { onReady?: () => void }) {
     );
   }, []);
 
+  useEffect(() => {
+    void releaseBigPictureFullscreen();
+  }, []);
+
+  useEffect(() => {
+    const go = shouldAutoStartBigPicture({
+      autoStart: settings.bigPictureAutoStart,
+      alreadyBooted: bigPictureBooted.current,
+      kidProfileActive: kid !== null,
+    });
+    if (!go) return;
+    bigPictureBooted.current = true;
+    enterBigPicture();
+  }, [settings.bigPictureAutoStart, kid]);
+
   useKeyboardNavigation({
-    enabled: settings.tvNavigation && !player && !picker,
+    enabled: settings.tvNavigation && !player && !picker && !bigPicture,
     wrap: false,
     onBack: handleTvBack,
     onBackToNav: handleTvBackToNav,
@@ -1043,6 +1070,14 @@ function Shell({ onReady }: { onReady?: () => void }) {
       openSettings: () => setView("settings"),
       openNotifications: () => openNotificationCenter(),
       openAccountMenu: (el?: unknown) => openAccountMenu(anchorFromElement(el)),
+      bigPicture: () => {
+        const offer = shouldOfferBigPicture({
+          kidProfileActive: kid !== null,
+          buttonEnabled: settings.bigPictureButton,
+          suppressedByChrome: false,
+        });
+        if (offer) enterBigPicture();
+      },
       tryViewMyProfile,
       viewMyProfile: async () => {
         if (tryViewMyProfile()) return;
@@ -1053,7 +1088,7 @@ function Shell({ onReady }: { onReady?: () => void }) {
       onUnread: (cb: (count: number) => void) =>
         typeof cb === "function" ? subscribeUnread(cb) : () => {},
     };
-  }, [setView, goBack, setSearchOpen]);
+  }, [setView, goBack, setSearchOpen, kid, settings.bigPictureButton]);
 
   useEffect(() => {
     if (topKind !== "live") {
@@ -1673,6 +1708,11 @@ function Shell({ onReady }: { onReady?: () => void }) {
             <TogetherButton />
           </div>
         )}
+        {!immersive && !playerActive && !pickerTop && !bigPicture && layout === "custom" && (
+          <div className="harbor-bp-proxy">
+            <BigPictureEntryButton hidden={chromeHidden} />
+          </div>
+        )}
         {!immersive && layout === "rail" && !settingsTop && (
           <div
             aria-hidden
@@ -1687,6 +1727,13 @@ function Shell({ onReady }: { onReady?: () => void }) {
             src={player}
           />
         </Suspense>
+      )}
+      {bigPicture && (
+        <BpErrorBoundary>
+          <Suspense fallback={null}>
+            <BigPictureShell />
+          </Suspense>
+        </BpErrorBoundary>
       )}
       <CustomCodeMount />
       <ThemeChromeBridge />

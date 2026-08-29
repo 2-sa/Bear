@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
-import { Check, FolderOpen, Play, Trash2 } from "lucide-react";
+import { Check, FolderOpen, Trash2 } from "lucide-react";
+import { Play } from "@/components/icons/play-filled";
 import { DownloadCancelIcon, DownloadPauseResumeIcon } from "@/components/download-action-icons";
 import { Poster, usePosterChain } from "@/components/poster";
 import { useSettings } from "@/lib/settings";

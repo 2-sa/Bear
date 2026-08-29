@@ -183,13 +183,13 @@ export function CinematicPlayerLoader({
               <div className="flex items-center gap-2.5">
                 <button
                   onClick={onCancel}
-                  className="flex h-11 cursor-pointer items-center rounded-full border border-white/20 bg-white/10 px-6 text-[13.5px] font-medium text-white/90 transition-colors hover:border-white/35 hover:bg-white/15"
+                  className="flex h-11 cursor-pointer items-center rounded-full bg-[#34343b] px-6 text-[13.5px] font-medium text-white/90 transition-colors hover:bg-[#41414a]"
                 >
                   {t("Go back")}
                 </button>
                 <button
                   onClick={prep.retry}
-                  className="flex h-11 cursor-pointer items-center rounded-full border border-white/12 bg-transparent px-6 text-[13.5px] font-medium text-white/70 transition-colors hover:border-white/25 hover:text-white"
+                  className="flex h-11 cursor-pointer items-center rounded-full bg-[#26262c] px-6 text-[13.5px] font-medium text-white/70 transition-colors hover:bg-[#31313a] hover:text-white"
                 >
                   {t("Try again")}
                 </button>
@@ -240,7 +240,7 @@ export function CinematicPlayerLoader({
       {!(isLocalEngine && prep.phase === "no-peers") && (
         <button
           onClick={onCancel}
-          className="absolute bottom-10 left-1/2 z-10 flex h-11 -translate-x-1/2 cursor-pointer items-center gap-2 rounded-full border border-white/15 bg-black/45 px-6 text-[13.5px] font-medium text-white/75 backdrop-blur-md transition-colors hover:border-white/30 hover:bg-black/60 hover:text-white"
+          className="absolute bottom-10 left-1/2 z-10 flex h-11 -translate-x-1/2 cursor-pointer items-center gap-2 rounded-full bg-[#34343b] px-6 text-[13.5px] font-medium text-white/85 transition-colors hover:bg-[#41414a]"
         >
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
             <path

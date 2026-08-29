@@ -51,7 +51,7 @@ export function StoreBrowse({
             key={s.id}
             type="button"
             onClick={() => setSort(s.id)}
-            className={`h-8 rounded-full px-3.5 text-[12px] font-semibold transition-colors ${
+            className={`h-8 rounded-full px-3.5 text-[12.5px] font-semibold transition-colors ${
               sort === s.id
                 ? "bg-ink text-canvas"
                 : "bg-surface text-ink-muted ring-1 ring-edge-soft hover:text-ink hover:ring-edge"
@@ -64,19 +64,19 @@ export function StoreBrowse({
           <button
             type="button"
             onClick={onClearMood}
-            className="inline-flex h-8 items-center gap-1.5 rounded-full bg-accent-soft px-3 text-[12px] font-semibold text-accent transition-opacity hover:opacity-85"
+            className="inline-flex h-8 items-center gap-1.5 rounded-full bg-accent-soft px-3 text-[12.5px] font-semibold text-accent transition-opacity hover:opacity-85"
           >
             {MOOD_RAILS.find((r) => r.mood === mood)?.title ?? mood}
             <X size={12} strokeWidth={2.6} />
           </button>
         )}
-        <span className="ms-auto tabular-nums text-[12px] text-ink-subtle">
+        <span className="ms-auto tabular-nums text-[12.5px] text-ink-subtle">
           {shown.length} {shown.length === 1 ? "theme" : "themes"}
         </span>
       </div>
 
       {shown.length === 0 ? (
-        <p className="rounded-[14px] bg-surface/40 px-4 py-14 text-center text-[13px] text-ink-subtle ring-1 ring-edge-soft">
+        <p className="rounded-md bg-surface px-4 py-14 text-center text-[13px] text-ink-subtle ring-1 ring-edge-soft">
           {q ? "No themes match your search." : "No community themes yet. Be the first to share one."}
         </p>
       ) : (

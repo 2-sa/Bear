@@ -47,7 +47,7 @@ export function PxField({
           if (e.key === "Enter") commit();
           else if (e.key === "Escape") setEditing(false);
         }}
-        className="w-14 rounded-md border border-ink bg-canvas px-1.5 py-0.5 text-[12px] tabular-nums text-ink outline-none"
+        className="h-8 w-[74px] rounded-md bg-raised px-2.5 text-[13px] font-semibold tabular-nums text-ink outline-none"
       />
     );
   }
@@ -56,7 +56,7 @@ export function PxField({
       type="button"
       onClick={() => setEditing(true)}
       title="Click to edit"
-      className="rounded px-1 py-0.5 tabular-nums text-ink-muted transition-colors hover:bg-raised hover:text-ink"
+      className="h-8 w-[74px] rounded-md bg-elevated text-[13px] font-semibold tabular-nums text-ink-muted transition-colors hover:bg-raised hover:text-ink"
     >
       {value}px
     </button>

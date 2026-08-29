@@ -14,6 +14,7 @@ import { MobileWhosWatching } from "./mobile-whos-watching";
 import { useMobileRemote } from "./mobile-remote";
 import { setMobileRemoteStyle, useMobileRemoteStyle, type MobileRemoteStyle } from "./remote-style";
 import { HARBOR_BUGS_BASE } from "@/lib/config/endpoints";
+import { openUrl } from "@/lib/window";
 
 export function MobileProfile({ onOpenRemote }: { onOpenRemote: () => void }) {
   const { user, signOut } = useAuth();
@@ -73,7 +74,7 @@ export function MobileProfile({ onOpenRemote }: { onOpenRemote: () => void }) {
         <Row
           icon={<HelpCircle size={20} strokeWidth={2} />}
           label="Help & feedback"
-          onClick={() => window.open(HARBOR_BUGS_BASE, "_blank")}
+          href={HARBOR_BUGS_BASE}
         />
         <Divider />
         <Row icon={<FileText size={20} strokeWidth={2} />} label="Legal" onClick={() => {}} />
@@ -141,28 +142,54 @@ function TouchpadGlyph() {
   );
 }
 
+/* `href` renders a real anchor rather than a button calling window.open. This
+   screen is where the setup flow lands people, and a programmatic open that a
+   mobile browser does not credit as a user gesture can navigate the current
+   tab instead, which is how a viewer ends up outside Harbor with no way back. */
 function Row({
   icon,
   label,
   onClick,
+  href,
   danger,
 }: {
   icon: ReactNode;
   label: string;
-  onClick: () => void;
+  onClick?: () => void;
+  href?: string;
   danger?: boolean;
 }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex w-full items-center gap-3.5 px-4 py-3.5 text-start transition-colors active:bg-raised/60"
-    >
+  const skin =
+    "flex w-full items-center gap-3.5 px-4 py-3.5 text-start transition-colors active:bg-raised/60";
+  const inner = (
+    <>
       <span className={danger ? "text-danger" : "text-ink-muted"}>{icon}</span>
       <span className={`flex-1 text-[15px] font-medium ${danger ? "text-danger" : "text-ink"}`}>
         {label}
       </span>
       {!danger && <ChevronRight size={18} strokeWidth={2.2} className="text-ink-subtle" />}
+    </>
+  );
+  if (href) {
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={(e) => {
+          if (!("__TAURI_INTERNALS__" in window)) return;
+          e.preventDefault();
+          openUrl(href);
+        }}
+        className={skin}
+      >
+        {inner}
+      </a>
+    );
+  }
+  return (
+    <button type="button" onClick={onClick} className={skin}>
+      {inner}
     </button>
   );
 }

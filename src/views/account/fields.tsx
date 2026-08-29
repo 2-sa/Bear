@@ -2,7 +2,7 @@ import { useState, type ReactNode } from "react";
 import { Eye, EyeOff } from "lucide-react";
 
 export const inputClass =
-  "h-11 w-full rounded-[10px] border border-edge-soft bg-elevated/40 px-3.5 text-[14px] text-ink placeholder:text-ink-subtle transition-colors duration-150 focus:border-edge focus:outline-none";
+  "h-11 w-full rounded-md bg-canvas px-3.5 text-[14px] text-ink placeholder:text-ink-subtle transition-colors duration-150 focus:bg-elevated focus:outline-none";
 
 export function Field({ label, hint, tone, children }: { label: string; hint?: string; tone?: "muted" | "danger"; children: ReactNode }) {
   return (

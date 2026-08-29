@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
 // @ts-expect-error Node test types are intentionally outside the browser-only tsconfig.
 import test from "node:test";
-import { sfntFamilyName } from "../src/lib/font-family-name";
+import { sfntFamilyName } from "../src/lib/font-family-name.ts";
 
 const at = (p: string) => new URL(`../${p}`, import.meta.url);
 const read = (p: string) => readFileSync(at(p), "utf8");

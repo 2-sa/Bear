@@ -1,4 +1,5 @@
-import { Plus, Search } from "lucide-react";
+import { Plus } from "lucide-react";
+import { Search } from "@/components/icons/search-icon";
 import { useEffect, useRef, useState } from "react";
 import { Poster, usePosterChain } from "@/components/poster";
 import type { Meta } from "@/lib/cinemeta";

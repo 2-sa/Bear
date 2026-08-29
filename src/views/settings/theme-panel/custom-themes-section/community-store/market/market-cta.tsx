@@ -6,7 +6,7 @@ import { fmtCount } from "../format";
 
 const SIZE: Record<"sm" | "md" | "lg", string> = {
   sm: "h-11 gap-1.5 px-4 text-[13px]",
-  md: "h-11 gap-1.5 px-5 text-[14px]",
+  md: "h-11 gap-1.5 px-5 text-[13.5px]",
   lg: "h-12 gap-2 px-6 text-[15px]",
 };
 
@@ -39,12 +39,12 @@ export function MarketCta({
       <button
         type="button"
         onClick={onClick}
-        className="group flex min-h-[64px] w-full items-center gap-3 rounded-[14px] bg-surface pe-3 ps-4 text-start ring-1 ring-edge-soft transition-colors hover:bg-elevated"
+        className="group flex min-h-[64px] w-full items-center gap-3 rounded-md bg-surface pe-3 ps-4 text-start ring-1 ring-edge-soft transition-colors hover:bg-elevated"
       >
         <IconFan icons={preview ?? []} />
         <span className="min-w-0 flex-1">
-          <span className="block text-[14px] font-semibold text-ink">{label ?? "Browse community"}</span>
-          {meta && <span className="block text-[12px] text-ink-subtle tabular-nums">{meta}</span>}
+          <span className="block text-[13.5px] font-semibold text-ink">{label ?? "Browse community"}</span>
+          {meta && <span className="block text-[12.5px] text-ink-subtle tabular-nums">{meta}</span>}
         </span>
         <ChevronRight
           size={18}
@@ -59,7 +59,7 @@ export function MarketCta({
       <button
         type="button"
         onClick={onClick}
-        className={`inline-flex items-center justify-center rounded-[10px] bg-elevated font-semibold text-ink ring-1 ring-edge-soft transition-[transform,box-shadow] duration-150 hover:ring-edge active:scale-[0.97] motion-reduce:transform-none ${SIZE[size]}`}
+        className={`inline-flex items-center justify-center rounded-md bg-elevated font-semibold text-ink ring-1 ring-edge-soft transition-[transform,box-shadow] duration-150 hover:ring-edge active:scale-[0.97] motion-reduce:transform-none ${SIZE[size]}`}
       >
         {children ?? label ?? "View details"}
       </button>
@@ -79,7 +79,7 @@ export function MarketCta({
       onClick={onClick}
       disabled={state === "loading"}
       aria-label={text}
-      className={`inline-flex items-center justify-center rounded-[10px] font-semibold transition-[transform,background-color] duration-150 active:scale-[0.97] disabled:cursor-default motion-reduce:transform-none ${SIZE[size]} ${skin}`}
+      className={`inline-flex items-center justify-center rounded-md font-semibold transition-[transform,background-color] duration-150 active:scale-[0.97] disabled:cursor-default motion-reduce:transform-none ${SIZE[size]} ${skin}`}
     >
       {state === "loading" ? (
         <Loader2 size={16} className="animate-spin" />

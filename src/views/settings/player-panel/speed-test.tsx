@@ -49,7 +49,7 @@ function SpeedResultBadge({ value }: { value: string }) {
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         onClick={() => setPinned((v) => !v)}
-        className={`flex items-center gap-1.5 rounded-full bg-canvas/60 px-2.5 py-1 text-[13px] font-semibold tabular-nums text-ink ring-1 transition-colors ${
+        className={`flex items-center gap-1.5 rounded-full bg-canvas px-2.5 py-1 text-[13px] font-semibold tabular-nums text-ink ring-1 transition-colors ${
           open ? "ring-edge" : "ring-edge-soft hover:ring-edge"
         }`}
       >
@@ -73,7 +73,7 @@ function SpeedResultBadge({ value }: { value: string }) {
       {open && (
         <div
           role="tooltip"
-          className="absolute end-0 top-[calc(100%+8px)] z-30 w-[300px] origin-top-right rtl:origin-top-left rounded-xl border border-edge bg-elevated p-3.5 text-start shadow-[0_18px_48px_-12px_rgba(0,0,0,0.65)]"
+          className="absolute end-0 top-[calc(100%+8px)] z-30 w-[300px] origin-top-right rtl:origin-top-left rounded-md bg-raised p-3.5 text-start harbor-float"
           style={{ animation: "harbor-fade-in 140ms ease-out both" }}
         >
           <div className="mb-2 flex items-center gap-2">
@@ -83,7 +83,7 @@ function SpeedResultBadge({ value }: { value: string }) {
               draggable={false}
               className="h-4 w-4 shrink-0 object-contain"
             />
-            <span className="text-[12px] font-semibold uppercase tracking-[0.14em] text-ink-subtle">
+            <span className="text-[12.5px] font-semibold uppercase tracking-[0.14em] text-ink-subtle">
               How this is measured
             </span>
           </div>
@@ -98,7 +98,7 @@ function SpeedResultBadge({ value }: { value: string }) {
             single origin, so on a very fast line this can read lower than a multi-server test like
             speedtest.net.
           </p>
-          <div className="mt-2 flex items-center gap-2 border-t border-edge-soft pt-2 text-[11px] text-ink-subtle">
+          <div className="mt-2 flex items-center gap-2 border-t border-edge-soft pt-2 text-[11.5px] text-ink-subtle">
             <span className="h-1 w-1 rounded-full bg-ink-subtle/60" />
             Uses up to 150 MB
             <span className="h-1 w-1 rounded-full bg-ink-subtle/60" />
@@ -113,7 +113,7 @@ function SpeedResultBadge({ value }: { value: string }) {
 export function SpeedTestButton() {
   if (!isTauri) {
     return (
-      <span className="flex h-8 shrink-0 items-center rounded-full border border-edge-soft px-3 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-ink-subtle">
+ <span className="flex h-8 shrink-0 items-center rounded-md bg-canvas px-3 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-ink-subtle">
         Desktop only
       </span>
     );
@@ -174,7 +174,7 @@ function SpeedTestButtonInner() {
   if (state === "error") {
     return (
       <div className="flex shrink-0 items-center gap-2.5">
-        <span className="max-w-[260px] text-end text-[12px] leading-snug text-ink-subtle">{error}</span>
+        <span className="max-w-[260px] text-end text-[12.5px] leading-snug text-ink-subtle">{error}</span>
         <button
           type="button"
           onClick={run}
@@ -182,7 +182,7 @@ function SpeedTestButtonInner() {
           className={`flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 text-[11.5px] font-semibold uppercase tracking-[0.12em] transition-colors ${
             cooling
               ? "cursor-not-allowed border-edge-soft text-ink-subtle"
-              : "border-danger/40 text-danger hover:bg-danger/10"
+              : "border-danger text-danger hover:bg-danger/25"
           }`}
         >
           {cooling ? `${Math.ceil(cooldownRemaining / 1000)}s` : "Retry"}
@@ -195,7 +195,7 @@ function SpeedTestButtonInner() {
       <button
         type="button"
         onClick={run}
-        className="flex h-8 shrink-0 items-center rounded-full border border-edge-soft px-3 text-[11.5px] font-semibold uppercase tracking-[0.12em] text-ink-muted transition-colors hover:border-edge hover:text-ink"
+ className="flex h-8 shrink-0 items-center rounded-md bg-canvas px-3 text-[11.5px] font-semibold uppercase tracking-[0.12em] text-ink-muted transition-colors hover:bg-surface hover:text-ink"
       >
         Run speed test
       </button>
@@ -212,7 +212,7 @@ function SpeedTestButtonInner() {
         className={`flex h-7 items-center justify-center rounded-full text-ink-subtle transition-colors ${
           cooling
             ? "w-auto cursor-not-allowed px-2 text-[10.5px] font-semibold tabular-nums tracking-wide"
-            : "w-7 hover:bg-canvas/40 hover:text-ink"
+            : "w-7 hover:bg-canvas hover:text-ink"
         }`}
       >
         {cooling ? (

@@ -41,7 +41,7 @@ export function PageJumpSheet({ open, onClose }: { open: boolean; onClose: () =>
     >
       <style>{SHEET_EXIT_CSS}</style>
       <div
-        className={`flex flex-col gap-6 rounded-t-[28px] border-t border-edge-soft/60 bg-elevated px-5 pt-4 ${leaving ? "harbor-sheet-panel-out" : reduce ? "" : "animate-in slide-in-from-bottom-4 duration-300"}`}
+        className={`flex flex-col gap-6 rounded-t-2xl border-t border-edge-soft/60 bg-elevated px-5 pt-4 ${leaving ? "harbor-sheet-panel-out" : reduce ? "" : "animate-in slide-in-from-bottom-4 duration-300"}`}
         style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 24px)" }}
         onClick={(e) => e.stopPropagation()}
       >

@@ -14,7 +14,7 @@ export function NotificationItem({ n, onOpen }: { n: ThemeNotification; onOpen: 
     <button
       type="button"
       onClick={onOpen}
-      className={`flex w-full items-center gap-3 px-4 py-3 text-start transition-colors hover:bg-surface ${n.read ? "" : "bg-accent/5"}`}
+      className={`flex w-full items-center gap-3 px-4 py-3 text-start transition-colors hover:bg-surface ${n.read ? "" : "bg-accent-soft"}`}
     >
       <span className="relative grid h-10 w-12 shrink-0 place-items-center overflow-hidden rounded-[4px] bg-elevated">
         {n.cover ? (
@@ -32,7 +32,7 @@ export function NotificationItem({ n, onOpen }: { n: ThemeNotification; onOpen: 
         <span className="truncate text-[12.5px] leading-snug text-ink">
           <span className="font-semibold">{n.themeName}</span> {text}
         </span>
-        <span className="text-[11px] text-ink-subtle">{timeAgo(n.createdAt)}</span>
+        <span className="text-[11.5px] text-ink-subtle">{timeAgo(n.createdAt)}</span>
       </span>
       {!n.read && <span className="h-2 w-2 shrink-0 rounded-full bg-accent" />}
     </button>

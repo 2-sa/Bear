@@ -35,7 +35,7 @@ export function CommentsSection({ themeId }: { themeId: string }) {
       {author ? (
         <CommentComposer onSubmit={add} />
       ) : (
-        <p className="rounded-[6px] border border-dashed border-edge bg-surface/40 px-4 py-5 text-center text-[13px] text-ink-subtle">
+        <p className="rounded-sm border border-dashed border-edge bg-surface px-4 py-5 text-center text-[13px] text-ink-subtle">
           Sign in from the My themes tab to join the conversation.
         </p>
       )}

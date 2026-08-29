@@ -1,18 +1,5 @@
-import {
-  Check,
-  ChevronDown,
-  Ghost,
-  Heart,
-  MessageSquareWarning,
-  Play,
-  Plus,
-  ShieldAlert,
-  Star,
-  Swords,
-  ThumbsUp,
-  Wine,
-  type LucideIcon,
-} from "lucide-react";
+import { Check, ChevronDown, Ghost, Heart, MessageSquareWarning, Plus, ShieldAlert, Star, Swords, ThumbsUp, Wine, type LucideIcon } from "lucide-react";
+import { Play } from "@/components/icons/play-filled";
 import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { Meta } from "@/lib/cinemeta";
 import type { PreviewData } from "@/lib/hover-preview/preview-data";
@@ -78,8 +65,8 @@ function advisoryChip(category: string): { Icon: LucideIcon; label: string } {
 }
 
 function useAdvisory(imdbId: string | undefined): ParentalCategory[] {
-  const [cats, setCats] = useState<ParentalCategory[]>(() =>
-    imdbId ? (harborImdbParentalCached(imdbId) ?? []) : [],
+  const [cats, setCats] = useState<ParentalCategory[]>(
+    () => (imdbId ? harborImdbParentalCached(imdbId) ?? [] : []),
   );
   useEffect(() => {
     if (!imdbId) {
@@ -199,7 +186,7 @@ function MarqueeBlock({
 }) {
   const meta = data.meta;
   const alt = tmdbImdbCached(meta.id);
-  const imdb = meta.id.startsWith("tt") ? meta.id : (alt ?? undefined);
+  const imdb = meta.id.startsWith("tt") ? meta.id : alt ?? undefined;
   const altIds = useMemo(() => [alt ?? undefined], [alt]);
   const inList = useInWatchlist(meta.id, altIds);
   const [watched, setWatched] = useState(false);

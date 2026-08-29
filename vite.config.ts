@@ -22,34 +22,64 @@ function silenceMediapipeSourcemap() {
   };
 }
 
-export default defineConfig({
-  plugins: [react(), tailwindcss(), silenceMediapipeSourcemap()],
-  clearScreen: false,
-  define: {
-    __APP_VERSION__: JSON.stringify(pkg.version),
-    __IS_BETA_BUILD__: JSON.stringify(process.env.HARBOR_CHANNEL !== "stable"),
-    __BUILD_ID__: JSON.stringify(
-      process.env.HARBOR_BUILD_ID ||
-        (() => {
-          try {
-            return execSync("git rev-parse --short HEAD").toString().trim();
-          } catch {
-            return "local";
-          }
-        })(),
-    ),
-    __BUILD_DATE__: JSON.stringify(new Date().toISOString().slice(0, 10)),
-  },
-  server: {
-    host: "127.0.0.1",
-    port: 1420,
-    strictPort: true,
-    watch: { ignored: ["**/src-tauri/**"] },
-  },
-  resolve: {
-    alias: { "@": "/src" },
-  },
-  assetsInclude: ["**/*.onnx", "**/*.tflite"],
-  optimizeDeps: { exclude: ["onnxruntime-web", "@mediapipe/tasks-vision"] },
-  worker: { format: "es" },
+export default defineConfig(({ mode }) => {
+  const android = mode === "android" || process.env.HARBOR_TARGET === "android";
+  const devHost = process.env.TAURI_DEV_HOST;
+  return {
+    plugins: [react(), tailwindcss(), silenceMediapipeSourcemap()],
+    clearScreen: false,
+    define: {
+      __APP_VERSION__: JSON.stringify(pkg.version),
+      __IS_BETA_BUILD__: JSON.stringify(process.env.HARBOR_CHANNEL !== "stable"),
+      __BUILD_ID__: JSON.stringify(
+        process.env.HARBOR_BUILD_ID ||
+          (() => {
+            try {
+              return execSync("git rev-parse --short HEAD").toString().trim();
+            } catch {
+              return "local";
+            }
+          })(),
+      ),
+      __BUILD_DATE__: JSON.stringify(new Date().toISOString().slice(0, 10)),
+    },
+    // Both entries ship. index-tv.html is what the TV window loads; index.html
+    // exists only so web_server.rs has a page to hand the phone for /remote,
+    // which the QR hand-off in onboarding depends on. Listing tv alone left the
+    // phone staring at "web assets are not available in this build".
+    // Vite 7 defaults to baseline-widely-available, a chrome107 floor. Android
+    // TV sticks and Fire TV ship a System WebView well below that, and the
+    // failure is a bare SyntaxError before React mounts, with no error surface
+    // on a device you cannot open devtools on. Pin a floor the hardware meets.
+    // This lowers syntax only; esbuild adds no API polyfills.
+    ...(android
+      ? {
+          build: {
+            target: "chrome87",
+            rollupOptions: { input: { tv: "index-tv.html", main: "index.html" } },
+          },
+        }
+      : {}),
+    server: {
+      host: devHost || "127.0.0.1",
+      port: 1420,
+      strictPort: true,
+      ...(devHost ? { hmr: { protocol: "ws", host: devHost, port: 1421 } } : {}),
+      watch: {
+        ignored: [
+          "**/src-tauri/**",
+          "**/android-native/**",
+          "**/android/**",
+          "**/.gradle/**",
+          "**/target/**",
+        ],
+      },
+    },
+    resolve: {
+      alias: { "@": "/src" },
+    },
+    assetsInclude: ["**/*.onnx", "**/*.tflite"],
+    optimizeDeps: { exclude: ["onnxruntime-web", "@mediapipe/tasks-vision"] },
+    worker: { format: "es" },
+  };
 });

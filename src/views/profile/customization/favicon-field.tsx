@@ -5,7 +5,7 @@ import type { CustomizationInput, ProfileSummary } from "../profile-types";
 import { IMAGE_URL_MAX } from "./customization-types";
 
 const inputCls =
-  "w-full min-h-11 rounded-[10px] bg-elevated px-3 text-[14px] text-ink outline-none ring-1 ring-edge-soft placeholder:text-ink-subtle focus:ring-edge";
+  "w-full min-h-11 rounded-md bg-elevated px-3 text-[14px] text-ink outline-none ring-1 ring-edge-soft placeholder:text-ink-subtle focus:ring-edge";
 
 export function FaviconField({
   form,
@@ -56,7 +56,7 @@ export function FaviconField({
           type="button"
           onClick={() => fileRef.current?.click()}
           disabled={busy}
-          className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-[10px] bg-elevated px-3.5 text-[13px] font-medium text-ink ring-1 ring-edge-soft transition-colors hover:bg-raised disabled:opacity-50"
+          className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-md bg-elevated px-3.5 text-[13px] font-medium text-ink ring-1 ring-edge-soft transition-colors hover:bg-raised disabled:opacity-50"
         >
           {busy ? <Loader2 size={15} className="animate-spin" /> : <Upload size={15} />} Upload
         </button>

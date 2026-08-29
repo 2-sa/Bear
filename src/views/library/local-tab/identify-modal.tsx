@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { Loader2, Search, X } from "lucide-react";
+import { Loader2, X } from "lucide-react";
+import { Search } from "@/components/icons/search-icon";
 import { get, IMG } from "@/lib/providers/tmdb/tmdb-client";
 import { useSettings } from "@/lib/settings";
 import { useT } from "@/lib/i18n";
@@ -148,12 +149,12 @@ export function IdentifyModal({
 
   return createPortal(
     <div
-      className="pointer-events-auto fixed inset-0 z-[120] flex items-start justify-center overflow-y-auto bg-black/72 py-[8vh] backdrop-blur-md animate-in fade-in duration-200"
+      className="pointer-events-auto fixed inset-0 z-[170] flex items-start justify-center overflow-y-auto bg-black/72 py-[8vh] backdrop-blur-md animate-in fade-in duration-200"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="flex w-full max-w-[560px] flex-col gap-5 rounded-[24px] border border-edge-soft bg-elevated/95 px-7 py-7 shadow-[0_30px_80px_-25px_rgba(0,0,0,0.85)] animate-in zoom-in-95 fade-in duration-200">
+      <div className="flex w-full max-w-[560px] flex-col gap-5 rounded-3xl border border-edge-soft bg-elevated/95 px-7 py-7 shadow-[0_30px_80px_-25px_rgba(0,0,0,0.85)] animate-in zoom-in-95 fade-in duration-200">
         <div className="flex items-start justify-between gap-4">
           <div className="flex min-w-0 flex-col gap-0.5">
             <h2 className="text-[18px] font-medium tracking-tight text-ink">{t("What is this title?")}</h2>

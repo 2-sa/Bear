@@ -1,4 +1,5 @@
-import { Check, Download, Play } from "lucide-react";
+import { Check, Download } from "lucide-react";
+import { Play } from "@/components/icons/play-filled";
 import { AddonLogo } from "@/components/addon-logo";
 import { CopyLinkButton, resolveStreamLink } from "@/components/player/copy-link-button";
 import { DubSubPill, streamDubSub } from "@/components/dub-sub-pill";

@@ -22,9 +22,9 @@ function compact(n: number): string {
 
 function ThemeCard({ item }: { item: ShowcaseItem }) {
   return (
-    <div className="flex w-full items-center gap-4 rounded-[10px] p-2">
+    <div className="flex w-full items-center gap-4 rounded-md p-2">
       <div
-        className="w-36 shrink-0 overflow-hidden rounded-[10px] bg-elevated ring-1 ring-edge-soft shadow-[0_8px_24px_-12px_rgba(0,0,0,0.6)]"
+        className="w-36 shrink-0 overflow-hidden rounded-md bg-elevated ring-1 ring-edge-soft shadow-[0_8px_24px_-12px_rgba(0,0,0,0.6)]"
         style={{ aspectRatio: "16/10", background: item.swatch?.[1] || undefined }}
       >
         {item.posterUrl && (
@@ -81,7 +81,7 @@ function ThemePicker({
   }, []);
 
   return (
-    <div className="mt-3 rounded-[10px] border border-edge-soft bg-elevated/40 p-3">
+    <div className="mt-3 rounded-md border border-edge-soft bg-elevated/40 p-3">
       <div className="mb-2 flex items-center justify-between">
         <span className="text-[12px] font-semibold uppercase tracking-[0.1em] text-ink-subtle">
           {t("Feature a theme")}
@@ -114,7 +114,7 @@ function ThemePicker({
               className="flex items-center gap-3 rounded-[8px] p-1.5 text-start transition-colors hover:bg-raised disabled:opacity-60"
             >
               <span
-                className="h-10 w-16 shrink-0 overflow-hidden rounded-[6px] bg-raised ring-1 ring-edge-soft"
+                className="h-10 w-16 shrink-0 overflow-hidden rounded-sm bg-raised ring-1 ring-edge-soft"
                 style={{ background: th.swatch?.[1] || undefined }}
               >
                 {th.cover && <img src={th.cover} alt="" className="h-full w-full object-cover" draggable={false} />}
@@ -180,7 +180,7 @@ export function Showcase({
   };
 
   return (
-    <section aria-label="Showcase" className="rounded-[14px] bg-surface p-5 ring-1 ring-edge-soft">
+    <section aria-label="Showcase" className="rounded-lg bg-surface p-5 ring-1 ring-edge-soft">
       <div className="mb-4 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.12em] text-ink-subtle">
           <Bookmark size={20} /> Showcase
@@ -203,10 +203,10 @@ export function Showcase({
             <button
               onClick={() => item.metaId && onOpen?.(item.metaId, undefined, { name: item.title, poster: item.posterUrl })}
               disabled={!item.metaId}
-              className="group flex w-full items-center gap-4 rounded-[10px] p-2 text-start transition-colors hover:bg-elevated disabled:cursor-default"
+              className="group flex w-full items-center gap-4 rounded-md p-2 text-start transition-colors hover:bg-elevated disabled:cursor-default"
             >
               <div className="w-24 shrink-0">
-                <Poster src={item.posterUrl} seed={item.title} ratio="portrait" className="rounded-[10px]" />
+                <Poster src={item.posterUrl} seed={item.title} ratio="portrait" className="rounded-md" />
               </div>
               <div className="min-w-0">
                 <div className="text-[11px] uppercase tracking-[0.1em] text-accent">{KIND_LABEL[item.kind]}</div>
@@ -219,14 +219,14 @@ export function Showcase({
             <button
               onClick={remove}
               disabled={busy}
-              className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-[10px] border border-edge-soft text-[13px] font-medium text-ink-muted transition-colors hover:border-danger/40 hover:text-danger disabled:opacity-60"
+              className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-md border border-edge-soft text-[13px] font-medium text-ink-muted transition-colors hover:border-danger/40 hover:text-danger disabled:opacity-60"
             >
               <X size={20} /> {busy ? "Removing" : "Remove from showcase"}
             </button>
           )}
         </div>
       ) : isOwner ? (
-        <div className="flex flex-col items-center justify-center rounded-[10px] border border-dashed border-edge py-10 text-center">
+        <div className="flex flex-col items-center justify-center rounded-md border border-dashed border-edge py-10 text-center">
           <p className="text-[14px] text-ink-muted">Nothing on display yet</p>
           <p className="mt-1 text-[12px] text-ink-subtle">A favorite title or one of your themes will appear here</p>
         </div>

@@ -33,7 +33,10 @@
     },
     {
       "identifier": "http:default",
-      "allow": [{ "url": "https://*:*/**" }, { "url": "http://*:*/**" }]
+      "allow": [
+        { "url": "https://*:*/**" },
+        { "url": "http://*:*/**" }
+      ]
     },
     "clipboard-manager:allow-read-text",
     "dialog:default",
@@ -44,8 +47,6 @@
     "dialog:allow-message",
     "fs:default",
     "deep-link:default",
-    "updater:default",
-    "process:default",
     {
       "identifier": "fs:allow-write-file",
       "allow": [{ "path": "**" }]

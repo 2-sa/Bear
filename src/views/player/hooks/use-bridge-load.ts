@@ -154,9 +154,6 @@ export function useBridgeLoad(params: {
         return;
       }
       if (!guestInRoom && startSec > 5) {
-        // On Linux's embedded mpv renderer, supplying `start` during load can
-        // race the initial render context with a network seek. Load the first
-        // frame normally, then seek once the bridge reports a duration.
         setPendingSeekSec(startSec);
         return;
       }

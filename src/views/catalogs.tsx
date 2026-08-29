@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { Check, Pin, Puzzle, Search, SlidersHorizontal, X } from "lucide-react";
+import { Check, Pin, Puzzle, SlidersHorizontal, X } from "lucide-react";
+import { Search } from "@/components/icons/search-icon";
 import { useAuth } from "@/lib/auth";
 import { listBrowseCatalogs, type BrowseCatalog } from "@/lib/catalog-browse";
 import { useView } from "@/lib/view";
@@ -190,9 +191,9 @@ export function Catalogs({ active = true }: { active?: boolean }) {
               <section key={g.name} className="flex flex-col gap-4">
                 <div className="flex items-center gap-2.5">
                   {g.logo ? (
-                    <img src={g.logo} alt="" draggable={false} className="h-6 w-6 rounded-[6px] object-contain" />
+                    <img src={g.logo} alt="" draggable={false} className="h-6 w-6 rounded-sm object-contain" />
                   ) : (
-                    <span className="flex h-6 w-6 items-center justify-center rounded-[6px] bg-elevated text-[11px] font-bold text-ink-subtle ring-1 ring-edge-soft">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-sm bg-elevated text-[11px] font-bold text-ink-subtle ring-1 ring-edge-soft">
                       {g.name.charAt(0).toUpperCase()}
                     </span>
                   )}

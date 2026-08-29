@@ -1,3 +1,4 @@
+import { createPortal } from "react-dom";
 import { useEffect, useMemo, useState } from "react";
 import { useT, useUiLanguage } from "@/lib/i18n";
 
@@ -562,7 +563,7 @@ export function AgeGateModal({
     }, 1400);
   };
 
-  return (
+  return createPortal(
     <div
       onClick={(e) => {
         if (e.target === e.currentTarget && !verified) onClose();
@@ -664,7 +665,8 @@ export function AgeGateModal({
       </div>
       </div>
       )}
-    </div>
+    </div>,
+    document.body,
   );
 }
 

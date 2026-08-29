@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { Info, Play, Tv } from "lucide-react";
+import { Info, Tv } from "lucide-react";
+import { Play } from "@/components/icons/play-filled";
 import type { Meta } from "@/lib/cinemeta";
 import { useT } from "@/lib/i18n";
 import { useFavorites } from "@/lib/iptv/favorites";

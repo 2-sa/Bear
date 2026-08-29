@@ -336,7 +336,7 @@ export function SeriesEpisodes({
               className={`flex h-9 items-center gap-1.5 rounded-full px-3 text-[12.5px] font-semibold tabular-nums transition-colors ${
                 showHidden
                   ? "bg-ink text-canvas"
-                  : "border border-edge-soft text-ink-muted hover:border-edge hover:text-ink"
+                  : "bg-white/[0.06] text-ink-muted hover:bg-white/[0.10] hover:text-ink"
               }`}
             >
               {showHidden ? <Eye size={14} strokeWidth={2.2} /> : <EyeOff size={14} strokeWidth={2.2} />}

@@ -42,14 +42,14 @@ export function LocalFileError({
         <div className="flex items-center gap-2.5 pt-2">
           <button
             onClick={onBack}
-            className="flex h-11 items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-5 text-[13px] font-medium text-white/75 transition-colors hover:border-white/30 hover:bg-white/10 hover:text-white"
+            className="flex h-11 items-center gap-2 rounded-full bg-[#34343b] px-5 text-[13px] font-medium text-white/85 transition-colors hover:bg-[#41414a]"
           >
             <ArrowLeft size={14} strokeWidth={2} className="dir-icon" />
             {t("Back to library")}
           </button>
           <button
             onClick={onRetry}
-            className="flex h-11 items-center rounded-xl bg-white px-5 text-[13px] font-semibold text-black transition-colors hover:bg-white/85"
+            className="flex h-11 items-center rounded-full bg-[#26262c] px-5 text-[13px] font-medium text-white/70 transition-colors hover:bg-[#31313a] hover:text-white"
           >
             {t("Try again")}
           </button>

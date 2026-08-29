@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { AlertCircle, RefreshCw, Search, Sparkles, Upload } from "lucide-react";
+import { AlertCircle, RefreshCw, Sparkles, Upload } from "lucide-react";
+import { Search } from "@/components/icons/search-icon";
 import { getTheme, type StoreTheme } from "@/lib/theme-store";
 import type { Mood } from "./color-rank";
 import { ThemeDetail } from "./theme-detail";
@@ -70,11 +71,11 @@ export function CommunityStore({ initialTab = "discover" }: { initialTab?: Store
         {themeTab && (
           <div className="flex items-center gap-2.5">
             <div
-              className={`flex h-9 items-center gap-2 rounded-full border border-edge-soft bg-elevated/40 px-3.5 transition-opacity ${
+              className={`flex h-9 items-center gap-2 rounded-full bg-elevated px-3.5 transition-opacity ${
                 interactive ? "" : "pointer-events-none opacity-40"
               }`}
             >
-              <Search size={15} className="text-ink-subtle" />
+              <Search size={16} className="text-ink-subtle" />
               <input
                 value={query}
                 onChange={(e) => onSearch(e.target.value)}
@@ -142,8 +143,8 @@ export function CommunityStore({ initialTab = "discover" }: { initialTab?: Store
 
 function ErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
-    <div className="mx-auto flex max-w-sm flex-col items-center gap-4 rounded-[14px] border border-edge-soft bg-surface px-6 py-14 text-center">
-      <span className="grid h-12 w-12 place-items-center rounded-full bg-danger/12 text-danger">
+ <div className="mx-auto flex max-w-sm flex-col items-center gap-4 rounded-md bg-surface px-6 py-14 text-center">
+      <span className="grid h-12 w-12 place-items-center rounded-full bg-danger/15 text-danger">
         <AlertCircle size={22} />
       </span>
       <p className="text-[13.5px] text-ink-muted">{message}</p>
@@ -160,8 +161,8 @@ function ErrorState({ message, onRetry }: { message: string; onRetry: () => void
 
 function EmptyState({ onShare }: { onShare: () => void }) {
   return (
-    <div className="mx-auto flex max-w-md flex-col items-center gap-4 rounded-[14px] border border-dashed border-edge bg-surface/40 px-6 py-16 text-center">
-      <span className="grid h-14 w-14 place-items-center rounded-full bg-accent/12 text-accent">
+    <div className="mx-auto flex max-w-md flex-col items-center gap-4 rounded-md border border-dashed border-edge bg-surface px-6 py-16 text-center">
+      <span className="grid h-14 w-14 place-items-center rounded-full bg-accent-soft text-accent">
         <Sparkles size={26} />
       </span>
       <div className="flex flex-col gap-1.5">
@@ -175,7 +176,7 @@ function EmptyState({ onShare }: { onShare: () => void }) {
         onClick={onShare}
         className="flex h-11 items-center gap-2 rounded-full bg-ink px-6 text-[13.5px] font-semibold text-canvas transition-[opacity,transform] hover:opacity-90 active:scale-[0.97] motion-reduce:active:scale-100"
       >
-        <Upload size={15} strokeWidth={2.2} /> Share a theme
+        <Upload size={16} strokeWidth={2.2} /> Share a theme
       </button>
     </div>
   );

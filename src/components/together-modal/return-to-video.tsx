@@ -1,4 +1,4 @@
-import { Play } from "lucide-react";
+import { Play } from "@/components/icons/play-filled";
 import type { SyncState } from "@/lib/together/protocol";
 
 export function ReturnToVideo({ media, onReturn }: { media: SyncState; onReturn: () => void }) {

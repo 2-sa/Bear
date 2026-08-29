@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { needsImdbForPoster, needsTmdbForPoster, rpdbPoster } from "@/lib/providers/rpdb";
 import { useTitlePoster } from "@/lib/title-poster";
 import {
@@ -203,7 +203,7 @@ const RATIO_AR: Record<Ratio, number> = {
   wide: 16 / 7,
 };
 
-export function Poster({
+function PosterBody({
   src,
   seed,
   ratio = "portrait",
@@ -271,7 +271,10 @@ export function Poster({
     const box = el.getBoundingClientRect();
     if (box.width <= 0) return;
     const need = Math.max(box.width, box.height * RATIO_AR[ratio]);
-    const t = Math.ceil(need * (window.devicePixelRatio || 1) * qMult);
+    // Capped at 2. An Android TV WebView reports devicePixelRatio 4 because it is
+    // describing the 4K panel, while the window it rasterises is 1920x1080, so the
+    // raw value asks for a bucket twice as wide and four times the pixels.
+    const t = Math.ceil(need * Math.min(2, window.devicePixelRatio || 1) * qMult);
     setTargetPx((prev) => (t > prev ? t : prev));
   }, [inView, qMult, ratio]);
   const rawCandidates = [src, ...(fallbacks ?? [])].filter((u): u is string => !!u);
@@ -463,6 +466,12 @@ export function Poster({
     </div>
   );
 }
+
+// Every arrow press on the Big Picture taste grid re-ran 40 Poster bodies for
+// props whose values had not changed, and a MutationObserver recorded no DOM
+// change from any of them. Call sites that pass children or onError inline will
+// still re-render; those are fresh objects every time by construction.
+export const Poster = memo(PosterBody);
 
 export function posterPlate(seed: string): string {
   return gradient(hash(seed) % 360);

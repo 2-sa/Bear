@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
-import { Play, X } from "lucide-react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { X } from "lucide-react";
+import { Play } from "@/components/icons/play-filled";
 import type { Meta } from "@/lib/cinemeta";
 import { useAuth } from "@/lib/auth";
 import { useHideAnime } from "@/lib/anime-hide";
@@ -43,26 +44,73 @@ function localToLibraryItem(e: LocalCwEntry): LibraryItem {
   };
 }
 
+// listLocalCw() is synchronous while the cloud library is not, so the first
+// merge is local-only. Consumers that must not flash a partial list wait on this.
+let cwReady = false;
+const readySubs = new Set<() => void>();
+
+// The latch is global but items is per mount, so a remount used to arrive with
+// ready already true and an empty list, and home rendered the local-only merge
+// for a frame before the cloud library landed. Holding the last resolved list
+// here means a remount starts correct instead of starting wrong.
+let cloudCache: LibraryItem[] = [];
+let cloudKey: string | null = null;
+
+function markCwReady(): void {
+  if (cwReady) return;
+  cwReady = true;
+  for (const fn of readySubs) fn();
+}
+
+// A different profile has a different library, so the cache cannot answer for
+// it and consumers have to wait again rather than show the outgoing profile's.
+function resetCwReady(): void {
+  if (!cwReady) return;
+  cwReady = false;
+  for (const fn of readySubs) fn();
+}
+
+export function useMobileCwReady(): boolean {
+  return useSyncExternalStore(
+    (cb) => {
+      readySubs.add(cb);
+      return () => void readySubs.delete(cb);
+    },
+    () => cwReady,
+    () => cwReady,
+  );
+}
+
 export function useMobileCw(limit = 14): LibraryItem[] {
   const { authKey } = useAuth();
   const { settings } = useSettings();
   const cwPerProfile = settings.cwPerProfile;
   const hideAnime = useHideAnime();
-  const [items, setItems] = useState<LibraryItem[]>([]);
+  const [items, setItems] = useState<LibraryItem[]>(() =>
+    authKey && cloudKey === authKey ? cloudCache : [],
+  );
   const [localVersion, setLocalVersion] = useState(0);
   const dismissVersion = useCwDismissVersion();
 
   useEffect(() => {
     if (!authKey) {
+      cloudKey = null;
+      cloudCache = [];
       setItems([]);
+      markCwReady();
       return;
     }
+    if (cloudKey === authKey) setItems(cloudCache);
+    else resetCwReady();
     let cancelled = false;
     library(authKey)
       .then((li) => {
+        cloudKey = authKey;
+        cloudCache = li;
         if (!cancelled) setItems(li);
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(markCwReady);
     return () => {
       cancelled = true;
     };

@@ -58,6 +58,80 @@ const FLAG: Record<string, string> = {
   Vietnamese: flagVie,
 };
 
+const LANG_COUNTRY: Record<string, string> = {
+  Indonesian: "id",
+  Greek: "gr",
+  Tamil: "in",
+  Telugu: "in",
+  Malayalam: "in",
+  Kannada: "in",
+  Bengali: "bd",
+  Marathi: "in",
+  Gujarati: "in",
+  Punjabi: "in",
+  Urdu: "pk",
+  Odia: "in",
+  Assamese: "in",
+  Nepali: "np",
+  Sinhala: "lk",
+  Malay: "my",
+  Filipino: "ph",
+  Burmese: "mm",
+  Khmer: "kh",
+  Lao: "la",
+  Persian: "ir",
+  Pashto: "af",
+  Azerbaijani: "az",
+  Georgian: "ge",
+  Armenian: "am",
+  Kazakh: "kz",
+  Uzbek: "uz",
+  Bulgarian: "bg",
+  Serbian: "rs",
+  Croatian: "hr",
+  Bosnian: "ba",
+  Slovak: "sk",
+  Slovenian: "si",
+  Lithuanian: "lt",
+  Latvian: "lv",
+  Estonian: "ee",
+  Icelandic: "is",
+  Irish: "ie",
+  Catalan: "es-ct",
+  Basque: "es-pv",
+  Galician: "es-ga",
+  Welsh: "gb-wls",
+  Maltese: "mt",
+  Albanian: "al",
+  Macedonian: "mk",
+  Belarusian: "by",
+  Swahili: "tz",
+  Amharic: "et",
+  Afrikaans: "za",
+  Hausa: "ng",
+  Yoruba: "ng",
+  Igbo: "ng",
+  Zulu: "za",
+};
+
+function FiFlag({ cc, h, title }: { cc: string; h: number; title?: string }) {
+  return (
+    <span
+      className={`fi fi-${cc}`}
+      title={title}
+      aria-label={title}
+      style={{
+        height: h,
+        width: h * 1.5,
+        borderRadius: 2,
+        backgroundSize: "cover",
+        boxShadow: "0 0 0 1px rgba(255,255,255,0.06), 0 1px 2px rgba(0,0,0,0.4)",
+        display: "block",
+      }}
+    />
+  );
+}
+
 export function countryFlagSrc(code: string): string | null {
   return regionFlagSrc(code);
 }
@@ -77,7 +151,7 @@ const LABEL_SIZE: Record<FlagSize, number> = {
 };
 
 export function languageHasFlag(language: string): boolean {
-  return language in FLAG;
+  return language in FLAG || language in LANG_COUNTRY;
 }
 
 export function flagSrc(language: string): string | null {
@@ -105,9 +179,10 @@ export function Flag({
   }
 
   const src = FLAG[language];
+  const cc = src ? undefined : LANG_COUNTRY[language];
   const h = FLAG_HEIGHT[size];
 
-  if (!src) {
+  if (!src && !cc) {
     return showLabel ? (
       <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-subtle">
         {language}
@@ -117,20 +192,24 @@ export function Flag({
 
   return (
     <span className="inline-flex items-center gap-1.5">
-      <img
-        src={src}
-        alt={language}
-        height={h}
-        style={{
-          height: h,
-          width: h * 1.5,
-          display: "block",
-          borderRadius: 2,
-          objectFit: "cover",
-          boxShadow: "0 0 0 1px rgba(255,255,255,0.06), 0 1px 2px rgba(0,0,0,0.4)",
-        }}
-        draggable={false}
-      />
+      {src ? (
+        <img
+          src={src}
+          alt={language}
+          height={h}
+          style={{
+            height: h,
+            width: h * 1.5,
+            display: "block",
+            borderRadius: 2,
+            objectFit: "cover",
+            boxShadow: "0 0 0 1px rgba(255,255,255,0.06), 0 1px 2px rgba(0,0,0,0.4)",
+          }}
+          draggable={false}
+        />
+      ) : (
+        <FiFlag cc={cc!} h={h} title={language} />
+      )}
       {showLabel && (
         <span
           className="font-semibold tracking-[0.01em] text-ink-muted"
@@ -172,7 +251,8 @@ export function FlagStack({
           );
         }
         const src = FLAG[lang];
-        if (!src) {
+        const cc = src ? undefined : LANG_COUNTRY[lang];
+        if (!src && !cc) {
           return (
             <span
               key={lang}
@@ -183,7 +263,7 @@ export function FlagStack({
             </span>
           );
         }
-        return (
+        return src ? (
           <img
             key={lang}
             src={src}
@@ -199,6 +279,8 @@ export function FlagStack({
             }}
             draggable={false}
           />
+        ) : (
+          <FiFlag key={lang} cc={cc!} h={h} title={lang} />
         );
       })}
       {extra > 0 && (

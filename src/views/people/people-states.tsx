@@ -25,7 +25,7 @@ export function LoadingState({ hero }: { hero: boolean }) {
 
 function HeroSkeleton() {
   return (
-    <div className="flex items-end gap-6 rounded-[28px] bg-surface/40 p-8 ring-1 ring-edge-soft">
+    <div className="flex items-end gap-6 rounded-2xl bg-surface/40 p-8 ring-1 ring-edge-soft">
       <div className="harbor-shimmer relative h-[188px] w-[128px] shrink-0 rounded-2xl" style={delayVar(0)} />
       <div className="flex min-w-0 flex-1 flex-col gap-3 pb-2">
         <div className="harbor-shimmer relative h-3 w-24 rounded-md" style={delayVar(60)} />

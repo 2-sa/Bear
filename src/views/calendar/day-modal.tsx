@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Clock, X } from "lucide-react";
 import { Poster, usePosterChain } from "@/components/poster";
 import type { CalendarItem } from "@/lib/calendar";
@@ -28,10 +29,10 @@ export function DayModal({
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  return (
+  return createPortal(
     <div
       onClick={onClose}
-      className="fixed inset-0 z-[140] flex animate-fade-in items-center justify-center bg-canvas/80 backdrop-blur-md"
+      className="fixed inset-0 z-[185] flex animate-fade-in items-center justify-center bg-canvas/80 backdrop-blur-md"
     >
       <div
         onClick={(e) => e.stopPropagation()}
@@ -65,7 +66,8 @@ export function DayModal({
           ))}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

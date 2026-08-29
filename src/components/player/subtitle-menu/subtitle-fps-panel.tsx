@@ -1,4 +1,5 @@
 import { ArrowLeft, Check, Loader2 } from "lucide-react";
+import { Dropdown } from "@/components/dropdown";
 import { useEffect, useRef, useState } from "react";
 import { useT } from "@/lib/i18n";
 import type { TrackInfo } from "@/lib/player/bridge";
@@ -167,32 +168,36 @@ export function SubtitleFpsPanel({
       </div>
 
       <div className="p-3">
-        <p className="text-[11px] font-bold uppercase text-ink-subtle">
+        <p className="text-[10.5px] font-medium uppercase tracking-wider text-ink-subtle">
           {tr("Subtitle source FPS")}
         </p>
         <p className="mt-0.5 text-[11.5px] leading-snug text-ink-muted">
           {tr("Choose the frame rate the subtitle was authored for.")}
         </p>
 
-        <select
-          value={customOpen ? "custom" : selectedValue}
-          disabled={disabled}
-          onChange={(event) => selectOption(event.currentTarget.value)}
-          aria-label={tr("Subtitle source FPS")}
-          className="mt-2 h-9 w-full rounded-md border border-edge-soft bg-canvas px-2 text-[12px] font-semibold text-ink outline-none transition-colors hover:bg-raised focus:border-accent disabled:cursor-not-allowed disabled:opacity-45"
-        >
-          <option value="default">{tr("No correction (default)")}</option>
-          <option value="auto">
-            {tr("Auto (match video)")}
-            {videoFps == null ? "" : ` · ${formatSubtitleFps(videoFps, 6)}`}
-          </option>
-          {SUBTITLE_FPS_PRESETS.map((preset) => (
-            <option key={preset.label} value={preset.label}>
-              {preset.label}
-            </option>
-          ))}
-          <option value="custom">{tr("Custom...")}</option>
-        </select>
+        <div className={`mt-2 ${disabled ? "pointer-events-none opacity-45" : ""}`}>
+          <Dropdown
+            size="sm"
+            value={customOpen ? "custom" : selectedValue}
+            onChange={selectOption}
+            className="w-full"
+            options={[
+              { value: "default", label: tr("No correction (default)") },
+              {
+                value: "auto",
+                label:
+                  videoFps == null
+                    ? tr("Auto (match video)")
+                    : `${tr("Auto (match video)")} · ${formatSubtitleFps(videoFps, 6)}`,
+              },
+              ...SUBTITLE_FPS_PRESETS.map((preset) => ({
+                value: preset.label,
+                label: preset.label,
+              })),
+              { value: "custom", label: tr("Custom...") },
+            ]}
+          />
+        </div>
 
         {customOpen && !loading && (
           <form
@@ -212,20 +217,20 @@ export function SubtitleFpsPanel({
               step="any"
               onChange={(event) => setDraft(event.currentTarget.value)}
               aria-label={tr("Custom subtitle FPS")}
-              className="h-8 min-w-0 flex-1 rounded-md border border-edge-soft bg-canvas px-2 text-end font-mono text-[12px] tabular-nums text-ink outline-none transition-colors focus:border-accent disabled:cursor-not-allowed disabled:opacity-45"
+              className="h-9 min-w-0 flex-1 rounded-md bg-canvas px-2.5 text-end font-mono text-[12.5px] tabular-nums text-ink ring-1 ring-inset ring-edge-soft outline-none transition-colors focus:ring-accent/50 disabled:cursor-not-allowed disabled:opacity-45"
             />
             <button
               type="submit"
               disabled={!availability.enabled || saving}
               aria-label={tr("Apply custom subtitle FPS")}
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-accent text-canvas transition-[filter] hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-45"
+              className="harbor-press-pop flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-ink text-canvas transition-transform disabled:cursor-not-allowed disabled:opacity-45"
             >
               <Check size={15} strokeWidth={2.5} />
             </button>
           </form>
         )}
 
-        <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5 text-[11.5px]">
+        <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 rounded-md bg-canvas/60 px-3 py-2.5 text-[11.5px]">
           <dt className="text-ink-muted">{tr("Video FPS")}</dt>
           <dd className="text-end font-mono font-semibold tabular-nums text-ink">
             {videoFps == null ? "-" : formatSubtitleFps(videoFps, 6)}
@@ -243,7 +248,7 @@ export function SubtitleFpsPanel({
 
       {(reason || error) && !loading && (
         <p
-          className="mx-3 mb-3 rounded-md border border-edge-soft bg-raised/50 px-2 py-1.5 text-[11.5px] leading-snug text-ink-muted"
+          className="mx-3 mb-3 rounded-md bg-canvas/60 px-2.5 py-2 text-[11.5px] leading-snug text-ink-muted ring-1 ring-inset ring-edge-soft"
           role={error ? "alert" : undefined}
         >
           {error ?? reason}

@@ -22,6 +22,7 @@ import {
   setRemoteCastDiscovering,
   setRemoteCastDevices,
   setRemoteHostConfig,
+  setRemoteHostName,
   setRemoteLibrary,
   setRemoteTrackers,
   subscribeRemoteSession,
@@ -280,6 +281,16 @@ export function RemoteHostMount() {
     setRemoteLibrary(hostLibrary);
     if (isTauri && enabled) pushSnapshot();
   }, [hostLibrary, enabled]);
+
+  useEffect(() => {
+    if (!isTauri) return;
+    void invoke<{ name: string }>("harbor_lan_identity")
+      .then((id) => {
+        setRemoteHostName(id.name);
+        if (enabled) pushSnapshot();
+      })
+      .catch(() => {});
+  }, [enabled]);
 
   useEffect(() => {
     if (!isTauri || !enabled) return;

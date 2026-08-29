@@ -1,4 +1,5 @@
-import { Ban, Search, Upload } from "lucide-react";
+import { Ban, Upload } from "lucide-react";
+import { Search } from "@/components/icons/search-icon";
 import { useMemo, useRef, useState } from "react";
 import { CHROME_ICONS } from "./chrome-icons";
 
@@ -35,8 +36,8 @@ export function IconPicker({
   return (
     <div className="flex flex-col gap-2 border-t border-edge-soft px-2.5 py-2.5">
       <div className="flex items-center gap-1.5">
-        <div className="flex h-8 flex-1 items-center gap-1.5 rounded-md border border-edge-soft bg-canvas/50 px-2 transition-colors focus-within:border-accent/60">
-          <Search size={13} className="shrink-0 text-ink-subtle" />
+        <div className="flex h-8 flex-1 items-center gap-1.5 rounded-md border border-edge-soft bg-canvas px-2 transition-colors focus-within:border-accent">
+          <Search size={14} className="shrink-0 text-ink-subtle" />
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
@@ -49,9 +50,9 @@ export function IconPicker({
           onClick={() => fileRef.current?.click()}
           onMouseEnter={() => setHover("__upload")}
           onMouseLeave={() => setHover(null)}
-          className="flex h-8 shrink-0 items-center gap-1 rounded-md border border-edge-soft px-2.5 text-[12px] font-medium text-ink-muted transition-colors hover:border-edge hover:text-ink"
+          className="flex h-8 shrink-0 items-center gap-1 rounded-md px-2.5 text-[12.5px] font-medium text-ink-muted transition-colors hover: hover:text-ink transition-colors focus:bg-elevated"
         >
-          <Upload size={13} strokeWidth={2} />
+          <Upload size={14} strokeWidth={2} />
           Upload
         </button>
         <input
@@ -86,7 +87,7 @@ export function IconPicker({
           </Tile>
         ))}
         {filtered.length === 0 && (
-          <p className="col-span-7 px-1 py-3 text-center text-[12px] text-ink-subtle">
+          <p className="col-span-7 px-1 py-3 text-center text-[12.5px] text-ink-subtle">
             No icons match that search. Try Upload.
           </p>
         )}
@@ -118,8 +119,8 @@ function Tile({
       onMouseLeave={() => onHover(false)}
       className={`flex aspect-square items-center justify-center rounded-md border transition-colors ${
         active
-          ? "border-accent/80 bg-accent/10 text-ink"
-          : "border-edge-soft text-ink-muted hover:border-edge hover:bg-canvas/40 hover:text-ink"
+          ? "border-accent bg-accent-soft text-ink"
+          : "border-edge-soft text-ink-muted hover:border-edge hover:bg-canvas hover:text-ink"
       }`}
     >
       {children}

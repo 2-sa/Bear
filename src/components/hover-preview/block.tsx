@@ -1,4 +1,5 @@
-import { ArrowUpRight, Bookmark, BookmarkCheck, Play } from "lucide-react";
+import { ArrowUpRight, Bookmark, BookmarkCheck } from "lucide-react";
+import { Play } from "@/components/icons/play-filled";
 import { useMemo, type ReactNode } from "react";
 import type { PreviewData } from "@/lib/hover-preview/preview-data";
 import { tmdbImdbCached } from "@/lib/providers/tmdb";

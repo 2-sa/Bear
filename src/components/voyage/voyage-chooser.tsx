@@ -4,9 +4,11 @@ import { VOYAGE_THEMES, THEME_PALETTE } from "@/lib/voyage/themes";
 import { startVoyage } from "@/lib/voyage/store";
 import type { VoyageTheme } from "@/lib/voyage/types";
 import { useT } from "@/lib/i18n";
+import { useSettings } from "@/lib/settings";
 
 export function VoyageChooser() {
   const t = useT();
+  const { settings } = useSettings();
   const [busy, setBusy] = useState<string | null>(null);
   const [len, setLen] = useState(5);
   const [error, setError] = useState<string | null>(null);
@@ -14,7 +16,7 @@ export function VoyageChooser() {
   const start = async (theme: VoyageTheme) => {
     setBusy(theme.id);
     setError(null);
-    const ok = await startVoyage(theme, len);
+    const ok = await startVoyage(theme, len, settings.tmdbKey ?? "");
     if (!ok) {
       setError(t("That route wouldn't chart. Try a different direction."));
       setBusy(null);
@@ -77,7 +79,7 @@ function ThemeTile({
       type="button"
       disabled={disabled}
       onClick={onPick}
-      className="group relative h-[132px] w-full overflow-hidden rounded-[10px] text-start ring-1 ring-edge-soft transition-[transform,box-shadow] duration-200 ease-out hover:will-change-transform hover:-translate-y-1 hover:shadow-[0_26px_50px_-24px_rgba(0,0,0,0.7)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/60 disabled:pointer-events-none disabled:opacity-70 motion-reduce:hover:translate-y-0"
+      className="group relative h-[132px] w-full overflow-hidden rounded-md text-start ring-1 ring-edge-soft transition-[transform,box-shadow] duration-200 ease-out hover:will-change-transform hover:-translate-y-1 hover:shadow-[0_26px_50px_-24px_rgba(0,0,0,0.7)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/60 disabled:pointer-events-none disabled:opacity-70 motion-reduce:hover:translate-y-0"
       style={{ background: `linear-gradient(150deg, ${pal.from}, ${pal.to})` }}
     >
       {theme.backdrop && (

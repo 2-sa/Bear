@@ -1,7 +1,6 @@
 import { ChevronDown, ChevronRight, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { HarborLoader } from "@/components/harbor-loader";
-import { ThreeLiquidGlassSurface } from "@/components/ThreeLiquidGlassSurface";
 import type { Meta } from "@/lib/cinemeta";
 import { useDebridClients } from "@/lib/debrid/registry";
 import { invalidatePreparedDebridLink } from "@/lib/debrid/playback-preparation";
@@ -38,7 +37,6 @@ function sameEpisode(a: PlayEpisode, b: PlayEpisode): boolean {
 }
 
 export function EpisodePanel({
-  engine,
   open,
   onClose,
   meta,
@@ -63,12 +61,11 @@ export function EpisodePanel({
   onRestart?: () => void;
 }) {
   const t = useT();
-  const isMpv = engine === "mpv";
   const { settings, update } = useSettings();
   const { openPicker, replacePlayerSrc } = useView();
   const queue = useQueue();
   const debrids = useDebridClients();
-  const { seasons, season, setSeason, episodes, loading } = useSeasonBrowser(
+  const { seasons, season, setSeason, episodes, loading, imdbRatings } = useSeasonBrowser(
     meta,
     currentEpisode,
     open,
@@ -236,7 +233,7 @@ export function EpisodePanel({
         role="dialog"
         aria-label={t("Up next")}
         className={`absolute top-0 h-full w-full max-w-[440px] overflow-hidden shadow-[0_30px_80px_-30px_rgba(0,0,0,0.85)] transition-transform duration-300 ease-out ${
-          corner === "top-left" || corner === "bottom-left" ? "left-0" : "right-0"
+          corner === "top-left" || corner === "bottom-left" ? "left-0 rounded-r-[12px]" : "right-0 rounded-l-[12px]"
         } ${
           open
             ? "translate-x-0"
@@ -245,44 +242,7 @@ export function EpisodePanel({
               : "translate-x-full"
         }`}
       >
-        <ThreeLiquidGlassSurface
-          radius={
-            corner === "top-left" || corner === "bottom-left" ? "0 24px 24px 0" : "24px 0 0 24px"
-          }
-          shaderRadius={0.42}
-          intensity={0.1}
-          refractionStrength={0.62}
-          lensStrength={0.9}
-          causticsStrength={0.06}
-          motionSpeed={0.5}
-          interactive={false}
-          alwaysActive
-          style={
-            isMpv
-              ? {
-                  backgroundColor: settings.liquidGlass
-                    ? "color-mix(in srgb, var(--color-canvas) 42%, transparent)"
-                    : "var(--color-canvas)",
-                  boxShadow:
-                    corner === "top-left" || corner === "bottom-left"
-                      ? "inset -1px 0 0 rgba(255,255,255,0.13), inset 0 1px 0 rgba(255,255,255,0.07), inset 0 -1px 0 rgba(0,0,0,0.08)"
-                      : "inset 1px 0 0 rgba(255,255,255,0.13), inset 0 1px 0 rgba(255,255,255,0.07), inset 0 -1px 0 rgba(0,0,0,0.08)",
-                }
-              : {
-                  background:
-                    "linear-gradient(145deg, rgba(255,255,255,0.055), rgba(10,12,18,0.16) 48%, rgba(255,255,255,0.018))",
-                  WebkitBackdropFilter:
-                    "blur(18px) saturate(1.38) brightness(1.025) contrast(1.025)",
-                  backdropFilter: "blur(18px) saturate(1.38) brightness(1.025) contrast(1.025)",
-                  boxShadow:
-                    corner === "top-left" || corner === "bottom-left"
-                      ? "inset -1px 0 0 rgba(255,255,255,0.13), inset 0 1px 0 rgba(255,255,255,0.07), inset 0 -1px 0 rgba(0,0,0,0.08)"
-                      : "inset 1px 0 0 rgba(255,255,255,0.13), inset 0 1px 0 rgba(255,255,255,0.07), inset 0 -1px 0 rgba(0,0,0,0.08)",
-                }
-          }
-          className={`h-full w-full ${corner === "top-left" || corner === "bottom-left" ? "border-r" : "border-l"} border-white/[0.10]`}
-          contentClassName="relative flex h-full w-full flex-col overflow-hidden"
-        >
+        <div className="relative flex h-full w-full flex-col overflow-hidden bg-canvas">
           {pickingFor ? (
             <StreamsView
               meta={meta}
@@ -329,45 +289,14 @@ export function EpisodePanel({
                       </button>
                     </div>
                   )}
-                  <ThreeLiquidGlassSurface
-                    radius="9999px"
-                    shaderRadius={0.5}
-                    intensity={0.1}
-                    refractionStrength={0.78}
-                    lensStrength={1}
-                    causticsStrength={0.05}
-                    motionSpeed={0.5}
-                    interactive={false}
-                    alwaysActive
-                    style={
-                      isMpv
-                        ? {
-                            background:
-                              "linear-gradient(145deg, rgba(255,255,255,0.075), rgba(255,255,255,0.018))",
-                            boxShadow:
-                              "inset 0 1px 0 rgba(255,255,255,0.16), inset 0 -1px 0 rgba(0,0,0,0.08)",
-                          }
-                        : {
-                            background:
-                              "linear-gradient(145deg, rgba(255,255,255,0.075), rgba(255,255,255,0.018))",
-                            WebkitBackdropFilter: "blur(12px) saturate(1.42) brightness(1.035)",
-                            backdropFilter: "blur(12px) saturate(1.42) brightness(1.035)",
-                            boxShadow:
-                              "inset 0 1px 0 rgba(255,255,255,0.16), inset 0 -1px 0 rgba(0,0,0,0.08)",
-                          }
-                    }
-                    className="h-11 w-11 shrink-0 border border-white/[0.12]"
-                    contentClassName="flex h-full w-full"
+                  <button
+                    aria-label={t("Close")}
+                    onClick={onClose}
+                    data-tv-modal-close
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/10 text-ink-muted transition-[color,background-color,transform] hover:bg-white/15 hover:text-ink active:scale-[0.96]"
                   >
-                    <button
-                      aria-label={t("Close")}
-                      onClick={onClose}
-                      data-tv-modal-close
-                      className="flex h-full w-full items-center justify-center rounded-full bg-transparent text-ink-muted transition-[color,transform] hover:text-ink active:scale-[0.96]"
-                    >
-                      <X size={18} strokeWidth={2.2} />
-                    </button>
-                  </ThreeLiquidGlassSurface>
+                    <X size={18} strokeWidth={2.2} />
+                  </button>
                 </div>
               </header>
               <div className="flex items-center justify-between gap-3 px-6 pb-3">
@@ -431,6 +360,7 @@ export function EpisodePanel({
                             <EpisodeRow
                               key={key}
                               episode={ep}
+                              imdbRating={imdbRatings.get(`${ep.season}:${ep.episode}`)}
                               expanded={expandedEp === key}
                               onToggle={() => setExpandedEp((cur) => (cur === key ? null : key))}
                               onPlay={() => {
@@ -467,7 +397,7 @@ export function EpisodePanel({
               </div>
             </>
           )}
-        </ThreeLiquidGlassSurface>
+        </div>
       </aside>
     </div>
   );

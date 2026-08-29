@@ -46,6 +46,8 @@ fn is_spa_path(raw_path: &str) -> bool {
         || raw_path.is_empty()
         || raw_path == "/remote"
         || raw_path.starts_with("/remote/")
+        || raw_path == "/setup"
+        || raw_path.starts_with("/setup/")
         || raw_path == "/reader"
         || raw_path.starts_with("/reader/")
 }

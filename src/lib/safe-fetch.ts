@@ -4,6 +4,41 @@ import { TrackerBlockedError, isBlockedUrl, noteBlocked } from "./privacy/blockl
 
 const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
+declare global {
+  interface Window {
+    __harborFetchCounts?: BridgeCounts;
+  }
+}
+
+type BridgeKind = "direct" | "directFail" | "harborFetch" | "pluginHttp";
+
+type BridgeCounts = {
+  total: Record<BridgeKind, number>;
+  byHost: Record<string, number>;
+};
+
+const bridgeCounts: BridgeCounts = {
+  total: { direct: 0, directFail: 0, harborFetch: 0, pluginHttp: 0 },
+  byHost: {},
+};
+if (typeof window !== "undefined") window.__harborFetchCounts = bridgeCounts;
+
+function urlOf(input: RequestInfo | URL): string {
+  if (typeof input === "string") return input;
+  if (input instanceof URL) return input.href;
+  return input.url;
+}
+
+function countCrossing(kind: BridgeKind, url: string): void {
+  bridgeCounts.total[kind] += 1;
+  let host = "other";
+  try {
+    host = new URL(String(url)).hostname;
+  } catch {}
+  const key = `${kind}:${host}`;
+  bridgeCounts.byHost[key] = (bridgeCounts.byHost[key] ?? 0) + 1;
+}
+
 // Torrentio + TorBox sit behind Cloudflare that blocks datacenter IPs, so on web they
 // MUST be fetched directly from the browser's residential IP (they set CORS, so it
 // works) — proxying them through the VPS gets 403'd. EVERYTHING ELSE routes through the
@@ -47,6 +82,43 @@ const PROXY_SUFFIXES = [
   ".deno.dev",
   ".dzcdn.net",
 ];
+
+const TAURI_DIRECT_HOSTS = new Set([
+  "v3-cinemeta.strem.io",
+  "api.ani.zip",
+  "anime-kitsu.strem.fun",
+  "kitsu.io",
+  "api.themoviedb.org",
+  "graphql.anilist.co",
+]);
+
+const DIRECT_FAIL_LIMIT = 2;
+const directFailures = new Map<string, number>();
+
+export function allowDirectHost(url: string): void {
+  try {
+    const u = new URL(url);
+    if (u.protocol !== "https:") return;
+    TAURI_DIRECT_HOSTS.add(u.hostname);
+  } catch {}
+}
+
+function tauriDirectHost(url: string): string | null {
+  try {
+    const host = new URL(url).hostname;
+    if (!TAURI_DIRECT_HOSTS.has(host)) return null;
+    if ((directFailures.get(host) ?? 0) >= DIRECT_FAIL_LIMIT) return null;
+    return host;
+  } catch {
+    return null;
+  }
+}
+
+function isCancellation(e: unknown): boolean {
+  const err = e as { name?: string; message?: string } | undefined;
+  if (err?.name === "AbortError" || err?.name === "TimeoutError") return true;
+  return /request cancell?ed/i.test(err?.message ?? "");
+}
 
 let proxyOriginCache: boolean | null = null;
 function webProxyAvailable(): boolean {
@@ -93,6 +165,7 @@ type HarborFetchResponse = {
 };
 
 async function tauriHarborFetch(input: string, init?: RequestInit): Promise<Response> {
+  countCrossing("harborFetch", input);
   const headers: Record<string, string> = {};
   if (init?.headers) {
     const h = new Headers(init.headers as HeadersInit);
@@ -139,6 +212,11 @@ function normalizeAbort(p: Promise<Response>): Promise<Response> {
   });
 }
 
+function pluginHttpFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  countCrossing("pluginHttp", urlOf(input));
+  return normalizeAbort(tauriFetchImpl(input, init) as Promise<Response>);
+}
+
 const HARBOR_FETCH_DEADLINE_MS = 35000;
 
 function withDeadline(p: Promise<Response>, signal?: AbortSignal | null): Promise<Response> {
@@ -182,18 +260,26 @@ export const safeFetch: typeof fetch = (input, init) => {
   }
   if (isTauri) {
     if (typeof input === "string") {
+      const directHost = tauriDirectHost(input);
+      if (directHost) {
+        countCrossing("direct", input);
+        const attempt = fetch(input, init).catch((e: unknown) => {
+          if (isCancellation(e)) throw e;
+          countCrossing("directFail", input);
+          directFailures.set(directHost, (directFailures.get(directHost) ?? 0) + 1);
+          return tauriHarborFetch(input, init);
+        });
+        return withDeadline(attempt, init?.signal);
+      }
       const exec = isIdempotent(init?.method)
-        ? tauriHarborFetch(input, init).catch(() =>
-            normalizeAbort(
-              tauriFetchImpl(input as string, init as RequestInit) as Promise<Response>,
-            ),
-          )
+        ? tauriHarborFetch(input, init).catch((e: unknown) => {
+            if (isCancellation(e)) throw e;
+            return pluginHttpFetch(input, init);
+          })
         : tauriHarborFetch(input, init);
       return withDeadline(exec, init?.signal);
     }
-    return normalizeAbort(
-      tauriFetchImpl(input as unknown as string, init as RequestInit) as Promise<Response>,
-    );
+    return pluginHttpFetch(input, init);
   }
   if (typeof input === "string") {
     const r = rewriteForWeb(input, init);

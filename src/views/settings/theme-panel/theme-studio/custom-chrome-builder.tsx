@@ -75,7 +75,7 @@ export function CustomChromeBuilder({
           value={config.brand}
           onChange={(e) => onChange({ ...config, brand: e.target.value })}
           placeholder="Harbor"
-          className="h-12 rounded-lg border border-edge-soft bg-canvas/60 px-3.5 text-[15px] text-ink placeholder:text-ink-subtle transition-colors focus:border-accent/70 focus:bg-canvas/80 focus:outline-none"
+          className="h-12 rounded-md bg-canvas px-3.5 text-[15px] text-ink placeholder:text-ink-subtle transition-colors /70 focus:bg-canvas focus:outline-none"
         />
       </Field>
 
@@ -96,7 +96,7 @@ export function CustomChromeBuilder({
             />
           ))}
           {enabled.length === 0 && (
-            <p className="px-1 text-[12px] text-ink-subtle">Add at least one item below.</p>
+            <p className="px-1 text-[12.5px] text-ink-subtle">Add at least one item below.</p>
           )}
         </div>
         {available.length > 0 && (
@@ -106,7 +106,7 @@ export function CustomChromeBuilder({
                 key={id}
                 type="button"
                 onClick={() => onChange({ ...config, items: [...enabled, id] })}
-                className="flex h-10 items-center gap-1 rounded-md border border-edge-soft bg-canvas/40 px-3 text-[13.5px] font-medium text-ink-muted transition-colors hover:border-edge hover:text-ink"
+ className="flex h-10 items-center gap-1 rounded-md bg-canvas px-3 text-[13.5px] font-medium text-ink-muted transition-colors hover:bg-surface hover:text-ink"
               >
                 <Plus size={12} strokeWidth={2.4} />
                 {NAV_LABELS[id]}
@@ -121,7 +121,7 @@ export function CustomChromeBuilder({
       <button
         type="button"
         onClick={onOpenCode}
-        className="flex h-12 items-center justify-center gap-2 rounded-lg border border-edge-soft text-[15px] font-semibold text-ink-muted transition-colors hover:border-edge hover:bg-elevated/40 hover:text-ink"
+ className="flex h-12 items-center justify-center gap-2 rounded-md text-[15px] font-semibold text-ink-muted transition-colors hover:bg-elevated hover:text-ink"
       >
         <Code2 size={16} strokeWidth={2.2} />
         Edit the HTML and CSS by hand
@@ -131,7 +131,7 @@ export function CustomChromeBuilder({
         <button
           type="button"
           onClick={onRegenerate}
-          className="flex h-8 items-center justify-center gap-1.5 text-[12px] font-medium text-ink-subtle transition-colors hover:text-ink-muted"
+          className="flex h-8 items-center justify-center gap-1.5 text-[12.5px] font-medium text-ink-subtle transition-colors hover:text-ink-muted"
         >
           <RotateCcw size={12} strokeWidth={2.2} />
           Rebuild from the visual builder
@@ -168,15 +168,15 @@ function MenuItemRow({
   const hasIcon = isImage || !!CurrentIcon;
 
   return (
-    <div className="flex flex-col rounded-lg border border-edge-soft bg-canvas/50">
+ <div className="flex flex-col rounded-md bg-canvas">
       <div className="flex items-center gap-1 px-2.5 py-2">
         <button
           type="button"
           onClick={() => setPicking((v) => !v)}
           aria-label="Choose icon"
-          className={`flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg border transition-colors ${
+          className={`flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md border transition-colors ${
             picking
-              ? "border-accent/70 text-ink"
+              ? "border-accent text-ink"
               : hasIcon
                 ? "border-edge-soft text-ink hover:border-edge"
                 : "border-dashed border-edge-soft text-ink-subtle hover:border-edge hover:text-ink-muted"
@@ -187,14 +187,14 @@ function MenuItemRow({
           ) : CurrentIcon ? (
             <CurrentIcon size={18} strokeWidth={2} />
           ) : (
-            <Shapes size={15} strokeWidth={2} />
+            <Shapes size={16} strokeWidth={2} />
           )}
         </button>
         <input
           value={label}
           onChange={(e) => onRename(e.target.value)}
           aria-label="Rename item"
-          className="min-w-0 flex-1 rounded-md bg-transparent px-1.5 py-1 text-[15px] font-medium text-ink outline-none transition-colors hover:bg-canvas/40 focus:bg-canvas/55"
+          className="min-w-0 flex-1 rounded-md bg-transparent px-1.5 py-1 text-[15px] font-medium text-ink outline-none transition-colors hover:bg-canvas focus:bg-canvas"
         />
         <IconBtn label="Move up" disabled={isFirst} onClick={onMoveUp}>
           <ChevronUp size={14} strokeWidth={2.4} />
@@ -203,7 +203,7 @@ function MenuItemRow({
           <ChevronDown size={14} strokeWidth={2.4} />
         </IconBtn>
         <IconBtn label="Remove" onClick={onRemove}>
-          <X size={13} strokeWidth={2.4} />
+          <X size={14} strokeWidth={2.4} />
         </IconBtn>
       </div>
       {picking && (
@@ -222,7 +222,7 @@ function MenuItemRow({
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <span className="text-[12px] font-semibold uppercase tracking-[0.14em] text-ink-subtle">
+      <span className="text-[12.5px] font-semibold uppercase tracking-[0.14em] text-ink-subtle">
         {label}
       </span>
       {children}
@@ -245,10 +245,10 @@ function PosButton({
     <button
       type="button"
       onClick={onClick}
-      className={`flex h-16 flex-col items-center justify-center gap-1.5 rounded-lg border text-[13px] font-semibold transition-all ${
+      className={`flex h-16 flex-col items-center justify-center gap-1.5 rounded-md border text-[13px] font-semibold transition ${
         active
-          ? "border-accent/80 bg-canvas/40 text-ink"
-          : "border-edge-soft bg-canvas/30 text-ink-muted hover:border-edge hover:text-ink"
+          ? "border-accent bg-canvas text-ink"
+          : "border-edge-soft bg-canvas text-ink-muted hover:border-edge hover:text-ink"
       }`}
     >
       {icon}
@@ -274,7 +274,7 @@ function IconBtn({
       onClick={onClick}
       disabled={disabled}
       aria-label={label}
-      className="flex h-9 w-9 items-center justify-center rounded-lg text-ink-subtle transition-colors hover:bg-raised hover:text-ink disabled:opacity-25 disabled:hover:bg-transparent"
+      className="flex h-9 w-9 items-center justify-center rounded-md text-ink-subtle transition-colors hover:bg-raised hover:text-ink disabled:opacity-25 disabled:hover:bg-transparent"
     >
       {children}
     </button>

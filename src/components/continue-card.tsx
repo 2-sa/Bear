@@ -1,5 +1,6 @@
 import { memo, useEffect, useMemo, useRef, useState } from "react";
-import { Check, Play, X } from "lucide-react";
+import { Check, X } from "lucide-react";
+import { Play } from "@/components/icons/play-filled";
 import simklLogo from "@/assets/simkl.png";
 import { meta as fetchMeta, narrowMediaType, type Meta } from "@/lib/cinemeta";
 import { animeKitsuMeta, type AnimeKitsuVideo } from "@/lib/providers/anime-kitsu-addon";
@@ -514,9 +515,7 @@ export const ContinueCard = memo(function ContinueCard({
               background:
                 "linear-gradient(145deg, rgba(8,12,18,0.50), rgba(8,12,18,0.38) 52%, rgba(8,12,18,0.44))",
             }}
-            style={{
-              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.10), inset 0 -1px 0 rgba(0,0,0,0.05)",
-            }}
+            style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.10), inset 0 -1px 0 rgba(0,0,0,0.05)" }}
             className="pointer-events-none h-14 w-14 scale-95 rounded-full border border-white/[0.10] opacity-0 transition-[opacity,transform] duration-[120ms] group-hover:pointer-events-auto group-hover:scale-100 group-hover:opacity-100 focus-within:pointer-events-auto focus-within:scale-100 focus-within:opacity-100"
             contentClassName="flex h-full w-full"
           >
@@ -552,8 +551,8 @@ export const ContinueCard = memo(function ContinueCard({
       >
         {displayTitle}
       </button>
-      {onDismiss &&
-        (settings.liquidGlass ? (
+      {onDismiss && (
+        settings.liquidGlass ? (
           <div className="absolute end-0.5 top-0.5 z-10 flex h-11 w-11 items-center justify-center">
             <ThreeLiquidGlassSurface
               radius="9999px"
@@ -563,9 +562,7 @@ export const ContinueCard = memo(function ContinueCard({
                 background:
                   "linear-gradient(145deg, rgba(8,12,18,0.50), rgba(8,12,18,0.38) 52%, rgba(8,12,18,0.44))",
               }}
-              style={{
-                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.10), inset 0 -1px 0 rgba(0,0,0,0.05)",
-              }}
+              style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.10), inset 0 -1px 0 rgba(0,0,0,0.05)" }}
               className="pointer-events-none h-9 w-9 scale-95 rounded-full border border-white/[0.09] opacity-0 transition-[opacity,transform] duration-[120ms] group-hover:pointer-events-auto group-hover:scale-100 group-hover:opacity-100 focus-within:pointer-events-auto focus-within:scale-100 focus-within:opacity-100"
               contentClassName="flex h-full w-full"
             >
@@ -596,7 +593,8 @@ export const ContinueCard = memo(function ContinueCard({
               <X size={20} strokeWidth={2.4} />
             </span>
           </button>
-        ))}
+        )
+      )}
     </div>
   );
 });

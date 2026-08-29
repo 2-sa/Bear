@@ -142,7 +142,7 @@ export function MemoryMatch() {
               }}
             />
           ))}
-          <div className="kids-card flex flex-col items-center gap-4 rounded-[28px] border-4 border-[#ffd166] bg-white/95 px-12 py-10 text-center">
+          <div className="kids-card flex flex-col items-center gap-4 rounded-2xl border-4 border-[#ffd166] bg-white/95 px-12 py-10 text-center">
             <PartyPopper size={44} className="text-[#e08900]" strokeWidth={2} />
             <p className="font-display text-[30px] font-medium text-[#123a52]">You found them all!</p>
             <p className="text-[16px] font-semibold text-[#3c6a84]">{moves} moves. Amazing memory!</p>

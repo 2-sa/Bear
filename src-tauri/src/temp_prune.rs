@@ -10,7 +10,9 @@ fn is_updater_dir(name: &str) -> bool {
 }
 
 fn is_orphan_dir(name: &str) -> bool {
-    name.starts_with("harbor-hls-") || name == "harbor-castsubs"
+    name.starts_with("harbor-hls-")
+        || name.starts_with("harbor-update-")
+        || name == "harbor-castsubs"
 }
 
 pub fn sweep_temp() {
@@ -125,6 +127,7 @@ mod tests {
     fn matches_only_harbor_orphans() {
         assert!(is_orphan_dir("harbor-hls-1234"));
         assert!(is_orphan_dir("harbor-castsubs"));
+        assert!(is_orphan_dir("harbor-update-0.9.121"));
         assert!(!is_orphan_dir("harbor-trailers"));
         assert!(!is_orphan_dir("hls-cache"));
     }

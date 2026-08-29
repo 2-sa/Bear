@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
-import { BookOpen, GalleryVerticalEnd, Popcorn } from "lucide-react";
+import { Popcorn } from "lucide-react";
+import { NavGlyph } from "@/components/icons/nav-glyph";
 import { useUnseenReminderCount } from "@/lib/reminders";
 import { AddonsIcon } from "@/components/icons/addons-icon";
 import { CatalogsIcon } from "@/components/icons/catalogs-icon";
@@ -73,12 +74,12 @@ export const NAV_ITEMS: NavItem[] = [
   { id: "shows", label: "nav.shows", render: (active) => <TvIcon active={active} />, view: "shows", parentalKey: "shows" },
   { id: "kids", label: "nav.kids", render: (active) => <Popcorn size={26} strokeWidth={2.2} className={active ? "" : "opacity-70"} />, view: "kids" },
   { id: "anime", label: "nav.anime", render: (active) => <AnimeIcon active={active} />, view: "anime", hideKey: "anime", parentalKey: "anime" },
-  { id: "manga", label: "nav.manga", render: (active) => <BookOpen size={24} strokeWidth={2.2} className={active ? "" : "opacity-70"} />, view: "manga", hideKey: "manga", parentalKey: "anime" },
+  { id: "manga", label: "nav.manga", render: () => <NavGlyph name="manga" className="h-[26px] w-[26px] p-[2px]" />, view: "manga", hideKey: "manga", parentalKey: "anime" },
   { id: "live", label: "nav.live", render: (active) => <LiveTvIcon active={active} />, view: "live", hideKey: "liveTv", parentalKey: "liveTv" },
   { id: "vod", label: "nav.playlists", render: (active) => <PlaylistVodIcon active={active} />, view: "vod" },
   { id: "calendar", label: "nav.calendar", render: (active) => <CalendarNavIcon active={active} />, view: "calendar", parentalKey: "calendar" },
   { id: "library", label: "nav.library", render: (active) => <LibraryIcon active={active} />, view: "library", parentalKey: "library" },
-  { id: "collections", label: "Collections", render: (active) => <GalleryVerticalEnd size={24} strokeWidth={2.2} className={active ? "" : "opacity-70"} />, view: "collections-hub" },
+  { id: "collections", label: "Collections", render: () => <NavGlyph name="collections" className="h-[26px] w-[26px] p-[2px]" />, view: "collections-hub" },
   { id: "downloads", label: "nav.downloads", render: (active) => <DownloadsNavIcon active={active} />, view: "downloads" },
   { id: "addons", label: "nav.addons", render: (active) => <AddonsIcon active={active} />, view: "addons", parentalKey: "addons" },
   { id: "settings", label: "nav.settings", render: (active) => <SettingsIcon active={active} />, view: "settings", pinGated: true },

@@ -1,4 +1,5 @@
-import { BarChart3, Bookmark, Clock, Eye, EyeOff, HardDrive, Layers, Library, Star } from "lucide-react";
+import { BarChart3, Bookmark, Clock, Eye, EyeOff, HardDrive, Library, Star } from "lucide-react";
+import { UiIcon } from "@/components/ui-icon";
 import { useEffect, useMemo, useRef, useState } from "react";
 import traktLogo from "@/assets/trakt.svg";
 import anilistLogo from "@/assets/anilist.png";
@@ -252,7 +253,7 @@ function Header({
           {t("Local")}
         </TabBtn>
         <TabBtn active={tab === "lists"} onClick={() => onTab("lists")}>
-          <Layers size={14} strokeWidth={2.2} />
+          <UiIcon name="list" className="h-3.5 w-3.5" />
           {t("My Lists")}
         </TabBtn>
         <TabBtn active={tab === "favorites"} onClick={() => onTab("favorites")}>

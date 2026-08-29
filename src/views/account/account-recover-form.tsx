@@ -148,7 +148,7 @@ export function AccountRecoverForm({
           <button
             type="submit"
             disabled={!keyReady || busy}
-            className="flex h-11 items-center justify-center gap-2 rounded-[10px] bg-accent text-[14px] font-semibold text-canvas transition-all duration-150 hover:opacity-90 active:scale-[0.99] disabled:opacity-40 disabled:active:scale-100"
+            className="flex h-11 items-center justify-center gap-2 rounded-md bg-accent text-[14px] font-semibold text-canvas transition-all duration-150 hover:opacity-90 active:scale-[0.99] disabled:opacity-40 disabled:active:scale-100"
           >
             {busy && <Loader2 size={16} className="animate-spin" />}
             {t("Reset password")}
@@ -198,7 +198,7 @@ export function AccountRecoverForm({
           <button
             type="submit"
             disabled={!usernameOk || busy}
-            className="flex h-11 items-center justify-center gap-2 rounded-[10px] bg-accent text-[14px] font-semibold text-canvas transition-all duration-150 hover:opacity-90 active:scale-[0.99] disabled:opacity-40 disabled:active:scale-100"
+            className="flex h-11 items-center justify-center gap-2 rounded-md bg-accent text-[14px] font-semibold text-canvas transition-all duration-150 hover:opacity-90 active:scale-[0.99] disabled:opacity-40 disabled:active:scale-100"
           >
             {busy && <Loader2 size={16} className="animate-spin" />}
             {t("Send code")}
@@ -235,7 +235,7 @@ export function AccountRecoverForm({
           <button
             type="submit"
             disabled={!confirmReady || busy}
-            className="flex h-11 items-center justify-center gap-2 rounded-[10px] bg-accent text-[14px] font-semibold text-canvas transition-all duration-150 hover:opacity-90 active:scale-[0.99] disabled:opacity-40 disabled:active:scale-100"
+            className="flex h-11 items-center justify-center gap-2 rounded-md bg-accent text-[14px] font-semibold text-canvas transition-all duration-150 hover:opacity-90 active:scale-[0.99] disabled:opacity-40 disabled:active:scale-100"
           >
             {busy && <Loader2 size={16} className="animate-spin" />}
             {t("Reset password")}

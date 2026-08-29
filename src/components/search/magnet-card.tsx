@@ -1,4 +1,5 @@
-import { AlertCircle, FileVideo, Loader2, Magnet, Play } from "lucide-react";
+import { AlertCircle, FileVideo, Loader2, Magnet } from "lucide-react";
+import { Play } from "@/components/icons/play-filled";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { parse } from "parse-torrent-title";
 import { awaitCastServerReady, remoteStreamServerUrl } from "@/lib/stremio-server";

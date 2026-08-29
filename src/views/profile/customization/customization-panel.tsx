@@ -102,7 +102,7 @@ export function CustomizationPanel({
             <button
               onClick={onClose}
               aria-label="Back"
-              className="flex h-11 w-11 items-center justify-center rounded-[10px] text-ink-muted transition-colors hover:bg-elevated"
+              className="flex h-11 w-11 items-center justify-center rounded-md text-ink-muted transition-colors hover:bg-elevated"
             >
               <ArrowLeft size={20} />
             </button>
@@ -111,13 +111,13 @@ export function CustomizationPanel({
           <div className="flex shrink-0 items-center gap-2">
             <button
               onClick={openPreview}
-              className="inline-flex min-h-11 items-center gap-2 rounded-[10px] px-4 text-[14px] font-medium text-ink ring-1 ring-edge transition-colors hover:bg-elevated"
+              className="inline-flex min-h-11 items-center gap-2 rounded-md px-4 text-[14px] font-medium text-ink ring-1 ring-edge transition-colors hover:bg-elevated"
             >
               <Eye size={18} /> Preview
             </button>
             <button
               onClick={onClose}
-              className="inline-flex min-h-11 items-center rounded-[10px] px-4 text-[14px] font-medium text-ink-muted transition-colors hover:bg-elevated"
+              className="inline-flex min-h-11 items-center rounded-md px-4 text-[14px] font-medium text-ink-muted transition-colors hover:bg-elevated"
             >
               Cancel
             </button>
@@ -125,7 +125,7 @@ export function CustomizationPanel({
               <button
                 onClick={() => void save()}
                 disabled={saving}
-                className="inline-flex min-h-11 items-center gap-2 rounded-[10px] bg-accent px-5 text-[14px] font-semibold text-canvas transition-opacity hover:opacity-90 disabled:opacity-40"
+                className="inline-flex min-h-11 items-center gap-2 rounded-md bg-accent px-5 text-[14px] font-semibold text-canvas transition-opacity hover:opacity-90 disabled:opacity-40"
               >
                 <Check size={18} /> {saving ? "Saving" : "Save"}
               </button>

@@ -60,7 +60,7 @@ export function DownloadsSection() {
         value={settings.downloadCreateFolders}
         onChange={(v) => update({ downloadCreateFolders: v })}
       />
-      <div className="flex items-center justify-between gap-3 rounded-xl border border-edge-soft bg-canvas/40 px-4 py-3">
+ <div className="flex items-center justify-between gap-3 rounded-md bg-canvas px-4 py-3">
         <div className="flex min-w-0 flex-col gap-0.5">
           <span className="text-[11.5px] font-semibold uppercase tracking-[0.16em] text-ink-subtle">
             {isCustom ? "Custom location" : "System default"}
@@ -73,9 +73,9 @@ export function DownloadsSection() {
           <button
             type="button"
             onClick={revealCurrent}
-            className="flex h-9 shrink-0 items-center gap-1.5 rounded-lg border border-edge-soft px-3 text-[12.5px] font-medium text-ink-muted transition-colors hover:border-edge hover:text-ink"
+ className="flex h-9 shrink-0 items-center gap-1.5 rounded-md px-3 text-[12.5px] font-medium text-ink-muted transition-colors hover:bg-canvas hover:text-ink"
           >
-            <FolderOpen size={13} strokeWidth={2.2} />
+            <FolderOpen size={14} strokeWidth={2.2} />
             Open
           </button>
         )}
@@ -84,7 +84,7 @@ export function DownloadsSection() {
         <button
           type="button"
           onClick={pickFolder}
-          className="flex h-10 items-center gap-2 rounded-lg bg-ink px-4 text-[13px] font-semibold text-canvas transition-transform hover:scale-[1.02] active:scale-[0.97]"
+          className="flex h-10 items-center gap-2 rounded-md bg-ink px-4 text-[13px] font-semibold text-canvas transition-transform hover:scale-[1.02] active:scale-[0.97]"
         >
           Choose folder
         </button>
@@ -92,9 +92,9 @@ export function DownloadsSection() {
           <button
             type="button"
             onClick={resetToDefault}
-            className="flex h-10 items-center gap-1.5 rounded-lg border border-edge-soft px-3 text-[12.5px] font-medium text-ink-muted transition-colors hover:border-edge hover:text-ink"
+ className="flex h-10 items-center gap-1.5 rounded-md px-3 text-[12.5px] font-medium text-ink-muted transition-colors hover:bg-canvas hover:text-ink"
           >
-            <RotateCcw size={13} strokeWidth={2.2} />
+            <RotateCcw size={14} strokeWidth={2.2} />
             Reset to default
           </button>
         )}

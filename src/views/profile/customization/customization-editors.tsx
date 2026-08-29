@@ -3,7 +3,7 @@ import { CANVAS_MAX, CANVAS_MIN, IMAGE_URL_MAX, SUGGESTED_FONTS } from "./custom
 import { FaviconField } from "./favicon-field";
 
 const inputCls =
-  "w-full min-h-11 rounded-[10px] bg-elevated px-3 text-[14px] text-ink outline-none ring-1 ring-edge-soft placeholder:text-ink-subtle focus:ring-edge";
+  "w-full min-h-11 rounded-md bg-elevated px-3 text-[14px] text-ink outline-none ring-1 ring-edge-soft placeholder:text-ink-subtle focus:ring-edge";
 
 function Row({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
@@ -28,7 +28,7 @@ export function CustomizationEditors({
 }) {
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3 rounded-[10px] bg-elevated px-3 py-2.5 ring-1 ring-edge-soft">
+      <div className="flex items-center justify-between gap-3 rounded-md bg-elevated px-3 py-2.5 ring-1 ring-edge-soft">
         <div className="min-w-0">
           <div className="text-[13px] font-medium text-ink">Show customization to visitors</div>
           <div className="text-[12px] text-ink-subtle">Off keeps your font, background, and canvas as a private preview.</div>
@@ -107,7 +107,7 @@ export function CustomizationEditors({
         />
       </Row>
 
-      <div className="flex items-center justify-between gap-3 rounded-[10px] bg-elevated px-3 py-2.5 ring-1 ring-edge-soft">
+      <div className="flex items-center justify-between gap-3 rounded-md bg-elevated px-3 py-2.5 ring-1 ring-edge-soft">
         <div className="min-w-0">
           <div className="text-[13px] font-medium text-ink">Hide top banner</div>
           <div className="text-[12px] text-ink-subtle">Let your full page background show without the top cover.</div>
@@ -126,7 +126,7 @@ export function CustomizationEditors({
         </button>
       </div>
 
-      <div className="flex items-center justify-between gap-3 rounded-[10px] bg-elevated px-3 py-2.5 ring-1 ring-edge-soft">
+      <div className="flex items-center justify-between gap-3 rounded-md bg-elevated px-3 py-2.5 ring-1 ring-edge-soft">
         <div className="min-w-0">
           <div className="text-[13px] font-medium text-ink">Hide card titles</div>
           <div className="text-[12px] text-ink-subtle">Drop the About and Custom labels so an embed fills the card cleanly.</div>

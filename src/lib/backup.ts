@@ -1,4 +1,5 @@
 import { downloadText } from "@/lib/download-text";
+import { buildSyncBackup, type SyncBackup } from "@/lib/profile-sync/backup-payload";
 import { loadBgImage, saveBgImage } from "@/lib/theme-storage";
 import { readAllProfilesIdentity } from "@/lib/profiles";
 import { activeProfileId } from "@/lib/active-profile-id";
@@ -255,6 +256,12 @@ export type Backup = {
   bgImages?: Record<string, string>;
   /** @deprecated legacy single-image field from before per-profile backgrounds; still read on restore */
   bgImage?: string | null;
+  /**
+   * A resolved snapshot of everything account sync owns, so the server side never
+   * becomes the only copy of a household's customisation. That is the standing wound on
+   * the :8799 community sync service and it must not repeat here with higher stakes.
+   */
+  sync?: SyncBackup;
 };
 
 function isPortable(key: string): boolean {
@@ -314,6 +321,7 @@ export async function buildBackup(selected?: BackupSectionKey[]): Promise<Backup
     app: typeof __APP_VERSION__ === "string" ? __APP_VERSION__ : "dev",
     exportedAt: new Date().toISOString(),
     data,
+    sync: buildSyncBackup(),
     sections: sectionSet
       ? (ALL_SECTION_KEYS.filter((k) => sectionSet.has(k)) as BackupSectionKey[])
       : [...ALL_SECTION_KEYS],

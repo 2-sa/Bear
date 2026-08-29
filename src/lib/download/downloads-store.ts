@@ -12,6 +12,8 @@ import {
   pauseTorrentUsage,
   releaseTorrentUsage,
   retainTorrentUsage,
+  torrentEnginePause,
+  torrentEngineSelectSet,
 } from "@/lib/torrent/local-engine";
 
 export type DownloadItem = {
@@ -142,6 +144,25 @@ async function uniquePath(path: string): Promise<string> {
 function randomId(): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) return crypto.randomUUID();
   return `${Date.now().toString(36)}${Math.floor(performance.now()).toString(36)}`;
+}
+
+// P2P engine downloads read from a shared torrent via /stream/<hash>/<idx>.
+// Keep that torrent selecting exactly the files that still have an active
+// download; when none are left, pause it so it stops pulling the rest of a pack.
+function reconcileEngineSelection(hash: string): void {
+  const wanted = new Set<number>();
+  for (const d of items.values()) {
+    if (d.status !== "downloading") continue;
+    const ref = localEngineStreamRef(d.url);
+    if (ref && ref.infoHash.toLowerCase() === hash) wanted.add(ref.fileIdx);
+  }
+  if (wanted.size === 0) void torrentEnginePause(hash);
+  else void torrentEngineSelectSet(hash, [...wanted]);
+}
+
+function reconcileFromUrl(url: string): void {
+  const ref = localEngineStreamRef(url);
+  if (ref) reconcileEngineSelection(ref.infoHash.toLowerCase());
 }
 
 function torrentOwnerId(id: string): string {
@@ -325,6 +346,7 @@ function beginDownload(id: string): void {
         requestHeaders.delete(id);
         if (current) releaseDownloadTorrent(current);
       }
+      reconcileFromUrl(item.url);
     });
   completions.set(id, completion);
 }
@@ -337,6 +359,7 @@ export function cancelDownload(id: string): void {
   requestHeaders.delete(id);
   handles.get(id)?.abort();
   if (wasPaused) releaseDownloadTorrent(item);
+  reconcileFromUrl(item.url);
 }
 
 export function pauseDownload(id: string): void {
@@ -355,6 +378,8 @@ export async function resumeDownload(id: string): Promise<void> {
   if (items.get(id)?.status !== "paused" || handles.has(id)) return;
   patch(id, { status: "downloading", error: null, bytesPerSec: 0 });
   beginDownload(id);
+  const url = items.get(id)?.url;
+  if (url) reconcileFromUrl(url);
 }
 
 export function removeDownload(id: string): void {
@@ -367,6 +392,7 @@ export function removeDownload(id: string): void {
   if (items.delete(id)) rebuild();
   if (item) {
     releaseDownloadTorrent(item);
+    reconcileFromUrl(item.url);
     void remove(item.path).catch(() => {});
     void remove(`${item.path}.part`).catch(() => {});
   }

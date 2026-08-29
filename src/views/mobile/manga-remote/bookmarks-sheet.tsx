@@ -54,7 +54,7 @@ export function BookmarksSheet({ open, onClose }: { open: boolean; onClose: () =
     >
       <style>{SHEET_EXIT_CSS}</style>
       <div
-        className={`flex max-h-[78vh] flex-col rounded-t-[28px] border-t border-edge-soft/60 bg-elevated ${leaving ? "harbor-sheet-panel-out" : reduce ? "" : "animate-in slide-in-from-bottom-4 duration-300"}`}
+        className={`flex max-h-[78vh] flex-col rounded-t-2xl border-t border-edge-soft/60 bg-elevated ${leaving ? "harbor-sheet-panel-out" : reduce ? "" : "animate-in slide-in-from-bottom-4 duration-300"}`}
         style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 20px)", ...panelStyle }}
         onClick={(e) => e.stopPropagation()}
       >

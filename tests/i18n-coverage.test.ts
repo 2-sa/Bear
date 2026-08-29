@@ -4,9 +4,6 @@ import assert from "node:assert/strict";
 import { readdirSync, readFileSync } from "node:fs";
 // @ts-expect-error Node test types are intentionally outside the browser-only tsconfig.
 import test from "node:test";
-import ptLocale from "../src/lib/i18n/locales/pt.ts";
-import arLocale from "../src/lib/i18n/locales/ar.ts";
-import ruLocale from "../src/lib/i18n/locales/ru.ts";
 import ptCoverage from "../src/lib/i18n/locales/pt/coverage.ts";
 import arCoverage from "../src/lib/i18n/locales/ar/coverage.ts";
 import ruCoverage from "../src/lib/i18n/locales/ru/coverage.ts";
@@ -14,8 +11,8 @@ import ruCoverage from "../src/lib/i18n/locales/ru/coverage.ts";
 const ROOT = new URL("../", import.meta.url);
 const LANGS = ["pt", "ar", "ru"] as const;
 const CALL = /\b(?:t|tr)\(\s*(["'])((?:\\.|(?!\1)[^\\])*?)\1/g;
+const KEY = /^\s*"((?:\\.|[^"\\])*)"\s*:/gm;
 const COVERAGE = { pt: ptCoverage, ar: arCoverage, ru: ruCoverage };
-const LOCALES = { pt: ptLocale, ar: arLocale, ru: ruLocale };
 
 function walk(dir: URL, out: URL[] = []): URL[] {
   for (const e of readdirSync(dir, { withFileTypes: true })) {
@@ -43,7 +40,17 @@ function uiStrings(): Set<string> {
 }
 
 function localeKeys(lang: string): Set<string> {
-  return new Set(Object.keys(LOCALES[lang as keyof typeof LOCALES]));
+  const out = new Set<string>();
+  const files = [new URL(`src/lib/i18n/locales/${lang}.ts`, ROOT)];
+  const dir = new URL(`src/lib/i18n/locales/${lang}/`, ROOT);
+  for (const e of readdirSync(dir)) if (e.endsWith(".ts")) files.push(new URL(e, dir));
+  for (const f of files) {
+    const src = readFileSync(f, "utf8");
+    let m: RegExpExecArray | null;
+    KEY.lastIndex = 0;
+    while ((m = KEY.exec(src))) out.add(m[1].replace(/\\"/g, '"'));
+  }
+  return out;
 }
 
 const strings = uiStrings();
@@ -61,6 +68,25 @@ test("every translated language covers every UI string", () => {
         .map((s) => JSON.stringify(s))
         .join(", ")}`,
     );
+  }
+});
+
+test("genre names reach the catalogs even though nothing passes them as a literal", () => {
+  const tags = readFileSync(new URL("src/lib/feed/tags.ts", ROOT), "utf8");
+  const block = (name: string) => {
+    const a = tags.indexOf(`export const ${name}`);
+    return tags.slice(a, tags.indexOf("};", a));
+  };
+  const ENTRY = /^\s*(?:"([^"]+)"|([A-Za-z][A-Za-z0-9_]*))\s*:\s*\d+\s*,/gm;
+  const names = new Set<string>();
+  for (const b of [block("MOVIE_GENRES"), block("TV_GENRES")]) {
+    for (const m of b.matchAll(ENTRY)) names.add(m[1] ?? m[2]);
+  }
+  assert.ok(names.size > 15, `only found ${names.size} genres, the scanner is broken`);
+  for (const lang of LANGS) {
+    const have = localeKeys(lang);
+    const missing = [...names].filter((g) => !have.has(g));
+    assert.deepEqual(missing, [], `${lang} is missing ${missing.length} genre names`);
   }
 });
 

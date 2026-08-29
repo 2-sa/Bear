@@ -2,6 +2,7 @@ import { ChevronRight } from "lucide-react";
 import { useMemo } from "react";
 import { LazyMount } from "@/components/lazy-mount";
 import { PickCard } from "@/components/pick-card";
+import { TopRankCard } from "@/components/top-rank-card";
 import { Row, usePosterRow } from "@/components/row";
 import { RowControls } from "@/views/home/row-controls";
 import { useHideAnimeRows } from "@/lib/anime-hide";
@@ -23,6 +24,7 @@ export type CatalogRow = {
   metas: Meta[];
   fetcher?: (page: number) => Promise<Meta[]>;
   hasMore?: boolean;
+  variant?: "rank";
 };
 
 function RowTitle({ row, kids = false }: { row: CatalogRow; kids?: boolean }) {
@@ -85,7 +87,22 @@ export function CatalogRows({
         const viewAll = row.fetcher
           ? () => openGrid({ title: t(row.title), fetcher: row.fetcher!, initial: row.metas })
           : undefined;
-        const rowEl = (
+        const rowEl = row.variant === "rank" ? (
+          <Row
+            title={<RowTitle row={row} kids={kids} />}
+            titleClassName={kids ? "text-[#0e3a43]" : "text-ink"}
+            titleScale={kids ? 1.28 : 1}
+            min={216}
+            shape="rank"
+            scrollKey={`${scrollPrefix}:${row.key}`}
+            onViewAll={viewAll}
+            viewAllClassName={kids ? "text-[#0e3a43]/70 hover:text-[#1f8f88]" : undefined}
+          >
+            {row.metas.slice(0, 10).map((m, ri) => (
+              <TopRankCard key={m.id} meta={m} rank={ri + 1} />
+            ))}
+          </Row>
+        ) : (
           <Row
             title={<RowTitle row={row} kids={kids} />}
             titleClassName={kids ? "text-[#0e3a43]" : "text-ink"}

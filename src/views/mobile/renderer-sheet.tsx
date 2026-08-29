@@ -4,6 +4,14 @@ import { useMobileRemote } from "./mobile-remote";
 import { SHEET_EXIT_CSS, useSheetPresence } from "./remote-extras";
 import { APP_VERSION } from "@/lib/build-info";
 
+const GENERIC_LOCAL_LABELS = new Set(["", "this pc", "your computer", "local"]);
+
+function hostLabel(raw: string | undefined): string {
+  const trimmed = (raw ?? "").trim();
+  if (!trimmed || GENERIC_LOCAL_LABELS.has(trimmed.toLowerCase())) return "This Harbor";
+  return trimmed;
+}
+
 export function RendererSheet({ open, onClose, title = "Play on" }: { open: boolean; onClose: () => void; title?: string }) {
   const { snapshot, sendCommand } = useMobileRemote();
   const { render, leaving } = useSheetPresence(open);
@@ -17,6 +25,7 @@ export function RendererSheet({ open, onClose, title = "Play on" }: { open: bool
 
   const target = snapshot.target;
   const localActive = target.kind === "local";
+  const localName = hostLabel(target.kind === "local" ? target.label : undefined);
 
   return (
     <div
@@ -25,7 +34,7 @@ export function RendererSheet({ open, onClose, title = "Play on" }: { open: bool
     >
       <style>{SHEET_EXIT_CSS}</style>
       <div
-        className={`rounded-t-[28px] border-t border-edge-soft/60 bg-elevated ${leaving ? "harbor-sheet-panel-out" : "animate-in slide-in-from-bottom-4 duration-300"}`}
+        className={`rounded-t-2xl border-t border-edge-soft/60 bg-elevated ${leaving ? "harbor-sheet-panel-out" : "animate-in slide-in-from-bottom-4 duration-300"}`}
         style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 22px)" }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -35,8 +44,9 @@ export function RendererSheet({ open, onClose, title = "Play on" }: { open: bool
           {snapshot.castDiscovering && <span className="text-[12px] text-ink-subtle">Scanning…</span>}
         </div>
         <div className="flex flex-col px-2 pb-2">
+          <SectionLabel>Harbor</SectionLabel>
           <DeviceRow
-            name="Your computer"
+            name={localName}
             badge={`Harbor ${hostVersion}`}
             icon={<MonitorSmartphone size={20} strokeWidth={2} />}
             active={localActive}
@@ -45,6 +55,7 @@ export function RendererSheet({ open, onClose, title = "Play on" }: { open: bool
               onClose();
             }}
           />
+          <SectionLabel>Cast to</SectionLabel>
           {snapshot.castDevices.map((d) => (
             <DeviceRow
               key={d.id}
@@ -66,6 +77,14 @@ export function RendererSheet({ open, onClose, title = "Play on" }: { open: bool
         </div>
       </div>
     </div>
+  );
+}
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="px-4 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-subtle">
+      {children}
+    </span>
   );
 }
 

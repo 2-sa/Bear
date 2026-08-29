@@ -6,7 +6,7 @@ function PackTile({ url, label, variant }: { url: string; label: string; variant
   const [failed, setFailed] = useState(false);
   if (variant === "hero") {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-[10px] bg-elevated px-2 py-1.5 ring-1 ring-edge-soft">
+      <span className="inline-flex items-center gap-1.5 rounded-md bg-elevated px-2 py-1.5 ring-1 ring-edge-soft">
         <span className="grid h-5 w-5 shrink-0 place-items-center">
           {!failed && (
             <img
@@ -18,13 +18,13 @@ function PackTile({ url, label, variant }: { url: string; label: string; variant
             />
           )}
         </span>
-        <span className="text-[12px] font-medium text-ink-muted">{label}</span>
+        <span className="text-[12.5px] font-medium text-ink-muted">{label}</span>
       </span>
     );
   }
   return (
-    <span className="flex min-w-0 items-center gap-2 rounded-[10px] bg-elevated px-2.5 py-2 ring-1 ring-edge-soft">
-      <span className="grid h-7 w-7 shrink-0 place-items-center rounded-[6px] bg-surface">
+    <span className="flex min-w-0 items-center gap-2 rounded-md bg-elevated px-2.5 py-2 ring-1 ring-edge-soft">
+      <span className="grid h-7 w-7 shrink-0 place-items-center rounded-sm bg-surface">
         {!failed && (
           <img
             src={url}
@@ -55,7 +55,7 @@ export function PackContents({
   const overflow = icons.length - shown.length;
   return (
     <div className={`flex flex-col gap-2.5 ${className ?? ""}`}>
-      <span className="text-[12px] font-semibold uppercase tracking-[0.12em] text-ink-subtle">
+      <span className="text-[12.5px] font-semibold uppercase tracking-[0.12em] text-ink-subtle">
         {icons.length} in this pack
       </span>
       <div className={variant === "hero" ? "flex flex-wrap gap-2" : "grid grid-cols-2 gap-2 sm:grid-cols-3"}>
@@ -63,7 +63,7 @@ export function PackContents({
           <PackTile key={ic.key} url={ic.url} label={labelForIcon(bundle.kind, ic.key)} variant={variant} />
         ))}
         {variant === "hero" && overflow > 0 && (
-          <span className="inline-flex items-center rounded-[10px] bg-elevated px-2.5 py-1.5 text-[12px] font-semibold text-ink-muted ring-1 ring-edge-soft">
+          <span className="inline-flex items-center rounded-md bg-elevated px-2.5 py-1.5 text-[12.5px] font-semibold text-ink-muted ring-1 ring-edge-soft">
             +{overflow} more
           </span>
         )}

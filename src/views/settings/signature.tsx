@@ -5,14 +5,14 @@ export function Signature() {
   const [open, setOpen] = useState(false);
   return (
     <div className="flex flex-col items-center gap-2 pt-2 pb-1">
-      <p className="flex items-center gap-1.5 text-center text-[12px] tracking-wide text-ink-subtle">
+      <p className="flex items-center gap-1.5 text-center text-[12.5px] tracking-wide text-ink-subtle">
         Made with
         <HeartGlyph />
         by Harbor contributors
       </p>
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1 text-[11px] text-ink-subtle/80 transition-colors hover:text-ink-muted"
+        className="flex items-center gap-1 text-[11.5px] text-ink-subtle/80 transition-colors hover:text-ink-muted"
       >
         Know more
         <ChevronDown

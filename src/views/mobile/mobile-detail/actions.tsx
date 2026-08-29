@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { Bookmark, Check, Eye, Film, Monitor, MoreHorizontal, Play } from "lucide-react";
+import { Bookmark, Check, Eye, Film, Monitor, MoreHorizontal } from "lucide-react";
+import { Play } from "@/components/icons/play-filled";
 import type { Meta } from "@/lib/cinemeta";
 import type { TmdbDetail } from "@/lib/providers/tmdb";
 import type { RemoteLibraryAction, RemoteLibraryItem, RemoteTrackers } from "@/lib/remote/protocol";

@@ -43,10 +43,10 @@ export function SongCardStylePicker() {
                 type="button"
                 aria-pressed={active}
                 onClick={() => update({ songCardStyle: o.v })}
-                className={`flex flex-col gap-3 rounded-2xl border p-3 text-left transition-colors ${
+                className={`flex flex-col gap-3 rounded-md border p-3 text-left transition-colors ${
                   active
-                    ? "border-accent bg-accent/10"
-                    : "border-edge-soft bg-canvas/50 hover:border-edge"
+                    ? "border-accent bg-accent-soft"
+                    : "border-edge-soft bg-canvas hover:border-edge"
                 }`}
               >
                 <StyleThumb kind={o.v} />
@@ -60,7 +60,7 @@ export function SongCardStylePicker() {
                   </span>
                   <span className="text-[13px] font-semibold text-ink">{o.label}</span>
                 </div>
-                <span className="text-[12px] leading-snug text-ink-muted">{o.desc}</span>
+                <span className="text-[12.5px] leading-snug text-ink-muted">{o.desc}</span>
               </button>
             );
           })}
@@ -80,7 +80,7 @@ export function SongCardStylePicker() {
 function StyleThumb({ kind }: { kind: SongCardStyle }) {
   if (kind === "compact") {
     return (
-      <div className="flex h-24 w-full items-center gap-2.5 rounded-xl bg-black p-3">
+      <div className="flex h-24 w-full items-center gap-2.5 rounded-md bg-black p-3">
         <Disc />
         <div className="flex flex-1 flex-col gap-1.5">
           <div className="h-2 w-3/4 rounded bg-white/70" />
@@ -91,7 +91,7 @@ function StyleThumb({ kind }: { kind: SongCardStyle }) {
     );
   }
   return (
-    <div className="flex h-24 w-full flex-col items-center justify-center gap-1.5 rounded-xl bg-black p-3">
+    <div className="flex h-24 w-full flex-col items-center justify-center gap-1.5 rounded-md bg-black p-3">
       <Disc />
       <div className="h-1.5 w-2/3 rounded bg-white/70" />
       <div className="h-1 w-1/2 rounded bg-white/30" />
@@ -102,8 +102,9 @@ function StyleThumb({ kind }: { kind: SongCardStyle }) {
 
 function Disc() {
   return (
-    <div className="relative h-9 w-9 flex-none rounded-full bg-gradient-to-br from-neutral-600 to-black ring-1 ring-white/10">
-      <div className="absolute left-1/2 top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/40" />
+    <div className="relative h-9 w-9 flex-none rounded-full bg-canvas">
+      <div className="absolute left-1/2 top-1/2 h-6 w-6 -translate-x-1/2 -translate-y-1/2 rounded-full bg-ink/[0.10]" />
+      <div className="absolute left-1/2 top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-ink/40" />
     </div>
   );
 }

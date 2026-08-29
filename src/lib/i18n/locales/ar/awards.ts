@@ -3,6 +3,7 @@ const awards: Record<string, string> = {
   "to refresh the bundled dataset.": "لتحديث مجموعة البيانات المُرفقة.",
   "No data shipped for this award yet.": "لم تُشحن بيانات لهذه الجائزة بعد.",
   "No winners match these filters.": "لا فائزين يطابقون هذه المرشّحات.",
+  "No match found": "لم يُعثر على نتيجة مطابقة",
   "Clear filters": "مسح المرشّحات",
   "Search by recipient or title…": "ابحث حسب المُكرَّم أو العنوان…",
   "All years": "كل السنوات",

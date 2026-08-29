@@ -7,9 +7,11 @@ import {
   dismissUpdate,
   checkForUpdate,
   openManualDownload,
+  openHandoffDownload,
   useUpdate,
 } from "@/lib/updater/use-update";
 import { releaseNote, type ReleaseNote } from "@/lib/updater/release-notes";
+import { useT } from "@/lib/i18n";
 import { RichNote } from "./rich-notes";
 
 function mb(bytes: number): string {
@@ -17,6 +19,7 @@ function mb(bytes: number): string {
 }
 
 export function UpdateCard() {
+  const t = useT();
   const u = useUpdate();
   const [shown, setShown] = useState(false);
   const [rich, setRich] = useState<ReleaseNote | null>(null);
@@ -83,6 +86,18 @@ export function UpdateCard() {
           )}
         </div>
 
+        {u.handoff && u.status !== "error" && (
+          <p className="mx-5 mb-2 text-[12px] leading-relaxed text-ink-subtle">
+            {u.handoff.verifiable
+              ? t(
+                  "This one also replaces Harbor's bundled players and tools, so it installs through Harbor Setup. Harbor closes, the installer finishes, then Harbor reopens.",
+                )
+              : t(
+                  "This one installs through Harbor Setup, but the update manifest carries no signature for it. Harbor will not run an installer it cannot verify. Download it and run it yourself.",
+                )}
+          </p>
+        )}
+
         {u.status === "available" && (rich || u.notes) && (
           <div className="mx-5 mb-1 max-h-[248px] overflow-y-auto rounded-xl border border-edge-soft/60 bg-canvas/40 px-3.5 py-3">
             {rich ? (
@@ -134,7 +149,8 @@ export function UpdateCard() {
             <>
               <GhostButton onClick={dismissUpdate}>Later</GhostButton>
               <PrimaryButton onClick={() => void downloadUpdate()}>
-                <Download size={16} strokeWidth={2.2} /> Download
+                <Download size={16} strokeWidth={2.2} />{" "}
+                {u.handoff && !u.handoff.verifiable ? t("Download installer") : "Download"}
               </PrimaryButton>
             </>
           )}
@@ -142,18 +158,25 @@ export function UpdateCard() {
             <>
               <GhostButton onClick={dismissUpdate}>Later</GhostButton>
               <PrimaryButton onClick={() => void installUpdate()}>
-                <RotateCw size={16} strokeWidth={2.2} /> Install & restart
+                <RotateCw size={16} strokeWidth={2.2} />{" "}
+                {u.handoff ? t("Install and reopen") : "Install & restart"}
               </PrimaryButton>
             </>
           )}
           {u.status === "installing" && (
-            <span className="text-[12px] text-ink-subtle">Harbor will restart automatically.</span>
+            <span className="text-[12px] text-ink-subtle">
+              {u.handoff
+                ? t("Harbor is closing. Harbor Setup will finish and reopen it.")
+                : "Harbor will restart automatically."}
+            </span>
           )}
           {u.status === "error" && (
             <>
               <GhostButton onClick={closeUpdatePanel}>Close</GhostButton>
               {u.installFailed ? (
-                <PrimaryButton onClick={() => void openManualDownload()}>
+                <PrimaryButton
+                  onClick={() => void (u.handoff ? openHandoffDownload() : openManualDownload())}
+                >
                   <Download size={16} strokeWidth={2.2} /> Download installer
                 </PrimaryButton>
               ) : (
@@ -178,7 +201,7 @@ function PrimaryButton({ children, onClick }: { children: React.ReactNode; onCli
   return (
     <button
       onClick={onClick}
-      className="flex h-11 items-center gap-2 rounded-xl bg-accent px-4 text-[14px] font-semibold text-[#1b1304] transition-[filter] hover:brightness-105"
+      className="flex h-11 items-center gap-2 rounded-xl bg-accent px-4 text-[14px] font-semibold text-canvas transition-[filter] hover:brightness-105"
     >
       {children}
     </button>

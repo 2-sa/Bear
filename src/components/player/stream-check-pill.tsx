@@ -1,4 +1,4 @@
-import { Check, AlertCircle, Replace } from "lucide-react";
+import { Check, AlertCircle } from "lucide-react";
 import { useT } from "@/lib/i18n";
 import { useActiveKid } from "@/lib/profiles";
 
@@ -66,7 +66,6 @@ export function StreamCheckPill({
           onClick={onPickAnother}
           className="flex h-7 items-center gap-1.5 rounded-full bg-white/12 px-3 text-[11.5px] font-semibold text-white transition-colors hover:bg-white/22"
         >
-          <Replace size={11.5} strokeWidth={2.4} />
           {live ? t("Other sources") : t("Pick another")}
         </button>
       </div>

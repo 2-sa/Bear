@@ -1,4 +1,5 @@
-import { Flag, Play } from "lucide-react";
+import { Flag } from "lucide-react";
+import { Play } from "@/components/icons/play-filled";
 import { useT } from "@/lib/i18n";
 import { endVoyage } from "@/lib/voyage/store";
 import type { Voyage } from "@/lib/voyage/types";
@@ -7,9 +8,9 @@ export function VoyageReady({ voyage, onStart }: { voyage: Voyage; onStart: () =
   const t = useT();
   const count = voyage.routeIds.length;
   return (
-    <div className="flex flex-col items-center gap-3 rounded-[10px] border border-dashed border-edge bg-canvas/30 px-6 py-9 text-center">
+    <div className="flex flex-col items-center gap-3 rounded-md border border-dashed border-edge bg-canvas/30 px-6 py-9 text-center">
       <span
-        className="grid h-14 w-14 place-items-center rounded-[10px]"
+        className="grid h-14 w-14 place-items-center rounded-md"
         style={{
           background: `color-mix(in oklch, ${voyage.accent}, transparent 88%)`,
           color: voyage.accent,

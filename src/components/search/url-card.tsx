@@ -1,4 +1,5 @@
-import { Link2, Play } from "lucide-react";
+import { Link2 } from "lucide-react";
+import { Play } from "@/components/icons/play-filled";
 import { useMemo } from "react";
 import { directUrlNotWebReady } from "@/lib/torrent/magnet";
 import { useView, type PlayerSrc } from "@/lib/view";

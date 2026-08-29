@@ -22,7 +22,7 @@ export function BundleDetailsStep({
           onChange={(e) => onName(e.target.value)}
           maxLength={60}
           placeholder="Gilded Trophies"
-          className="h-11 rounded-xl bg-elevated/40 px-3.5 text-[14px] text-ink ring-1 ring-edge-soft placeholder:text-ink-subtle focus:outline-none focus:ring-edge"
+          className="h-11 rounded-md bg-canvas px-3.5 text-[13.5px] text-ink placeholder:text-ink-subtle focus:outline-none transition-colors focus:bg-elevated"
         />
       </Field>
       <AuthorIdentity account={account} />
@@ -33,7 +33,7 @@ export function BundleDetailsStep({
           maxLength={280}
           rows={3}
           placeholder="A warm, hand-drawn set of trophies."
-          className="resize-none rounded-xl bg-elevated/40 px-3.5 py-2.5 text-[14px] text-ink ring-1 ring-edge-soft placeholder:text-ink-subtle focus:outline-none focus:ring-edge"
+          className="resize-none rounded-md bg-canvas px-3.5 py-2.5 text-[13.5px] text-ink placeholder:text-ink-subtle focus:outline-none transition-colors focus:bg-elevated"
         />
       </Field>
     </div>

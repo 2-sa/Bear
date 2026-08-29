@@ -1,6 +1,6 @@
 import { searchCinemeta } from "./search";
 import { DEFAULT_AI_MODEL, migrateModelId } from "./ai-models";
-import type { Meta } from "./cinemeta";
+import { meta as fetchFullMeta, type Meta } from "./cinemeta";
 
 import { releaseText } from "@/lib/release-info";
 import { HARBOR_API_BASE } from "@/lib/config/endpoints";
@@ -200,11 +200,24 @@ export async function resolveAiSuggestions(suggestions: AiSuggestion[]): Promise
         const meta = pickBest([...c.movies, ...c.series], s);
         if (!meta) return null;
         const isEpisode = meta.type === "series" && s.season != null && s.episode != null;
+        let episodeTitle = isEpisode ? s.episodeTitle : undefined;
+        if (isEpisode) {
+          try {
+            const full = await fetchFullMeta("series", meta.id);
+            const vid = full?.videos?.find(
+              (v) => v.season === s.season && (v.episode ?? v.number) === s.episode,
+            );
+            const real = (vid?.name ?? vid?.title)?.trim();
+            if (real) episodeTitle = real;
+          } catch {
+            /* fall back to the model's episodeTitle */
+          }
+        }
         return {
           meta,
           season: isEpisode ? s.season : undefined,
           episode: isEpisode ? s.episode : undefined,
-          episodeTitle: isEpisode ? s.episodeTitle : undefined,
+          episodeTitle,
         };
       } catch {
         return null;

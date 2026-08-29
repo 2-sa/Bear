@@ -7,6 +7,7 @@ import {
   RotateCcw,
   Trash2,
   Upload,
+  X,
 } from "lucide-react";
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { createPortal } from "react-dom";
@@ -145,13 +146,13 @@ export function ProfilePicker({
       </button>
 
       {open && (
-        <div className="absolute end-0 top-[calc(100%+8px)] z-40 w-[280px] overflow-hidden rounded-2xl border border-white/12 bg-black/95 shadow-[0_24px_60px_rgba(0,0,0,0.55)] backdrop-blur-2xl">
-          <div className="px-4 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/45">
+        <div className="absolute end-0 top-[calc(100%+8px)] z-40 w-[280px] overflow-hidden rounded-md border border-white/12 bg-black/95 harbor-float backdrop-blur-2xl">
+          <div className="px-4 pt-3 pb-1 text-[10.5px] font-semibold uppercase tracking-[0.16em] text-white/45">
             Profiles
           </div>
           <ul className="max-h-[280px] overflow-y-auto px-1.5">
             {profiles.length === 0 ? (
-              <li className="px-3 py-2 text-[12px] text-white/50">No saved profiles yet.</li>
+              <li className="px-3 py-2 text-[12.5px] text-white/50">No saved profiles yet.</li>
             ) : (
               profiles.map((p) => {
                 const isActive = p.id === activeProfileId;
@@ -163,7 +164,7 @@ export function ProfilePicker({
                         onSwitch(p.id);
                         setOpen(false);
                       }}
-                      className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-start text-[13px] transition-colors ${
+                      className={`flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-start text-[13px] transition-colors ${
                         isActive ? "bg-white/10 text-white" : "text-white/80 hover:bg-white/8 hover:text-white"
                       }`}
                     >
@@ -183,13 +184,13 @@ export function ProfilePicker({
           <div className="px-1.5 py-1">
             <MenuItem icon={<Plus size={14} strokeWidth={2.3} />} label="Save as new profile..." onClick={askSaveAsNew} />
             <MenuItem
-              icon={<Pencil size={13} strokeWidth={2.3} />}
+              icon={<Pencil size={14} strokeWidth={2.3} />}
               label="Rename current"
               disabled={!active}
               onClick={askRename}
             />
             <MenuItem
-              icon={<Trash2 size={13} strokeWidth={2.3} />}
+              icon={<Trash2 size={14} strokeWidth={2.3} />}
               label="Delete current"
               disabled={!active}
               danger
@@ -201,7 +202,7 @@ export function ProfilePicker({
 
           <div className="px-1.5 pb-2 pt-1">
             <MenuItem
-              icon={<Download size={13} strokeWidth={2.3} />}
+              icon={<Download size={14} strokeWidth={2.3} />}
               label="Export as file"
               disabled={!active}
               onClick={() => {
@@ -210,7 +211,7 @@ export function ProfilePicker({
               }}
             />
             <MenuItem
-              icon={<Upload size={13} strokeWidth={2.3} />}
+              icon={<Upload size={14} strokeWidth={2.3} />}
               label="Import from file..."
               onClick={() => {
                 fileRef.current?.click();
@@ -218,7 +219,7 @@ export function ProfilePicker({
               }}
             />
             <MenuItem
-              icon={<RotateCcw size={13} strokeWidth={2.3} />}
+              icon={<RotateCcw size={14} strokeWidth={2.3} />}
               label="Reset to defaults"
               onClick={askReset}
             />
@@ -262,7 +263,7 @@ function LayoutDialog({ dialog, onClose }: { dialog: Dialog; onClose: () => void
 
   return createPortal(
     <div
-      className="harbor-layout-dialog fixed inset-0 z-[400] flex items-center justify-center bg-black/70 p-6 backdrop-blur-sm"
+      className="harbor-layout-dialog animate-scrim-in fixed inset-0 z-[400] grid place-items-center p-8"
       onPointerDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -270,31 +271,45 @@ function LayoutDialog({ dialog, onClose }: { dialog: Dialog; onClose: () => void
       <div
         role="dialog"
         aria-modal="true"
-        className="w-full max-w-sm rounded-2xl border border-white/12 bg-[#16161c] p-5 shadow-[0_30px_80px_rgba(0,0,0,0.65)]"
+        className="animate-dialog-in flex max-h-[86vh] w-[min(640px,100%)] flex-col overflow-hidden rounded-md bg-surface"
       >
-        <h2 className="text-[16px] font-semibold tracking-tight text-white">{dialog.title}</h2>
-        {dialog.kind === "input" ? (
-          <input
-            ref={inputRef}
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                confirm();
-              }
-            }}
-            placeholder={dialog.placeholder}
-            className="mt-4 h-11 w-full rounded-xl border border-white/15 bg-white/5 px-3.5 text-[14px] text-white placeholder:text-white/35 transition-colors focus:border-white/40 focus:outline-none"
-          />
-        ) : (
-          <p className="mt-2.5 text-[13.5px] leading-relaxed text-white/65">{dialog.message}</p>
-        )}
-        <div className="mt-5 flex justify-end gap-2">
+        <div className="flex items-start gap-4 px-6 pt-6">
+          <h2 className="min-w-0 flex-1 text-[17px] font-semibold tracking-tight text-ink">
+            {dialog.title}
+          </h2>
           <button
             type="button"
             onClick={onClose}
-            className="h-10 rounded-full px-4 text-[13px] font-medium text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+            aria-label="Close"
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-md text-ink-subtle transition-colors hover:bg-elevated hover:text-ink"
+          >
+            <X size={16} />
+          </button>
+        </div>
+        <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto p-6">
+          {dialog.kind === "input" ? (
+            <input
+              ref={inputRef}
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  confirm();
+                }
+              }}
+              placeholder={dialog.placeholder}
+              className="h-11 w-full rounded-md bg-canvas px-3.5 text-[13px] text-ink outline-none transition-colors placeholder:text-ink-subtle focus:bg-elevated"
+            />
+          ) : (
+            <p className="text-[12.5px] leading-relaxed text-ink-muted">{dialog.message}</p>
+          )}
+        </div>
+        <div className="flex items-center justify-end gap-2 px-6 pb-6">
+          <button
+            type="button"
+            onClick={onClose}
+            className="harbor-press-pop h-9 rounded-md bg-elevated px-4 text-[12.5px] font-semibold text-ink-muted transition-colors hover:text-ink"
           >
             Cancel
           </button>
@@ -302,8 +317,8 @@ function LayoutDialog({ dialog, onClose }: { dialog: Dialog; onClose: () => void
             type="button"
             onClick={confirm}
             disabled={!canConfirm}
-            className={`h-10 rounded-full px-5 text-[13px] font-semibold transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 ${
-              dialog.kind === "confirm" && dialog.danger ? "bg-red-500 text-white" : "bg-white text-black"
+            className={`harbor-press-pop h-9 rounded-md px-4 text-[12.5px] font-semibold transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 ${
+              dialog.kind === "confirm" && dialog.danger ? "bg-danger text-white" : "bg-ink text-canvas"
             }`}
           >
             {dialog.confirmLabel}
@@ -333,7 +348,7 @@ function MenuItem({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-start text-[12.5px] transition-colors ${
+      className={`flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-start text-[12.5px] transition-colors ${
         disabled
           ? "cursor-not-allowed text-white/25"
           : danger

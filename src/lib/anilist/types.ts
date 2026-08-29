@@ -40,6 +40,7 @@ export type AnilistMedia = {
   seasonYear: number | null;
   countryOfOrigin?: string | null;
   description?: string | null;
+  status?: string | null;
 };
 
 export type AnilistMediaEntry = {

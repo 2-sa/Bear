@@ -30,9 +30,9 @@ export function CustomFontTiles({
   };
 
   const pad = compact ? "p-4" : "p-5";
-  const radius = compact ? "rounded-xl" : "rounded-2xl";
+  const radius = compact ? "rounded-md" : "rounded-md";
   const previewSize = compact ? "text-[22px]" : "text-[28px]";
-  const activeCls = compact ? "border-accent bg-accent-soft" : "border-ink bg-elevated/40";
+  const activeCls = compact ? "border-accent bg-accent-soft" : "border-ink bg-elevated";
   const checkCls = compact ? "bg-accent" : "bg-ink";
 
   return (
@@ -44,7 +44,7 @@ export function CustomFontTiles({
           <div
             key={f.id}
             className={`group/font relative flex flex-col ${radius} border ${pad} transition-colors ${
-              active ? activeCls : "border-edge-soft bg-elevated/15 hover:border-edge"
+              active ? activeCls : "border-edge-soft bg-elevated hover:border-edge"
             }`}
             style={{ animation: "harborFontIn 240ms ease both" }}
           >
@@ -67,7 +67,7 @@ export function CustomFontTiles({
               <span
                 className={`truncate ${
                   compact
-                    ? "mt-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-subtle"
+                    ? "mt-1 text-[11.5px] font-semibold uppercase tracking-[0.16em] text-ink-subtle"
                     : "text-[11.5px] text-ink-subtle"
                 }`}
               >
@@ -86,9 +86,9 @@ export function CustomFontTiles({
                 type="button"
                 onClick={() => remove(f.id)}
                 aria-label={`Remove ${f.name}`}
-                className="hidden h-7 w-7 items-center justify-center rounded-full bg-canvas/70 text-ink-subtle transition-colors hover:bg-danger/20 hover:text-danger group-hover/font:flex"
+                className="hidden h-7 w-7 items-center justify-center rounded-full bg-canvas text-ink-subtle transition-colors hover:bg-danger/25 hover:text-danger group-hover/font:flex"
               >
-                <Trash2 size={13} strokeWidth={2.2} />
+                <Trash2 size={14} strokeWidth={2.2} />
               </button>
             </div>
           </div>
@@ -100,11 +100,11 @@ export function CustomFontTiles({
         onClick={() => inputRef.current?.click()}
         disabled={busy}
         className={`flex flex-col items-center justify-center gap-2 ${radius} border border-dashed border-edge-soft ${pad} text-center transition-colors ${
-          busy ? "opacity-80" : "hover:border-edge hover:bg-elevated/20"
+          busy ? "opacity-80" : "hover:border-edge hover:bg-elevated"
         }`}
       >
         <span
-          className={`flex items-center justify-center rounded-full bg-elevated/50 text-ink-muted ${
+          className={`flex items-center justify-center rounded-full bg-elevated text-ink-muted ${
             compact ? "h-9 w-9" : "h-11 w-11"
           }`}
         >
@@ -117,10 +117,10 @@ export function CustomFontTiles({
         <span className="text-[13px] font-semibold text-ink">
           {busy ? "Adding font..." : "Upload a font"}
         </span>
-        {!busy && <span className="text-[11px] text-ink-subtle">TTF, OTF, WOFF or WOFF2</span>}
+        {!busy && <span className="text-[11.5px] text-ink-subtle">TTF, OTF, WOFF or WOFF2</span>}
       </button>
 
-      {error && <p className="col-span-full text-[12px] font-medium text-danger">{error}</p>}
+      {error && <p className="col-span-full text-[12.5px] font-medium text-danger">{error}</p>}
 
       <input
         ref={inputRef}

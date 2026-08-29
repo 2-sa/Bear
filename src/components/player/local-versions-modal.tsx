@@ -1,6 +1,7 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
-import { HardDrive, Play, X } from "lucide-react";
+import { HardDrive, X } from "lucide-react";
+import { Play } from "@/components/icons/play-filled";
 import { useT } from "@/lib/i18n";
 import { LocalVersionBadges } from "@/components/local-version-badges";
 import {

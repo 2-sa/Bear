@@ -272,6 +272,21 @@ export function languageName(code: string): string {
   return NAMES[n] || code.toUpperCase();
 }
 
+export function trackLanguageName(lang?: string | null, title?: string | null): string {
+  const base = normalizeLang(lang ?? "");
+  if (title) {
+    const fromTitle = normalizeLang(title);
+    if (
+      NAMES[fromTitle] &&
+      fromTitle !== base &&
+      (!base || base.split("-")[0] === fromTitle.split("-")[0])
+    ) {
+      return NAMES[fromTitle];
+    }
+  }
+  return NAMES[base] || (lang ? lang.toUpperCase() : "");
+}
+
 const IMPLAUSIBLE_LANG_PATTERN =
   /[=<>{}[\]|\\]|\berror\b|\binvalid\b|\btimed?\s*out\b|\bfailed\b|\brequest\b/i;
 

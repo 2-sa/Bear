@@ -393,7 +393,7 @@ function FeatureCardShell({ onClick, art, title, caption, wash, backdrop }: { on
     <button
       type="button"
       onClick={onClick}
-      className="group relative flex min-h-[132px] flex-col justify-between overflow-hidden rounded-[20px] bg-surface p-4 text-start ring-1 ring-edge-soft transition-transform duration-150 active:scale-[0.98] motion-reduce:transition-none"
+      className="group relative flex min-h-[132px] flex-col justify-between overflow-hidden rounded-xl bg-surface p-4 text-start ring-1 ring-edge-soft transition-transform duration-150 active:scale-[0.98] motion-reduce:transition-none"
     >
       {backdrop}
       <span aria-hidden className={`pointer-events-none absolute inset-0 bg-gradient-to-br to-transparent ${wash}`} />

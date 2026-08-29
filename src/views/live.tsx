@@ -1,4 +1,4 @@
-import { Search } from "lucide-react";
+import { Search } from "@/components/icons/search-icon";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePlaylistMutations } from "./live/hooks/use-playlist-mutations";
 import { useLiveActions } from "./live/hooks/use-live-actions";

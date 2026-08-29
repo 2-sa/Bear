@@ -58,10 +58,10 @@ export function AuthForm({ onRecovery }: { onRecovery: (code: string) => void })
   const active = MODES.find((m) => m.id === mode)!;
 
   return (
-    <div className="flex flex-col gap-5 rounded-2xl border border-edge-soft bg-surface p-6">
+ <div className="flex flex-col gap-5 rounded-md bg-surface p-6">
       <div className="flex items-center gap-3">
-        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/15 text-accent">
-          <UserRound size={19} strokeWidth={2} />
+        <span className="flex h-10 w-10 items-center justify-center rounded-md bg-accent-soft text-accent">
+          <UserRound size={18} strokeWidth={2} />
         </span>
         <div className="flex flex-col">
           <h3 className="text-[16px] font-semibold tracking-tight text-ink">Author account</h3>
@@ -69,7 +69,7 @@ export function AuthForm({ onRecovery }: { onRecovery: (code: string) => void })
         </div>
       </div>
 
-      <div className="flex items-center gap-1 rounded-xl border border-edge-soft bg-elevated/40 p-1">
+ <div className="flex items-center gap-1 rounded-md bg-elevated p-1">
         {MODES.map((m) => (
           <button
             key={m.id}
@@ -78,7 +78,7 @@ export function AuthForm({ onRecovery }: { onRecovery: (code: string) => void })
               setMode(m.id);
               setError(null);
             }}
-            className={`h-8 flex-1 rounded-lg text-[12.5px] font-semibold transition-colors ${
+            className={`h-8 flex-1 rounded-md text-[12.5px] font-semibold transition-colors ${
               mode === m.id ? "bg-ink text-canvas" : "text-ink-muted hover:text-ink"
             }`}
           >
@@ -129,7 +129,7 @@ export function AuthForm({ onRecovery }: { onRecovery: (code: string) => void })
         <button
           type="submit"
           disabled={!ready || busy}
-          className="flex h-11 items-center justify-center gap-2 rounded-xl bg-accent text-[14px] font-semibold text-canvas transition-all duration-150 hover:opacity-90 active:scale-[0.99] disabled:opacity-40 disabled:active:scale-100"
+          className="flex h-11 items-center justify-center gap-2 rounded-md bg-accent text-[13.5px] font-semibold text-canvas transition duration-150 hover:opacity-90 active:scale-[0.99] disabled:opacity-40 disabled:active:scale-100"
         >
           {busy && <Loader2 size={16} className="animate-spin" />}
           {active.action}

@@ -42,7 +42,7 @@ export function NoSourcesState({
       ? "On the web, Harbor can only reach addons that allow browser access (Torrentio, TorBox, Cinemeta). For unreleased titles, no source typically exists yet."
       : "Try signing in to Stremio so Harbor can use your addon collection. Older or foreign titles often need Torrentio + a debrid addon to find anything.";
   return (
-    <div className="rounded-[24px] border border-edge-soft/70 bg-canvas/80 px-9 py-11">
+    <div className="rounded-3xl border border-edge-soft/70 bg-canvas/80 px-9 py-11">
       <div className="flex flex-col items-center gap-5 text-center">
         <p className="text-[10.5px] font-bold uppercase tracking-[0.42em] text-ink-subtle">
           No source returned a stream
@@ -73,7 +73,7 @@ export function FilteredOutState({
 }) {
   const groups = groupRejections(rejected);
   return (
-    <div className="relative overflow-hidden rounded-[24px] border border-edge-soft/70 bg-canvas/80 px-9 py-11">
+    <div className="relative overflow-hidden rounded-3xl border border-edge-soft/70 bg-canvas/80 px-9 py-11">
       <div className="flex flex-col items-center gap-5 text-center">
         <p className="text-[10.5px] font-bold uppercase tracking-[0.42em] text-ink-subtle">
           {rawCount} sources · 0 made it through
@@ -126,7 +126,7 @@ export function TheatresEmptyState({
 }) {
   const art = meta.background || meta.poster;
   return (
-    <div className="relative overflow-hidden rounded-[24px] border border-edge-soft/60 bg-canvas/60">
+    <div className="relative overflow-hidden rounded-3xl border border-edge-soft/60 bg-canvas/60">
       {art && (
         <img
           src={art}

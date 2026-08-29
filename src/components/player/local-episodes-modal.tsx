@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
-import { ArrowDownWideNarrow, ArrowUpNarrowWide, Play, Wifi, X } from "lucide-react";
+import { ArrowDownWideNarrow, ArrowUpNarrowWide, Wifi, X } from "lucide-react";
+import { Play } from "@/components/icons/play-filled";
 import { useT } from "@/lib/i18n";
 import { useSettings } from "@/lib/settings";
 import { useLocalLibrary, type LocalEntry } from "@/lib/local-library";
