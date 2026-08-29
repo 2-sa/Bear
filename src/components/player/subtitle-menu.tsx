@@ -50,6 +50,7 @@ export function SubtitleMenu(props: Props) {
       const target = e.target as HTMLElement | null;
       if (wrap.current?.contains(target)) return;
       if (target?.closest("[data-title-suggest-dropdown]")) return;
+      if (target?.closest("[data-dropdown-menu]")) return;
       setOpen(false);
     };
     window.addEventListener("mousedown", close);
