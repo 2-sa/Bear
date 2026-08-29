@@ -393,3 +393,102 @@ test("runtime native downloads require an explicit policy and trusted shader all
   const shaders = readFileSync(new URL("../src-tauri/src/shaders.rs", import.meta.url), "utf8");
   assert.match(shaders, /find_pack\(&id\)/);
 });
+
+test("private network requests require an explicit local-service opt-in", () => {
+  const nativeFetch = readFileSync(
+    new URL("../src-tauri/src/http_fetch.rs", import.meta.url),
+    "utf8",
+  );
+  assert.match(nativeFetch, /allow_private_network/);
+  assert.match(nativeFetch, /\.is_private\(\)/);
+  assert.match(nativeFetch, /\.is_unique_local\(\)/);
+  assert.match(nativeFetch, /100\s*\.\.=\s*127/);
+
+  const safeFetch = readFileSync(new URL("../src/lib/safe-fetch.ts", import.meta.url), "utf8");
+  assert.match(safeFetch, /allowPrivateNetwork/);
+  assert.match(safeFetch, /isPrivateNetworkUrl/);
+  assert.match(safeFetch, /private network/i);
+});
+
+test("update discovery and manual fallback stay on Bear's signed GitHub channel", () => {
+  const endpoints = readFileSync(
+    new URL("../src/lib/config/endpoints.ts", import.meta.url),
+    "utf8",
+  );
+  assert.match(
+    endpoints,
+    /BEAR_UPDATE_MANIFEST_URL\s*=\s*["']https:\/\/github\.com\/2-sa\/Bear\/releases\/download\/beta-channel\/latest\.json["']/,
+  );
+  assert.match(
+    endpoints,
+    /BEAR_RELEASES_URL\s*=\s*["']https:\/\/github\.com\/2-sa\/Bear\/releases["']/,
+  );
+  for (const file of ["use-update.ts", "handoff.ts"]) {
+    const source = readFileSync(new URL(`../src/lib/updater/${file}`, import.meta.url), "utf8");
+    assert.doesNotMatch(source, /HARBOR_API_BASE|harbor\.site|harborstremio/);
+    assert.match(source, /BEAR_(?:UPDATE_MANIFEST|RELEASES)_URL/);
+  }
+});
+
+test("account sessions are stored in the operating-system credential vault", () => {
+  const nativeStore = readFileSync(
+    new URL("../src-tauri/src/settings_store.rs", import.meta.url),
+    "utf8",
+  );
+  assert.match(nativeStore, /keyring::Entry/);
+  assert.match(nativeStore, /secrets\.json/);
+  assert.match(nativeStore, /remove_file/);
+  assert.doesNotMatch(rustCommand(nativeStore, "secrets_write"), /fs::write/);
+
+  const frontend = readFileSync(new URL("../src/lib/secret-store.ts", import.meta.url), "utf8");
+  assert.doesNotMatch(frontend, /localStorage\.setItem\(key,\s*value\)/);
+});
+
+test("downloaded shaders are immutable and checksum verified before installation", () => {
+  for (const file of ["anime4k.rs", "shaders.rs"]) {
+    const source = readFileSync(new URL(`../src-tauri/src/${file}`, import.meta.url), "utf8");
+    assert.match(source, /Sha256/);
+    assert.match(source, /expected_sha256/i);
+    assert.doesNotMatch(source, /githubusercontent\.com\/[^/]+\/[^/]+\/(?:master|main)\//);
+    assert.doesNotMatch(source, /gist\.githubusercontent\.com\/[^\s"']+\/raw\//);
+    assert.match(source, /checksum|integrity/i);
+  }
+});
+
+test("the desktop CSP and reveal bridge do not expose blanket privileges", () => {
+  const config = JSON.parse(
+    readFileSync(new URL("../src-tauri/tauri.conf.json", import.meta.url), "utf8"),
+  ) as { app?: { security?: { csp?: string } } };
+  const csp = config.app?.security?.csp ?? "";
+  assert.equal(csp.split(/\s+/).includes("'unsafe-eval'"), false);
+  assert.match(csp, /frame-ancestors\s+'none'/);
+
+  const capability = readFileSync(
+    new URL("../src-tauri/capabilities/default.json", import.meta.url),
+    "utf8",
+  );
+  assert.doesNotMatch(capability, /opener:allow-reveal-item-in-dir/);
+  for (const file of sourceFiles(new URL("../src/", import.meta.url), [".ts", ".tsx"])) {
+    assert.doesNotMatch(readFileSync(file, "utf8"), /\brevealItemInDir\s*\(/, file.pathname);
+  }
+  const native = readFileSync(new URL("../src-tauri/src/lib.rs", import.meta.url), "utf8");
+  assert.match(native, /reveal_scoped_item/);
+  assert.match(native, /fs_scope\(\)\.is_allowed/);
+});
+
+test("manga refresh failures are handled and MovieHash waits for a player bridge", () => {
+  const manga = readFileSync(
+    new URL("../src/views/manga/manga-browse.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(manga, /await refreshMangaTags\(\)[\s\S]{0,300}catch/);
+  assert.match(manga, /role="alert"/);
+
+  const autoload = readFileSync(
+    new URL("../src/views/player/hooks/use-track-autoload.ts", import.meta.url),
+    "utf8",
+  );
+  const bridgeGuard = autoload.indexOf("const b = bridgeRef.current");
+  const hashStart = autoload.indexOf("const movieHashStageKey");
+  assert.ok(bridgeGuard >= 0 && hashStart > bridgeGuard);
+});
