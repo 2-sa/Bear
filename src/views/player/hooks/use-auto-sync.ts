@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
-import { convertFileSrc, invoke } from "@tauri-apps/api/core";
+import { convertFileSrc } from "@tauri-apps/api/core";
 import type { PlayerBridge, PlayerSnapshot } from "@/lib/player/bridge";
 import type { PlayerSrc } from "@/lib/view";
 import type { Settings } from "@/lib/settings";
@@ -32,6 +32,7 @@ import {
   type DriftDeps,
 } from "@/lib/subtitles/autosync/drift-monitor";
 import { resetMpvSubtitleFpsForTransition } from "@/lib/player/mpv-properties";
+import { writeTempTextFile } from "@/lib/temp-text-file";
 import {
   buildSubtitleTimingMediaKey,
   isAutoSyncScopeCurrent,
@@ -576,10 +577,11 @@ async function writeSyncedTrack(
   isCurrent: () => boolean,
 ): Promise<boolean> {
   if (!isCurrent()) return false;
-  const pathMod = await import("@tauri-apps/api/path");
-  const dir = await pathMod.join(await pathMod.tempDir(), "harbor-subs");
-  const filePath = await pathMod.join(dir, `autosync-${Date.now()}.${fmt}`);
-  await invoke("save_text_file", { path: filePath, contents: text });
+  const filePath = await writeTempTextFile(
+    "bear-beta-subs",
+    `autosync-${Date.now()}.${fmt}`,
+    text,
+  );
   if (!isCurrent()) return false;
   const added = await b.addSubtitle(filePath, undefined, `Synced (${fmt.toUpperCase()})`, true);
   if (!added || !isCurrent()) return false;

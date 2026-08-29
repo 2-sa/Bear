@@ -205,17 +205,6 @@ async fn deeplink_is_stremio_registered(app: tauri::AppHandle) -> Result<bool, S
         .map_err(|e| e.to_string())
 }
 
-#[tauri::command]
-async fn save_text_file(path: String, contents: String) -> Result<(), String> {
-    let target = std::path::PathBuf::from(&path);
-    if let Some(parent) = target.parent() {
-        if !parent.as_os_str().is_empty() {
-            std::fs::create_dir_all(parent).map_err(|e| format!("create folder: {}", e))?;
-        }
-    }
-    std::fs::write(&target, contents.as_bytes()).map_err(|e| format!("write file: {}", e))
-}
-
 #[cfg(windows)]
 fn make_main_transparent(app: &tauri::AppHandle) {
     use tauri::Manager;
@@ -799,7 +788,6 @@ pub fn run() {
             harbor_set_context_menu,
             harbor_try_suspend_webview,
             harbor_resume_webview,
-            save_text_file,
             subsync::moviehash::compute_moviehash,
             subsync::sync_subtitle,
             subsync::scorer::subsync_score_transform,

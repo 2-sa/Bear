@@ -66,6 +66,12 @@ test("privileged filesystem access stays narrowly scoped", () => {
   assert.equal(filesystemPaths.includes("$APPDATA/settings.json.tmp"), true);
   assert.equal(capability.permissions?.includes("process:default"), false);
 
+  const desktopCapability = JSON.parse(
+    readFileSync(new URL("../src-tauri/capabilities/desktop-only.json", import.meta.url), "utf8"),
+  ) as { permissions?: string[] };
+  assert.equal(desktopCapability.permissions?.includes("process:default"), false);
+  assert.equal(desktopCapability.permissions?.includes("process:allow-restart"), true);
+
   const config = JSON.parse(
     readFileSync(new URL("../src-tauri/tauri.conf.json", import.meta.url), "utf8"),
   ) as {
@@ -173,11 +179,13 @@ test("subtitle and local analysis commands enforce the shared filesystem scope g
 test("external pages are kept outside Harbor by default", () => {
   assert.equal(IN_APP_EXTERNAL_PAGES_ENABLED, false);
 
-  const capability = JSON.parse(
-    readFileSync(new URL("../src-tauri/capabilities/default.json", import.meta.url), "utf8"),
-  ) as { windows?: string[] };
-  assert.equal(capability.windows?.includes("harbor-browser"), false);
-  assert.equal(capability.windows?.includes("harbor-cf-solver"), false);
+  for (const file of ["default.json", "desktop-only.json"]) {
+    const capability = JSON.parse(
+      readFileSync(new URL(`../src-tauri/capabilities/${file}`, import.meta.url), "utf8"),
+    ) as { windows?: string[] };
+    assert.equal(capability.windows?.includes("harbor-browser"), false);
+    assert.equal(capability.windows?.includes("harbor-cf-solver"), false);
+  }
 });
 
 test("only our signature-verified update channel is enabled", () => {
@@ -191,17 +199,22 @@ test("only our signature-verified update channel is enabled", () => {
   };
   assert.equal(config.bundle?.createUpdaterArtifacts, false);
   assert.deepEqual(config.plugins?.updater?.endpoints, [
-    "https://github.com/2-sa/Bear/releases/latest/download/latest.json",
+    "https://github.com/2-sa/Bear/releases/download/beta-channel/latest.json",
   ]);
   assert.notEqual(config.plugins?.updater?.pubkey, undefined);
   assert.notEqual(config.plugins?.updater?.pubkey, "");
   assert.notEqual(config.plugins?.updater?.dangerousInsecureTransportProtocol, true);
 
-  const capability = readFileSync(
+  const defaultCapability = readFileSync(
     new URL("../src-tauri/capabilities/default.json", import.meta.url),
     "utf8",
   );
-  assert.match(capability, /"updater:default"/);
+  const desktopCapability = readFileSync(
+    new URL("../src-tauri/capabilities/desktop-only.json", import.meta.url),
+    "utf8",
+  );
+  assert.doesNotMatch(defaultCapability, /"updater:default"/);
+  assert.match(desktopCapability, /"updater:default"/);
 
   const frontend = readFileSync(
     new URL("../src/lib/updater/use-update.ts", import.meta.url),
@@ -216,7 +229,7 @@ test("only our signature-verified update channel is enabled", () => {
   }
 });
 
-test("release workflow signs Windows and macOS updates and keeps them draft", () => {
+test("release workflow signs every desktop update before advancing the beta channel", () => {
   const workflow = readFileSync(
     new URL("../.github/workflows/tauri-build.yml", import.meta.url),
     "utf8",
@@ -225,11 +238,15 @@ test("release workflow signs Windows and macOS updates and keeps them draft", ()
   assert.match(workflow, /contents: write/);
   assert.match(workflow, /environment: release-signing/);
   assert.match(workflow, /TAURI_SIGNING_PRIVATE_KEY: \$\{\{ secrets\.TAURI_SIGNING_PRIVATE_KEY \}\}/);
-  assert.match(workflow, /createUpdaterArtifacts":true/);
-  assert.match(workflow, /tagName: v__VERSION__/);
+  const releaseConfig = JSON.parse(
+    readFileSync(new URL("../src-tauri/tauri.release.conf.json", import.meta.url), "utf8"),
+  ) as { bundle?: { createUpdaterArtifacts?: boolean } };
+  assert.equal(releaseConfig.bundle?.createUpdaterArtifacts, true);
+  assert.match(workflow, /tagName: beta-v__VERSION__/);
   assert.match(workflow, /releaseDraft: true/);
-  assert.match(workflow, /uploadUpdaterJson: true/);
-  assert.match(workflow, /uploadUpdaterSignatures: true/);
+  assert.match(workflow, /publish-update:[\s\S]*?needs: build/);
+  assert.match(workflow, /verify-update-manifest\.mjs/);
+  assert.match(workflow, /gh release edit "\$VERSION_TAG" --draft=false/);
   assert.match(workflow, /x86_64-pc-windows-msvc/);
   assert.match(workflow, /aarch64-pc-windows-msvc/);
   assert.match(workflow, /x86_64-apple-darwin/);
@@ -271,15 +288,18 @@ test("release builds bundle only checksum-locked executable sidecars", () => {
   );
   assert.doesNotMatch(workflow, /releases\/latest|releases\/download\/latest|osxexperts\.net|johnvansickle\.com/);
   assert.match(workflow, /fetch-binaries\.mjs --target/);
-  assert.match(workflow, /HARBOR_BINARY_MIRROR_URL: https:\/\/harbor-binary-mirror\.xyz7\.workers\.dev/);
-  assert.match(workflow, /HARBOR_BINARY_MIRROR_REQUIRED: "1"/);
 
   const appWorkflow = readFileSync(
     new URL("../.github/workflows/app-build.yml", import.meta.url),
     "utf8",
   );
-  assert.match(appWorkflow, /HARBOR_BINARY_MIRROR_URL: https:\/\/harbor-binary-mirror\.xyz7\.workers\.dev/);
-  assert.match(appWorkflow, /HARBOR_BINARY_MIRROR_REQUIRED: "1"/);
+  assert.match(appWorkflow, /pnpm run setup:all/);
+
+  for (const file of ["fetch-libmpv.mjs", "fetch-mpv.mjs", "fetch-ffmpeg.mjs"]) {
+    const source = readFileSync(new URL(`../scripts/${file}`, import.meta.url), "utf8");
+    assert.doesNotMatch(source, /releases\/latest|releases\/download\/latest/);
+    assert.match(source, /sha256|SHA256|checksum/i);
+  }
 
   const fetcher = readFileSync(
     new URL("../scripts/fetch-binaries.mjs", import.meta.url),
@@ -350,18 +370,26 @@ test("release workflow actions are pinned to immutable commits", () => {
   }
 });
 
-test("runtime native asset downloads are disabled by security policy", () => {
+test("runtime native downloads require an explicit policy and trusted shader allowlist", () => {
   const policy = readFileSync(
     new URL("../src-tauri/src/security_policy.rs", import.meta.url),
     "utf8",
   );
   assert.match(policy, /fn remote_native_assets_enabled\(\) -> bool\s*\{\s*false\s*\}/);
 
-  for (const file of ["asr_model.rs", "anime4k.rs", "shaders.rs"]) {
-    const source = readFileSync(
-      new URL(`../src-tauri/src/${file}`, import.meta.url),
-      "utf8",
-    );
-    assert.match(source, /security_policy::remote_native_assets_enabled/);
+  assert.match(policy, /fn known_shader_downloads_enabled\(\) -> bool\s*\{\s*true\s*\}/);
+
+  const model = readFileSync(new URL("../src-tauri/src/asr_model.rs", import.meta.url), "utf8");
+  assert.match(model, /security_policy::remote_native_assets_enabled/);
+
+  for (const [file, command] of [
+    ["anime4k.rs", "anime4k_download"],
+    ["shaders.rs", "shader_download"],
+  ] as const) {
+    const source = readFileSync(new URL(`../src-tauri/src/${file}`, import.meta.url), "utf8");
+    assert.match(source, /security_policy::known_shader_downloads_enabled/);
+    assert.doesNotMatch(rustCommand(source, command), /\burl:\s*String\b/);
   }
+  const shaders = readFileSync(new URL("../src-tauri/src/shaders.rs", import.meta.url), "utf8");
+  assert.match(shaders, /find_pack\(&id\)/);
 });

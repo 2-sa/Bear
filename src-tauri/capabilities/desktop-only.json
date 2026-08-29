@@ -10,12 +10,10 @@
   "windows": [
     "main",
     "harbor-pip",
-    "harbor-browser",
-    "harbor-modal-overlay",
-    "harbor-cf-solver"
+    "harbor-modal-overlay"
   ],
   "permissions": [
     "updater:default",
-    "process:default"
+    "process:allow-restart"
   ]
 }
