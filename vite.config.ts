@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { execSync } from "node:child_process";
-import { defineConfig } from "vite";
+import { defineConfig, type ViteDevServer } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import pkg from "./package.json" with { type: "json" };
@@ -22,11 +22,37 @@ function silenceMediapipeSourcemap() {
   };
 }
 
+function servePublicMediapipe() {
+  return {
+    name: "serve-public-mediapipe",
+    apply: "serve" as const,
+    configureServer(server: ViteDevServer) {
+      server.middlewares.use((req, res, next) => {
+        const path = (req.url ?? "").split("?")[0];
+        if (!path.startsWith("/mp-wasm/") || path.includes("..") || !path.endsWith(".js")) {
+          next();
+          return;
+        }
+        let body: Buffer;
+        try {
+          body = readFileSync(`${server.config.root}/public${path}`);
+        } catch {
+          next();
+          return;
+        }
+        res.setHeader("Content-Type", "text/javascript; charset=utf-8");
+        res.setHeader("Cache-Control", "no-cache");
+        res.end(body);
+      });
+    },
+  };
+}
+
 export default defineConfig(({ mode }) => {
   const android = mode === "android" || process.env.HARBOR_TARGET === "android";
   const devHost = process.env.TAURI_DEV_HOST;
   return {
-    plugins: [react(), tailwindcss(), silenceMediapipeSourcemap()],
+    plugins: [react(), tailwindcss(), silenceMediapipeSourcemap(), servePublicMediapipe()],
     clearScreen: false,
     define: {
       __APP_VERSION__: JSON.stringify(pkg.version),

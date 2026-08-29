@@ -15,6 +15,7 @@ export function clearOverlayDismiss(): void {
 
 export function watchOutsideMouseDown(handler: (e: MouseEvent) => void): () => void {
   const wrapped = (e: MouseEvent) => {
+    if ((e.target as Element | null)?.closest?.("[data-dropdown-menu]")) return;
     noteOverlayDismiss();
     handler(e);
   };

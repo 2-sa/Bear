@@ -49,6 +49,15 @@ export function SubtitleFpsPanel({
   const [automatic, setAutomatic] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const applyRequestRef = useRef(0);
+  const customInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!customOpen || loading) return;
+    const field = customInputRef.current;
+    if (!field) return;
+    field.focus();
+    field.select();
+  }, [customOpen, loading]);
 
   useEffect(() => {
     let cancelled = false;
@@ -167,11 +176,8 @@ export function SubtitleFpsPanel({
         )}
       </div>
 
-      <div className="p-3">
-        <p className="text-[10.5px] font-medium uppercase tracking-wider text-ink-subtle">
-          {tr("Subtitle source FPS")}
-        </p>
-        <p className="mt-0.5 text-[11.5px] leading-snug text-ink-muted">
+      <div className="px-3 pb-3 pt-2.5">
+        <p className="text-[11.5px] leading-snug text-ink-muted">
           {tr("Choose the frame rate the subtitle was authored for.")}
         </p>
 
@@ -201,13 +207,14 @@ export function SubtitleFpsPanel({
 
         {customOpen && !loading && (
           <form
-            className="mt-2 flex items-center gap-1.5"
+            className="animate-item-in mt-2 flex items-center gap-1.5"
             onSubmit={(event) => {
               event.preventDefault();
               commitCustom();
             }}
           >
             <input
+              ref={customInputRef}
               type="number"
               value={draft}
               disabled={!availability.enabled || saving}
@@ -217,7 +224,7 @@ export function SubtitleFpsPanel({
               step="any"
               onChange={(event) => setDraft(event.currentTarget.value)}
               aria-label={tr("Custom subtitle FPS")}
-              className="h-9 min-w-0 flex-1 rounded-md bg-canvas px-2.5 text-end font-mono text-[12.5px] tabular-nums text-ink ring-1 ring-inset ring-edge-soft outline-none transition-colors focus:ring-accent/50 disabled:cursor-not-allowed disabled:opacity-45"
+              className="h-9 min-w-0 flex-1 rounded-md bg-canvas px-2.5 text-end font-mono text-[12.5px] tabular-nums text-ink outline-none transition-colors focus:bg-raised disabled:cursor-not-allowed disabled:opacity-45"
             />
             <button
               type="submit"
@@ -230,30 +237,34 @@ export function SubtitleFpsPanel({
           </form>
         )}
 
-        <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 rounded-md bg-canvas/60 px-3 py-2.5 text-[11.5px]">
-          <dt className="text-ink-muted">{tr("Video FPS")}</dt>
-          <dd className="text-end font-mono font-semibold tabular-nums text-ink">
-            {videoFps == null ? "-" : formatSubtitleFps(videoFps, 6)}
-          </dd>
-          <dt className="text-ink-muted">{tr("Subtitle source FPS")}</dt>
-          <dd className="text-end font-mono font-semibold tabular-nums text-ink">
-            {loading
-              ? "-"
-              : subtitleFps == null
-                ? tr("No correction")
-                : formatSubtitleFps(subtitleFps, 6)}
-          </dd>
+        <dl className="mt-3 flex flex-col gap-1.5 border-t border-edge-soft pt-2.5 text-[11.5px]">
+          <div className="flex items-center justify-between gap-3">
+            <dt className="text-ink-subtle">{tr("Video FPS")}</dt>
+            <dd className="font-mono font-semibold tabular-nums text-ink">
+              {videoFps == null ? "-" : formatSubtitleFps(videoFps, 6)}
+            </dd>
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <dt className="text-ink-subtle">{tr("Subtitle source FPS")}</dt>
+            <dd className="font-mono font-semibold tabular-nums text-ink">
+              {loading
+                ? "-"
+                : subtitleFps == null
+                  ? tr("No correction")
+                  : formatSubtitleFps(subtitleFps, 6)}
+            </dd>
+          </div>
         </dl>
-      </div>
 
-      {(reason || error) && !loading && (
-        <p
-          className="mx-3 mb-3 rounded-md bg-canvas/60 px-2.5 py-2 text-[11.5px] leading-snug text-ink-muted ring-1 ring-inset ring-edge-soft"
-          role={error ? "alert" : undefined}
-        >
-          {error ?? reason}
-        </p>
-      )}
+        {(reason || error) && !loading && (
+          <p
+            className={`mt-2.5 text-[11.5px] leading-snug ${error ? "text-danger" : "text-ink-subtle"}`}
+            role={error ? "alert" : undefined}
+          >
+            {error ?? reason}
+          </p>
+        )}
+      </div>
     </div>
   );
 }

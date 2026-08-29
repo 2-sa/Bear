@@ -1,9 +1,21 @@
 import { Check, ChevronDown } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 export type DropdownOption = { value: string; label: string };
 
 const MENU_MAX = 320;
+const GAP = 6;
+const EDGE = 8;
+
+type MenuBox = {
+  top: number;
+  left: number;
+  minWidth: number;
+  maxWidth: number;
+  maxHeight: number;
+  up: boolean;
+};
 
 export function Dropdown({
   value,
@@ -21,8 +33,7 @@ export function Dropdown({
   size?: "sm" | "md";
 }) {
   const [open, setOpen] = useState(false);
-  const [dropUp, setDropUp] = useState(false);
-  const [alignEnd, setAlignEnd] = useState(false);
+  const [box, setBox] = useState<MenuBox | null>(null);
   const ref = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const selected = options.find((o) => o.value === value) ?? null;
@@ -30,7 +41,9 @@ export function Dropdown({
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => {
-      if (!ref.current?.contains(e.target as Node)) setOpen(false);
+      const t = e.target as Node;
+      if (ref.current?.contains(t) || listRef.current?.contains(t)) return;
+      setOpen(false);
     };
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setOpen(false);
@@ -44,20 +57,52 @@ export function Dropdown({
   }, [open]);
 
   useLayoutEffect(() => {
-    if (!open) return;
-    const rect = ref.current?.getBoundingClientRect();
-    if (rect) {
-      const natural = options.length * 40 + 8;
-      const desired = Math.min(natural, 360, window.innerHeight * 0.6) + 10;
-      const below = window.innerHeight - rect.bottom;
-      const above = rect.top;
-      setDropUp(below < desired && above > below);
-      setAlignEnd(window.innerWidth - rect.left < MENU_MAX + 24);
+    if (!open) {
+      setBox(null);
+      return;
     }
-    listRef.current
-      ?.querySelector('[data-selected="true"]')
-      ?.scrollIntoView({ block: "nearest" });
-  }, [open, options.length]);
+    const place = () => {
+      const el = ref.current;
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      const menu = listRef.current;
+      const maxWidth = Math.min(MENU_MAX, window.innerWidth - EDGE * 2);
+      const minWidth = Math.min(r.width, maxWidth);
+      const width = Math.min(maxWidth, Math.max(minWidth, menu?.offsetWidth ?? minWidth));
+      const natural = menu?.offsetHeight ?? options.length * (size === "sm" ? 36 : 40) + 8;
+      const below = window.innerHeight - r.bottom - GAP - EDGE;
+      const above = r.top - GAP - EDGE;
+      const up = natural > below && above > below;
+      const maxHeight = Math.max(120, Math.min(360, window.innerHeight * 0.6, up ? above : below));
+      const top = up ? Math.max(EDGE, r.top - GAP - Math.min(natural, maxHeight)) : r.bottom + GAP;
+      const rtl = getComputedStyle(el).direction === "rtl";
+      const anchored = rtl ? r.right - width : r.left;
+      const left = Math.min(Math.max(EDGE, anchored), Math.max(EDGE, window.innerWidth - width - EDGE));
+      setBox({ top, left, minWidth, maxWidth, maxHeight, up });
+    };
+    place();
+    let raf = 0;
+    const reflow = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        place();
+      });
+    };
+    window.addEventListener("resize", reflow);
+    window.addEventListener("scroll", reflow, true);
+    return () => {
+      if (raf) cancelAnimationFrame(raf);
+      window.removeEventListener("resize", reflow);
+      window.removeEventListener("scroll", reflow, true);
+    };
+  }, [open, options.length, size]);
+
+  const placed = box != null;
+  useLayoutEffect(() => {
+    if (!open || !placed) return;
+    listRef.current?.querySelector('[data-selected="true"]')?.scrollIntoView({ block: "nearest" });
+  }, [open, placed]);
 
   const chevRef = useRef<HTMLSpanElement>(null);
   const spinChevron = (next: boolean) => {
@@ -103,46 +148,57 @@ export function Dropdown({
           <ChevronDown size={16} strokeWidth={2} />
         </span>
       </button>
-      {open && (
-        <div
-          ref={listRef}
-          role="listbox"
-          style={{ maxWidth: `min(${MENU_MAX}px, calc(100vw - 2rem))` }}
-          className={`absolute z-50 max-h-[min(360px,60vh)] w-max min-w-full overflow-y-auto rounded-md bg-elevated p-1 shadow-[0_18px_50px_-15px_rgba(0,0,0,0.7)] ${
-            alignEnd ? "end-0" : "start-0"
-          } ${
-            dropUp ? "bottom-[calc(100%+6px)] animate-menu-in-up" : "top-[calc(100%+6px)] animate-menu-in"
-          }`}
-        >
-          {options.map((o, i) => {
-            const active = o.value === value;
-            return (
-              <button
-                key={o.value}
-                type="button"
-                role="option"
-                aria-selected={active}
-                data-selected={active}
-                onClick={() => {
-                  onChange(o.value);
-                  setOpen(false);
-                }}
-                style={{ animationDelay: `${Math.min(i, 8) * 22}ms` }}
-                className={`animate-item-in flex w-full items-center justify-between gap-3 rounded-[4px] px-3 text-start transition-colors ${
-                  size === "sm" ? "h-9 text-[12.5px]" : "h-10 text-[13.5px]"
-                } ${
-                  active ? "bg-ink font-semibold text-canvas" : "text-ink-muted hover:bg-raised hover:text-ink"
-                }`}
-              >
-                <span className="truncate">{o.label}</span>
-                {active && (
-                  <Check size={15} strokeWidth={2.4} className="animate-badge-pop shrink-0" />
-                )}
-              </button>
-            );
-          })}
-        </div>
-      )}
+      {open &&
+        createPortal(
+          <div
+            ref={listRef}
+            role="listbox"
+            data-dropdown-menu
+            style={{
+              position: "fixed",
+              top: box ? box.top : -9999,
+              left: box ? box.left : -9999,
+              minWidth: box?.minWidth,
+              maxWidth: box?.maxWidth ?? MENU_MAX,
+              maxHeight: box?.maxHeight,
+              visibility: box ? "visible" : "hidden",
+            }}
+            className={`z-[9999] w-max overflow-y-auto overscroll-contain rounded-md bg-elevated p-1 shadow-[0_18px_50px_-15px_rgba(0,0,0,0.7)] ${
+              box ? (box.up ? "animate-menu-in-up" : "animate-menu-in") : ""
+            }`}
+          >
+            {options.map((o, i) => {
+              const active = o.value === value;
+              return (
+                <button
+                  key={o.value}
+                  type="button"
+                  role="option"
+                  aria-selected={active}
+                  data-selected={active}
+                  onClick={() => {
+                    onChange(o.value);
+                    setOpen(false);
+                  }}
+                  style={{ animationDelay: `${Math.min(i, 8) * 22}ms` }}
+                  className={`animate-item-in flex w-full items-center justify-between gap-3 rounded-[4px] px-3 text-start transition-colors ${
+                    size === "sm" ? "h-9 text-[12.5px]" : "h-10 text-[13.5px]"
+                  } ${
+                    active
+                      ? "bg-ink font-semibold text-canvas"
+                      : "text-ink-muted hover:bg-raised hover:text-ink"
+                  }`}
+                >
+                  <span className="truncate">{o.label}</span>
+                  {active && (
+                    <Check size={15} strokeWidth={2.4} className="animate-badge-pop shrink-0" />
+                  )}
+                </button>
+              );
+            })}
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }
