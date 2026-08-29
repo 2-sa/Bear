@@ -577,6 +577,7 @@ fetch, storage, files, or Tauri access. Networking and HTML parsing go through h
       wikidataId?: string;
       isbn?: string;
       cover?: string;
+      internalCover?: string;
       description?: string;
       year?: number;
       status?: string;
@@ -587,12 +588,12 @@ fetch, storage, files, or Tauri access. Networking and HTML parsing go through h
       isFanMade?: boolean;
     };
 
-EBookSummary requires id and title. It may include altTitle, cover, year, status,
-description, author or authors, genres, chapters, volumes, siteUrl, and isFanMade. Covers
-and siteUrl must be absolute HTTP(S) URLs. Set isFanMade: true from the source site's own
-edition badge or metadata and Harbor will discard that entry. If a site only marks fan
+EBookSummary requires id and title. It may include altTitle, cover, internalCover, year, status,
+description, author or authors, genres, chapters, volumes, siteUrl, and isFanMade. Cover,
+internalCover, and siteUrl must be absolute HTTP(S) URLs. Set isFanMade: true from the source site's own
+edition badge or metadata and Bear will discard that entry. If a site only marks fan
 editions in titles, detect that site's marker in the plugin and set isFanMade rather than
-making Harbor guess. Return the canonical title; Harbor also normalizes punctuation used
+making Bear guess. Return the canonical title; Bear also normalizes punctuation used
 as word separators and removes trailing source branding such as "kol"/"كول" before
 metadata matching.
 

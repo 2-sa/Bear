@@ -1,4 +1,5 @@
 .bk-book-stage {
+  --bk-open-center-shift: 40%;
   position: relative;
   width: 100%;
   perspective: 1200px;
@@ -40,6 +41,7 @@
   transform: rotateX(0.6deg) rotateY(-2.5deg);
   transform-style: preserve-3d;
   transform-origin: center center;
+  will-change: transform;
   transition: transform 360ms cubic-bezier(0.22, 0.78, 0.24, 1);
 }
 
@@ -57,9 +59,11 @@
 
 .bk-front {
   z-index: 10;
-  transform: translateZ(9px);
-  transform-origin: left center;
-  transition: transform 360ms cubic-bezier(0.22, 0.78, 0.24, 1);
+  transform: rotateY(-34deg) translateZ(8px);
+  transform-origin: left bottom;
+  transition:
+    transform 800ms ease,
+    z-index 600ms;
 }
 
 .bk-front > div {
@@ -133,11 +137,73 @@
 
 .bk-cover-back {
   z-index: 1;
+  overflow: hidden;
   border-radius: 5px 2px 2px 5px;
-  background:
-    linear-gradient(90deg, rgba(0, 0, 0, 0.35), transparent 12%),
-    var(--color-surface);
+  background: #141414;
   transform: rotateY(180deg);
+}
+
+.bk-internal-cover {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.bk-left-page-meta {
+  position: absolute;
+  inset: 14%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 12%;
+  color: #4b4235;
+  font-family: Georgia, "Times New Roman", serif;
+  text-align: center;
+  transform: rotateY(180deg) translateZ(1px);
+  backface-visibility: hidden;
+}
+
+.bk-left-page-meta strong {
+  overflow: hidden;
+  max-width: 100%;
+  font-size: clamp(6px, 0.55vw, 9px);
+  line-height: 1.3;
+  text-overflow: ellipsis;
+}
+
+.bk-left-page-meta span {
+  color: #9a6816;
+  font-size: clamp(10px, 1vw, 16px);
+  font-weight: 700;
+}
+
+.bk-story-page {
+  position: absolute;
+  inset: 12% 12% 10% 16%;
+  overflow: hidden;
+  color: #4b4235;
+  font-family: Georgia, "Times New Roman", serif;
+  text-align: start;
+}
+
+.bk-story-page strong {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: clamp(7px, 0.62vw, 11px);
+  line-height: 1.15;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.bk-story-page p {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 8% 0 0;
+  font-size: clamp(5px, 0.43vw, 7.5px);
+  line-height: 1.42;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 10;
 }
 
 .bk-page {
@@ -160,32 +226,77 @@
     ),
     linear-gradient(90deg, #c9c0af 0%, #f4efe5 8%, #e1d9cb 100%);
   box-shadow: inset -1px 0 rgba(88, 75, 56, 0.12);
+  transform-origin: left center;
+  transition-property: transform;
+  transition-timing-function: ease;
 }
 
 .bk-content:nth-child(1) {
-  transform: translateZ(7px);
+  transform: rotateY(-28deg) translateZ(7px);
+  transition-duration: 600ms;
 }
 
 .bk-content:nth-child(2) {
-  transform: translateZ(4px);
+  transform: rotateY(-30deg) translateZ(5px);
+  transition-duration: 600ms;
 }
 
 .bk-content:nth-child(3) {
-  transform: translateZ(1px);
+  transform: rotateY(-32deg) translateZ(3px);
+  transition-duration: 400ms;
+}
+
+.bk-content:nth-child(4) {
+  transform: rotateY(-34deg) translateZ(1px);
+  transition-duration: 500ms;
+}
+
+.bk-content:nth-child(5) {
+  transform: rotateY(-36deg) translateZ(-1px);
+  transition-duration: 600ms;
 }
 
 .bk-back {
   z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 5px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 12%;
+  border: 1px solid rgba(35, 28, 21, 0.32);
   border-radius: 5px 2px 2px 5px;
-  background: var(--color-surface);
-  box-shadow: 4px 7px 14px -8px rgba(0, 0, 0, 0.92);
-  transform: translateZ(-9px) rotateY(180deg);
+  background: color-mix(in srgb, rgb(var(--bk-poster-color)) 72%, #211b17);
+  color: rgba(255, 251, 236, 0.82);
+  box-shadow:
+    inset 8px 0 11px -10px rgba(0, 0, 0, 0.7),
+    4px 7px 14px -8px rgba(0, 0, 0, 0.92);
+  transform: rotateY(-34deg) translateZ(-8px);
+  transform-origin: left bottom;
   backface-visibility: hidden;
+  transition: transform 800ms ease;
 }
 
-.bk-right,
+.bk-back span,
+.bk-back small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bk-back span {
+  font-family: var(--font-display);
+  font-size: clamp(9px, 0.78vw, 13px);
+  font-weight: 600;
+}
+
+.bk-back small {
+  font-size: clamp(6px, 0.5vw, 8px);
+  letter-spacing: 0.08em;
+  opacity: 0.68;
+  text-transform: uppercase;
+}
+
 .bk-left {
   top: 4px;
   bottom: 4px;
@@ -193,28 +304,19 @@
   backface-visibility: hidden;
 }
 
-.bk-right {
-  right: -9px;
-  background:
-    repeating-linear-gradient(
-      to bottom,
-      #eee8dc 0,
-      #eee8dc 4px,
-      #c8bdab 4px,
-      #c8bdab 4.5px
-    ),
-    #ddd4c5;
-  transform: rotateY(90deg);
-}
-
 .bk-left {
   left: -9px;
+  z-index: 12;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
   border-radius: 2px 0 0 2px;
-  background: color-mix(in srgb, var(--color-surface) 82%, black);
+  border-block: 1px solid rgba(35, 28, 21, 0.32);
+  background: color-mix(in srgb, var(--color-accent) 14%, #55483b);
+  box-shadow:
+    inset 2px 0 rgba(255, 255, 255, 0.07),
+    inset -3px 0 5px rgba(0, 0, 0, 0.28);
   transform: rotateY(-90deg);
 }
 
@@ -264,26 +366,68 @@
 
 .group:hover .bk-book,
 .group:focus-visible .bk-book {
-  transform: translateY(-6px) rotateX(1.5deg) rotateY(-8deg);
+  transform: translateX(var(--bk-open-center-shift)) translateY(-6px) rotateX(1.5deg)
+    rotateY(-8deg);
 }
 
 .group:hover .bk-front,
 .group:focus-visible .bk-front {
-  transform: translateZ(9px) rotateY(-2.5deg);
+  z-index: 0;
+  transform: rotateY(-145deg) translateZ(0);
+}
+
+.group:hover .bk-back,
+.group:focus-visible .bk-back {
+  transform: rotateY(-8deg) translateZ(-8px);
+}
+
+.group:hover .bk-page .bk-content:nth-child(1),
+.group:focus-visible .bk-page .bk-content:nth-child(1) {
+  transform: rotateY(-30deg) translateZ(7px);
+  transition-duration: 1500ms;
+}
+
+.group:hover .bk-page .bk-content:nth-child(2),
+.group:focus-visible .bk-page .bk-content:nth-child(2) {
+  transform: rotateY(-35deg) translateZ(5px);
+  transition-duration: 1800ms;
+}
+
+.group:hover .bk-page .bk-content:nth-child(3),
+.group:focus-visible .bk-page .bk-content:nth-child(3) {
+  transform: rotateY(-118deg) translateZ(3px);
+  transition-duration: 1600ms;
+}
+
+.group:hover .bk-page .bk-content:nth-child(4),
+.group:focus-visible .bk-page .bk-content:nth-child(4) {
+  transform: rotateY(-130deg) translateZ(1px);
+  transition-duration: 1400ms;
+}
+
+.group:hover .bk-page .bk-content:nth-child(5),
+.group:focus-visible .bk-page .bk-content:nth-child(5) {
+  transform: rotateY(-140deg) translateZ(-1px);
+  transition-duration: 1200ms;
 }
 
 .group:hover .bk-book-stage::after,
 .group:focus-visible .bk-book-stage::after {
   opacity: 0.72;
-  transform: translateY(5px) scaleX(0.94);
+  transform: translateY(5px) scaleX(1.65);
 }
 
 :dir(rtl) .bk-book {
   transform: rotateX(0.6deg) rotateY(2.5deg);
 }
 
+:dir(rtl) .bk-book-stage {
+  --bk-open-center-shift: -40%;
+}
+
 :dir(rtl) .bk-front {
-  transform-origin: right center;
+  transform: rotateY(34deg) translateZ(8px);
+  transform-origin: right bottom;
 }
 
 :dir(rtl) .bk-cover {
@@ -303,12 +447,6 @@
   box-shadow: inset 1px 0 rgba(0, 0, 0, 0.12);
 }
 
-:dir(rtl) .bk-right {
-  right: auto;
-  left: -9px;
-  transform: rotateY(-90deg);
-}
-
 :dir(rtl) .bk-left {
   right: -9px;
   left: auto;
@@ -320,19 +458,81 @@
   writing-mode: vertical-lr;
 }
 
+:dir(rtl) .bk-content {
+  transform-origin: right center;
+}
+
+:dir(rtl) .bk-content:nth-child(1) {
+  transform: rotateY(28deg) translateZ(7px);
+}
+
+:dir(rtl) .bk-content:nth-child(2) {
+  transform: rotateY(30deg) translateZ(5px);
+}
+
+:dir(rtl) .bk-content:nth-child(3) {
+  transform: rotateY(32deg) translateZ(3px);
+}
+
+:dir(rtl) .bk-content:nth-child(4) {
+  transform: rotateY(34deg) translateZ(1px);
+}
+
+:dir(rtl) .bk-content:nth-child(5) {
+  transform: rotateY(36deg) translateZ(-1px);
+}
+
+:dir(rtl) .bk-back {
+  transform: rotateY(34deg) translateZ(-8px);
+  transform-origin: right bottom;
+}
+
 :dir(rtl) .group:hover .bk-book,
 :dir(rtl) .group:focus-visible .bk-book {
-  transform: translateY(-6px) rotateX(1.5deg) rotateY(8deg);
+  transform: translateX(var(--bk-open-center-shift)) translateY(-6px) rotateX(1.5deg)
+    rotateY(8deg);
 }
 
 :dir(rtl) .group:hover .bk-front,
 :dir(rtl) .group:focus-visible .bk-front {
-  transform: translateZ(9px) rotateY(2.5deg);
+  transform: rotateY(145deg) translateZ(0);
+}
+
+:dir(rtl) .group:hover .bk-back,
+:dir(rtl) .group:focus-visible .bk-back {
+  transform: rotateY(8deg) translateZ(-8px);
+}
+
+:dir(rtl) .group:hover .bk-page .bk-content:nth-child(1),
+:dir(rtl) .group:focus-visible .bk-page .bk-content:nth-child(1) {
+  transform: rotateY(30deg) translateZ(7px);
+}
+
+:dir(rtl) .group:hover .bk-page .bk-content:nth-child(2),
+:dir(rtl) .group:focus-visible .bk-page .bk-content:nth-child(2) {
+  transform: rotateY(35deg) translateZ(5px);
+}
+
+:dir(rtl) .group:hover .bk-page .bk-content:nth-child(3),
+:dir(rtl) .group:focus-visible .bk-page .bk-content:nth-child(3) {
+  transform: rotateY(118deg) translateZ(3px);
+}
+
+:dir(rtl) .group:hover .bk-page .bk-content:nth-child(4),
+:dir(rtl) .group:focus-visible .bk-page .bk-content:nth-child(4) {
+  transform: rotateY(130deg) translateZ(1px);
+}
+
+:dir(rtl) .group:hover .bk-page .bk-content:nth-child(5),
+:dir(rtl) .group:focus-visible .bk-page .bk-content:nth-child(5) {
+  transform: rotateY(140deg) translateZ(-1px);
 }
 
 @media (prefers-reduced-motion: reduce) {
   .bk-book,
   .bk-front,
+  .bk-back,
+  .bk-content,
   .bk-book-stage::after {
     transition: none;
   }
@@ -342,5 +542,25 @@
   :dir(rtl) .group:hover .bk-book,
   :dir(rtl) .group:focus-visible .bk-book {
     transform: none;
+  }
+
+  .group:hover .bk-front,
+  .group:focus-visible .bk-front {
+    transform: rotateY(-34deg) translateZ(8px);
+  }
+
+  :dir(rtl) .group:hover .bk-front,
+  :dir(rtl) .group:focus-visible .bk-front {
+    transform: rotateY(34deg) translateZ(8px);
+  }
+
+  .group:hover .bk-back,
+  .group:focus-visible .bk-back {
+    transform: rotateY(-34deg) translateZ(-8px);
+  }
+
+  :dir(rtl) .group:hover .bk-back,
+  :dir(rtl) .group:focus-visible .bk-back {
+    transform: rotateY(34deg) translateZ(-8px);
   }
 }

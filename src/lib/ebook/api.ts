@@ -19,6 +19,7 @@ export type EBook = {
   altTitle?: string;
   authors: string[];
   cover?: string;
+  internalCover?: string;
   banner?: string;
   description: string;
   year?: number;
@@ -650,6 +651,12 @@ function claim(entity: WikidataEntity, property: string): unknown {
   return entity.claims?.[property]?.[0]?.mainsnak?.datavalue?.value;
 }
 
+function commonsImage(value: unknown): string | undefined {
+  return typeof value === "string" && value
+    ? `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(value)}?width=800`
+    : undefined;
+}
+
 function creditedAuthors(description: string): string[] {
   const match = description.match(
     /\b(?:novel|series|work)\s+(?:written\s+)?by\s+(.+?)(?:\s+and\s+(?:illustrated|published|created)\s+by|[.;]|$)/i,
@@ -704,9 +711,7 @@ function mapWikidata(entity: WikidataEntity, summary?: WikipediaSummary | null):
     cover:
       summary?.originalimage?.source ??
       summary?.thumbnail?.source ??
-      (typeof cover === "string"
-        ? `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(cover)}?width=800`
-        : undefined),
+      commonsImage(cover),
     description,
     year: Number(date?.time?.match(/[+-](\d{4})/)?.[1]) || undefined,
     genres: [],
@@ -1113,6 +1118,11 @@ export function mergeEBookMetadata(sources: EBook[], metadata: EBook[]): EBook[]
       title: keepArabicSource ? source.title : meta.title || source.title,
       altTitle: meta.altTitle ?? source.altTitle,
       authors: meta.authors.length ? meta.authors : source.authors,
+      internalCover:
+        source.internalCover ??
+        candidates.find((candidate) => candidate.cover && candidate.cover !== meta.cover)?.cover ??
+        source.cover ??
+        meta.cover,
       cover:
         keepArabicSource || embeddedSourceCover
           ? source.cover || meta.cover

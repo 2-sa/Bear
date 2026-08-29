@@ -44,6 +44,8 @@ type Props = {
   profile: string;
   bookId: string;
   bookTitle: string;
+  bookCover?: string;
+  internalCover?: string;
   chapter: EBookChapter;
   content: EBookChapterContent;
   direction: "ltr" | "rtl";
@@ -132,6 +134,8 @@ export function HarborReader({
   profile,
   bookId,
   bookTitle,
+  bookCover,
+  internalCover,
   chapter,
   content,
   direction,
@@ -745,6 +749,19 @@ export function HarborReader({
           onMouseMove={(event) => prefs.mouseLineTrack && updateTrace(event.clientY)}
         >
           <div className="pointer-events-none absolute inset-y-0 start-0 w-px bg-gradient-to-b from-transparent via-black/10 to-transparent" />
+          {chapterIndex === 0 && (internalCover || bookCover) && (
+            <section
+              aria-label={`${bookTitle} cover`}
+              className="mb-14 flex min-h-[70vh] flex-col items-center justify-center border-b pb-14 text-center"
+              style={{ borderColor: `${colors.muted}35` }}
+            >
+              <img
+                src={internalCover || bookCover}
+                alt={`${bookTitle} internal cover`}
+                className="h-full max-h-[72vh] w-full object-contain shadow-[0_22px_65px_rgba(0,0,0,.38)]"
+              />
+            </section>
+          )}
           <header className="mb-12 border-b pb-7" style={{ borderColor: `${colors.muted}35` }}>
             <div className="mb-2 text-xs font-semibold uppercase tracking-[.24em]" style={{ color: colors.muted }}>Bear Reader</div>
             <h1 className="text-balance text-[1.85em] font-semibold leading-tight">{readerTitle}</h1>

@@ -15,7 +15,7 @@ import {
   Search,
   SlidersHorizontal,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import "./ebook-book.css";
 import { Poster } from "@/components/poster";
 import { Row } from "@/components/row";
@@ -54,6 +54,7 @@ import { subscribeEBookSources } from "@/lib/ebook/sources";
 import { fetchEBookListCollection, flushPendingEBookTracking } from "@/lib/ebook/tracking";
 import { useView } from "@/lib/view";
 import { openUrl } from "@/lib/window";
+import { useArtGlow } from "./big-picture/bp-art-color";
 import { EBookSourcesView } from "./ebook/ebook-sources-panel";
 import { EBookReader } from "./ebook/ebook-reader";
 
@@ -839,13 +840,60 @@ function EBookGrid({
 }
 
 function EBookCard({ ebook, onOpen }: { ebook: EBook; onOpen: (ebook: EBook) => void }) {
+  const cardRef = useRef<HTMLButtonElement>(null);
+  const rearColor = useArtGlow(ebook.cover);
+  const alignOpenBook = useCallback(() => {
+    const card = cardRef.current;
+    const stage = card?.querySelector<HTMLElement>(".bk-book-stage");
+    if (!card || !stage) return;
+
+    const stageRect = stage.getBoundingClientRect();
+    const clipper = card.closest<HTMLElement>(".harbor-row-track") ?? card.closest<HTMLElement>("main");
+    const clipRect = clipper?.getBoundingClientRect();
+    const left = Math.max(0, clipRect?.left ?? 0);
+    const right = Math.min(window.innerWidth, clipRect?.right ?? window.innerWidth);
+    const boundaryCenter = (left + right) / 2;
+    const stageCenter = stageRect.left + stageRect.width / 2;
+    const openHalfWidth = stageRect.width * 0.91;
+    const safeInset = 12;
+    const minimumCenter = left + safeInset + openHalfWidth;
+    const maximumCenter = right - safeInset - openHalfWidth;
+    const inwardNudge = (boundaryCenter - stageCenter) * 0.12;
+    const preferredCenter = stageCenter + inwardNudge;
+    const openCenter =
+      minimumCenter <= maximumCenter
+        ? Math.min(maximumCenter, Math.max(minimumCenter, preferredCenter))
+        : boundaryCenter;
+    const direction = getComputedStyle(stage).direction === "rtl" ? -1 : 1;
+    const coverCenterOffset = stageRect.width * 0.4 * direction;
+
+    stage.style.setProperty(
+      "--bk-open-center-shift",
+      `${coverCenterOffset + openCenter - stageCenter}px`,
+    );
+  }, []);
+  const resetOpenBookAlignment = useCallback(() => {
+    cardRef.current
+      ?.querySelector<HTMLElement>(".bk-book-stage")
+      ?.style.removeProperty("--bk-open-center-shift");
+  }, []);
+
   return (
     <button
+      ref={cardRef}
       type="button"
       onClick={() => onOpen(ebook)}
-      className="group flex w-full min-w-0 flex-col gap-2 text-start"
+      onPointerEnter={alignOpenBook}
+      onPointerLeave={resetOpenBookAlignment}
+      onFocus={alignOpenBook}
+      onBlur={resetOpenBookAlignment}
+      className="group relative z-0 flex w-full min-w-0 flex-col gap-2 text-start hover:z-20 focus-visible:z-20"
     >
-      <div className="bk-book-stage" aria-hidden="true">
+      <div
+        className="bk-book-stage"
+        aria-hidden="true"
+        style={{ "--bk-poster-color": rearColor ?? "85 72 59" } as CSSProperties}
+      >
         <div className="bk-book">
           <div className="bk-front">
             <div className="bk-cover">
@@ -863,17 +911,42 @@ function EBookCard({ ebook, onOpen }: { ebook: EBook; onOpen: (ebook: EBook) => 
                 </h2>
               )}
             </div>
-            <div className="bk-cover-back" />
+            <div className="bk-cover-back">
+              {(ebook.internalCover || ebook.cover) && (
+                <img
+                  src={ebook.internalCover || ebook.cover}
+                  alt=""
+                  className="bk-internal-cover"
+                  loading="lazy"
+                />
+              )}
+            </div>
           </div>
 
           <div className="bk-page">
             <div className="bk-content bk-content-current" />
+            <div className="bk-content">
+              <div className="bk-story-page">
+                <strong>{ebook.title}</strong>
+                <p>{ebook.description || "No story summary is available."}</p>
+              </div>
+            </div>
             <div className="bk-content" />
             <div className="bk-content" />
+            <div className="bk-content">
+              <div className="bk-left-page-meta">
+                <strong>{ebook.genres.slice(0, 3).join(" · ") || "eBook"}</strong>
+                {ebook.score != null && (
+                  <span>★ {(ebook.score > 10 ? ebook.score / 10 : ebook.score).toFixed(1)}</span>
+                )}
+              </div>
+            </div>
           </div>
 
-          <div className="bk-back" />
-          <div className="bk-right" />
+          <div className="bk-back">
+            <span>{ebook.title}</span>
+            <small>{ebook.authors[0] || "Bear eBooks"}</small>
+          </div>
 
           <div className="bk-left">
             <h2>
@@ -1575,6 +1648,8 @@ function EBookDetails({
           key={reading.chapter.id}
           bookId={ebook.id}
           bookTitle={ebook.title}
+          bookCover={ebook.cover}
+          internalCover={ebook.internalCover}
           chapter={reading.chapter}
           content={reading.content}
           error={reading.error}

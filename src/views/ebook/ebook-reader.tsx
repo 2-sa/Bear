@@ -22,6 +22,8 @@ function textDirection(text: string): "ltr" | "rtl" {
 export function EBookReader({
   bookId,
   bookTitle,
+  bookCover,
+  internalCover,
   chapter,
   content,
   error,
@@ -31,6 +33,8 @@ export function EBookReader({
 }: {
   bookId: string;
   bookTitle: string;
+  bookCover?: string;
+  internalCover?: string;
   chapter: EBookChapter;
   content: EBookChapterContent | null;
   error?: string;
@@ -106,6 +110,8 @@ export function EBookReader({
         profile={profile}
         bookId={bookId}
         bookTitle={bookTitle}
+        bookCover={bookCover}
+        internalCover={internalCover}
         chapter={chapter}
         content={content}
         direction={direction}

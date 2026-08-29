@@ -136,6 +136,7 @@ function pluginEBook(provider: Provider, value: unknown): EBook | null {
     altTitle: altTitles.length ? [...new Set(altTitles)].join("|") : undefined,
     authors,
     cover: url(item.cover),
+    internalCover: url(item.internalCover),
     description: text(item.description) ?? "",
     year: typeof item.year === "number" ? Math.trunc(item.year) : undefined,
     status: text(item.status),
