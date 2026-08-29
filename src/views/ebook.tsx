@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import "./ebook-book.css";
+import "./ebook-hero.css";
 import { Poster } from "@/components/poster";
 import { Row } from "@/components/row";
 import { useAnilist } from "@/lib/anilist/provider";
@@ -172,8 +173,7 @@ export function EBookView() {
     void browsePopularEBooks()
       .catch(() => [])
       .then((allTime) => {
-        if (!active) return;
-        setPopular(allTime);
+        if (active) setPopular(allTime);
       });
     return () => {
       active = false;
@@ -398,7 +398,11 @@ export function EBookView() {
     );
   };
   const catalog = sourceItems?.filter(matchesCategory) ?? sourceItems;
-  const hero = sourceItems?.[0];
+  const featuredBooks = (popular ?? []).filter(
+    (ebook) => ebook.cover && !/(?:^|\/)default(?:\.[a-z0-9]+)?(?:[?#]|$)/i.test(ebook.cover),
+  );
+  const hero = featuredBooks[0] ?? popular?.[0];
+  const shelfBooks = featuredBooks.filter((ebook) => ebook.id !== hero?.id).slice(0, 60);
   const refreshing = query.trim().length >= 2 ? results === null : sourceItems === null;
   const rails: Rail[] =
     query.trim().length >= 2
@@ -431,38 +435,11 @@ export function EBookView() {
 
   return (
     <main className="flex-1 overflow-y-auto overflow-x-hidden pb-20">
-      <section className="relative min-h-[390px] overflow-hidden border-b border-edge-soft px-12 pb-12 pt-28">
-        {hero?.banner && (
-          <img
-            src={hero.banner}
-            alt=""
-            className="absolute inset-0 h-full w-full object-cover opacity-35"
-          />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-r from-canvas via-canvas/90 to-canvas/30" />
-        <div className="absolute inset-0 bg-gradient-to-t from-canvas via-transparent to-canvas/30" />
-        <div className="relative z-10 flex max-w-3xl flex-col items-start gap-5">
-          <span className="text-[12px] font-semibold uppercase tracking-[0.28em] text-accent">
-            Bear eBooks
-          </span>
-          <h1 className="font-display text-[48px] font-medium leading-[0.98] tracking-tight text-ink">
-            {hero?.title ?? "A shelf for every story"}
-          </h1>
-          <p className="line-clamp-3 max-w-2xl text-[15px] leading-7 text-ink-muted">
-            {hero?.description ||
-              "Discover light eBooks, keep a personal library, and return to the stories you love."}
-          </p>
-          {hero && (
-            <button
-              type="button"
-              onClick={() => openEBook(String(hero.id))}
-              className="rounded-full bg-ink px-6 py-3 text-[14px] font-semibold text-canvas transition-transform hover:scale-[1.02] active:scale-[0.98]"
-            >
-              View eBook
-            </button>
-          )}
-        </div>
-      </section>
+      <EBookLibraryHero
+        ebook={hero}
+        shelfBooks={shelfBooks}
+        onOpen={(ebook) => openEBook(String(ebook.id))}
+      />
 
       <div className="mx-auto flex max-w-[1500px] flex-col gap-9 px-12 pt-8">
         {rails.map((rail) => (
@@ -653,6 +630,168 @@ function EBookSourceDropdown({
         </div>
       )}
     </div>
+  );
+}
+
+type FeaturedShelfItem =
+  | { kind: "spine"; book: EBook; lean: "upright" | "left" | "right"; height: number }
+  | { kind: "stack"; books: EBook[] };
+
+const SHELF_STACKS = [
+  new Map([
+    [5, 2],
+    [13, 1],
+  ]),
+  new Map([
+    [2, 5],
+    [15, 4],
+  ]),
+  new Map([
+    [7, 1],
+    [16, 2],
+  ]),
+];
+const SHELF_LEANS_RIGHT = [new Set([1, 8, 16]), new Set([8, 12]), new Set([1, 10])];
+const SHELF_LEANS_LEFT = [new Set([3, 10, 18]), new Set([10, 14]), new Set([3, 12])];
+
+function arrangeFeaturedShelf(books: EBook[], shelfIndex: number): FeaturedShelfItem[] {
+  const items: FeaturedShelfItem[] = [];
+  const stacks = SHELF_STACKS[shelfIndex] ?? new Map<number, number>();
+  const leansRight = SHELF_LEANS_RIGHT[shelfIndex] ?? new Set<number>();
+  const leansLeft = SHELF_LEANS_LEFT[shelfIndex] ?? new Set<number>();
+  for (let bookIndex = 0; bookIndex < books.length; bookIndex += 1) {
+    const stackSize = Math.min(stacks.get(bookIndex) ?? 0, books.length - bookIndex);
+    if (stackSize > 0) {
+      items.push({ kind: "stack", books: books.slice(bookIndex, bookIndex + stackSize) });
+      bookIndex += stackSize - 1;
+      continue;
+    }
+    items.push({
+      kind: "spine",
+      book: books[bookIndex],
+      lean: leansRight.has(bookIndex) ? "right" : leansLeft.has(bookIndex) ? "left" : "upright",
+      height: [82, 96, 88, 76, 92, 84][bookIndex % 6],
+    });
+  }
+  return items;
+}
+
+function EBookLibraryHero({
+  ebook,
+  shelfBooks,
+  onOpen,
+}: {
+  ebook?: EBook;
+  shelfBooks: EBook[];
+  onOpen: (ebook: EBook) => void;
+}) {
+  const artColor = useArtGlow(ebook?.cover);
+  const shelves = [0, 1, 2].map((shelfIndex) =>
+    shelfBooks.filter((_, bookIndex) => bookIndex % 3 === shelfIndex).slice(0, 20),
+  );
+  const arrangedShelves = shelves.map(arrangeFeaturedShelf);
+  return (
+    <section
+      className="ebook-library-hero"
+      style={{ "--ebook-hero-accent": artColor ?? "205 116 50" } as CSSProperties}
+    >
+      <div className="ebook-hero-shelves" aria-hidden="true">
+        {arrangedShelves.map((shelf, shelfIndex) => (
+          <div className="ebook-hero-shelf" key={shelfIndex}>
+            <div className="ebook-hero-books">
+              {shelf.map((item) =>
+                item.kind === "stack" ? (
+                  <div className="ebook-hero-shelf-stack" key={`stack:${item.books[0].id}`}>
+                    {item.books.map((book, stackIndex) => (
+                      <div
+                        className="ebook-hero-horizontal-book"
+                        key={book.id}
+                        style={{ "--horizontal-book-step": stackIndex } as CSSProperties}
+                      >
+                        <img src={book.cover} alt="" draggable={false} decoding="async" />
+                        <span>{book.title}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div
+                    className={`ebook-hero-shelf-book ebook-hero-shelf-book--${item.lean}`}
+                    key={item.book.id}
+                    style={{ "--shelf-book-height": `${item.height}%` } as CSSProperties}
+                  >
+                    <img
+                      className="ebook-hero-spine-art"
+                      src={item.book.cover}
+                      alt=""
+                      draggable={false}
+                      decoding="async"
+                    />
+                    <span className="ebook-hero-spine-title">{item.book.title}</span>
+                  </div>
+                ),
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="ebook-hero-paper">
+        <svg
+          className="ebook-hero-paper-shape"
+          viewBox="0 0 1120 520"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <defs>
+            <radialGradient id="ebookHeroPaperWash" cx="18%" cy="14%" r="58%">
+              <stop offset="0%" stopColor={`rgb(${artColor ?? "205 116 50"})`} stopOpacity="0.1" />
+              <stop offset="72%" stopColor="#f2eddf" stopOpacity="0" />
+            </radialGradient>
+          </defs>
+          <path
+            className="ebook-hero-paper-fill"
+            d="M0 0H790C930 0 1005 54 984 118C965 176 858 160 852 216C846 269 975 268 996 332C1018 399 933 467 806 520H0Z"
+          />
+          <path
+            className="ebook-hero-paper-wash"
+            d="M0 0H790C930 0 1005 54 984 118C965 176 858 160 852 216C846 269 975 268 996 332C1018 399 933 467 806 520H0Z"
+          />
+        </svg>
+
+        <div className="ebook-hero-copy">
+          <span className="ebook-hero-kicker">Featured books · Metadata picks</span>
+          <h1>{ebook?.title ?? "A remarkable book for your shelf"}</h1>
+          <p>
+            {ebook?.description ||
+              "A living shelf for new worlds, beloved stories, and the books you have yet to meet."}
+          </p>
+          <div className="ebook-hero-meta">
+            {ebook?.year && <span>{ebook.year}</span>}
+            {ebook?.genres.slice(0, 2).map((genre) => <span key={genre}>{genre}</span>)}
+          </div>
+          {ebook && (
+            <button type="button" onClick={() => onOpen(ebook)}>
+              <BookOpen size={17} /> Open featured book
+            </button>
+          )}
+        </div>
+
+        <div className="ebook-hero-showcase" aria-hidden="true">
+          <div className="ebook-hero-book-shadow" />
+          <div className="ebook-hero-book-object">
+            <div className="ebook-hero-book-pages" />
+            <Poster
+              src={ebook?.cover}
+              seed={`ebook-hero:${ebook?.id ?? "loading"}`}
+              ratio="portrait"
+              className="ebook-hero-book-cover"
+            />
+          </div>
+          <span className="ebook-hero-edition">Featured pick</span>
+        </div>
+      </div>
+    </section>
   );
 }
 

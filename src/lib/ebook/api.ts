@@ -1015,7 +1015,7 @@ export async function browsePopularEBooks(): Promise<EBook[]> {
   url.searchParams.set("q", "language:eng");
   url.searchParams.set("sort", "readinglog");
   url.searchParams.set("fields", "key,title,author_name,cover_i,first_publish_year,subject");
-  url.searchParams.set("limit", "18");
+  url.searchParams.set("limit", "60");
   const data = await cachedJson<{ docs?: OpenLibraryDoc[] }>(url.toString(), 30_000);
   return groupEBookSeries((data.docs ?? []).map(mapOpenLibrary));
 }
