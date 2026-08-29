@@ -1,5 +1,6 @@
 import { loadEBookExtensions, installedEBookPlugins } from "./extensions";
 import { fetchEBookMetadata, mergeEBookMetadata, type EBook } from "./api";
+import { parseEpub, readEpubChapter, type EpubBook } from "./epub";
 import { listEBookSources, type EBookHtmlSourceConfig, type EBookSource } from "./sources";
 import { safeFetch } from "@/lib/safe-fetch";
 import { translateEBookChapter } from "./translation";
@@ -39,6 +40,9 @@ type Provider = {
 const workers = new Map<string, PluginWorker>();
 const htmlPages = new Map<string, Map<string, Map<number, number>>>();
 const details = new Map<string, Promise<EBook | null>>();
+const localBooks = new Map<string, Map<string, { title: string; paths: string[] }>>();
+const localEpubs = new Map<string, Promise<EpubBook>>();
+const LOCAL_EPUB_CACHE_LIMIT = 6;
 let extensionsReady: Promise<void> | null = null;
 
 function routeId(providerId: string, itemId: string): string {
@@ -210,6 +214,133 @@ function pluginContent(value: unknown): EBookChapterContent {
   return { text: body, images };
 }
 
+async function localJoin(parent: string, child: string): Promise<string> {
+  if (/^file:\/\//i.test(parent))
+    return new URL(encodeURIComponent(child), parent.endsWith("/") ? parent : `${parent}/`).href;
+  return (await import("@tauri-apps/api/path")).join(parent, child);
+}
+
+function localTitle(name: string): string {
+  return name.replace(/\.epub$/i, "").replaceAll(/[_-]+/g, " ").trim() || "Untitled eBook";
+}
+
+async function localPackage(path: string): Promise<EpubBook> {
+  let pending = localEpubs.get(path);
+  if (pending) {
+    localEpubs.delete(path);
+    localEpubs.set(path, pending);
+  }
+  if (!pending) {
+    pending = import("@tauri-apps/plugin-fs")
+      .then(({ readFile }) => readFile(path))
+      .then((bytes) => parseEpub(bytes.slice().buffer));
+    localEpubs.set(path, pending);
+    pending.catch(() => localEpubs.delete(path));
+    pending.then(
+      () => {
+        while (localEpubs.size > LOCAL_EPUB_CACHE_LIMIT) {
+          const oldest = localEpubs.keys().next().value;
+          if (oldest) localEpubs.delete(oldest);
+          else break;
+        }
+      },
+      () => undefined,
+    );
+  }
+  return pending;
+}
+
+async function scanLocalBooks(
+  source: EBookSource,
+): Promise<Map<string, { title: string; paths: string[] }>> {
+  const { readDir } = await import("@tauri-apps/plugin-fs");
+  const entries = await readDir(source.location);
+  const books = new Map<string, { title: string; paths: string[] }>();
+  for (const item of entries.sort((a, b) =>
+    a.name.localeCompare(b.name, undefined, { numeric: true }),
+  )) {
+    const path = await localJoin(source.location, item.name);
+    if (item.isFile && /\.epub$/i.test(item.name))
+      books.set(path, { title: localTitle(item.name), paths: [path] });
+    if (!item.isDirectory) continue;
+    const files = await readDir(path).catch(() => []);
+    const epubs = files
+      .filter((file) => file.isFile && /\.epub$/i.test(file.name))
+      .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+    if (epubs.length)
+      books.set(path, {
+        title: localTitle(item.name),
+        paths: await Promise.all(epubs.map((file) => localJoin(path, file.name))),
+      });
+  }
+  localBooks.set(source.id, books);
+  return books;
+}
+
+function localProvider(source: EBookSource): Provider {
+  const provider = { id: source.id, name: source.name, iconUrl: source.iconUrl } as Provider;
+  const find = async (id: string) =>
+    localBooks.get(source.id)?.get(id) ?? (await scanLocalBooks(source)).get(id);
+  const summary = (id: string, book: { title: string; paths: string[] }): EBook => ({
+    id: routeId(provider.id, id),
+    source: "source",
+    providerId: provider.id,
+    sourceItemId: id,
+    providerName: provider.name,
+    title: book.title,
+    authors: [],
+    description: "",
+    genres: [],
+    volumes: book.paths.length > 1 ? book.paths.length : undefined,
+  });
+  const list = async (query: string, offset: number) => {
+    const books = [...(await scanLocalBooks(source))].filter(([, book]) =>
+      book.title.toLocaleLowerCase().includes(query.toLocaleLowerCase()),
+    );
+    return books.slice(offset, offset + 24).map(([id, book]) => summary(id, book));
+  };
+  provider.popular = (offset) => list("", offset);
+  provider.search = (query, offset) => list(query, offset);
+  provider.detail = async (id) => {
+    const book = await find(id);
+    if (!book) return null;
+    const epub = await localPackage(book.paths[0]);
+    return {
+      ...summary(id, book),
+      title: book.paths.length > 1 ? book.title : epub.title || book.title,
+      authors: epub.authors,
+      cover: epub.cover,
+      description: epub.description,
+      year: epub.year,
+      genres: epub.subjects,
+      chapters: book.paths.length === 1 ? epub.chapters.length : undefined,
+    };
+  };
+  provider.chapters = async (id) => {
+    const book = await find(id);
+    if (!book) return [];
+    const chapters: EBookChapter[] = [];
+    for (const [volumeIndex, path] of book.paths.entries()) {
+      const epub = await localPackage(path);
+      for (const [chapterIndex, chapter] of epub.chapters.entries())
+        chapters.push({
+          id: JSON.stringify([path, chapter.path]),
+          title: chapter.title,
+          chapter: String(chapterIndex + 1),
+          position: chapters.length,
+          volume: book.paths.length > 1 ? String(volumeIndex + 1) : undefined,
+          volumeTitle: book.paths.length > 1 ? epub.title : undefined,
+        });
+    }
+    return chapters;
+  };
+  provider.content = async (id) => {
+    const [path, chapter] = JSON.parse(id) as [string, string];
+    return { text: cleanSourceText(readEpubChapter(await localPackage(path), chapter)) };
+  };
+  return provider;
+}
+
 function pluginProvider(plugin: InstalledPlugin): Provider {
   const id = `plugin:${plugin.id}`;
   let worker = workers.get(id);
@@ -366,6 +497,9 @@ function htmlProvider(source: EBookSource & { config: EBookHtmlSourceConfig }): 
 async function providers(): Promise<Provider[]> {
   await (extensionsReady ??= loadEBookExtensions());
   return [
+    ...listEBookSources()
+      .filter((source) => source.kind === "local")
+      .map(localProvider),
     ...listEBookSources()
       .filter(
         (source): source is EBookSource & { config: EBookHtmlSourceConfig } =>

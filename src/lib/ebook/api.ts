@@ -1101,6 +1101,7 @@ export function mergeEBookMetadata(sources: EBook[], metadata: EBook[]): EBook[]
     const source = sourceFallback(ebook);
     if (!candidates.length) return source;
     const meta = candidates[0];
+    const embeddedSourceCover = /^data:image\//i.test(source.cover ?? "");
     const metadataGenres = candidates.find((candidate) => candidate.genres.length)?.genres ?? [];
     return {
       ...source,
@@ -1112,7 +1113,10 @@ export function mergeEBookMetadata(sources: EBook[], metadata: EBook[]): EBook[]
       title: keepArabicSource ? source.title : meta.title || source.title,
       altTitle: meta.altTitle ?? source.altTitle,
       authors: meta.authors.length ? meta.authors : source.authors,
-      cover: keepArabicSource ? source.cover || meta.cover : meta.cover || source.cover,
+      cover:
+        keepArabicSource || embeddedSourceCover
+          ? source.cover || meta.cover
+          : meta.cover || source.cover,
       banner: meta.banner ?? source.banner,
       description: keepArabicSource
         ? source.description || meta.description
