@@ -28,6 +28,7 @@ import manga from "./ru/manga";
 import controllers from "./ru/controllers";
 import plurals from "./ru/plurals";
 
+import bpSources from "./ru/bp-sources";
 import used from "./ru/used";
 
 const ru: Record<string, string> = {
@@ -60,6 +61,7 @@ const ru: Record<string, string> = {
   ...manga,
   ...controllers,
   ...plurals,
+  ...bpSources,
   ...used,
 };
 

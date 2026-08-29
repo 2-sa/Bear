@@ -4,7 +4,6 @@ import { CatalogRows } from "@/components/catalog/catalog-rows";
 import { CatalogCustomizeBar } from "@/components/catalog/customize-bar";
 import { CinemaHero } from "@/components/cinema-hero";
 import { Row, ScrollRootContext } from "@/components/row";
-import { TopRankCard } from "@/components/top-rank-card";
 import { PickCard } from "@/components/pick-card";
 import { TmdbNudge } from "@/components/nudge";
 import { topMovies, type Meta } from "@/lib/cinemeta";
@@ -32,6 +31,7 @@ type MovieRow = {
   page: number;
   hasMore: boolean;
   fetcher?: (page: number) => Promise<Meta[]>;
+  variant?: "rank";
 };
 
 export function Movies({ active = true }: { active?: boolean }) {
@@ -266,6 +266,22 @@ export function Movies({ active = true }: { active?: boolean }) {
     () => [...collectionRows, ...restRows],
     [collectionRows, restRows],
   );
+  const catalogRows = useMemo<MovieRow[]>(() => {
+    if (top10.length < 10) return allRestRows;
+    const trending = rows.find((r) => r.key === "trending");
+    return [
+      {
+        key: "top10",
+        title: "Top 10 Movies Today",
+        metas: top10.slice(0, 10),
+        page: 1,
+        hasMore: false,
+        fetcher: trending?.fetcher,
+        variant: "rank",
+      },
+      ...allRestRows,
+    ];
+  }, [top10, rows, allRestRows]);
 
   return (
     <main ref={scrollCb} className="relative h-full overflow-y-auto overflow-x-hidden bg-canvas">
@@ -317,31 +333,8 @@ export function Movies({ active = true }: { active?: boolean }) {
             </Row>
             );
           })}
-          {top10.length >= 10 && (
-            <Row
-              title={t("Top 10 Movies Today")}
-              min={216}
-              shape="rank"
-              scrollKey="movies:top10"
-              onViewAll={(() => {
-                const trending = rows.find((r) => r.key === "trending");
-                return trending?.fetcher
-                  ? () =>
-                      openGrid({
-                        title: t(trending.title),
-                        fetcher: trending.fetcher!,
-                        initial: trending.metas,
-                      })
-                  : undefined;
-              })()}
-            >
-              {top10.slice(0, 10).map((m, i) => (
-                <TopRankCard key={m.id} meta={m} rank={i + 1} />
-              ))}
-            </Row>
-          )}
           <CatalogRows
-            rows={allRestRows}
+            rows={catalogRows}
             editMode={pageRows.editMode}
             custom={pageRows.custom}
             onPersist={pageRows.persist}

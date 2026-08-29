@@ -5,6 +5,7 @@ import { useSettings } from "@/lib/settings";
 import { useT } from "@/lib/i18n";
 import { processLogoImage } from "./image-utils";
 import { APP_ICON_PRESETS } from "./app-icon-presets";
+import { LogoPreview } from "./logo-preview";
 
 const PRESET_SRCS = APP_ICON_PRESETS.map((p) => p.src);
 
@@ -38,6 +39,7 @@ function LogoSlot({
   maxDim: number;
   onChange: (v: string) => void;
 }) {
+  const t = useT();
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const onFile = async (file: File | null) => {
@@ -53,7 +55,7 @@ function LogoSlot({
   return (
     <div className="flex items-center gap-4">
       <div
-        className={`flex ${square ? "h-14 w-14" : "h-14 w-24"} shrink-0 items-center justify-center overflow-hidden rounded-xl border border-edge-soft bg-elevated/30`}
+        className={`flex ${square ? "h-14 w-14" : "h-14 w-24"} shrink-0 items-center justify-center overflow-hidden rounded-md border border-edge-soft bg-elevated`}
       >
         {value ? (
           <img src={value} alt="" draggable={false} className="max-h-full max-w-full object-contain p-1.5" />
@@ -79,17 +81,17 @@ function LogoSlot({
       <button
         onClick={() => inputRef.current?.click()}
         disabled={busy}
-        className="shrink-0 rounded-full bg-ink px-4 py-2 text-[12px] font-semibold text-canvas transition-opacity hover:opacity-90 disabled:opacity-60"
+        className="shrink-0 rounded-full bg-ink px-4 py-2 text-[12.5px] font-semibold text-canvas transition-opacity hover:opacity-90 disabled:opacity-60"
       >
         {busy ? "…" : value ? "Replace" : "Upload"}
       </button>
       {value && !busy && (
         <button
           onClick={() => onChange("")}
-          aria-label="Remove"
-          className="shrink-0 rounded-full border border-edge-soft p-2 text-ink-muted transition-colors hover:border-edge hover:text-ink"
+          aria-label={t("Remove")}
+ className="shrink-0 rounded-md bg-canvas p-2 text-ink-muted transition-colors hover:text-ink"
         >
-          <Trash2 size={13} strokeWidth={2.2} />
+          <Trash2 size={14} strokeWidth={2.2} />
         </button>
       )}
     </div>
@@ -98,11 +100,11 @@ function LogoSlot({
 
 function TaskbarPreview({ srcs, active }: { srcs: string[]; active: number }) {
   return (
-    <div className="flex h-12 items-center justify-center gap-2.5 rounded-2xl bg-gradient-to-b from-[#1b1e26] to-[#0c0e13] px-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] ring-1 ring-white/10">
-      <span className="h-6 w-6 rounded-md bg-white/[0.07]" />
-      <span className="h-6 w-6 rounded-md bg-white/[0.07]" />
+    <div className="flex h-12 items-center justify-center gap-2.5 rounded-md bg-canvas px-4">
+      <span className="h-6 w-6 rounded-[4px] bg-ink/[0.10]" />
+      <span className="h-6 w-6 rounded-[4px] bg-ink/[0.10]" />
       <span className="flex flex-col items-center">
-        <span className="relative h-7 w-7 overflow-hidden rounded-[7px] shadow-[0_2px_8px_rgba(0,0,0,0.5)]">
+        <span className="relative h-7 w-7 overflow-hidden rounded-[5px]">
           {srcs.map((s, i) => (
             <img
               key={s}
@@ -117,8 +119,8 @@ function TaskbarPreview({ srcs, active }: { srcs: string[]; active: number }) {
         </span>
         <span className="mt-[3px] h-[3px] w-4 rounded-full bg-accent" />
       </span>
-      <span className="h-6 w-6 rounded-md bg-white/[0.07]" />
-      <span className="h-6 w-6 rounded-md bg-white/[0.07]" />
+      <span className="h-6 w-6 rounded-[4px] bg-ink/[0.10]" />
+      <span className="h-6 w-6 rounded-[4px] bg-ink/[0.10]" />
     </div>
   );
 }
@@ -185,7 +187,7 @@ function AppIconPicker() {
               className="h-full w-full object-contain drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]"
             />
           ) : (
-            <span className="flex h-full w-full items-center justify-center rounded-2xl border border-dashed border-edge-soft bg-elevated/30">
+            <span className="flex h-full w-full items-center justify-center rounded-md border border-dashed border-edge-soft bg-elevated">
               <ImageDown size={18} strokeWidth={1.6} className="text-ink-subtle" />
             </span>
           )}
@@ -200,7 +202,7 @@ function AppIconPicker() {
           onClick={() => inputRef.current?.click()}
           disabled={busy}
           title={t("Use your own image as the app icon")}
-          className="flex shrink-0 items-center gap-1.5 rounded-full border border-edge-soft px-3 py-1.5 text-[11.5px] font-medium text-ink-muted transition-colors hover:border-edge hover:text-ink disabled:opacity-60"
+ className="flex shrink-0 items-center gap-1.5 rounded-md bg-canvas px-3 py-1.5 text-[11.5px] font-medium text-ink-muted transition-colors hover:bg-surface hover:text-ink disabled:opacity-60"
         >
           <Upload size={12} strokeWidth={2.2} />
           {hasCustom ? t("Replace") : t("Upload")}
@@ -211,9 +213,9 @@ function AppIconPicker() {
             title={t("Re-apply to the window and taskbar now")}
             className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11.5px] font-medium transition-colors ${
               applied
-                ? "border-accent/50 bg-accent/12 text-accent"
+                ? "border-accent bg-accent-soft text-accent"
                 : failed
-                  ? "border-danger/50 bg-danger/12 text-danger"
+                  ? "border-danger bg-danger/15 text-danger"
                   : "border-edge-soft text-ink-muted hover:border-edge hover:text-ink"
             }`}
           >
@@ -228,7 +230,7 @@ function AppIconPicker() {
         {active && (
           <button
             onClick={() => update({ customAppIcon: "", customAppIconPreset: "" })}
-            className="shrink-0 rounded-full border border-edge-soft px-3 py-1.5 text-[11.5px] font-medium text-ink-muted transition-colors hover:border-edge hover:text-ink"
+ className="shrink-0 rounded-md bg-canvas px-3 py-1.5 text-[11.5px] font-medium text-ink-muted transition-colors hover:bg-surface hover:text-ink"
           >
             {t("Reset")}
           </button>
@@ -238,7 +240,7 @@ function AppIconPicker() {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-4 rounded-2xl border border-edge-soft bg-canvas/40 p-3 text-start transition-colors hover:border-edge"
+ className="flex items-center gap-4 rounded-md bg-canvas p-3 text-start transition-colors hover:bg-surface"
       >
         <div className="w-[172px] shrink-0">
           <TaskbarPreview srcs={PRESET_SRCS} active={rot} />
@@ -268,7 +270,7 @@ function AppIconPicker() {
                 disabled={busy}
                 className="group flex flex-col items-center gap-1.5"
               >
-                <span className="relative aspect-square w-full transition-transform duration-200 group-hover:-translate-y-0.5 group-active:scale-[0.96]">
+                <span className="relative aspect-square w-full transition-transform duration-200 group-active:scale-[0.96]">
                   <img
                     src={p.src}
                     alt=""
@@ -279,13 +281,13 @@ function AppIconPicker() {
                     <span className="pointer-events-none absolute -inset-[3px] rounded-[28%] ring-2 ring-accent" />
                   )}
                   {selected && (
-                    <span className="absolute -end-1 -top-1 flex h-[18px] w-[18px] items-center justify-center rounded-full bg-accent text-[#1b1304] shadow-[0_1px_3px_rgba(0,0,0,0.45)]">
-                      <Check size={11} strokeWidth={3} />
+                    <span className="absolute -end-1 -top-1 flex h-[18px] w-[18px] items-center justify-center rounded-full bg-accent text-canvas shadow-[0_1px_3px_rgba(0,0,0,0.45)]">
+                      <Check size={12} strokeWidth={3} />
                     </span>
                   )}
                 </span>
                 <span
-                  className={`w-full truncate text-center text-[10px] font-medium ${
+                  className={`w-full truncate text-center text-[10.5px] font-medium ${
                     selected ? "text-accent" : "text-ink-subtle"
                   }`}
                 >
@@ -301,10 +303,10 @@ function AppIconPicker() {
             className="group flex flex-col items-center gap-1.5"
           >
             <span
-              className={`relative flex aspect-square w-full items-center justify-center rounded-[22%] border border-dashed transition-all group-active:scale-[0.96] ${
+              className={`relative flex aspect-square w-full items-center justify-center rounded-[22%] border border-dashed transition group-active:scale-[0.96] ${
                 hasCustom
-                  ? "border-accent bg-accent/10"
-                  : "border-edge text-ink-subtle group-hover:-translate-y-0.5 group-hover:border-ink-subtle group-hover:text-ink"
+                  ? "border-accent bg-accent-soft"
+                  : "border-edge-soft text-ink-subtle group-hover:border-edge group-hover:text-ink"
               }`}
             >
               {hasCustom ? (
@@ -313,12 +315,12 @@ function AppIconPicker() {
                 <Upload size={16} strokeWidth={2} />
               )}
               {hasCustom && (
-                <span className="absolute end-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-[#1b1304]">
-                  <Check size={10} strokeWidth={3} />
+                <span className="absolute end-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-canvas">
+                  <Check size={12} strokeWidth={3} />
                 </span>
               )}
             </span>
-            <span className={`text-[10px] font-medium ${hasCustom ? "text-accent" : "text-ink-subtle"}`}>
+            <span className={`text-[10.5px] font-medium ${hasCustom ? "text-accent" : "text-ink-subtle"}`}>
               {t("Upload")}
             </span>
           </button>
@@ -344,6 +346,11 @@ export function LogoPicker() {
   const t = useT();
   return (
     <div className="flex flex-col gap-5">
+      <LogoPreview
+        mark={settings.customLogoMark}
+        wordmark={settings.customLogoWordmark}
+        icon={settings.customAppIcon}
+      />
       <div className="flex flex-col gap-4">
         <LogoSlot
           label={t("App logo")}
@@ -361,9 +368,7 @@ export function LogoPicker() {
           onChange={(v) => update({ customLogoWordmark: v })}
         />
       </div>
-      <div className="border-t border-edge-soft/60 pt-5">
-        <AppIconPicker />
-      </div>
+      <AppIconPicker />
     </div>
   );
 }

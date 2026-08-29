@@ -16,8 +16,6 @@ import {
 } from "lucide-react";
 import { renderBbcode } from "@/lib/social/bbcode";
 import { EmbedPrompt, type EmbedKind } from "@/components/embed-prompt";
-import { handleLinkOutActivation } from "@/lib/social/link-out-activation";
-import { openLinkOut } from "@/lib/social/link-out";
 
 export const ABOUT_MAX = 4000;
 
@@ -44,13 +42,7 @@ const TOOLS: Tool[] = [
   { icon: Music2, label: "Spotify", open: "[spotify]", close: "[/spotify]", embed: "spotify" },
 ];
 
-export function AboutEditor({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (next: string) => void;
-}) {
+export function AboutEditor({ value, onChange }: { value: string; onChange: (next: string) => void }) {
   const ref = useRef<HTMLTextAreaElement>(null);
   const [preview, setPreview] = useState(false);
   const [embed, setEmbed] = useState<EmbedKind | null>(null);
@@ -88,7 +80,7 @@ export function AboutEditor({
   const over = value.length > ABOUT_MAX;
 
   return (
-    <div className="flex flex-col gap-2 rounded-[10px] bg-elevated p-2.5 ring-1 ring-edge-soft">
+    <div className="flex flex-col gap-2 rounded-md bg-elevated p-2.5 ring-1 ring-edge-soft">
       <div className="flex flex-wrap items-center gap-0.5">
         {TOOLS.map((tool) => (
           <button
@@ -97,7 +89,7 @@ export function AboutEditor({
             onClick={() => apply(tool)}
             title={tool.label}
             aria-label={tool.label}
-            className="grid h-8 w-8 place-items-center rounded-[6px] text-ink-subtle transition-colors hover:bg-raised hover:text-ink active:scale-90 motion-reduce:active:scale-100"
+            className="grid h-8 w-8 place-items-center rounded-sm text-ink-subtle transition-colors hover:bg-raised hover:text-ink active:scale-90 motion-reduce:active:scale-100"
           >
             <tool.icon size={15} strokeWidth={2.1} />
           </button>
@@ -105,7 +97,7 @@ export function AboutEditor({
         <button
           type="button"
           onClick={() => setPreview((p) => !p)}
-          className="ms-auto flex h-8 items-center gap-1.5 rounded-[6px] px-2.5 text-[12px] font-semibold text-ink-subtle transition-colors hover:bg-raised hover:text-ink"
+          className="ms-auto flex h-8 items-center gap-1.5 rounded-sm px-2.5 text-[12px] font-semibold text-ink-subtle transition-colors hover:bg-raised hover:text-ink"
         >
           {preview ? <Pencil size={13} /> : <Eye size={14} />} {preview ? "Edit" : "Preview"}
         </button>
@@ -118,8 +110,9 @@ export function AboutEditor({
           {value.trim() ? (
             <div
               className="max-w-none break-words text-[14px] leading-relaxed text-ink-muted"
-              onClick={(e) => handleLinkOutActivation(e, openLinkOut)}
-              onAuxClick={(e) => handleLinkOutActivation(e, openLinkOut)}
+              onClick={(e) => {
+                if ((e.target as HTMLElement).closest?.("a")) e.preventDefault();
+              }}
               dangerouslySetInnerHTML={{ __html: renderBbcode(value) }}
             />
           ) : (

@@ -26,7 +26,7 @@ function List({ items, tone }: { items: string[]; tone: "ok" | "no" }) {
 
 export function CustomizationDocs() {
   return (
-    <div className="space-y-4 rounded-[14px] bg-elevated/60 p-4 ring-1 ring-edge-soft">
+    <div className="space-y-4 rounded-lg bg-elevated/60 p-4 ring-1 ring-edge-soft">
       <div>
         <h3 className="text-[14px] font-semibold text-ink">How the canvas works</h3>
         <p className="mt-1 text-[13px] leading-relaxed text-ink-muted">

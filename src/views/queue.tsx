@@ -297,7 +297,7 @@ function Strip({
               type="button"
               data-active={isActive}
               onClick={() => onJump(i)}
-              className={`group relative h-[112px] w-[200px] shrink-0 rounded-[10px] transition-all duration-200 hover:z-10 hover:scale-[1.02] ${
+              className={`group relative h-[112px] w-[200px] shrink-0 rounded-md transition-all duration-200 hover:z-10 hover:scale-[1.02] ${
                 isPast ? "opacity-50" : ""
               }`}
             >
@@ -305,12 +305,12 @@ function Strip({
                 src={item.meta.background ?? item.meta.poster}
                 seed={item.meta.id}
                 ratio="landscape"
-                className="absolute inset-0 rounded-[10px]"
+                className="absolute inset-0 rounded-md"
               />
               {isActive && (
                 <span
                   aria-hidden
-                  className="pointer-events-none absolute inset-0 rounded-[10px]"
+                  className="pointer-events-none absolute inset-0 rounded-md"
                   style={{
                     background:
                       "linear-gradient(180deg, oklch(0.79 0.13 62 / 0.18) 0%, oklch(0.79 0.13 62 / 0.28) 100%)",
@@ -321,7 +321,7 @@ function Strip({
               {isActive && (
                 <span
                   aria-hidden
-                  className="pointer-events-none absolute inset-0 rounded-[10px] shadow-[inset_0_0_0_2px_var(--color-accent)]"
+                  className="pointer-events-none absolute inset-0 rounded-md shadow-[inset_0_0_0_2px_var(--color-accent)]"
                 />
               )}
               <span className="absolute start-1.5 top-1.5 rounded-md bg-canvas/85 px-1.5 py-0.5 text-[9.5px] font-semibold uppercase tracking-[0.12em] text-ink">
@@ -339,7 +339,7 @@ function QueueSkeleton({ loading, hasKey }: { loading: boolean; hasKey: boolean 
   const t = useT();
   if (loading) {
     return (
-      <div className="harbor-skel relative h-full min-h-[300px] overflow-hidden rounded-[28px] border border-edge-soft bg-elevated/25">
+      <div className="harbor-skel relative h-full min-h-[300px] overflow-hidden rounded-2xl border border-edge-soft bg-elevated/25">
         <div className="absolute inset-x-0 bottom-0 flex flex-col gap-3.5 p-8 sm:p-10">
           <div className="h-6 w-20 rounded-full bg-elevated/60" />
           <div className="h-10 w-2/3 max-w-[420px] rounded-lg bg-elevated/60" />
@@ -353,7 +353,7 @@ function QueueSkeleton({ loading, hasKey }: { loading: boolean; hasKey: boolean 
     );
   }
   return (
-    <div className="flex h-full min-h-[300px] items-center justify-center rounded-[28px] border border-edge-soft bg-elevated/30 px-12 py-16 text-center">
+    <div className="flex h-full min-h-[300px] items-center justify-center rounded-2xl border border-edge-soft bg-elevated/30 px-12 py-16 text-center">
       {!hasKey ? (
         <p className="max-w-[60ch] text-[15px] text-ink-muted">
           {t("Add a TMDB key in Settings to unlock the full discovery feed.")}

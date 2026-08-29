@@ -80,6 +80,11 @@ type Listener = () => void;
 
 const LOCAL_TARGET: RemoteTarget = { kind: "local", label: "This PC" };
 
+export function setRemoteHostName(name: string): void {
+  const trimmed = name.trim();
+  if (trimmed && LOCAL_TARGET.kind === "local") LOCAL_TARGET.label = trimmed;
+}
+
 let binding: RemotePlaybackBinding | null = null;
 let preferredTarget: RemoteTarget = LOCAL_TARGET;
 let castDevices: RemoteCastDevice[] = [];

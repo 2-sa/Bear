@@ -210,7 +210,7 @@ function LinkOutJourneyInterstitial({
             This link goes to an external site that Bear does not control or vouch for. Triple-check
             the address before you continue, and never enter your Bear password anywhere but Bear.
           </p>
-          <div className="mt-6 flex flex-col gap-1 rounded-[14px] border border-edge-soft bg-surface p-4 text-start">
+          <div className="mt-6 flex flex-col gap-1 rounded-lg border border-edge-soft bg-surface p-4 text-start">
             <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-subtle">
               Destination
             </span>

@@ -32,10 +32,10 @@ export function CastingOverlay({
       <div className="relative z-10 flex flex-col items-center gap-10 px-10 text-center">
         <div className="relative flex h-32 w-32 items-center justify-center">
           <span
-            className="absolute inset-0 rounded-[28px] bg-accent/20 blur-2xl"
+            className="absolute inset-0 rounded-2xl bg-accent/20 blur-2xl"
             style={{ animation: "harbor-cast-pulse 2.6s ease-in-out infinite" }}
           />
-          <span className="relative flex h-32 w-32 items-center justify-center rounded-[28px] border border-edge bg-elevated/85 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.8)] backdrop-blur-xl">
+          <span className="relative flex h-32 w-32 items-center justify-center rounded-2xl border border-edge bg-elevated/85 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.8)] backdrop-blur-xl">
             <CastIcon device={device} size={64} />
           </span>
           {connecting && (

@@ -171,7 +171,7 @@ export function RuleBuilder({
   return (
     <section
       id={settingsAnchor(t("Automations"))}
-      className="scroll-mt-28 flex flex-col gap-4 rounded-2xl border border-edge-soft bg-elevated/40 p-7"
+ className="scroll-mt-28 flex flex-col gap-4 rounded-2xl bg-elevated p-7"
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex flex-col gap-1">
@@ -190,7 +190,7 @@ export function RuleBuilder({
             disabled={!canDiscord && !canTelegram}
             className="flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-ink px-4 text-[12.5px] font-semibold text-canvas transition-opacity hover:opacity-90 disabled:opacity-40"
           >
-            <Plus size={13} strokeWidth={2.4} />
+            <Plus size={14} strokeWidth={2.4} />
             {t("New rule")}
           </button>
         )}
@@ -208,12 +208,12 @@ export function RuleBuilder({
       ) : (
         <>
           {!canDiscord && !canTelegram && (
-            <div className="rounded-lg border border-amber-200/30 bg-amber-200/5 px-3 py-2 text-[11.5px] text-amber-200/85">
+            <div className="rounded-md border border-accent/30 bg-accent/5 px-3 py-2 text-[11.5px] text-accent/85">
               {t("Add a Discord or Telegram URL above before creating rules.")}
             </div>
           )}
           {rules.length === 0 ? (
-            <div className="harbor-rise rounded-xl border border-dashed border-edge-soft/60 bg-canvas/20 px-3 py-7 text-center text-[12.5px] text-ink-subtle">
+            <div className="harbor-rise rounded-md border border-dashed border-edge-soft/60 bg-canvas px-3 py-7 text-center text-[12.5px] text-ink-subtle">
               {t("No automations yet. Hit New rule to wire one up.")}
             </div>
           ) : (
@@ -265,8 +265,8 @@ function RuleRow({
     >
       <div className="overflow-hidden">
         <div
-          className={`mb-2 flex items-center gap-3 rounded-xl border px-3.5 py-2.5 transition-colors ${
-            rule.enabled ? "border-edge-soft bg-canvas/30" : "border-edge-soft/40 bg-canvas/15 opacity-60"
+          className={`mb-2 flex items-center gap-3 rounded-md border px-3.5 py-2.5 transition-colors ${
+            rule.enabled ? "border-edge-soft bg-canvas" : "border-edge-soft/40 bg-canvas opacity-60"
           }`}
         >
           <button
@@ -301,7 +301,7 @@ function RuleRow({
           <button
             type="button"
             onClick={onEdit}
-            className="rounded-full px-2.5 py-1 text-[11.5px] font-medium text-ink-muted hover:bg-canvas/60 hover:text-ink"
+            className="rounded-full px-2.5 py-1 text-[11.5px] font-medium text-ink-muted hover:bg-canvas hover:text-ink"
           >
             Edit
           </button>
@@ -309,7 +309,7 @@ function RuleRow({
             type="button"
             onClick={del}
             aria-label="Delete rule"
-            className="flex h-7 w-7 items-center justify-center rounded-full text-ink-subtle transition-colors hover:bg-danger/15 hover:text-danger"
+            className="flex h-7 w-7 items-center justify-center rounded-full text-ink-subtle transition-colors hover:bg-danger/25 hover:text-danger"
           >
             <Trash2 size={12} strokeWidth={1.9} />
           </button>
@@ -343,8 +343,8 @@ function RuleEditor({
   };
 
   return (
-    <div className="harbor-rise flex flex-col gap-5 rounded-xl border border-edge-soft bg-canvas/30 p-5">
-        <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-ink-subtle">
+ <div className="harbor-rise flex flex-col gap-5 rounded-md bg-canvas p-5">
+        <span className="text-[11.5px] font-bold uppercase tracking-[0.16em] text-ink-subtle">
           {isNew ? "New rule" : "Edit rule"}
         </span>
 
@@ -355,7 +355,7 @@ function RuleEditor({
             onChange={(e) => setDraft({ ...draft, name: e.target.value })}
             placeholder={EVENT_LABELS[draft.trigger.event]}
             maxLength={80}
-            className="h-11 w-full rounded-xl border border-edge bg-canvas px-3.5 text-[13px] text-ink placeholder:text-ink-subtle outline-none focus:border-ink"
+            className="h-11 w-full rounded-md bg-canvas px-3.5 text-[13px] text-ink placeholder:text-ink-subtle outline-none transition-colors focus:bg-elevated"
           />
         </Field>
 
@@ -363,7 +363,7 @@ function RuleEditor({
           <select
             value={draft.trigger.event}
             onChange={(e) => setEvent(e.target.value as WebhookTrigger["event"])}
-            className="h-11 w-full rounded-xl border border-edge bg-canvas px-3 text-[13px] text-ink outline-none focus:border-ink"
+            className="h-11 w-full rounded-md bg-canvas px-3 text-[13px] text-ink outline-none transition-colors focus:bg-elevated"
           >
             {EVENT_ORDER.map((ev) => (
               <option key={ev} value={ev}>
@@ -459,7 +459,7 @@ function RuleEditor({
               <span className="text-[12.5px] text-ink">Only my favorited channels</span>
             </label>
             <label className="flex items-center gap-3">
-              <span className="w-[140px] shrink-0 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-subtle">
+              <span className="w-[140px] shrink-0 text-[11.5px] font-semibold uppercase tracking-[0.14em] text-ink-subtle">
                 Heads up
               </span>
               <select
@@ -470,7 +470,7 @@ function RuleEditor({
                   const t = draft.trigger as Extract<WebhookTrigger, { event: "liveTvEvent" }>;
                   setDraft({ ...draft, trigger: { ...t, leadMinutes: Number(e.target.value) } });
                 }}
-                className="h-9 flex-1 rounded-lg border border-edge bg-canvas px-3 text-[12.5px] text-ink outline-none focus:border-ink"
+ className="h-9 flex-1 rounded-md bg-canvas px-3 text-[12.5px] text-ink outline-none focus:border-ink"
               >
                 {[5, 10, 15, 30, 60, 120].map((m) => (
                   <option key={m} value={m}>
@@ -486,7 +486,7 @@ function RuleEditor({
         )}
 
         {draft.trigger.event === "fromTrackedPerson" && trackedPeople.length === 0 && (
-          <div className="rounded-lg border border-amber-200/30 bg-amber-200/5 px-3 py-2 text-[12px] text-amber-200/85">
+          <div className="rounded-md border border-accent/30 bg-accent/5 px-3 py-2 text-[12.5px] text-accent/85">
             Add people in the Custom calendar manager first, then come back here.
           </div>
         )}
@@ -553,7 +553,7 @@ function RuleEditor({
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="flex flex-col gap-1.5">
-      <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-subtle">{label}</span>
+      <span className="text-[11.5px] font-semibold uppercase tracking-[0.14em] text-ink-subtle">{label}</span>
       {children}
     </label>
   );
@@ -561,7 +561,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 function TriggerSubFields({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-edge-soft/60 bg-canvas/30 p-3.5">
+ <div className="flex flex-col gap-3 rounded-md /60 bg-canvas p-3.5">
       {children}
     </div>
   );
@@ -580,13 +580,13 @@ function SubSelect({
 }) {
   return (
     <label className="flex items-center gap-3">
-      <span className="w-[100px] shrink-0 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-subtle">
+      <span className="w-[100px] shrink-0 text-[11.5px] font-semibold uppercase tracking-[0.14em] text-ink-subtle">
         {label}
       </span>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="h-9 flex-1 rounded-lg border border-edge bg-canvas px-3 text-[12.5px] text-ink outline-none focus:border-ink"
+ className="h-9 flex-1 rounded-md bg-canvas px-3 text-[12.5px] text-ink outline-none focus:border-ink"
       >
         {options.map((o) => (
           <option key={o.value} value={o.value}>
@@ -607,7 +607,7 @@ function SubChips({
 }) {
   return (
     <div className="flex flex-col gap-2">
-      <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-subtle">{label}</span>
+      <span className="text-[11.5px] font-semibold uppercase tracking-[0.14em] text-ink-subtle">{label}</span>
       <div className="flex flex-wrap gap-1.5">
         {items.map((it) => (
           <button
@@ -616,8 +616,8 @@ function SubChips({
             onClick={it.onToggle}
             className={`h-7 rounded-full border px-2.5 text-[11.5px] font-medium transition-colors ${
               it.selected
-                ? "border-accent/55 bg-accent/15 text-accent"
-                : "border-edge-soft bg-canvas/40 text-ink-muted hover:border-edge hover:text-ink"
+                ? "border-accent bg-accent-soft text-accent"
+                : "border-edge-soft bg-canvas text-ink-muted hover:border-edge hover:text-ink"
             }`}
           >
             {it.label}
@@ -649,7 +649,7 @@ function ChannelToggle({
           ? "cursor-not-allowed border-edge-soft/40 text-ink-subtle opacity-60"
           : on
             ? "border-ink bg-ink text-canvas"
-            : "border-edge-soft bg-canvas/40 text-ink-muted hover:border-edge hover:text-ink"
+            : "border-edge-soft bg-canvas text-ink-muted hover:border-edge hover:text-ink"
       }`}
       title={disabled ? "Configure URL above first" : undefined}
     >

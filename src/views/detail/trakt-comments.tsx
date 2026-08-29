@@ -540,7 +540,7 @@ export function TraktComments({ resolution }: { resolution: IdResolution | null 
             <div ref={sortRef} className="relative">
               <button
                 onClick={() => setShowSort(!showSort)}
-                className="flex items-center gap-1 rounded-lg px-3 py-1.5 text-[12px] font-medium text-ink-muted ring-1 ring-edge transition-colors hover:bg-elevated hover:text-ink"
+                className="flex items-center gap-1 rounded-lg bg-white/[0.06] px-3 py-1.5 text-[12px] font-medium text-ink-muted transition-colors hover:bg-white/[0.10] hover:text-ink"
               >
                 {t(sort.charAt(0).toUpperCase() + sort.slice(1))}
                 <ChevronDown size={12} />
@@ -563,7 +563,7 @@ export function TraktComments({ resolution }: { resolution: IdResolution | null 
             </div>
             <button
               onClick={handleOpenTrakt}
-              className="flex items-center gap-1 rounded-lg px-3 py-1.5 text-[12px] font-medium text-ink-muted ring-1 ring-edge transition-colors hover:bg-elevated hover:text-ink"
+              className="flex items-center gap-1 rounded-lg bg-white/[0.06] px-3 py-1.5 text-[12px] font-medium text-ink-muted transition-colors hover:bg-white/[0.10] hover:text-ink"
             >
               {t("Open on Trakt")}
             </button>
@@ -731,7 +731,7 @@ export function TraktComments({ resolution }: { resolution: IdResolution | null 
               type="button"
               onClick={() => void loadMore()}
               disabled={loadingMore}
-              className="mt-1 flex h-10 items-center justify-center gap-2 rounded-xl border border-edge-soft bg-elevated/40 text-[13px] font-semibold text-ink-muted transition-colors hover:border-edge hover:text-ink disabled:opacity-60"
+              className="mt-1 flex h-10 items-center justify-center gap-2 rounded-xl bg-white/[0.06] text-[13px] font-semibold text-ink-muted transition-colors hover:bg-white/[0.10] hover:text-ink disabled:opacity-60"
             >
               {loadingMore && <Loader2 size={15} className="animate-spin" />}
               {loadingMore ? t("Loading more") : t("Load more comments")}

@@ -122,7 +122,7 @@ export function LibraryBrowser({
                 onRemove={onRemove}
               />
             ) : (
-              <p className="rounded-[14px] border border-dashed border-edge px-4 py-14 text-center text-[13px] text-ink-subtle">
+              <p className="rounded-md border border-dashed border-edge px-4 py-14 text-center text-[13px] text-ink-subtle">
                 No themes match your filter.
               </p>
             )

@@ -1,19 +1,5 @@
-import {
-  ChevronLeft,
-  ChevronDown,
-  ChevronsLeft,
-  ChevronsRight,
-  Loader2,
-  Minus,
-  Monitor,
-  Pause,
-  Play,
-  Plus,
-  RotateCcw,
-  Search,
-  Volume2,
-  VolumeX,
-} from "lucide-react";
+import { ChevronLeft, ChevronDown, ChevronsLeft, ChevronsRight, Loader2, Minus, Monitor, Pause, Play, Plus, RotateCcw, Volume2, VolumeX } from "lucide-react";
+import { Search } from "@/components/icons/search-icon";
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode, type RefObject } from "react";
 import { CastIcon } from "@/components/player/cast-icon";
 import { HarborLoader } from "@/components/harbor-loader";

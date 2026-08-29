@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { AlertCircle, ArrowDownToLine, ChevronLeft, Package, RefreshCw, Search, Sparkles, Star, Upload } from "lucide-react";
+import { AlertCircle, ArrowDownToLine, ChevronLeft, Package, RefreshCw, Sparkles, Star, Upload } from "lucide-react";
+import { Search } from "@/components/icons/search-icon";
 import { type BundleKind, type StoreBundle } from "@/lib/bundle-store";
 import type { StoreTheme } from "@/lib/theme-store";
 import { SectionHeader } from "@/views/profile/section-header";
@@ -119,7 +120,7 @@ export function BundleBrowse({ kind, onShare }: { kind: BundleKind; onShare?: ()
             <MarketRail
               title="Top rated"
               subtitle="Highly rated by the community"
-              icon={<Star size={13} strokeWidth={2.2} />}
+              icon={<Star size={14} strokeWidth={2.2} />}
               items={rails.top}
               kind={kind}
               ranked
@@ -129,7 +130,7 @@ export function BundleBrowse({ kind, onShare }: { kind: BundleKind; onShare?: ()
             />
             <MarketRail
               title="Most installed"
-              icon={<ArrowDownToLine size={13} strokeWidth={2.2} />}
+              icon={<ArrowDownToLine size={14} strokeWidth={2.2} />}
               items={rails.downloads}
               kind={kind}
               scrollKey={`bundles-${kind}-dl`}
@@ -138,7 +139,7 @@ export function BundleBrowse({ kind, onShare }: { kind: BundleKind; onShare?: ()
             />
             <MarketRail
               title="Newest"
-              icon={<Sparkles size={13} strokeWidth={2.2} />}
+              icon={<Sparkles size={14} strokeWidth={2.2} />}
               items={rails.new}
               kind={kind}
               scrollKey={`bundles-${kind}-new`}
@@ -148,9 +149,9 @@ export function BundleBrowse({ kind, onShare }: { kind: BundleKind; onShare?: ()
           </div>
         ) : (
           <div className="flex flex-col gap-5">
-            <SectionHeader icon={<Package size={13} strokeWidth={2.2} />} label={q ? "Results" : "All packs"} />
+            <SectionHeader icon={<Package size={14} strokeWidth={2.2} />} label={q ? "Results" : "All packs"} />
             {shown.length === 0 ? (
-              <p className="rounded-[14px] border border-dashed border-edge px-4 py-14 text-center text-[13px] text-ink-subtle">
+              <p className="rounded-md border border-dashed border-edge px-4 py-14 text-center text-[13px] text-ink-subtle">
                 No {copy.units} match your search.
               </p>
             ) : (
@@ -198,12 +199,12 @@ function FilterBar({
         <button
           type="button"
           onClick={onBack}
-          className="inline-flex h-8 items-center gap-1 rounded-full border border-edge-soft bg-elevated/40 pe-3.5 ps-2.5 text-[12px] font-semibold text-ink-muted transition-colors hover:border-edge hover:text-ink"
+ className="inline-flex h-8 items-center gap-1 rounded-full bg-elevated pe-3.5 ps-2.5 text-[12.5px] font-semibold text-ink-muted transition-colors hover:bg-raised hover:text-ink"
         >
           <ChevronLeft size={14} strokeWidth={2.4} className="dir-icon" /> Featured
         </button>
       )}
-      <div className="flex h-8 items-center gap-2 rounded-full border border-edge-soft bg-elevated/40 px-3.5">
+ <div className="flex h-8 items-center gap-2 rounded-full bg-elevated px-3.5">
         <Search size={14} className="text-ink-subtle" />
         <input
           value={query}
@@ -217,16 +218,16 @@ function FilterBar({
           key={s.id}
           type="button"
           onClick={() => onSort(s.id)}
-          className={`h-8 rounded-full border px-3.5 text-[12px] font-semibold transition-colors ${
+          className={`h-8 rounded-full border px-3.5 text-[12.5px] font-semibold transition-colors ${
             activeSort === s.id
               ? "border-ink bg-ink text-canvas"
-              : "border-edge-soft bg-elevated/40 text-ink-muted hover:border-edge hover:text-ink"
+              : "border-edge-soft bg-elevated text-ink-muted hover:border-edge hover:text-ink"
           }`}
         >
           {s.label}
         </button>
       ))}
-      <span className="ms-auto text-[12px] tabular-nums text-ink-subtle">
+      <span className="ms-auto text-[12.5px] tabular-nums text-ink-subtle">
         {count} {count === 1 ? copy.unit : copy.units}
       </span>
     </div>
@@ -235,8 +236,8 @@ function FilterBar({
 
 function BundleError({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
-    <div className="mx-auto flex max-w-sm flex-col items-center gap-4 rounded-[14px] border border-edge-soft bg-surface px-6 py-14 text-center">
-      <span className="grid h-12 w-12 place-items-center rounded-full bg-danger/12 text-danger">
+ <div className="mx-auto flex max-w-sm flex-col items-center gap-4 rounded-md bg-surface px-6 py-14 text-center">
+      <span className="grid h-12 w-12 place-items-center rounded-full bg-danger/15 text-danger">
         <AlertCircle size={22} />
       </span>
       <p className="text-[13.5px] text-ink-muted">{message}</p>
@@ -253,7 +254,7 @@ function BundleError({ message, onRetry }: { message: string; onRetry: () => voi
 
 function BundleEmpty({ copy, onShare }: { copy: Copy; onShare?: () => void }) {
   return (
-    <div className="mx-auto flex max-w-md flex-col items-center gap-4 rounded-[14px] border border-dashed border-edge bg-surface/40 px-6 py-16 text-center">
+    <div className="mx-auto flex max-w-md flex-col items-center gap-4 rounded-md border border-dashed border-edge bg-surface px-6 py-16 text-center">
       <span className="grid h-14 w-14 place-items-center rounded-full bg-accent-soft text-accent">
         <Package size={26} />
       </span>
@@ -267,7 +268,7 @@ function BundleEmpty({ copy, onShare }: { copy: Copy; onShare?: () => void }) {
           onClick={onShare}
           className="flex h-11 items-center gap-2 rounded-full bg-ink px-6 text-[13.5px] font-semibold text-canvas transition-[opacity,transform] hover:opacity-90 active:scale-[0.97] motion-reduce:active:scale-100"
         >
-          <Upload size={15} strokeWidth={2.2} /> {copy.share}
+          <Upload size={16} strokeWidth={2.2} /> {copy.share}
         </button>
       )}
     </div>

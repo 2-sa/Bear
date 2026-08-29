@@ -85,7 +85,7 @@ export function TrailerOverlay({
       role="dialog"
       aria-modal="true"
       aria-label={t("Trailer")}
-      className="fixed inset-0 z-[120] flex cursor-zoom-out items-center justify-center"
+      className="fixed inset-0 z-[170] flex cursor-zoom-out items-center justify-center"
       style={{
         backgroundColor: open ? (isMacDesktop() ? "rgba(0,0,0,1)" : "rgba(0,0,0,0.82)") : "rgba(0,0,0,0)",
         backdropFilter: isMacDesktop() ? "none" : open ? "blur(32px) saturate(1.2)" : "blur(0px)",

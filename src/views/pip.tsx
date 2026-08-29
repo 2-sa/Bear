@@ -1,6 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { SkipBackIcon, SkipIcon } from "@/components/icons/harbor-glyphs";
 
 type PipSubtitle = {
   url: string;
@@ -326,10 +327,7 @@ export function PipApp() {
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1">
               <PipBtn label="Back 30 seconds" onClick={back30}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M3 12a9 9 0 1 0 3-6.7" />
-                  <polyline points="3 4 3 10 9 10" />
-                </svg>
+                <SkipBackIcon size={18} />
                 <span className="absolute bottom-0.5 right-0.5 rounded-sm bg-black/55 px-1 text-[8px] font-bold leading-none">30</span>
               </PipBtn>
               <button
@@ -350,10 +348,7 @@ export function PipApp() {
                 )}
               </button>
               <PipBtn label="Forward 30 seconds" onClick={fwd30}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 12a9 9 0 1 1-3-6.7" />
-                  <polyline points="21 4 21 10 15 10" />
-                </svg>
+                <SkipIcon size={18} />
                 <span className="absolute bottom-0.5 right-0.5 rounded-sm bg-black/55 px-1 text-[8px] font-bold leading-none">30</span>
               </PipBtn>
             </div>

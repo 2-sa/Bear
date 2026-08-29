@@ -56,8 +56,8 @@ export function HandleClaimCard({ author }: { author: Author }) {
     return (
       <div className="flex flex-col gap-2.5">
         <HandleHeader hasCustom={hasCustom} />
-        <div className="flex items-center gap-3 rounded-xl border border-edge-soft bg-elevated px-4 py-3.5">
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-raised text-ink-muted">
+        <div className="flex items-center gap-3 rounded-md bg-elevated px-4 py-3.5">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-raised text-ink-muted">
             <Lock size={16} />
           </span>
           <div className="flex min-w-0 flex-col">
@@ -98,9 +98,9 @@ export function HandleClaimCard({ author }: { author: Author }) {
             type="button"
             onClick={() => startClaim(value)}
             disabled={!canClaim}
-            className="flex h-8 items-center rounded-lg bg-ink px-3 text-[12.5px] font-semibold text-canvas transition-all duration-150 hover:opacity-90 active:scale-[0.98] disabled:opacity-35 disabled:active:scale-100"
+            className="harbor-press-pop flex h-8 items-center rounded-md bg-ink px-3.5 text-[12.5px] font-semibold text-canvas transition-opacity duration-150 hover:opacity-90 disabled:opacity-35"
           >
-            {busy ? <Loader2 size={14} className="animate-spin" /> : hasCustom ? "Change" : "Claim"}
+            {busy ? <Loader2 size={14} className="animate-spin" /> : hasCustom ? t("Change") : t("Claim")}
           </button>
         </div>
       </div>
@@ -174,7 +174,7 @@ function StatusLine({ status, onPick }: { status: HandleStatus; onPick: (s: stri
               key={s}
               type="button"
               onClick={() => onPick(s)}
-              className="flex h-8 items-center rounded-full border border-edge-soft px-3 font-display text-[13px] text-ink-muted transition-colors duration-150 hover:border-edge hover:text-ink"
+              className="harbor-press-pop flex h-8 items-center rounded-md bg-elevated px-3 font-display text-[13px] text-ink-muted transition-colors duration-150 hover:text-ink"
             >
               @{s}
             </button>

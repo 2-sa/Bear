@@ -1,3 +1,4 @@
+import { fillStyle } from "@/components/slider";
 import { Plus, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import godfatherStill from "@/assets/godfather-offer.svg";
@@ -5,6 +6,7 @@ import { sfntFamilyName } from "@/lib/font-family-name";
 import { saveFontData } from "@/lib/font-storage";
 import { useSettings } from "@/lib/settings";
 import { useT } from "@/lib/i18n";
+import { ModalShell, useModalExit } from "@/components/modal-shell";
 import { ColorPopoverTrigger } from "../color-picker";
 import { ToggleRow } from "../shared";
 import { Label, SubField, previewFamily } from "./internals";
@@ -76,8 +78,8 @@ export function SubtitleStylePanel() {
                 key={s.id}
                 type="button"
                 onClick={() => update({ subStyle: s.id })}
-                className={`flex flex-col items-start gap-0.5 rounded-xl border px-3.5 py-2.5 text-start transition-colors ${
-                  sel ? "border-ink bg-elevated" : "border-edge-soft bg-canvas/40 hover:border-edge"
+                className={`flex flex-col items-start gap-0.5 rounded-md border px-3.5 py-2.5 text-start transition-colors ${
+                  sel ? "border-ink bg-elevated" : "border-edge-soft bg-canvas hover:border-edge"
                 }`}
               >
                 <span className="text-[13px] font-semibold text-ink">{s.label}</span>
@@ -98,8 +100,8 @@ export function SubtitleStylePanel() {
                 key={m.id}
                 type="button"
                 onClick={() => update({ subAssOverride: m.id })}
-                className={`flex flex-col items-start gap-0.5 rounded-xl border px-3.5 py-2.5 text-start transition-colors ${
-                  sel ? "border-ink bg-elevated" : "border-edge-soft bg-canvas/40 hover:border-edge"
+                className={`flex flex-col items-start gap-0.5 rounded-md border px-3.5 py-2.5 text-start transition-colors ${
+                  sel ? "border-ink bg-elevated" : "border-edge-soft bg-canvas hover:border-edge"
                 }`}
               >
                 <span className="text-[13px] font-semibold text-ink">{m.label}</span>
@@ -131,8 +133,9 @@ export function SubtitleStylePanel() {
             step={0.05}
             value={settings.subBoxOpacity}
             onChange={(e) => update({ subBoxOpacity: parseFloat(e.target.value) })}
-            className="h-1 w-full appearance-none rounded-full bg-edge-soft accent-ink"
-          />
+            className="harbor-slider w-full"
+        style={fillStyle(settings.subBoxOpacity, 0.2, 1)}
+      />
         </SubField>
       )}
 
@@ -148,8 +151,9 @@ export function SubtitleStylePanel() {
               const v = parseFloat(e.target.value);
               if (Number.isFinite(v)) update({ subBorderSize: Math.min(6, Math.max(1, v)) });
             }}
-            className="h-1 w-full appearance-none rounded-full bg-edge-soft accent-ink"
-          />
+            className="harbor-slider w-full"
+        style={fillStyle(Math.max(1, settings.subBorderSize), 1, 6)}
+      />
         </SubField>
       )}
 
@@ -177,8 +181,9 @@ export function SubtitleStylePanel() {
           step={1}
           value={settings.subFontSize}
           onChange={(e) => update({ subFontSize: parseInt(e.target.value, 10) })}
-          className="h-1 w-full appearance-none rounded-full bg-edge-soft accent-ink"
-        />
+          className="harbor-slider w-full"
+        style={fillStyle(settings.subFontSize, 16, 120)}
+      />
       </SubField>
 
       <SubField label={t("Opacity")} value={`${Math.round((settings.subOpacity ?? 1) * 100)}%`}>
@@ -192,8 +197,9 @@ export function SubtitleStylePanel() {
             const v = parseFloat(e.target.value);
             if (Number.isFinite(v)) update({ subOpacity: Math.max(0.2, Math.min(1, v)) });
           }}
-          className="h-1 w-full appearance-none rounded-full bg-edge-soft accent-ink"
-        />
+          className="harbor-slider w-full"
+        style={fillStyle(settings.subOpacity ?? 1, 0.2, 1)}
+      />
       </SubField>
 
       <SubField label={t("Distance from bottom")} value={`${settings.subMarginY}%`}>
@@ -204,8 +210,9 @@ export function SubtitleStylePanel() {
           step={1}
           value={settings.subMarginY}
           onChange={(e) => update({ subMarginY: parseInt(e.target.value, 10) })}
-          className="h-1 w-full appearance-none rounded-full bg-edge-soft accent-ink"
-        />
+          className="harbor-slider w-full"
+        style={fillStyle(settings.subMarginY, 0, 100)}
+      />
       </SubField>
 
       <div className="flex flex-col gap-2.5">
@@ -218,8 +225,8 @@ export function SubtitleStylePanel() {
                 key={a.id}
                 type="button"
                 onClick={() => update({ subAlignX: a.id })}
-                className={`flex h-10 items-center justify-center rounded-xl border text-[12.5px] font-semibold transition-colors ${
-                  sel ? "border-ink bg-elevated text-ink" : "border-edge-soft bg-canvas/40 text-ink-muted hover:border-edge hover:text-ink"
+                className={`flex h-10 items-center justify-center rounded-md border text-[12.5px] font-semibold transition-colors ${
+                  sel ? "border-ink bg-elevated text-ink" : "border-edge-soft bg-canvas text-ink-muted hover:border-edge hover:text-ink"
                 }`}
               >
                 {a.label}
@@ -304,7 +311,7 @@ export function SubtitleStylePanel() {
           type="button"
           onClick={resetDefaults}
           disabled={isDefault}
-          className="flex h-9 items-center gap-2 rounded-full border border-edge-soft bg-canvas/40 px-4 text-[12.5px] font-semibold text-ink-muted transition-colors hover:border-edge hover:text-ink disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-edge-soft disabled:hover:text-ink-muted"
+ className="flex h-9 items-center gap-2 rounded-full bg-canvas px-4 text-[12.5px] font-semibold text-ink-muted transition-colors hover:bg-surface hover:text-ink disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-canvas disabled:hover:text-ink-muted"
         >
           {t("Reset to defaults")}
         </button>
@@ -359,7 +366,7 @@ function SubtitlePreview() {
 
   return (
     <div
-      className="relative h-56 overflow-hidden rounded-2xl bg-cover bg-center"
+      className="relative h-56 overflow-hidden rounded-md bg-cover bg-center"
       style={{ backgroundImage: `url(${godfatherStill})` }}
     >
       <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent" />
@@ -515,12 +522,12 @@ function FontPicker() {
                 type="button"
                 onClick={() => update({ subFontFamily: f.id })}
                 title={broken ? t("This font did not load. Remove it and upload it again.") : undefined}
-                className={`flex h-11 w-full items-center justify-center rounded-xl border px-2 text-[13px] font-semibold transition-colors ${
+                className={`flex h-11 w-full items-center justify-center rounded-md border px-2 text-[13px] font-semibold transition-colors ${
                   broken
-                    ? "border-danger/40 bg-danger/10 text-danger"
+                    ? "border-danger bg-danger/15 text-danger"
                     : sel
                       ? "border-ink bg-elevated text-ink"
-                      : "border-edge-soft bg-canvas/40 text-ink-muted hover:border-edge hover:text-ink"
+                      : "border-edge-soft bg-canvas text-ink-muted hover:border-edge hover:text-ink"
                 }`}
                 style={{ fontFamily: previewFamily(f.id) }}
               >
@@ -536,7 +543,7 @@ function FontPicker() {
                   aria-label={t("Remove {name}", { name: f.label })}
                   className="absolute -end-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-canvas text-ink-muted ring-1 ring-edge transition-colors hover:bg-danger hover:text-white"
                 >
-                  <X size={10} strokeWidth={2.6} />
+                  <X size={12} strokeWidth={2.6} />
                 </button>
               )}
             </div>
@@ -545,9 +552,9 @@ function FontPicker() {
         <button
           type="button"
           onClick={() => fileRef.current?.click()}
-          className="flex h-11 items-center justify-center gap-1.5 rounded-xl border border-dashed border-edge bg-canvas/30 text-[12.5px] font-semibold text-ink-muted transition-colors hover:border-ink hover:bg-elevated hover:text-ink"
+          className="flex h-11 items-center justify-center gap-1.5 rounded-md border border-dashed border-edge bg-canvas text-[12.5px] font-semibold text-ink-muted transition-colors hover:border-ink hover:bg-elevated hover:text-ink"
         >
-          <Plus size={13} strokeWidth={2.4} />
+          <Plus size={14} strokeWidth={2.4} />
           {t("Upload font")}
         </button>
       </div>
@@ -563,7 +570,7 @@ function FontPicker() {
         }}
       />
       {error && (
-        <p className="rounded-lg bg-danger/15 px-2.5 py-2 text-[11.5px] leading-snug text-danger ring-1 ring-danger/30">
+        <p className="rounded-md bg-danger/15 px-2.5 py-2 text-[11.5px] leading-snug text-danger ring-1 ring-danger">
           {error}
         </p>
       )}
@@ -588,47 +595,45 @@ function ConfirmDeleteFont({
   onConfirm: () => void;
 }) {
   const t = useT();
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        onCancel();
-      }
-    };
-    window.addEventListener("keydown", onKey, true);
-    return () => window.removeEventListener("keydown", onKey, true);
-  }, [onCancel]);
+  const { closing, close } = useModalExit(onCancel);
 
   return (
-    <div
-      className="fixed inset-0 z-[140] flex items-center justify-center bg-black/65 backdrop-blur-sm animate-in fade-in duration-150"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onCancel();
-      }}
-    >
-      <div className="w-[min(92vw,360px)] rounded-2xl border border-edge bg-elevated p-5 shadow-[0_28px_72px_-20px_rgba(0,0,0,0.85)] animate-in zoom-in-95 fade-in duration-150">
-        <p className="text-[15px] font-semibold text-ink">{t("Delete this font?")}</p>
-        <p className="mt-1.5 text-[13px] leading-relaxed text-ink-muted">
+    <ModalShell closing={closing} onDismiss={close}>
+      <div className="flex items-start gap-4 px-6 pt-6">
+        <p className="min-w-0 flex-1 text-[17px] font-semibold tracking-tight text-ink">
+          {t("Delete this font?")}
+        </p>
+        <button
+          type="button"
+          onClick={close}
+          aria-label={t("Cancel")}
+          className="grid h-8 w-8 shrink-0 place-items-center rounded-md text-ink-subtle transition-colors hover:bg-elevated hover:text-ink"
+        >
+          <X size={16} />
+        </button>
+      </div>
+      <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto p-6">
+        <p className="text-[12.5px] leading-relaxed text-ink-muted">
           <span className="font-semibold text-ink">{name}</span>{" "}
           {t("will be removed from Bear. Anything you've set to use it will fall back to Inter.")}
         </p>
-        <div className="mt-4 flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="rounded-full bg-raised px-4 py-2 text-[12.5px] font-semibold text-ink-muted transition-colors hover:bg-canvas/55 hover:text-ink"
-          >
-            {t("Cancel")}
-          </button>
-          <button
-            type="button"
-            onClick={onConfirm}
-            className="rounded-full bg-danger px-4 py-2 text-[12.5px] font-semibold text-white transition-colors hover:bg-danger/90"
-          >
-            {t("Delete")}
-          </button>
-        </div>
       </div>
-    </div>
+      <div className="flex items-center justify-end gap-2 px-6 pb-6">
+        <button
+          type="button"
+          onClick={close}
+          className="harbor-press-pop h-9 rounded-md bg-elevated px-4 text-[12.5px] font-semibold text-ink-muted transition-colors hover:text-ink"
+        >
+          {t("Cancel")}
+        </button>
+        <button
+          type="button"
+          onClick={onConfirm}
+          className="harbor-press-pop h-9 rounded-md bg-danger px-4 text-[12.5px] font-semibold text-canvas transition-opacity hover:opacity-90"
+        >
+          {t("Delete")}
+        </button>
+      </div>
+    </ModalShell>
   );
 }

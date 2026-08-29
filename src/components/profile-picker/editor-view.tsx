@@ -320,7 +320,9 @@ export function EditorView({
         emitListToast(t("Data copied from {name}", { name: primary.name }));
       }
       if (Object.keys(patch).length > 0) updateProfile(p.id, patch);
-      selectProfile(p.id);
+      // unlocked: the user set this PIN seconds ago in this very form. Without the flag
+      // selectProfile refuses the profile they just created and Save appears to fail.
+      selectProfile(p.id, { unlocked: true });
     }
     if (avatarSource && (isOwnProfile || mode.kind === "create")) {
       update({

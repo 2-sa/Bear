@@ -7,6 +7,7 @@ import {
   dismissUpdate,
   checkForUpdate,
   openManualDownload,
+  openHandoffDownload,
   useUpdate,
 } from "@/lib/updater/use-update";
 import { releaseNote, type ReleaseNote } from "@/lib/updater/release-notes";
@@ -59,31 +60,43 @@ export function UpdateCard() {
           <div className="flex min-w-0 flex-1 flex-col">
             <span className="text-[15px] font-semibold text-ink">
               {u.status === "downloaded"
-                ? t("Update ready to install")
+                ? "Update ready to install"
                 : u.status === "installing"
-                  ? t("Installing update")
+                  ? "Installing update"
                   : u.status === "downloading"
-                    ? t("Downloading update")
+                    ? "Downloading update"
                     : u.status === "error"
                       ? u.installFailed
-                        ? t("Finish updating Bear")
-                        : t("Update failed")
-                      : t("Update available")}
+                        ? "Finish updating Harbor"
+                        : "Update failed"
+                      : "Update available"}
             </span>
             {u.version && (
-              <span className="text-[12.5px] text-ink-subtle">Bear {u.version}</span>
+              <span className="text-[12.5px] text-ink-subtle">Harbor {u.version}</span>
             )}
           </div>
           {u.status !== "installing" && u.status !== "downloading" && (
             <button
               onClick={closeUpdatePanel}
-              aria-label={t("Close")}
+              aria-label="Close"
               className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-ink-subtle transition-colors hover:bg-raised hover:text-ink"
             >
               <X size={16} strokeWidth={2.2} />
             </button>
           )}
         </div>
+
+        {u.handoff && u.status !== "error" && (
+          <p className="mx-5 mb-2 text-[12px] leading-relaxed text-ink-subtle">
+            {u.handoff.verifiable
+              ? t(
+                  "This one also replaces Harbor's bundled players and tools, so it installs through Harbor Setup. Harbor closes, the installer finishes, then Harbor reopens.",
+                )
+              : t(
+                  "This one installs through Harbor Setup, but the update manifest carries no signature for it. Harbor will not run an installer it cannot verify. Download it and run it yourself.",
+                )}
+          </p>
+        )}
 
         {u.status === "available" && (rich || u.notes) && (
           <div className="mx-5 mb-1 max-h-[248px] overflow-y-auto rounded-xl border border-edge-soft/60 bg-canvas/40 px-3.5 py-3">
@@ -110,10 +123,10 @@ export function UpdateCard() {
             <div className="mt-1.5 flex items-center justify-between text-[11.5px] text-ink-subtle">
               <span>
                 {u.status === "downloaded"
-                  ? t("Download complete")
+                  ? "Download complete"
                   : determinate
-                    ? `${mb(u.downloadedBytes)} / ${mb(u.totalBytes)}`
-                    : t("Fetching the latest build")}
+                    ? `${mb(u.downloadedBytes)} of ${mb(u.totalBytes)}`
+                    : "Fetching the latest build"}
               </span>
               {u.status === "downloading" && determinate && <span>{pct}%</span>}
             </div>
@@ -122,10 +135,10 @@ export function UpdateCard() {
 
         {u.status === "error" && (
           <div className="mx-5 mb-1 rounded-xl border border-danger/40 bg-danger/10 px-3.5 py-3 text-[12.5px] leading-relaxed text-ink-muted">
-            {u.error ?? t("Something went wrong reaching the update server.")}
+            {u.error ?? "Something went wrong reaching the update server."}
             {u.installFailed && (
               <span className="mt-1.5 block text-ink-subtle">
-                {t("Download and run the installer to finish updating. If it keeps failing, run it as administrator once.")}
+                Download and run the installer to finish updating. If it keeps failing, run it as administrator once.
               </span>
             )}
           </div>
@@ -134,40 +147,48 @@ export function UpdateCard() {
         <div className="flex items-center justify-end gap-2 px-5 pb-4 pt-3">
           {u.status === "available" && (
             <>
-              <GhostButton onClick={dismissUpdate}>{t("Later")}</GhostButton>
+              <GhostButton onClick={dismissUpdate}>Later</GhostButton>
               <PrimaryButton onClick={() => void downloadUpdate()}>
-                <Download size={16} strokeWidth={2.2} /> {t("Download")}
+                <Download size={16} strokeWidth={2.2} />{" "}
+                {u.handoff && !u.handoff.verifiable ? t("Download installer") : "Download"}
               </PrimaryButton>
             </>
           )}
           {u.status === "downloaded" && (
             <>
-              <GhostButton onClick={dismissUpdate}>{t("Later")}</GhostButton>
+              <GhostButton onClick={dismissUpdate}>Later</GhostButton>
               <PrimaryButton onClick={() => void installUpdate()}>
-                <RotateCw size={16} strokeWidth={2.2} /> {t("Install & restart")}
+                <RotateCw size={16} strokeWidth={2.2} />{" "}
+                {u.handoff ? t("Install and reopen") : "Install & restart"}
               </PrimaryButton>
             </>
           )}
           {u.status === "installing" && (
-            <span className="text-[12px] text-ink-subtle">{t("Bear will restart automatically.")}</span>
+            <span className="text-[12px] text-ink-subtle">
+              {u.handoff
+                ? t("Harbor is closing. Harbor Setup will finish and reopen it.")
+                : "Harbor will restart automatically."}
+            </span>
           )}
           {u.status === "error" && (
             <>
-              <GhostButton onClick={closeUpdatePanel}>{t("Close")}</GhostButton>
+              <GhostButton onClick={closeUpdatePanel}>Close</GhostButton>
               {u.installFailed ? (
-                <PrimaryButton onClick={() => void openManualDownload()}>
-                  <Download size={16} strokeWidth={2.2} /> {t("Download installer")}
+                <PrimaryButton
+                  onClick={() => void (u.handoff ? openHandoffDownload() : openManualDownload())}
+                >
+                  <Download size={16} strokeWidth={2.2} /> Download installer
                 </PrimaryButton>
               ) : (
                 <PrimaryButton onClick={() => void checkForUpdate(true)}>
-                  <RefreshCw size={16} strokeWidth={2.2} /> {t("Try again")}
+                  <RefreshCw size={16} strokeWidth={2.2} /> Try again
                 </PrimaryButton>
               )}
             </>
           )}
           {u.status === "downloading" && (
             <span className="flex items-center gap-1.5 text-[12px] text-ink-subtle">
-              <Check size={14} strokeWidth={2.4} className="text-accent" /> {t("Keep using Bear while it downloads")}
+              <Check size={14} strokeWidth={2.4} className="text-accent" /> Keep using Harbor while it downloads
             </span>
           )}
         </div>
@@ -180,7 +201,7 @@ function PrimaryButton({ children, onClick }: { children: React.ReactNode; onCli
   return (
     <button
       onClick={onClick}
-      className="flex h-11 items-center gap-2 rounded-xl bg-accent px-4 text-[14px] font-semibold text-[#1b1304] transition-[filter] hover:brightness-105"
+      className="flex h-11 items-center gap-2 rounded-xl bg-accent px-4 text-[14px] font-semibold text-canvas transition-[filter] hover:brightness-105"
     >
       {children}
     </button>

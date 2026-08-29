@@ -100,7 +100,7 @@ export function RecoveryKeyInput({
               maxLength={LEN}
               aria-label={`Recovery key block ${i + 1} of ${GROUPS}`}
               placeholder="•••••"
-              className="h-11 w-full min-w-0 rounded-[10px] border border-edge-soft bg-elevated/40 text-center font-mono text-[15px] uppercase tracking-[0.16em] text-ink transition-colors placeholder:text-ink-subtle/40 focus:border-edge focus:outline-none"
+              className="h-11 w-full min-w-0 rounded-md border border-edge-soft bg-elevated/40 text-center font-mono text-[15px] uppercase tracking-[0.16em] text-ink transition-colors placeholder:text-ink-subtle/40 focus:border-edge focus:outline-none"
             />
             {i < GROUPS - 1 && <span aria-hidden className="text-[13px] text-ink-subtle/60">-</span>}
           </Fragment>

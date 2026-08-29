@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Play } from "lucide-react";
+import { Play } from "@/components/icons/play-filled";
 import { t, useT } from "@/lib/i18n";
 import { RailChevron } from "@/components/nav-arrow";
 import { mangaAdaptation, similarManga, type MangaAdaptation } from "@/lib/manga/related";
@@ -154,7 +154,7 @@ export function MangaRecommendedRail({
       <div className="relative">
         <div
           ref={scrollRef}
-          className="flex gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="flex gap-4 overflow-x-auto pt-2 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           style={{ scrollSnapType: "x proximity" }}
         >
           {items === null

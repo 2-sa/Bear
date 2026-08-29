@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Check, FolderOpen, X } from "lucide-react";
 import { saveTextFileWithPath } from "@/lib/download-text";
+import { useT } from "@/lib/i18n";
 
 export function DownloadMenu({
   docsRef,
@@ -9,6 +10,7 @@ export function DownloadMenu({
   docsRef: React.RefObject<HTMLDivElement | null>;
   onSaved: (path: string) => void;
 }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const wrap = useRef<HTMLDivElement>(null);
@@ -56,20 +58,18 @@ export function DownloadMenu({
         disabled={busy}
         aria-haspopup="menu"
         aria-expanded={open}
-        className={`flex h-9 items-center gap-2 rounded-full border px-3.5 text-[12.5px] font-semibold transition-colors disabled:opacity-60 ${
-          open
-            ? "border-edge bg-elevated text-ink"
-            : "border-edge-soft text-ink-muted hover:border-edge hover:bg-elevated/60 hover:text-ink"
+        className={`flex h-10 items-center gap-2 rounded-md px-4 text-[12.5px] font-semibold transition-colors disabled:opacity-60 ${
+          open ? "bg-raised text-ink" : "bg-canvas text-ink-muted hover:bg-raised hover:text-ink"
         }`}
       >
         <DownloadGlyph />
-        {busy ? "Saving…" : "Download"}
+        {busy ? t("Saving…") : t("Download")}
       </button>
       {open && (
-        <div className="absolute end-0 top-[calc(100%+8px)] z-30 flex w-44 flex-col overflow-hidden rounded-xl border border-edge-soft bg-elevated shadow-[0_18px_50px_-15px_rgba(0,0,0,0.6)] backdrop-blur-md animate-in fade-in slide-in-from-top-1 duration-150">
-          <DownloadOption label="Plain text (.txt)" onClick={() => void exportAs("txt")} />
-          <DownloadOption label="JSON (.json)" onClick={() => void exportAs("json")} />
-          <DownloadOption label="PDF (print)" onClick={() => void exportAs("pdf")} />
+        <div className="absolute end-0 top-[calc(100%+8px)] z-30 flex w-48 flex-col gap-0.5 overflow-hidden rounded-md bg-raised p-1 harbor-float animate-in fade-in slide-in-from-top-1 duration-150">
+          <DownloadOption label={t("Plain text (.txt)")} onClick={() => void exportAs("txt")} />
+          <DownloadOption label={t("JSON (.json)")} onClick={() => void exportAs("json")} />
+          <DownloadOption label={t("PDF (print)")} onClick={() => void exportAs("pdf")} />
         </div>
       )}
     </div>
@@ -81,7 +81,7 @@ function DownloadOption({ label, onClick }: { label: string; onClick: () => void
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full items-center px-3.5 py-2.5 text-start text-[12.5px] text-ink-muted transition-colors hover:bg-raised hover:text-ink"
+      className="flex w-full items-center rounded-md px-3 py-2.5 text-start text-[12.5px] text-ink-muted transition-colors hover:bg-elevated hover:text-ink"
     >
       {label}
     </button>
@@ -103,6 +103,7 @@ function DownloadGlyph() {
 }
 
 export function SavePill({ path, onDismiss }: { path: string; onDismiss: () => void }) {
+  const t = useT();
   const reveal = async () => {
     try {
       const { revealItemInDir } = await import("@tauri-apps/plugin-opener");
@@ -115,29 +116,29 @@ export function SavePill({ path, onDismiss }: { path: string; onDismiss: () => v
   const dir = path.slice(0, Math.max(0, path.length - name.length)).replace(/[\\/]+$/, "");
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-6 z-[120] flex justify-center px-4">
-      <div className="pointer-events-auto flex max-w-[min(560px,90vw)] items-center gap-3 rounded-full border border-edge bg-elevated/95 py-2 ps-3 pe-2 shadow-[0_18px_50px_-15px_rgba(0,0,0,0.7)] backdrop-blur-md animate-in fade-in slide-in-from-bottom-2 duration-200">
-        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-300">
-          <Check size={13} strokeWidth={2.8} />
+      <div className="pointer-events-auto flex max-w-[min(560px,90vw)] items-center gap-3 rounded-md bg-elevated p-2 ps-3 harbor-float animate-in fade-in slide-in-from-bottom-2 duration-200">
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-success/15 text-success">
+          <Check size={14} strokeWidth={2.8} />
         </span>
         <div className="flex min-w-0 flex-col">
-          <span className="text-[12.5px] font-semibold leading-tight text-ink">Saved</span>
-          <span className="truncate text-[11px] leading-tight text-ink-subtle" title={path}>
+          <span className="text-[12.5px] font-semibold leading-tight text-ink">{t("Saved")}</span>
+          <span className="truncate text-[11.5px] leading-tight text-ink-subtle" title={path}>
             {dir || name}
           </span>
         </div>
         <button
           type="button"
           onClick={reveal}
-          className="ms-1 flex h-8 shrink-0 items-center gap-1.5 rounded-full bg-raised px-3 text-[11.5px] font-semibold text-ink-muted transition-colors hover:bg-canvas hover:text-ink"
+          className="ms-1 flex h-8 shrink-0 items-center gap-1.5 rounded-md bg-canvas px-3 text-[11.5px] font-semibold text-ink-muted transition-colors hover:bg-raised hover:text-ink"
         >
-          <FolderOpen size={13} strokeWidth={2.2} />
-          Show
+          <FolderOpen size={14} strokeWidth={2.2} />
+          {t("Show")}
         </button>
         <button
           type="button"
           onClick={onDismiss}
-          aria-label="Dismiss"
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-ink-subtle transition-colors hover:bg-raised hover:text-ink"
+          aria-label={t("Dismiss")}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-ink-subtle transition-colors hover:bg-canvas hover:text-ink"
         >
           <X size={14} strokeWidth={2.4} />
         </button>

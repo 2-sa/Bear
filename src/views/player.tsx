@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { resolveChromeTheme } from "@/lib/theme";
+import { useBigPicture } from "@/lib/big-picture";
 import { useActiveKid } from "@/lib/profiles";
 import { type PlayerBridge } from "@/lib/player/bridge";
 import { useDebridClients } from "@/lib/debrid/registry";
@@ -88,6 +89,7 @@ import type { VolumeIndicatorState } from "@/components/player/volume-indicator"
 import type { ToastInfo } from "@/views/addons/addons-types";
 import { SFX } from "@/lib/sfx";
 import { useKeyboardNavigation } from "@/lib/keyboard-navigation";
+import { clearOverlayDismiss, dismissedJustNow } from "@/lib/player/overlay-dismiss";
 import { subtitleStreamKey } from "@/lib/subtitles/subtitle-memory";
 import { SUBTITLE_FPS_TRANSITION_FAILED_EVENT } from "@/lib/player/subtitle-fps";
 import { PlayerInteractionLockControls } from "@/components/player/player-interaction-lock";
@@ -96,9 +98,17 @@ import { usePlayerInteractionLock } from "./player/hooks/use-player-interaction-
 let hdrFallbackNoticeShown = false;
 
 export function PlayerView({ src }: { src: PlayerSrc }) {
-  const { setChromeHidden, topPath, openPicker, exitPlayback, replacePlayerSrc, exitPlayer } =
-    useView();
+  const {
+    setChromeHidden,
+    topPath,
+    openPicker,
+    exitPlayback,
+    replacePlayerSrc,
+    exitPlayer,
+    picker,
+  } = useView();
   const { settings, update } = useSettings();
+  const bigPictureActive = useBigPicture().active;
   const isKid = useActiveKid() != null;
   const t = useT();
   const chromeTheme = resolveChromeTheme(settings.theme, settings.playerChromeTheme);
@@ -392,36 +402,29 @@ export function PlayerView({ src }: { src: PlayerSrc }) {
         : { ...src, url: liveUrl, historyUrl: liveHistoryUrl, streamRef: liveStreamRef },
     [src, liveUrl, liveHistoryUrl, liveStreamRef],
   );
-  const {
-    resolvedImdbId,
-    subtitleSearchActive,
-    subAssNative,
-    captureExitSnapshot,
-    download,
-    subDropToast,
-  } = usePlayerMedia({
-    src: activeMediaSrc,
-    snap,
-    engine,
-    settings,
-    authKey,
-    bridgeRef,
-    bridgeReady,
-    bridgeKey,
-    svpActive,
-    videoMountRef,
-    toggleFullscreen,
-    castActiveRef: cast.castActiveRef,
-    season,
-    episode,
-  });
+  const { resolvedImdbId, subAssNative, captureExitSnapshot, download, subDropToast } =
+    usePlayerMedia({
+      src: activeMediaSrc,
+      snap,
+      engine,
+      settings,
+      authKey,
+      bridgeRef,
+      bridgeReady,
+      bridgeKey,
+      svpActive,
+      videoMountRef,
+      toggleFullscreen,
+      castActiveRef: cast.castActiveRef,
+      season,
+      episode,
+    });
 
   const contentAdvisory = useContentAdvisory(
     settings.contentAdvisoryToast,
-    (snap.status === "playing" || snap.status === "paused") && !subtitleSearchActive,
-    resolvedImdbId ?? src.imdbId ?? (src.meta.id.startsWith("tt") ? src.meta.id : null),
+    resolvedImdbId,
     src.url,
-    src.meta,
+    playing,
   );
   const { hostSourceRef } = useHostSource({
     inRoom,
@@ -953,8 +956,15 @@ export function PlayerView({ src }: { src: PlayerSrc }) {
     swapResolvingKey,
   });
   const [loaderShowing, setLoaderShowing] = useState(false);
+  // The desktop play-picker is a mouse surface, so while it is up the ten-foot
+  // chrome stands aside rather than layering a D-pad surface over something a
+  // remote cannot drive. PiP and draw are mouse modes for the same reason.
+  const tenFoot = bigPictureActive && !picker && !pipMode && !drawMode;
+  // One lever. showChrome feeds the transport, the quick tools, the ad-report
+  // button, the X-ray overlay and the P2P chip, and none of them belong on a
+  // television. Big Picture renders its own.
   const showChrome =
-    !screenLocked && !loaderActive && !loaderShowing && (chromeVisible || drawMode);
+    !screenLocked && !loaderActive && !loaderShowing && !tenFoot && (chromeVisible || drawMode);
   const liveShellSnap = cast.castDevice
     ? { ...snap, status: (cast.castPlaying ? "playing" : "paused") as typeof snap.status }
     : snap;
@@ -995,6 +1005,7 @@ export function PlayerView({ src }: { src: PlayerSrc }) {
   }, [src]);
 
   const overlayProps: PlayerOverlayLayersProps = {
+    tenFoot,
     snap,
     engine,
     src,
@@ -1171,6 +1182,10 @@ export function PlayerView({ src }: { src: PlayerSrc }) {
         onClick={(e) => {
           if (e.target !== e.currentTarget) return;
           if (drawMode || pipMode) return;
+          if (dismissedJustNow()) {
+            clearOverlayDismiss();
+            return;
+          }
           const resuming = snap.status !== "playing";
           playPauseToggle();
           if (resuming) hideForResume();
@@ -1212,7 +1227,7 @@ export function PlayerView({ src }: { src: PlayerSrc }) {
           }}
         />
       )}
-      <LeaveConfirmModal />
+      {!tenFoot && <LeaveConfirmModal />}
       <HdrStageBridge
         active={hdrStageRequested}
         payload={{

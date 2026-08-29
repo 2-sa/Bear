@@ -16,7 +16,7 @@ export function ListingPreview({
   return (
     <div className="flex flex-col gap-3">
       <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-ink-subtle">How it'll look</span>
-      <div className="w-full max-w-[280px] overflow-hidden rounded-2xl border border-edge-soft bg-surface shadow-[0_18px_40px_-24px_rgba(0,0,0,0.5)]">
+      <div className="w-full max-w-[280px] overflow-hidden rounded-md border border-edge-soft bg-surface shadow-[0_18px_40px_-24px_rgba(0,0,0,0.5)]">
         <div className="relative aspect-video w-full overflow-hidden bg-elevated">
           {coverUrl ? (
             <img src={coverUrl} alt="" className="h-full w-full object-cover" />

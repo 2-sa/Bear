@@ -1,4 +1,5 @@
-import { Bookmark, Check, Plus } from "lucide-react";
+import { Check, Plus } from "lucide-react";
+import { ShowcaseIcon } from "@/components/icons/harbor-glyphs";
 import { useState, type RefObject } from "react";
 import {
   addToList,
@@ -108,9 +109,8 @@ export function AddToListMenu({
               className="flex min-h-[44px] w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-start text-[13px] font-medium text-ink-muted transition-colors hover:bg-raised hover:text-ink disabled:opacity-60"
             >
               <span className="flex h-5 w-5 items-center justify-center">
-                <Bookmark
+                <ShowcaseIcon
                   size={20}
-                  strokeWidth={2}
                   className={isShowcase ? "text-accent" : undefined}
                 />
               </span>

@@ -61,7 +61,7 @@ function ThemeDeck({ themes }: { themes: ThemePreset[] }) {
       {shown.map((t, i) => (
         <span
           key={t.id}
-          className={`absolute aspect-[16/10] w-[46%] overflow-hidden rounded-[10px] shadow-[0_14px_34px_-14px_rgba(0,0,0,0.7)] ring-1 ring-edge-soft transition-transform duration-300 ease-out motion-reduce:transition-none ${DECK[i]}`}
+          className={`absolute aspect-[16/10] w-[46%] overflow-hidden rounded-md harbor-float transition-transform duration-300 ease-out motion-reduce:transition-none ${DECK[i]}`}
         >
           <Fit kind="theme" tokens={tokensFromPreset(t)} cover={t.previewImage ?? t.background?.image ?? null} />
         </span>
@@ -85,13 +85,13 @@ function BrowseHero({
     <button
       type="button"
       onClick={onClick}
-      className="group/hero relative flex min-h-[252px] flex-col overflow-hidden rounded-[14px] bg-surface text-start outline-none ring-1 ring-edge-soft transition-[transform,box-shadow] duration-200 ease-out hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-24px_rgba(0,0,0,0.65)] focus-visible:ring-2 focus-visible:ring-accent motion-reduce:transform-none"
+      className="group/hero relative flex min-h-[252px] flex-col overflow-hidden rounded-md bg-elevated text-start outline-none transition-colors duration-200 hover:bg-raised focus-visible:ring-2 focus-visible:ring-accent"
     >
       <div className="relative flex-1 overflow-hidden bg-canvas">
         <ThemeDeck themes={themes} />
         {imported && (
-          <span className="absolute end-3 top-3 z-30 inline-flex items-center gap-1.5 rounded-full bg-elevated px-2.5 py-1 text-[11px] font-semibold text-ink ring-1 ring-edge-soft">
-            <Check size={11} strokeWidth={2.8} className="text-success" />
+          <span className="absolute end-3 top-3 z-30 inline-flex items-center gap-1.5 rounded-[3px] bg-canvas px-2.5 py-1 text-[11.5px] font-semibold text-ink">
+            <Check size={12} strokeWidth={2.8} className="text-success" />
             {imported} added
           </span>
         )}
@@ -131,10 +131,10 @@ function ActionCard({
     <button
       type="button"
       onClick={onClick}
-      className="group/act relative flex flex-1 flex-col overflow-hidden rounded-[14px] bg-surface text-start outline-none ring-1 ring-edge-soft transition-[transform,box-shadow] duration-200 ease-out hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-24px_rgba(0,0,0,0.65)] focus-visible:ring-2 focus-visible:ring-accent motion-reduce:transform-none"
+      className="group/act relative flex flex-1 flex-col overflow-hidden rounded-md bg-elevated text-start outline-none transition-colors duration-200 hover:bg-raised focus-visible:ring-2 focus-visible:ring-accent"
     >
       <div className="relative h-[68px] shrink-0 overflow-hidden border-b border-edge-soft bg-canvas">{visual}</div>
-      <div className="flex flex-1 flex-col gap-1 p-4">
+      <div className="flex min-w-0 flex-1 flex-col gap-1 p-4">
         <span className="flex items-center gap-2 text-[14.5px] font-semibold tracking-tight text-ink">
           <span className="text-ink-subtle">{icon}</span>
           {title}
@@ -142,7 +142,7 @@ function ActionCard({
         <span className="text-[12.5px] leading-snug text-ink-muted">{body}</span>
         <span className="mt-auto inline-flex items-center gap-1.5 pt-2 text-[12.5px] font-semibold text-ink transition-transform group-hover/act:translate-x-0.5 rtl:group-hover/act:-translate-x-0.5">
           {cta}
-          <ArrowRight size={13} strokeWidth={2.2} className="dir-icon" />
+          <ArrowRight size={14} strokeWidth={2.2} className="dir-icon" />
         </span>
       </div>
     </button>
@@ -157,7 +157,7 @@ function PaletteVisual() {
       {PALETTE_BARS.map((c, i) => (
         <span
           key={i}
-          className={`h-9 flex-1 rounded-[5px] ring-1 ring-edge-soft/60 transition-transform duration-300 ease-out group-hover/act:-translate-y-0.5 motion-reduce:transition-none ${c}`}
+          className={`h-9 flex-1 rounded-[3px] transition-transform duration-300 ease-in-out group-hover/act:-translate-y-0.5 motion-reduce:transition-none ${c}`}
           style={{ transitionDelay: `${i * 40}ms` }}
         />
       ))}
@@ -168,9 +168,9 @@ function PaletteVisual() {
 function ImportVisual() {
   return (
     <div className="flex h-full w-full items-center justify-center px-4">
-      <div className="flex h-9 w-full items-center justify-center gap-2 rounded-[8px] border border-dashed border-edge text-ink-subtle transition-colors group-hover/act:border-edge-soft group-hover/act:text-ink-muted">
-        <FileDown size={15} strokeWidth={2} />
-        <span className="text-[11px] font-semibold uppercase tracking-[0.14em]">Drop a .harborstyle</span>
+      <div className="flex h-9 w-full items-center justify-center gap-2 rounded-md border border-dashed border-edge-soft text-ink-subtle transition-colors group-hover/act:text-ink-muted">
+        <FileDown size={16} strokeWidth={2} />
+        <span className="text-[11.5px] font-semibold uppercase tracking-[0.14em]">Drop a .harborstyle</span>
       </div>
     </div>
   );

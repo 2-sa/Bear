@@ -9,8 +9,8 @@ import {
 import type { Meta } from "@/lib/cinemeta";
 import type { Rejection } from "@/lib/streams/trust";
 import type { Addon } from "@/lib/addons";
-import type { ScoredStream, Stream, Tier } from "@/lib/streams/types";
-import { hasCachedMarker } from "@/lib/streams/cached";
+import type { DebridSlug, ScoredStream, Stream, Tier } from "@/lib/streams/types";
+import { hasCachedMarker, hasUncachedMarker } from "@/lib/streams/cached";
 import type { PlayEpisode } from "@/lib/view";
 
 export async function cinemetaImdbFallback(
@@ -24,9 +24,7 @@ export async function cinemetaImdbFallback(
   try {
     const res = await fetch(url);
     if (!res.ok) return null;
-    const data = (await res.json()) as {
-      metas?: Array<{ id: string; name: string; releaseInfo?: string }>;
-    };
+    const data = (await res.json()) as { metas?: Array<{ id: string; name: string; releaseInfo?: string }> };
     const metas = Array.isArray(data?.metas) ? data.metas : [];
     const wantNorm = name.trim().toLowerCase();
     for (const m of metas) {
@@ -76,12 +74,7 @@ export function buildAddonOptions(
     if (existing) existing.count += 1;
     else seen.set(key, { name: s.addonName ?? s.addonId, url: s.addonUrl, count: 1 });
   }
-  const opts = [...seen.entries()].map(([id, v]) => ({
-    id,
-    name: v.name,
-    url: v.url,
-    count: v.count,
-  }));
+  const opts = [...seen.entries()].map(([id, v]) => ({ id, name: v.name, url: v.url, count: v.count }));
   const nameCounts = new Map<string, number>();
   for (const o of opts) nameCounts.set(o.name, (nameCounts.get(o.name) ?? 0) + 1);
   for (const o of opts) {
@@ -128,32 +121,13 @@ export function normalizeLangCode(s: string): string {
   const lower = s.trim().toLowerCase();
   if (lower === "jp") return "ja";
   const nameToCode: Record<string, string> = {
-    english: "en",
-    portuguese: "pt",
-    spanish: "es",
-    french: "fr",
-    german: "de",
-    italian: "it",
-    japanese: "ja",
-    korean: "ko",
-    chinese: "zh",
-    russian: "ru",
-    hindi: "hi",
-    arabic: "ar",
-    dutch: "nl",
-    polish: "pl",
-    turkish: "tr",
-    swedish: "sv",
-    norwegian: "no",
-    danish: "da",
-    finnish: "fi",
-    czech: "cs",
-    hungarian: "hu",
-    romanian: "ro",
-    hebrew: "he",
-    thai: "th",
-    vietnamese: "vi",
-    ukrainian: "uk",
+    english: "en", portuguese: "pt", spanish: "es", french: "fr",
+    german: "de", italian: "it", japanese: "ja", korean: "ko",
+    chinese: "zh", russian: "ru", hindi: "hi", arabic: "ar",
+    dutch: "nl", polish: "pl", turkish: "tr", swedish: "sv",
+    norwegian: "no", danish: "da", finnish: "fi", czech: "cs",
+    hungarian: "hu", romanian: "ro", hebrew: "he", thai: "th",
+    vietnamese: "vi", ukrainian: "uk",
   };
   if (nameToCode[lower]) return nameToCode[lower];
   return lower.slice(0, 2);
@@ -284,13 +258,7 @@ export function rejectionLabel(reason: string): string {
 }
 
 export function isRoughSource(s: ScoredStream): boolean {
-  return (
-    s.source === "CAM" ||
-    s.source === "TS" ||
-    s.source === "HDTS" ||
-    s.source === "TC" ||
-    s.source === "SCR"
-  );
+  return s.source === "CAM" || s.source === "TS" || s.source === "HDTS" || s.source === "TC" || s.source === "SCR";
 }
 
 export function confirmationLabel(meta: Meta, stream: ScoredStream): string | null {
@@ -343,10 +311,7 @@ export function displayTitle(
   if (raw) return raw;
   if (!episode) {
     const filename = s.behaviorHints?.filename ?? s.behaviorHints?.fileName ?? "";
-    const firstLine = (s.title ?? "")
-      .split("\n")
-      .map((l) => l.trim())
-      .find((l) => l.length > 0);
+    const firstLine = (s.title ?? "").split("\n").map((l) => l.trim()).find((l) => l.length > 0);
     return filename || firstLine || s.name || showName || s.parsedTitle || "";
   }
   const parts = [showName || s.parsedTitle];
@@ -363,10 +328,7 @@ export function displayTitle(
 export function torrentFilename(s: ScoredStream): string {
   const fn = s.behaviorHints?.filename ?? s.behaviorHints?.fileName;
   if (fn && fn.trim()) return fn.trim();
-  const firstLine = (s.title ?? "")
-    .split("\n")
-    .map((l) => l.trim())
-    .find((l) => l.length > 0);
+  const firstLine = (s.title ?? "").split("\n").map((l) => l.trim()).find((l) => l.length > 0);
   return firstLine ?? "";
 }
 
@@ -421,11 +383,19 @@ export function hasInstantMarker(s: ScoredStream): boolean {
   return /\binstant\b/.test(haystack) || haystack.includes("⚡");
 }
 
-export { hasUncachedMarker } from "@/lib/streams/cached";
-export { hasCachedMarker };
+export { hasCachedMarker, hasUncachedMarker };
 
 export function anyStreamCached(s: ScoredStream): boolean {
   return Object.values(s.cached).some((v) => v === true) || hasCachedMarker(s);
+}
+
+export function streamIsCached(
+  s: ScoredStream,
+  debrids: ReadonlyArray<{ slug: DebridSlug }>,
+): boolean {
+  if (s.url != null && !s.infoHash && !hasUncachedMarker(s)) return true;
+  if (debrids.some((d) => s.cached[d.slug] === true || s.inLibrary[d.slug] === true)) return true;
+  return hasCachedMarker(s);
 }
 
 const DEBRID_FAIL_CODES = new Set([
@@ -438,10 +408,7 @@ const DEBRID_FAIL_CODES = new Set([
   "still-downloading",
 ]);
 
-export function isDebridFailure(
-  code: string,
-  tried?: Array<{ slug: string; code: string }>,
-): boolean {
+export function isDebridFailure(code: string, tried?: Array<{ slug: string; code: string }>): boolean {
   if (DEBRID_FAIL_CODES.has(code)) return true;
   if (tried && tried.length > 0) {
     return tried.every((t) => t.slug !== "direct" && DEBRID_FAIL_CODES.has(t.code));
@@ -594,7 +561,8 @@ export function orderByAddonNative(
   const BIG = Number.MAX_SAFE_INTEGER;
   const arrivalOf = (s: ScoredStream): number =>
     s.nativeIdx ?? arrival.get(streamIdentity(s)) ?? BIG;
-  const rankOf = (s: ScoredStream): number => s.addonPriority ?? rank.get(s.addonUrl ?? "") ?? BIG;
+  const rankOf = (s: ScoredStream): number =>
+    s.addonPriority ?? rank.get(s.addonUrl ?? "") ?? BIG;
   return streams.slice().sort((a, b) => {
     const ar = rankOf(a);
     const br = rankOf(b);

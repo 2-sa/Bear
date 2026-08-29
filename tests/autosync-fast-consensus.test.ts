@@ -66,5 +66,6 @@ test("auto-sync is a real toggle with a visible best-effort pill", () => {
   assert.match(popover, /case "best-effort":\s*return "synced";/);
   const menu = read("src/components/player/subtitle-menu/sync-control.tsx");
   assert.match(menu, /autoSync\?\.stop\(\);/);
-  assert.match(menu, /aria-pressed=\{autoSyncOn\}/);
+  assert.match(menu, /\{autoSyncOn \? tr\("Turn off auto-sync"\) : tr\("Auto sync"\)\}/);
+  assert.match(menu, /aria-label=\{tr\("\{label\}, sync options", \{ label \}\)\}/);
 });

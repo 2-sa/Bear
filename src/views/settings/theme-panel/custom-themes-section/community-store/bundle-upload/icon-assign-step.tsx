@@ -160,7 +160,7 @@ export function IconAssignStep({
     <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-2.5">
         <span className="text-[12.5px] font-semibold text-ink">What are you sharing?</span>
-        <div className="inline-flex w-fit rounded-full border border-edge-soft bg-elevated/40 p-1">
+ <div className="inline-flex w-fit rounded-full bg-elevated p-1">
           <KindTab active={kind === "badge"} onClick={() => onKind("badge")} icon={Medal} label="Badge pack" />
           <KindTab active={kind === "award"} onClick={() => onKind("award")} icon={Award} label="Award pack" />
         </div>
@@ -171,32 +171,32 @@ export function IconAssignStep({
         </p>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-edge-soft bg-surface/40 p-4">
+ <div className="flex flex-wrap items-center justify-between gap-3 rounded-md bg-surface p-4">
         <div className="flex min-w-0 flex-col">
           <span className="text-[13px] font-semibold text-ink">Import a set</span>
-          <span className="text-[12px] leading-snug text-ink-subtle">
+          <span className="text-[12.5px] leading-snug text-ink-subtle">
             Drop many images, GIFs, or a .zip at once. Name each file after its slot ({kind === "badge" ? "4k.png, hdr.png, atmos.png" : "oscar.png, emmy.png"}) and we match them. Any size is fine, we resize big images and keep animated GIFs light.
           </span>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <button
             onClick={() => setGuideOpen(true)}
-            className="inline-flex h-10 items-center gap-2 rounded-xl border border-edge-soft px-3.5 text-[13px] font-semibold text-ink-muted transition-colors hover:border-edge hover:text-ink"
+ className="inline-flex h-10 items-center gap-2 rounded-md px-3.5 text-[13px] font-semibold text-ink-muted transition-colors hover:bg-canvas hover:text-ink"
           >
-            <BookOpen size={15} strokeWidth={2.2} /> Naming guide
+            <BookOpen size={16} strokeWidth={2.2} /> Naming guide
           </button>
           <button
             onClick={() => pickFiles(true, "image/*,.zip,application/zip", runImport)}
             disabled={busy}
-            className="inline-flex h-10 items-center gap-2 rounded-xl bg-ink px-4 text-[13px] font-semibold text-canvas transition-transform hover:scale-[1.02] active:scale-[0.97] disabled:opacity-50"
+            className="inline-flex h-10 items-center gap-2 rounded-md bg-ink px-4 text-[13px] font-semibold text-canvas transition-transform hover:scale-[1.02] active:scale-[0.97] disabled:opacity-50"
           >
-            <Upload size={15} strokeWidth={2.2} /> {busy ? "Reading…" : "Import images or .zip"}
+            <Upload size={16} strokeWidth={2.2} /> {busy ? "Reading…" : "Import images or .zip"}
           </button>
         </div>
       </div>
 
       {errors.length > 0 && (
-        <div className="flex flex-col gap-1.5 rounded-xl border border-danger/25 bg-danger/8 px-3.5 py-2.5">
+        <div className="flex flex-col gap-1.5 rounded-md border border-danger bg-danger/15 px-3.5 py-2.5">
           <div className="flex items-center justify-between gap-2">
             <span className="flex items-center gap-1.5 text-[12.5px] font-semibold text-danger">
               <AlertTriangle size={14} strokeWidth={2.2} /> {errors.length} {errors.length === 1 ? "file was" : "files were"} skipped
@@ -207,7 +207,7 @@ export function IconAssignStep({
           </div>
           <ul className="flex max-h-28 flex-col gap-0.5 overflow-y-auto">
             {errors.map((e, i) => (
-              <li key={i} className="text-[12px] text-ink-muted">
+              <li key={i} className="text-[12.5px] text-ink-muted">
                 <span className="font-medium text-ink">{e.name}</span> {e.reason}
               </li>
             ))}
@@ -216,7 +216,7 @@ export function IconAssignStep({
       )}
 
       {optimized > 0 && (
-        <div className="flex items-center gap-2 rounded-xl border border-accent/25 bg-accent/8 px-3.5 py-2.5">
+        <div className="flex items-center gap-2 rounded-md border border-accent bg-accent-soft px-3.5 py-2.5">
           <Wand2 size={14} strokeWidth={2.2} className="shrink-0 text-accent" />
           <span className="text-[12.5px] text-ink-muted">
             Resized {optimized} {optimized === 1 ? "image" : "images"} to fit. Nothing was skipped for size.
@@ -225,7 +225,7 @@ export function IconAssignStep({
       )}
 
       {flattened > 0 && (
-        <div className="flex items-center gap-2 rounded-xl bg-accent-soft px-3.5 py-2.5 ring-1 ring-accent/25">
+        <div className="flex items-center gap-2 rounded-md bg-accent-soft px-3.5 py-2.5 ring-1 ring-accent">
           <AlertTriangle size={14} strokeWidth={2.2} className="shrink-0 text-accent" />
           <span className="text-[12.5px] text-ink-muted">
             {flattened} {flattened === 1 ? "GIF was" : "GIFs were"} over 2 MB, so we kept the first frame. Export it smaller to keep the animation.
@@ -234,10 +234,10 @@ export function IconAssignStep({
       )}
 
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-subtle">
+        <span className="text-[11.5px] font-semibold uppercase tracking-[0.14em] text-ink-subtle">
           {kind === "badge" ? "Quality badges" : "Award icons"}
         </span>
-        <span className="text-[12px] tabular-nums text-ink-subtle">
+        <span className="text-[12.5px] tabular-nums text-ink-subtle">
           {byKey.size} {byKey.size === 1 ? "slot" : "slots"} reskinned
         </span>
       </div>
@@ -263,19 +263,19 @@ export function IconAssignStep({
 
         {kind === "award" &&
           (addingCustom ? (
-            <div className="flex flex-wrap items-center gap-2 rounded-xl border border-edge-soft bg-surface/40 p-3">
+ <div className="flex flex-wrap items-center gap-2 rounded-md bg-surface p-3">
               <input
                 autoFocus
                 value={customName}
                 onChange={(e) => setCustomName(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && addCustom()}
                 placeholder="Custom award name (e.g. My Festival)"
-                className="h-10 min-w-0 flex-1 rounded-xl border border-edge-soft bg-elevated/40 px-3.5 text-[13px] text-ink placeholder:text-ink-subtle focus:border-edge focus:outline-none"
+                className="h-10 min-w-0 flex-1 rounded-md bg-canvas px-3.5 text-[13px] text-ink placeholder:text-ink-subtle focus: focus:outline-none transition-colors focus:bg-elevated"
               />
               <button
                 onClick={addCustom}
                 disabled={!normalizeCustomKey(customName)}
-                className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-ink px-4 text-[13px] font-semibold text-canvas transition-transform hover:scale-[1.02] active:scale-[0.97] disabled:opacity-40"
+                className="inline-flex h-10 items-center gap-1.5 rounded-md bg-ink px-4 text-[13px] font-semibold text-canvas transition-transform hover:scale-[1.02] active:scale-[0.97] disabled:opacity-40"
               >
                 <ImagePlus size={14} /> Pick art
               </button>
@@ -284,7 +284,7 @@ export function IconAssignStep({
                   setAddingCustom(false);
                   setCustomName("");
                 }}
-                className="h-10 rounded-xl px-3 text-[13px] font-medium text-ink-subtle transition-colors hover:text-ink"
+                className="h-10 rounded-md px-3 text-[13px] font-medium text-ink-subtle transition-colors hover:text-ink"
               >
                 Cancel
               </button>
@@ -292,14 +292,14 @@ export function IconAssignStep({
           ) : (
             <button
               onClick={() => setAddingCustom(true)}
-              className="inline-flex h-10 w-fit items-center gap-1.5 rounded-xl border border-dashed border-edge px-4 text-[13px] font-medium text-ink-muted transition-colors hover:border-accent hover:text-ink"
+              className="inline-flex h-10 w-fit items-center gap-1.5 rounded-md border border-dashed border-edge px-4 text-[13px] font-medium text-ink-muted transition-colors hover:border-accent hover:text-ink"
             >
-              <Plus size={15} strokeWidth={2.2} /> Add a custom award type
+              <Plus size={16} strokeWidth={2.2} /> Add a custom award type
             </button>
           ))}
       </div>
 
-      {byKey.size === 0 && <p className="text-[12px] text-accent">Add art to at least one slot to continue.</p>}
+      {byKey.size === 0 && <p className="text-[12.5px] text-accent">Add art to at least one slot to continue.</p>}
 
       <NamingGuideModal kind={kind} open={guideOpen} onClose={() => setGuideOpen(false)} />
     </div>
@@ -333,8 +333,8 @@ function Slot({
           }
         }}
         title={label}
-        className={`relative grid aspect-square w-full cursor-pointer place-items-center overflow-hidden rounded-xl border p-2 transition-colors ${
-          done ? "border-accent bg-accent/10" : "border-edge-soft bg-elevated/40 hover:border-edge hover:bg-elevated/60"
+        className={`relative grid aspect-square w-full cursor-pointer place-items-center overflow-hidden rounded-md border p-2 transition-colors ${
+          done ? "border-accent bg-accent-soft" : "border-edge-soft bg-elevated hover:border-edge hover:bg-elevated"
         }`}
       >
         {art ? (
@@ -354,11 +354,11 @@ function Slot({
             aria-label="Remove"
             className="absolute end-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/55 text-white opacity-0 backdrop-blur-sm transition-opacity hover:bg-black/75 group-hover:opacity-100"
           >
-            <Trash2 size={10} />
+            <Trash2 size={12} />
           </button>
         )}
       </div>
-      <span className="w-full truncate text-center text-[10px] leading-tight text-ink-subtle">{label}</span>
+      <span className="w-full truncate text-center text-[10.5px] leading-tight text-ink-subtle">{label}</span>
     </div>
   );
 }
@@ -371,7 +371,7 @@ function KindTab({ active, onClick, icon: Icon, label }: { active: boolean; onCl
         active ? "bg-ink text-canvas" : "text-ink-muted hover:text-ink"
       }`}
     >
-      <Icon size={15} strokeWidth={2.2} className={active ? "" : "text-accent"} /> {label}
+      <Icon size={16} strokeWidth={2.2} className={active ? "" : "text-accent"} /> {label}
     </button>
   );
 }

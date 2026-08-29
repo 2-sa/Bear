@@ -2,7 +2,7 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Main window capabilities",
-  "windows": ["main", "harbor-pip", "harbor-modal-overlay"],
+  "windows": ["main", "harbor-pip", "harbor-browser", "harbor-modal-overlay", "harbor-cf-solver"],
   "permissions": [
     "core:default",
     "os:default",
@@ -33,7 +33,10 @@
     },
     {
       "identifier": "http:default",
-      "allow": [{ "url": "https://*:*/**" }, { "url": "http://*:*/**" }]
+      "allow": [
+        { "url": "https://*:*/**" },
+        { "url": "http://*:*/**" }
+      ]
     },
     "clipboard-manager:allow-read-text",
     "dialog:default",
@@ -42,35 +45,47 @@
     "dialog:allow-confirm",
     "dialog:allow-ask",
     "dialog:allow-message",
+    "fs:default",
     "deep-link:default",
-    "updater:default",
-    "process:allow-restart",
-    "fs:allow-write-file",
-    "fs:allow-write-text-file",
-    "fs:allow-create",
-    "fs:allow-remove",
-    "fs:allow-exists",
-    "fs:allow-mkdir",
-    "fs:allow-read-dir",
-    "fs:allow-read-file",
-    "fs:allow-read-text-file",
-    "fs:allow-stat",
     {
-      "identifier": "fs:scope",
-      "allow": [
-        { "path": "$APPDATA/**" },
-        { "path": "$APPCACHE/**" },
-        { "path": "$APPLOCALDATA/**" },
-        { "path": "$TEMP/**" },
-        { "path": "$PICTURE/Bear" },
-        { "path": "$PICTURE/Bear/**" }
-      ],
-      "deny": [
-        { "path": "$APPDATA/secrets.json" },
-        { "path": "$APPDATA/secrets.json.tmp" },
-        { "path": "$APPDATA/settings.json" },
-        { "path": "$APPDATA/settings.json.tmp" }
-      ]
+      "identifier": "fs:allow-write-file",
+      "allow": [{ "path": "**" }]
+    },
+    {
+      "identifier": "fs:allow-write-text-file",
+      "allow": [{ "path": "**" }]
+    },
+    {
+      "identifier": "fs:allow-create",
+      "allow": [{ "path": "**" }]
+    },
+    {
+      "identifier": "fs:allow-remove",
+      "allow": [{ "path": "**" }]
+    },
+    {
+      "identifier": "fs:allow-exists",
+      "allow": [{ "path": "**" }]
+    },
+    {
+      "identifier": "fs:allow-mkdir",
+      "allow": [{ "path": "**" }]
+    },
+    {
+      "identifier": "fs:allow-read-dir",
+      "allow": [{ "path": "**" }]
+    },
+    {
+      "identifier": "fs:allow-read-file",
+      "allow": [{ "path": "**" }]
+    },
+    {
+      "identifier": "fs:allow-read-text-file",
+      "allow": [{ "path": "**" }]
+    },
+    {
+      "identifier": "fs:allow-stat",
+      "allow": [{ "path": "**" }]
     },
     {
       "identifier": "opener:allow-reveal-item-in-dir",

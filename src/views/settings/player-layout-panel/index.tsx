@@ -32,7 +32,7 @@ import { EditLayoutCard, FooterBar, ThemeTabs } from "./panel-bars";
 import { useChromeEdits } from "./use-chrome-edits";
 import { AdvisoryPreview } from "./advisory-preview";
 import { SeekBarPanel } from "../player-panel";
-import { Section, Segmented, ToggleRow } from "../shared";
+import { Section, ToggleRow } from "../shared";
 import { pushActivityHint } from "@/lib/discord/activity-hint";
 import { useT } from "@/lib/i18n";
 
@@ -56,10 +56,7 @@ export function PlayerLayoutPanel() {
   const bumpProfiles = useCallback(() => setProfileVersion((v) => v + 1), []);
 
   const profiles = useMemo(() => listProfiles(theme), [theme, profileVersion]);
-  const activeProfileId = useMemo(
-    () => getActiveProfile(theme)?.id ?? null,
-    [theme, profileVersion],
-  );
+  const activeProfileId = useMemo(() => getActiveProfile(theme)?.id ?? null, [theme, profileVersion]);
 
   useEffect(() => {
     const next = readPlayerChromeConfig(theme);
@@ -126,7 +123,7 @@ export function PlayerLayoutPanel() {
     async (id: string) => {
       if (!sameConfig(draft, saved)) {
         const ok = await confirmDialog(
-          t("You have unsaved changes that will be lost when switching profiles. Continue?"),
+          t("You have unsaved changes that will be lost when switching profiles. Continue?")
         );
         if (!ok) return;
       }
@@ -244,43 +241,25 @@ export function PlayerLayoutPanel() {
   const hiddenCount = draft.controls.length - visibleCount;
 
   return (
-    <div className="flex flex-col gap-6">
-      <EditLayoutCard
-        theme={theme}
-        config={draft}
-        visibleCount={visibleCount}
-        hiddenCount={hiddenCount}
-        activeProfileName={profiles.find((p) => p.id === activeProfileId)?.name ?? null}
-        onOpen={() => setEditorOpen(true)}
-      />
-
+    <div className="flex flex-col gap-10">
       <Section
-        title={t("Player style")}
-        subtitle={t(
-          "The button set your layout is built on. Your customizations are kept separately for each style.",
-        )}
+        title={t("Player layout")}
+        subtitle={t("The button set your layout is built on. Your customizations are kept separately for each style.")}
       >
+        <EditLayoutCard
+          theme={theme}
+          config={draft}
+          visibleCount={visibleCount}
+          hiddenCount={hiddenCount}
+          activeProfileName={profiles.find((p) => p.id === activeProfileId)?.name ?? null}
+          onOpen={() => setEditorOpen(true)}
+        />
         <ThemeTabs
           value={theme}
           onChange={(id) => {
             update({ playerChromeTheme: id });
             setTheme(id);
           }}
-        />
-      </Section>
-
-      <Section
-        title={t("Control bar")}
-        subtitle={t("How the on-screen controls read while you watch.")}
-      >
-        <OptionsSection
-          config={draft}
-          onTimeFormat={(v: TimeFormat) =>
-            setDraft((cur) => ({ ...cur, options: { ...cur.options, timeFormat: v } }))
-          }
-          onVolumeStyle={(v: VolumeStyle) =>
-            setDraft((cur) => ({ ...cur, options: { ...cur.options, volumeStyle: v } }))
-          }
         />
         <ToggleRow
           label={t("True black menus")}
@@ -291,76 +270,55 @@ export function PlayerLayoutPanel() {
       </Section>
 
       <Section
+        title={t("Control bar")}
+        subtitle={t("How the on-screen controls read while you watch.")}
+      >
+        <OptionsSection
+          config={draft}
+          theme={theme}
+          onTimeFormat={(v: TimeFormat) =>
+            setDraft((cur) => ({ ...cur, options: { ...cur.options, timeFormat: v } }))
+          }
+          onVolumeStyle={(v: VolumeStyle) =>
+            setDraft((cur) => ({ ...cur, options: { ...cur.options, volumeStyle: v } }))
+          }
+        />
+        <FooterBar
+          dirty={dirty}
+          justSaved={justSaved}
+          confirmingReset={confirmingReset}
+          onSave={onSave}
+          onDiscard={onDiscard}
+          onResetAll={onResetAll}
+        />
+      </Section>
+
+      <Section
         title={t("While you watch")}
         subtitle={t("Optional overlays that appear over the video.")}
       >
         <ToggleRow
-          label={t("Player screen lock")}
-          sub={t(
-            "Show a lock control in the player that blocks mouse, keyboard, remote, and media-key input until you unlock it.",
-          )}
-          value={settings.playerScreenLockEnabled}
-          onChange={(v) => update({ playerScreenLockEnabled: v })}
-        />
-        <ToggleRow
           label={t("Show P2P status chip")}
-          sub={t(
-            "Peers, speed and progress while a torrent streams. Sits clear of the exit button, top left.",
-          )}
+          sub={t("Peers, speed and progress on the player while a torrent streams. Sits top left, clear of the exit button.")}
           value={settings.playerP2pChip}
           onChange={(v) => update({ playerP2pChip: v })}
         />
         <ToggleRow
           label={t("Content advisory on start")}
-          sub={t(
-            "When a movie or episode starts, briefly show its Common Sense Media parental guide (violence, nudity, profanity, substances) with severity. Fades on its own.",
-          )}
+          sub={t("When a movie or episode starts, briefly show its IMDb parental guide (violence, profanity, substances, frightening scenes and more) with severity. Fades on its own.")}
           value={settings.contentAdvisoryToast}
           onChange={(v) => update({ contentAdvisoryToast: v })}
+          preview={<AdvisoryPreview />}
         />
-        {settings.contentAdvisoryToast && (
-          <div className="flex flex-col gap-2 rounded-xl border border-white/[0.06] bg-white/[0.02] p-3.5">
-            <div className="flex flex-col gap-0.5">
-              <span className="text-[13.5px] font-medium text-ink">
-                {t("Content advisory style")}
-              </span>
-              <span className="text-[12px] text-ink-subtle">
-                {t("Use color to distinguish severity, or keep every advisory monochrome.")}
-              </span>
-            </div>
-            <Segmented
-              value={settings.contentAdvisoryTheme}
-              options={[
-                { value: "colored", label: t("Colored") },
-                { value: "monochrome", label: t("Monochrome (White)") },
-              ]}
-              onChange={(value) =>
-                update({ contentAdvisoryTheme: value as "colored" | "monochrome" })
-              }
-            />
-          </div>
-        )}
-        <AdvisoryPreview />
       </Section>
 
       <Section
         title={t("Seek bar")}
-        subtitle={t(
-          "Style the timeline at the bottom of the player. Swap the dot for a sticker, change the bar height, recolor it. Settings live-preview right here.",
-        )}
+        subtitle={t("Style the timeline at the bottom of the player. Swap the dot for a sticker, change the bar height, recolor it. Settings live-preview right here.")}
         newId="playerLayout:seek-bar"
       >
         <SeekBarPanel />
       </Section>
-
-      <FooterBar
-        dirty={dirty}
-        justSaved={justSaved}
-        confirmingReset={confirmingReset}
-        onSave={onSave}
-        onDiscard={onDiscard}
-        onResetAll={onResetAll}
-      />
 
       {editorOpen && (
         <EditorOverlay
@@ -375,7 +333,7 @@ export function PlayerLayoutPanel() {
           onClose={async () => {
             if (!sameConfig(draft, saved)) {
               const ok = await confirmDialog(
-                t("You have unsaved changes. Close the editor and discard them?"),
+                t("You have unsaved changes. Close the editor and discard them?")
               );
               if (!ok) return;
               setDraft(saved);
@@ -408,3 +366,5 @@ export function PlayerLayoutPanel() {
     </div>
   );
 }
+
+

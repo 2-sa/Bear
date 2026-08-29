@@ -48,11 +48,7 @@ function CreateTile({ onCreate }: { onCreate: () => void }) {
     <button
       type="button"
       onClick={onCreate}
-      className="group relative flex h-full min-h-[252px] flex-col items-start justify-between overflow-hidden rounded-2xl border border-accent/30 p-5 text-start transition-all hover:-translate-y-0.5 hover:border-accent hover:shadow-[0_18px_40px_-22px_var(--color-accent-soft)]"
-      style={{
-        background:
-          "linear-gradient(160deg, var(--color-accent-soft) 0%, var(--color-surface) 60%, var(--color-surface) 100%)",
-      }}
+      className="group relative flex h-full min-h-[252px] flex-col items-start justify-between overflow-hidden rounded-md bg-elevated p-5 text-start transition-colors hover:bg-raised"
       aria-label="Build a new theme"
     >
       <span
@@ -61,7 +57,7 @@ function CreateTile({ onCreate }: { onCreate: () => void }) {
         style={{ background: "var(--color-accent)" }}
       />
       <div className="relative flex flex-col gap-1.5">
-        <span className="inline-flex w-fit items-center rounded-full bg-accent px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.2em] text-canvas">
+        <span className="inline-flex w-fit items-center rounded-[3px] bg-accent px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-[0.2em] text-canvas">
           New
         </span>
         <span className="text-[18px] font-semibold tracking-tight text-ink">Build a theme</span>
@@ -71,12 +67,12 @@ function CreateTile({ onCreate }: { onCreate: () => void }) {
       </div>
       <div className="relative flex items-end justify-between gap-3 self-stretch">
         <span
-          className="flex h-12 w-12 items-center justify-center rounded-2xl shadow-[0_8px_18px_-6px_var(--color-accent-soft)] transition-transform duration-300 group-hover:scale-105"
-          style={{ background: "var(--color-accent)", color: "#fff" }}
+          className="flex h-12 w-12 items-center justify-center rounded-md transition-transform duration-300 group-hover:scale-105"
+          style={{ background: "var(--color-accent)", color: "var(--color-canvas)" }}
         >
           <Palette size={20} strokeWidth={2} />
         </span>
-        <span className="inline-flex items-center gap-1 text-[12px] font-semibold text-accent transition-transform group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5">
+        <span className="inline-flex items-center gap-1 text-[12.5px] font-semibold text-accent transition-transform group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5">
           Open studio →
         </span>
       </div>
@@ -111,15 +107,15 @@ function ImportTile({ onUpload }: { onUpload: (file: File) => void }) {
         const f = e.dataTransfer.files?.[0];
         if (f) onUpload(f);
       }}
-      className={`group relative flex h-full min-h-[252px] flex-col items-start justify-between overflow-hidden rounded-2xl border p-5 text-start transition-all duration-200 ${
+      className={`group relative flex h-full min-h-[252px] flex-col items-start justify-between overflow-hidden rounded-md border p-5 text-start transition duration-200 ${
         dragOver
           ? "border-accent bg-accent-soft"
-          : "border-edge-soft bg-canvas/40 hover:-translate-y-0.5 hover:border-edge hover:bg-canvas/55"
+          : "border-edge-soft bg-canvas hover:bg-canvas"
       }`}
       aria-label="Import a theme file"
     >
       <div className="relative flex flex-col gap-1.5">
-        <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-ink-subtle">
+        <span className="text-[10.5px] font-bold uppercase tracking-[0.22em] text-ink-subtle">
           Have a file?
         </span>
         <span className="text-[18px] font-semibold tracking-tight text-ink">Import a theme</span>
@@ -131,7 +127,7 @@ function ImportTile({ onUpload }: { onUpload: (file: File) => void }) {
       </div>
       <div className="relative flex items-end justify-between gap-3 self-stretch">
         <span
-          className="flex h-12 w-12 items-center justify-center rounded-2xl border border-edge-soft bg-surface text-ink-muted transition-all duration-300 group-hover:border-edge group-hover:text-ink"
+          className="flex h-12 w-12 items-center justify-center rounded-md bg-canvas text-ink-muted transition-colors duration-300 group-hover:text-ink"
           style={{
             transform: dragOver ? "scale(1.08)" : "scale(1)",
             transition: "transform 240ms cubic-bezier(0.34, 1.56, 0.64, 1), border-color 200ms, color 200ms",
@@ -139,7 +135,7 @@ function ImportTile({ onUpload }: { onUpload: (file: File) => void }) {
         >
           <FilePlus2 size={20} strokeWidth={2} />
         </span>
-        <span className="inline-flex items-center gap-1 text-[12px] font-semibold text-ink-muted transition-colors group-hover:text-ink">
+        <span className="inline-flex items-center gap-1 text-[12.5px] font-semibold text-ink-muted transition-colors group-hover:text-ink">
           Browse files →
         </span>
       </div>
@@ -165,10 +161,10 @@ function LibraryCard({
   const bg = theme.background?.image ?? `linear-gradient(135deg, ${theme.swatch[0]}, ${theme.swatch[1]})`;
   return (
     <div
-      className={`group relative flex flex-col overflow-hidden rounded-2xl border bg-surface transition-all ${
+      className={`group relative flex flex-col overflow-hidden rounded-md border bg-surface transition-colors ${
         active
-          ? "border-accent shadow-[0_0_0_2px_var(--color-accent-soft),0_18px_40px_-22px_rgba(0,0,0,0.35)]"
-          : "border-edge-soft hover:border-edge hover:shadow-[0_18px_36px_-22px_rgba(0,0,0,0.3)]"
+          ? "border-accent ring-1 ring-accent/25"
+          : "border-edge-soft hover:border-edge hover:bg-elevated"
       }`}
     >
       <div
@@ -188,8 +184,8 @@ function LibraryCard({
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/0 via-black/0 to-black/35" />
         <CategoryBadge category={category} active={active} />
         {active && (
-          <span className="absolute end-3 top-3 flex h-7 items-center gap-1 rounded-full bg-accent px-2.5 text-[10.5px] font-bold uppercase tracking-[0.18em] text-canvas shadow-[0_4px_12px_-4px_rgba(0,0,0,0.4)]">
-            <Check size={11} strokeWidth={3} /> Active
+          <span className="absolute end-3 top-3 flex h-7 items-center gap-1 rounded-[3px] bg-accent px-2.5 text-[10.5px] font-bold uppercase tracking-[0.18em] text-canvas">
+            <Check size={12} strokeWidth={3} /> Active
           </span>
         )}
         <SwatchStrip swatch={theme.swatch} />
@@ -207,9 +203,9 @@ function LibraryCard({
           <button
             type="button"
             onClick={onActivate}
-            className={`h-8 flex-1 rounded-lg text-[12px] font-semibold transition-opacity ${
+            className={`h-8 flex-1 rounded-md text-[12.5px] font-semibold transition-opacity ${
               active
-                ? "bg-elevated/70 text-ink ring-1 ring-edge"
+                ? "bg-elevated text-ink"
                 : "bg-ink text-canvas hover:opacity-90"
             }`}
           >
@@ -239,10 +235,10 @@ function CategoryBadge({
   const isFeatured = category === "Featured";
   return (
     <span
-      className={`absolute start-3 top-3 flex items-center gap-1 rounded-full px-2.5 py-1 text-[9.5px] font-bold uppercase tracking-[0.2em] backdrop-blur-sm ${
+      className={`absolute start-3 top-3 flex items-center gap-1 rounded-[3px] px-2 py-1 text-[9.5px] font-bold uppercase tracking-[0.2em] ${
         isFeatured
-          ? "bg-canvas/65 text-accent ring-1 ring-accent/40"
-          : "bg-canvas/65 text-ink/85 ring-1 ring-white/15"
+          ? "bg-canvas text-accent"
+          : "bg-canvas text-ink/85"
       } ${active ? "opacity-0" : "opacity-100"}`}
     >
       {category}
@@ -277,8 +273,8 @@ function ActionBtn({
       aria-label={label}
       title={label}
       onClick={onClick}
-      className={`flex h-8 w-8 items-center justify-center rounded-lg border border-edge-soft text-ink-subtle transition-colors ${
-        danger ? "hover:border-danger/40 hover:text-danger" : "hover:border-edge hover:text-ink"
+      className={`flex h-8 w-8 items-center justify-center rounded-md bg-canvas text-ink-subtle transition-colors ${
+        danger ? "hover:bg-danger/15 hover:text-danger" : "hover:bg-surface hover:text-ink"
       }`}
     >
       {children}

@@ -87,19 +87,14 @@ export function ThemeUpdateFlow({
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[220] flex flex-col bg-canvas" role="dialog" aria-label="Update a theme">
-      <header data-tauri-drag-region className="flex shrink-0 items-center justify-between gap-4 border-b border-edge-soft bg-surface/40 px-10 py-5">
-        <div data-tauri-drag-region className="flex items-center gap-3">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent/15 text-accent">
-            <UploadCloud size={18} strokeWidth={2} />
-          </span>
-          <div className="flex flex-col">
-            <h1 className="pointer-events-none text-[20px] font-semibold tracking-tight text-ink">Update {target.name}</h1>
-            <p className="pointer-events-none text-[12.5px] text-ink-subtle">Push a new version. Your published version stays live while the update is reviewed.</p>
-          </div>
+    <div className="fixed inset-0 z-[300] flex flex-col bg-canvas" role="dialog" aria-label="Update a theme">
+      <header data-tauri-drag-region className="flex shrink-0 items-start justify-between gap-4 px-10 pb-5 pt-6">
+        <div data-tauri-drag-region className="flex flex-col gap-1">
+          <h1 className="pointer-events-none text-[17px] font-semibold tracking-tight text-ink">Update {target.name}</h1>
+          <p className="pointer-events-none text-[12.5px] text-ink-subtle">Push a new version. Your published version stays live while the update is reviewed.</p>
         </div>
-        <button onClick={onClose} aria-label="Close" className="flex h-10 w-10 items-center justify-center rounded-full text-ink-muted transition-colors hover:bg-elevated hover:text-ink">
-          <X size={18} strokeWidth={2.2} />
+        <button onClick={onClose} aria-label="Close" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-ink-subtle transition-colors hover:bg-elevated hover:text-ink">
+          <X size={16} strokeWidth={2.2} />
         </button>
       </header>
 
@@ -127,7 +122,7 @@ export function ThemeUpdateFlow({
                 {step === 0 && <PickThemeStep themes={localThemes} selected={theme} onSelect={setTheme} />}
                 {step === 1 && (
                   <div className="flex flex-col gap-3">
-                    <p className="text-[14px] text-ink-muted">Optional. Skip this step to keep your current cover.</p>
+                    <p className="text-[13.5px] text-ink-muted">Optional. Skip this step to keep your current cover.</p>
                     <CoverCropper onChange={setCoverBlob} />
                   </div>
                 )}
@@ -150,38 +145,40 @@ export function ThemeUpdateFlow({
       )}
 
       {!result && (
-        <footer className="flex shrink-0 items-center justify-between gap-4 border-t border-edge-soft bg-surface/40 px-10 py-4">
-          <button
-            onClick={() => (step === 0 ? onClose() : setStep((s) => s - 1))}
-            className="flex h-11 items-center gap-2 rounded-xl border border-edge-soft px-4 text-[13.5px] font-medium text-ink-muted transition-colors hover:border-edge hover:text-ink"
-          >
-            <ArrowLeft size={15} className="dir-icon" /> {step === 0 ? "Cancel" : "Back"}
-          </button>
+        <footer className="flex shrink-0 items-center justify-between gap-4 px-10 pb-6 pt-4">
           <button
             onClick={() => setSheetOpen(true)}
-            className="flex h-11 items-center gap-2 rounded-xl px-4 text-[13px] font-medium text-ink-subtle transition-colors hover:bg-elevated/60 hover:text-ink"
+            className="flex h-9 items-center gap-2 rounded-md bg-elevated px-4 text-[12.5px] font-semibold text-ink-muted transition-colors hover:text-ink"
           >
             <BookOpen size={14} strokeWidth={2.1} />
             API cheat sheet
           </button>
-          {step < STEPS.length - 1 ? (
+          <div className="flex items-center gap-2.5">
             <button
-              onClick={() => canAdvance && setStep((s) => s + 1)}
-              disabled={!canAdvance}
-              className="flex h-11 items-center gap-2 rounded-xl bg-ink px-6 text-[14px] font-semibold text-canvas transition-opacity hover:opacity-90 disabled:opacity-40"
+              onClick={() => (step === 0 ? onClose() : setStep((s) => s - 1))}
+              className="flex h-9 items-center gap-2 rounded-md bg-elevated px-4 text-[12.5px] font-semibold text-ink-muted transition-colors hover:text-ink"
             >
-              Continue <ArrowRight size={15} className="dir-icon" />
+              <ArrowLeft size={16} className="dir-icon" /> {step === 0 ? "Cancel" : "Back"}
             </button>
-          ) : (
-            <button
-              onClick={submit}
-              disabled={submitting || !theme || !changelog.trim()}
-              className="flex h-11 items-center gap-2 rounded-xl bg-accent px-6 text-[14px] font-semibold text-canvas transition-opacity hover:opacity-90 disabled:opacity-40"
-            >
-              {submitting ? <Loader2 size={16} className="animate-spin" /> : <UploadCloud size={16} />}
-              {submitting ? "Submitting…" : "Submit update"}
-            </button>
-          )}
+            {step < STEPS.length - 1 ? (
+              <button
+                onClick={() => canAdvance && setStep((s) => s + 1)}
+                disabled={!canAdvance}
+                className="flex h-9 items-center gap-2 rounded-md bg-ink px-5 text-[12.5px] font-semibold text-canvas transition-opacity hover:opacity-90 disabled:opacity-40"
+              >
+                Continue <ArrowRight size={16} className="dir-icon" />
+              </button>
+            ) : (
+              <button
+                onClick={submit}
+                disabled={submitting || !theme || !changelog.trim()}
+                className="flex h-9 items-center gap-2 rounded-md bg-ink px-5 text-[12.5px] font-semibold text-canvas transition-opacity hover:opacity-90 disabled:opacity-40"
+              >
+                {submitting ? <Loader2 size={16} className="animate-spin" /> : <UploadCloud size={16} />}
+                {submitting ? "Submitting…" : "Submit update"}
+              </button>
+            )}
+          </div>
         </footer>
       )}
       {sheetOpen && <CheatSheet onClose={() => setSheetOpen(false)} />}

@@ -13,10 +13,10 @@ export function ApiCheatCard({ compact = false }: { compact?: boolean }) {
   const [open, setOpen] = useState(false);
   return (
     <>
-      <div className={`flex flex-col gap-3 rounded-[16px] bg-surface/40 ring-1 ring-edge-soft ${compact ? "p-4" : "p-5"}`}>
+      <div className={`flex flex-col gap-3 rounded-md bg-surface ring-1 ring-edge-soft ${compact ? "p-4" : "p-5"}`}>
         <div className="flex items-start gap-3">
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-elevated text-ink-muted">
-            <BookOpen size={17} strokeWidth={2} />
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-elevated text-ink-muted">
+            <BookOpen size={18} strokeWidth={2} />
           </span>
           <div className="flex min-w-0 flex-col gap-0.5">
             <span className="text-[14.5px] font-semibold tracking-tight text-ink">Theme API cheat sheet</span>
@@ -28,7 +28,7 @@ export function ApiCheatCard({ compact = false }: { compact?: boolean }) {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="flex h-10 items-center justify-center gap-2 rounded-[10px] bg-ink text-[13.5px] font-semibold text-canvas transition-opacity hover:opacity-90"
+          className="flex h-10 items-center justify-center gap-2 rounded-md bg-ink text-[13.5px] font-semibold text-canvas transition-opacity hover:opacity-90"
         >
           <BookOpen size={14} strokeWidth={2.2} />
           Open the cheat sheet
@@ -106,18 +106,18 @@ export function MyThemesDashboard() {
               aria-label="Refresh"
               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink-muted ring-1 ring-edge-soft transition-colors hover:text-ink hover:ring-edge"
             >
-              <RefreshCw size={15} className={loading ? "animate-spin" : ""} />
+              <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
             </button>
           </div>
 
           {loading ? (
             <div className="grid gap-4 sm:grid-cols-2">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="harbor-skel h-[176px] rounded-[16px] bg-surface/40 ring-1 ring-edge-soft" />
+                <div key={i} className="harbor-skel h-[176px] rounded-md bg-surface ring-1 ring-edge-soft" />
               ))}
             </div>
           ) : error ? (
-            <div className="rounded-[16px] bg-danger/10 px-4 py-6 text-center text-[13px] text-danger ring-1 ring-danger/40">
+            <div className="rounded-md bg-danger/15 px-4 py-6 text-center text-[13px] text-danger ring-1 ring-danger">
               {error}
             </div>
           ) : themes.length === 0 ? (
@@ -153,8 +153,8 @@ export function MyThemesDashboard() {
 
 function EmptyState() {
   return (
-    <div className="flex flex-col items-center gap-3 rounded-[16px] border border-dashed border-edge-soft bg-surface/40 px-6 py-16 text-center">
-      <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-elevated text-ink-muted">
+    <div className="flex flex-col items-center gap-3 rounded-md border border-dashed border-edge-soft bg-surface px-6 py-16 text-center">
+      <span className="flex h-14 w-14 items-center justify-center rounded-md bg-elevated text-ink-muted">
         <UploadCloud size={24} strokeWidth={1.9} />
       </span>
       <div className="flex max-w-sm flex-col gap-1">

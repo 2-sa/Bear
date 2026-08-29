@@ -2,7 +2,7 @@ import type { CustomizationInput } from "../profile-types";
 import { MARKUP_CAP } from "./customization-types";
 
 const areaCls =
-  "w-full rounded-[10px] bg-elevated px-3 py-2.5 font-mono text-[13px] leading-relaxed text-ink outline-none ring-1 ring-edge-soft placeholder:text-ink-subtle focus:ring-edge";
+  "w-full rounded-md bg-elevated px-3 py-2.5 font-mono text-[13px] leading-relaxed text-ink outline-none ring-1 ring-edge-soft placeholder:text-ink-subtle focus:ring-edge";
 
 function CodeField({
   label,

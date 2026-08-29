@@ -50,7 +50,7 @@ export function HoverTip({
                   : "translate(-50%, calc(-100% - 16px))",
               ...SUITE_CHROME,
             }}
-            className="pointer-events-none z-[260] whitespace-nowrap rounded-md border border-edge bg-raised px-2.5 py-1 text-[12px] font-medium text-ink shadow-[0_10px_30px_-10px_rgba(0,0,0,0.7)]"
+            className="pointer-events-none z-[260] whitespace-nowrap rounded-md bg-raised px-2.5 py-1 text-[12.5px] font-medium text-ink harbor-float"
           >
             {label}
           </span>,
@@ -86,7 +86,7 @@ export function CopyName({ text }: { text: string }) {
           className="col-start-1 row-start-1 flex items-center gap-1 transition-[transform,opacity] duration-300"
           style={{ transform: copied ? "rotateX(0deg)" : "rotateX(-90deg)", opacity: copied ? 1 : 0 }}
         >
-          <Check size={13} strokeWidth={2.6} className="text-accent" />
+          <Check size={14} strokeWidth={2.6} className="text-accent" />
           <code className="font-mono text-[13px] font-semibold text-accent">Copied</code>
         </span>
       </button>
@@ -110,29 +110,29 @@ export function CodeBlock({ code, filename, compact }: { code: string; filename?
     void downloadText(name, code, [name.split(".").pop() ?? "txt"], "Bear snippet");
   };
   return (
-    <div className={`overflow-hidden rounded-lg border border-edge-soft bg-elevated ${compact ? "mt-2.5" : ""}`}>
-      <div className="flex items-center gap-2 border-b border-edge-soft/70 bg-canvas/40 px-3 py-1.5">
-        <span className="flex-1 truncate font-mono text-[12px] text-ink-subtle">{filename ?? "example"}</span>
+    <div className={`overflow-hidden rounded-md bg-elevated ${compact ? "mt-2.5" : ""}`}>
+      <div className="flex items-center gap-2 px-3 pb-0.5 pt-2">
+        <span className="flex-1 truncate font-mono text-[12.5px] text-ink-subtle">{filename ?? "example"}</span>
         {filename && (
           <button
             type="button"
             onClick={download}
-            className="flex h-7 items-center gap-1.5 rounded-md px-2 text-[12px] font-semibold text-ink-muted transition-colors hover:bg-white/[0.06] hover:text-ink"
+            className="flex h-7 items-center gap-1.5 rounded-md px-2 text-[12.5px] font-semibold text-ink-muted transition-colors hover:bg-raised hover:text-ink"
           >
-            <Download size={13} strokeWidth={2.2} />
+            <Download size={14} strokeWidth={2.2} />
             Download
           </button>
         )}
         <button
           type="button"
           onClick={copy}
-          className="flex h-7 items-center gap-1.5 rounded-md px-2 text-[12px] font-semibold text-ink-muted transition-colors hover:bg-white/[0.06] hover:text-ink"
+          className="flex h-7 items-center gap-1.5 rounded-md px-2 text-[12.5px] font-semibold text-ink-muted transition-colors hover:bg-raised hover:text-ink"
         >
-          {copied ? <Check size={13} strokeWidth={2.6} /> : <Copy size={13} strokeWidth={2.2} />}
+          {copied ? <Check size={14} strokeWidth={2.6} /> : <Copy size={14} strokeWidth={2.2} />}
           {copied ? "Copied" : "Copy"}
         </button>
       </div>
-      <pre className="overflow-auto px-4 py-3 font-mono text-[13px] leading-relaxed text-ink-muted">{code}</pre>
+      <pre className="overflow-auto px-4 pb-3 pt-1 font-mono text-[13px] leading-relaxed text-ink-muted">{code}</pre>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { Link2, Search, Unlink, X } from "lucide-react";
+import { Link2, Unlink, X } from "lucide-react";
+import { Search } from "@/components/icons/search-icon";
 import { useT } from "@/lib/i18n";
 import { getEpgOverride, setEpgOverride } from "@/lib/iptv/epg-map";
 import type { EpgIndex, IptvChannel } from "@/lib/iptv/types";

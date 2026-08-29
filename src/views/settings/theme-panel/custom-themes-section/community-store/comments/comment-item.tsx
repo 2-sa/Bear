@@ -68,8 +68,8 @@ export function CommentItem({
     </UserHoverCard>
   ) : (
     <span
-      className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full text-[12px] font-bold text-white ring-1 ring-white/15"
-      style={{ background: `linear-gradient(135deg, oklch(0.62 0.15 ${hue}), oklch(0.5 0.16 ${(hue + 40) % 360}))` }}
+      className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full text-[12.5px] font-bold text-white ring-1 ring-white/15"
+      style={{ background: `oklch(0.58 0.15 ${hue})` }}
     >
       {(name.trim()[0] || "?").toUpperCase()}
     </span>
@@ -103,7 +103,7 @@ export function CommentItem({
                 type="button"
                 onClick={del}
                 disabled={busy}
-                className={`ms-auto flex h-7 items-center gap-1 rounded-[4px] px-2 text-[11.5px] font-semibold transition-all ${
+                className={`ms-auto flex h-7 items-center gap-1 rounded-[4px] px-2 text-[11.5px] font-semibold transition ${
                   confirm
                     ? "bg-danger/15 text-danger"
                     : "text-ink-subtle opacity-0 hover:bg-elevated hover:text-ink group-hover:opacity-100 focus-visible:opacity-100"
@@ -148,7 +148,7 @@ export function CommentItem({
             className="flex h-7 w-fit items-center gap-1.5 rounded-[4px] px-1.5 text-[11.5px] font-semibold text-ink-subtle transition-colors hover:bg-elevated hover:text-ink"
           >
             <ChevronDown
-              size={13}
+              size={14}
               className={`transition-transform duration-200 ${showReplies ? "rotate-180" : ""}`}
             />
             {showReplies

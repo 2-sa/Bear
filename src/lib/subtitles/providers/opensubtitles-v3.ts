@@ -3,11 +3,7 @@ import { safeFetch } from "@/lib/safe-fetch";
 import type { SubResult, SubSearchQuery } from "../types";
 import { normalizeLang } from "../language";
 
-const ENDPOINTS = [
-  "https://opensubtitles.stremio.homes",
-  "https://opensubtitles-v3.strem.io",
-  "https://opensubtitles.strem.io",
-];
+const ENDPOINTS = ["https://opensubtitles-v3.strem.io"];
 
 type RawSub = {
   id?: string;
@@ -19,12 +15,6 @@ type RawSub = {
   encoding?: string;
 };
 
-/**
- * Ids to query for one search. Long-running anime have no primary season
- * (absolute episode only); OpenSubtitles indexes those as season 1 +
- * absolute episode (One Piece E1100 → tt:1:1100) rather than TVDB/IMDb
- * season splits.
- */
 function scopedIds(q: SubSearchQuery): Array<{ id: string; type: "series" | "movie" }> {
   const tt = q.imdbId!.startsWith("tt") ? q.imdbId! : `tt${q.imdbId!}`;
   if (q.season != null && q.episode != null) {

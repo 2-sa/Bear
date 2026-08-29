@@ -1,4 +1,5 @@
-import { ChevronLeft, ChevronRight, ExternalLink, Play, Quote, Star } from "lucide-react";
+import { ChevronLeft, ChevronRight, ExternalLink, Quote, Star } from "lucide-react";
+import { Play } from "@/components/icons/play-filled";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { narrowMediaType, type Meta } from "@/lib/cinemeta";
 import { pickRandom } from "@/lib/feed/tags";
@@ -229,20 +230,20 @@ export function CriticsPick({ meta }: { meta: Meta }) {
                 src={src}
                 alt=""
                 decoding="async"
-                className="absolute inset-[2px] h-[calc(100%-4px)] w-[calc(100%-4px)] rounded-[14px] object-cover"
+                className="absolute inset-[2px] h-[calc(100%-4px)] w-[calc(100%-4px)] rounded-lg object-cover"
               />
             ) : (
               <Poster
                 src={undefined}
                 seed={meta.id}
                 ratio="landscape"
-                className="absolute inset-[2px] h-[calc(100%-4px)] w-[calc(100%-4px)] rounded-[14px]"
+                className="absolute inset-[2px] h-[calc(100%-4px)] w-[calc(100%-4px)] rounded-lg"
               />
             );
           })()}
           <div
             aria-hidden
-            className="absolute inset-[2px] rounded-[14px]"
+            className="absolute inset-[2px] rounded-lg"
             style={{
               background:
                 "linear-gradient(to top, oklch(0.10 0.02 260 / 0.92) 0%, oklch(0.10 0.02 260 / 0.30) 40%, transparent 70%)",

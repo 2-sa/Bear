@@ -1,6 +1,6 @@
 import { MousePointerClick, RefreshCw, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { resolveAddonLogo } from "@/components/addon-logo";
+import { addonLogoMap } from "@/components/addon-logo";
 import { HostSourceBanner } from "@/components/host-source-banner";
 import { HoverTooltip } from "@/components/hover-tooltip";
 import { fetchInstalledAddons } from "@/lib/addon-store";
@@ -102,14 +102,7 @@ export function StreamSwitcher({
       const installed = await fetchInstalledAddons().catch(() => [] as Addon[]);
       const stremio = authKey ? await userAddons(authKey).catch(() => [] as Addon[]) : [];
       if (cancelled) return;
-      const m = new Map<string, string | null>();
-      const merged = [...installed, ...stremio];
-      for (const a of merged) {
-        const id = a.manifest?.id;
-        if (!id) continue;
-        m.set(id, resolveAddonLogo(a.manifest.logo, a.transportUrl));
-      }
-      setAddonLogos(m);
+      setAddonLogos(addonLogoMap([...installed, ...stremio]));
     })();
     return () => {
       cancelled = true;
@@ -326,7 +319,7 @@ export function StreamSwitcher({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="flex h-full max-h-[82vh] w-full max-w-[880px] flex-col overflow-hidden rounded-[20px] bg-elevated shadow-[0_28px_72px_-20px_rgba(0,0,0,0.85)] ring-1 ring-edge animate-in fade-in slide-in-from-bottom-2 duration-150 backdrop-blur-xl">
+      <div className="flex h-full max-h-[82vh] w-full max-w-[880px] flex-col overflow-hidden rounded-xl bg-elevated shadow-[0_28px_72px_-20px_rgba(0,0,0,0.85)] ring-1 ring-edge animate-in fade-in slide-in-from-bottom-2 duration-150 backdrop-blur-xl">
         <header className="flex items-center justify-between gap-4 border-b border-edge-soft px-6 py-4">
           <div className="flex items-center gap-2.5">
             <HoverTooltip label={t("Refresh sources")} side="bottom" align="center" disabled={refreshing}>

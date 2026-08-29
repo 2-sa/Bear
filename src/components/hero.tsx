@@ -1,15 +1,6 @@
 import { memo, useEffect, useRef, useState, useSyncExternalStore } from "react";
-import {
-  Check,
-  ChevronRight,
-  Info,
-  Play,
-  Plus,
-  RotateCcw,
-  TrendingUp,
-  Volume2,
-  VolumeX,
-} from "lucide-react";
+import { Check, ChevronRight, Info, Plus, RotateCcw, TrendingUp, Volume2, VolumeX } from "lucide-react";
+import { Play } from "@/components/icons/play-filled";
 import { ImdbIcon } from "@/components/icons/imdb-icon";
 import tmdbIcon from "@/assets/addon-logos/tmdb.png";
 import traktIcon from "@/assets/trakt.svg";
@@ -297,7 +288,7 @@ export const Hero = memo(function Hero({
     <section
       ref={sectionRef}
       onClick={() => openMeta({ ...meta, logo: logo ?? meta.logo })}
-      className={`harbor-hero-stage group relative cursor-pointer overflow-hidden bg-canvas ${full ? "h-[78vh] min-h-[640px] rounded-none" : "h-[560px] rounded-[28px]"}`}
+      className={`harbor-hero-stage group relative cursor-pointer overflow-hidden bg-canvas ${full ? "h-[78vh] min-h-[640px] rounded-none" : "h-[560px] rounded-2xl"}`}
       style={{ isolation: "isolate" }}
     >
       {bg && loadBackdrop && (
@@ -451,7 +442,7 @@ export const Hero = memo(function Hero({
                 e.stopPropagation();
                 openMeta({ ...meta, logo: logo ?? meta.logo });
               }}
-              className={`flex h-12 items-center gap-2.5 ${actionRadius} bg-ink px-7 text-[15px] font-semibold text-canvas shadow-[0_8px_24px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.65),inset_0_-1px_0_rgba(0,0,0,0.18)] transition-transform duration-200 hover:scale-[1.03] active:scale-[0.98]`}
+              className={`flex h-12 items-center gap-2.5 ${actionRadius} bg-ink px-7 text-[15px] font-semibold text-canvas transition-transform duration-200 hover:scale-[1.03] active:scale-[0.98]`}
             >
               <Play size={18} fill="currentColor" />
               {t("Play")}
@@ -462,7 +453,7 @@ export const Hero = memo(function Hero({
                   e.stopPropagation();
                   openMeta({ ...meta, logo: logo ?? meta.logo });
                 }}
-                className={`flex h-12 items-center gap-2.5 ${actionRadius} border border-edge bg-canvas/55 px-6 text-[15px] font-medium text-ink shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] transition-colors duration-200 hover:border-ink-subtle hover:bg-canvas/75`}
+                className={`flex h-12 items-center gap-2.5 ${actionRadius} bg-canvas/80 px-6 text-[15px] font-medium text-ink transition-colors duration-200 hover:bg-canvas/95`}
               >
                 <Info size={18} strokeWidth={2} />
                 {t("More info")}
@@ -482,7 +473,7 @@ export const Hero = memo(function Hero({
                     videos: meta.videos,
                   });
                 }}
-                className={`flex h-12 items-center gap-2.5 ${actionRadius} border border-edge bg-canvas/55 px-6 text-[15px] font-medium text-ink shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] transition-colors duration-200 hover:border-ink-subtle hover:bg-canvas/75`}
+                className={`flex h-12 items-center gap-2.5 ${actionRadius} bg-canvas/80 px-6 text-[15px] font-medium text-ink transition-colors duration-200 hover:bg-canvas/95`}
               >
                 {inWatchlist ? (
                   <Check size={18} strokeWidth={2.4} />

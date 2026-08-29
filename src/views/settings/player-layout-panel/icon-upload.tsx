@@ -29,7 +29,7 @@ export function IconUpload({
 }) {
   if (!replaceable) {
     return (
-      <span className="flex h-9 items-center whitespace-nowrap rounded-lg bg-white/4 px-3 text-[10px] uppercase tracking-[0.16em] text-white/35">
+      <span className="flex h-9 items-center whitespace-nowrap rounded-md bg-white/4 px-3 text-[10.5px] uppercase tracking-[0.16em] text-white/35">
         Icon locked
       </span>
     );
@@ -70,7 +70,7 @@ function PresetRow({
           type="button"
           onClick={() => apply(p)}
           title={`${p.label} icons`}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/12 bg-white/6 transition-colors hover:border-accent hover:bg-white/12"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-white/12 bg-white/6 transition-colors hover:border-accent hover:bg-white/12"
         >
           <img src={presetThumb(p)} alt={p.label} className="h-5 w-5 object-contain" draggable={false} />
         </button>
@@ -166,7 +166,7 @@ function MultiStateUpload({
   if (!active) return null;
   return (
     <div className="flex items-center gap-2">
-      <div className="flex items-center gap-0.5 rounded-lg bg-white/8 p-0.5">
+      <div className="flex items-center gap-0.5 rounded-md bg-white/8 p-0.5">
         {states.map((s) => (
           <button
             key={s.id}
@@ -176,7 +176,7 @@ function MultiStateUpload({
               s.id === active.id ? "bg-white/18 text-white" : "text-white/55 hover:text-white/85"
             }`}
           >
-            {s.url && <span className="h-2 w-2 rounded-full bg-emerald-400" />}
+            {s.url && <span className="h-2 w-2 rounded-full bg-success" />}
             {s.label}
           </button>
         ))}
@@ -192,9 +192,9 @@ function MultiStateUpload({
           type="button"
           onClick={() => onApplyToAll(active.url!)}
           title="Use this icon for all states"
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-white/85 transition-colors hover:bg-white/15 hover:text-white"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-white/85 transition-colors hover:bg-white/15 hover:text-white"
         >
-          <Layers size={13} strokeWidth={2.3} />
+          <Layers size={14} strokeWidth={2.3} />
         </button>
       )}
     </div>
@@ -217,8 +217,8 @@ function Thumb({
   return (
     <div
       title={warning ?? (label ? `${label} icon` : undefined)}
-      className={`relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg border bg-white/8 transition-colors ${
-        dragOver ? "border-accent ring-2 ring-accent/40" : warning ? "border-amber-300/40" : "border-white/12"
+      className={`relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md border bg-white/8 transition-colors ${
+        dragOver ? "border-accent ring-2 ring-accent" : warning ? "border-accent/40" : "border-white/12"
       }`}
     >
       {busy ? (
@@ -229,7 +229,7 @@ function Thumb({
         <ImageIcon size={14} className="text-white/40" strokeWidth={2.1} />
       )}
       {warning && !busy && (
-        <span className="absolute -end-0.5 -top-0.5 h-2 w-2 rounded-full bg-amber-300 ring-1 ring-black/40" />
+        <span className="absolute -end-0.5 -top-0.5 h-2 w-2 rounded-full bg-accent ring-1 ring-black/40" />
       )}
     </div>
   );
@@ -255,7 +255,7 @@ function PickButton({ onPick, busy }: { onPick: (file: File | undefined) => void
         onClick={() => ref.current?.click()}
         title="Upload icon"
         aria-label="Upload icon"
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-white/85 transition-colors hover:bg-white/15 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-white/85 transition-colors hover:bg-white/15 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
       >
         <Upload size={14} strokeWidth={2.3} />
       </button>
@@ -270,9 +270,9 @@ function ResetButton({ onClick }: { onClick: () => void }) {
       onClick={onClick}
       title="Reset to default"
       aria-label="Reset icon"
-      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-white/85 transition-colors hover:bg-white/15 hover:text-white"
+      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-white/85 transition-colors hover:bg-white/15 hover:text-white"
     >
-      <RotateCcw size={13} strokeWidth={2.3} />
+      <RotateCcw size={14} strokeWidth={2.3} />
     </button>
   );
 }

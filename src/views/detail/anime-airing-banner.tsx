@@ -46,7 +46,7 @@ export function AnimeAiringBanner({
   });
 
   return (
-    <div className="flex items-center justify-between gap-4 rounded-2xl border border-accent/30 bg-accent/[0.08] px-5 py-4">
+    <div className="flex items-center justify-between gap-4 rounded-2xl bg-elevated px-5 py-4">
       <div className="flex min-w-0 flex-col gap-1">
         <div className="flex items-center gap-2 text-[13.5px] font-semibold text-ink">
           <CalendarClock size={16} strokeWidth={2.2} className="shrink-0 text-accent" />

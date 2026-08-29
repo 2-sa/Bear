@@ -56,7 +56,7 @@ export function Inspector({
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="shrink-0 px-5 pb-1 pt-4">
-        <div className="flex items-center gap-1 rounded-2xl bg-elevated/40 p-1 ring-1 ring-edge-soft/60">
+        <div className="flex items-center gap-1 rounded-md bg-raised p-1">
           {TABS.map((t) => {
             const active = tab === t.id;
             return (
@@ -64,11 +64,15 @@ export function Inspector({
                 key={t.id}
                 type="button"
                 onClick={() => setTab(t.id)}
-                className={`flex h-10 flex-1 items-center justify-center rounded-xl text-[14px] font-semibold transition-colors ${
-                  active ? "bg-ink text-canvas" : "text-ink-muted hover:bg-raised hover:text-ink"
+                className={`harbor-studio-tab flex h-10 flex-1 items-center justify-center rounded-md text-[13.5px] font-semibold transition-colors ${
+                  active
+                    ? "bg-canvas text-ink ring-1 ring-edge"
+                    : "text-ink-muted hover:bg-surface hover:text-ink"
                 }`}
               >
-                {t.label}
+                <span key={active ? "on" : "off"} className={active ? "harbor-studio-pop" : undefined}>
+                  {t.label}
+                </span>
               </button>
             );
           })}
@@ -76,7 +80,7 @@ export function Inspector({
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <div key={tab} className="animate-[studioTabIn_220ms_ease-out] px-5 py-4 motion-reduce:animate-none">
+        <div key={tab} className="harbor-studio-body px-5 py-4">
           {tab === "look" && (
             <div className="flex flex-col">
               <IdentityRow name={draft.name} blurb={draft.blurb} onChange={(p) => onPatch(p)} />
@@ -112,7 +116,7 @@ export function Inspector({
               <StudioSection title="Surfaces">
                 <div className="flex flex-col gap-4">
                   <div className="flex flex-col gap-2">
-                    <span className="text-[12px] text-ink-subtle">Cards</span>
+                    <span className="text-[12.5px] text-ink-subtle">Cards</span>
                     <StylePicker
                       kind="card"
                       value={draft.cardStyle}
@@ -121,7 +125,7 @@ export function Inspector({
                     />
                   </div>
                   <div className="flex flex-col gap-2">
-                    <span className="text-[12px] text-ink-subtle">Buttons</span>
+                    <span className="text-[12.5px] text-ink-subtle">Buttons</span>
                     <StylePicker
                       kind="button"
                       value={draft.buttonStyle}
@@ -184,7 +188,7 @@ function HeaderAction({ icon, label, onClick }: { icon: ReactNode; label: string
     <button
       type="button"
       onClick={onClick}
-      className="flex h-8 items-center gap-1.5 rounded-lg px-2 text-[12px] font-semibold text-ink-subtle transition-colors hover:bg-elevated/40 hover:text-ink"
+      className="flex h-8 items-center gap-1.5 rounded-md px-2 text-[12.5px] font-semibold text-ink-subtle transition-colors hover:bg-elevated hover:text-ink"
     >
       {icon}
       {label}
@@ -194,9 +198,9 @@ function HeaderAction({ icon, label, onClick }: { icon: ReactNode; label: string
 
 function BokehToggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
   return (
-    <label className="-mx-1 flex cursor-pointer items-center justify-between gap-3 rounded-lg px-1 py-1 transition-colors hover:bg-elevated/40">
+    <label className="-mx-1 flex cursor-pointer items-center justify-between gap-3 rounded-md px-1 py-1 transition-colors hover:bg-elevated">
       <div className="flex min-w-0 flex-col">
-        <span className="text-[14px] font-semibold text-ink">Bokeh background</span>
+        <span className="text-[13.5px] font-semibold text-ink">Bokeh background</span>
         <span className="text-[13px] text-ink-muted">Floating orbs over the canvas.</span>
       </div>
       <span

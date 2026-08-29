@@ -80,7 +80,7 @@ export function KnownTileHover({ meta, rect }: { meta: Meta; rect: DOMRect }) {
   return createPortal(
     <div
       style={placement(rect)}
-      className="pointer-events-none fixed z-[150] overflow-hidden rounded-[14px] border border-edge bg-elevated/95 shadow-[0_24px_64px_-18px_rgba(0,0,0,0.8)] backdrop-blur-xl animate-popover-in motion-reduce:animate-none"
+      className="pointer-events-none fixed z-[150] overflow-hidden rounded-lg border border-edge bg-elevated/95 shadow-[0_24px_64px_-18px_rgba(0,0,0,0.8)] backdrop-blur-xl animate-popover-in motion-reduce:animate-none"
     >
       <div className="relative aspect-video w-full overflow-hidden bg-canvas">
         {backdrop ? (

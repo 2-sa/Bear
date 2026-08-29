@@ -1,3 +1,4 @@
+import { fillStyle } from "@/components/slider";
 import { useCallback, useRef, useState } from "react";
 import { ImagePlus, Move, ZoomIn } from "lucide-react";
 
@@ -96,7 +97,7 @@ export function CoverCropper({ onChange }: { onChange: (blob: Blob | null) => vo
         onPointerDown={onDown}
         onPointerMove={onMove}
         onPointerUp={onUp}
-        className={`relative aspect-video w-full select-none overflow-hidden rounded-2xl border border-edge-soft bg-elevated ${src ? "cursor-grab active:cursor-grabbing" : ""}`}
+ className={`relative aspect-video w-full select-none overflow-hidden rounded-md bg-elevated ${src ?"cursor-grab active:cursor-grabbing" :""}`}
       >
         {src ? (
           <>
@@ -119,8 +120,8 @@ export function CoverCropper({ onChange }: { onChange: (blob: Blob | null) => vo
                 <div key={i} className="border border-white/15" />
               ))}
             </div>
-            <div className="pointer-events-none absolute bottom-2 start-2 flex items-center gap-1.5 rounded-full bg-black/45 px-2.5 py-1 text-[11px] font-medium text-white/80 backdrop-blur-sm">
-              <Move size={11} /> drag to position
+            <div className="pointer-events-none absolute bottom-2 start-2 flex items-center gap-1.5 rounded-full bg-black/45 px-2.5 py-1 text-[11.5px] font-medium text-white/80 backdrop-blur-sm">
+              <Move size={12} /> drag to position
             </div>
           </>
         ) : (
@@ -133,7 +134,7 @@ export function CoverCropper({ onChange }: { onChange: (blob: Blob | null) => vo
       </div>
       {src && (
         <div className="flex items-center gap-3">
-          <ZoomIn size={15} className="shrink-0 text-ink-subtle" />
+          <ZoomIn size={16} className="shrink-0 text-ink-subtle" />
           <input
             type="range"
             min={1}
@@ -147,9 +148,10 @@ export function CoverCropper({ onChange }: { onChange: (blob: Blob | null) => vo
               setOffset(o);
               commit(o, z, nat);
             }}
-            className="h-1.5 flex-1 cursor-pointer accent-accent"
-          />
-          <button type="button" onClick={pick} className="shrink-0 text-[12px] font-medium text-ink-muted transition-colors hover:text-ink">
+            className="harbor-slider flex-1"
+        style={fillStyle(zoom, 1, 3)}
+      />
+          <button type="button" onClick={pick} className="shrink-0 text-[12.5px] font-medium text-ink-muted transition-colors hover:text-ink">
             Replace
           </button>
         </div>

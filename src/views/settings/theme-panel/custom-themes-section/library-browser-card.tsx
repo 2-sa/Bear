@@ -43,15 +43,15 @@ export function BrowserCard({
   };
   return (
     <div
-      className={`group/card relative flex flex-col overflow-hidden rounded-[14px] bg-surface transition-[transform,box-shadow] duration-200 ease-out hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-24px_rgba(0,0,0,0.65)] motion-reduce:transform-none motion-reduce:transition-none ${
-        active ? "ring-2 ring-accent" : "ring-1 ring-edge-soft"
+      className={`group/card relative flex flex-col overflow-hidden rounded-md bg-surface transition-colors duration-200 ease-out hover:harbor-float motion-reduce:transform-none motion-reduce:transition-none ${
+        active ? "ring-2 ring-accent" : ""
       }`}
     >
       <div className="relative aspect-[16/10] overflow-hidden bg-elevated">
         <Fit kind="theme" tokens={tokensFromPreset(theme)} cover={cover} />
         {active && (
           <span className="absolute end-2.5 top-2.5 z-10 flex h-7 items-center gap-1.5 rounded-[8px] bg-accent px-2.5 text-[10.5px] font-bold uppercase tracking-[0.16em] text-canvas">
-            <Check size={11} strokeWidth={3} /> Active
+            <Check size={12} strokeWidth={3} /> Active
           </span>
         )}
         {removable && !hasImage && (
@@ -59,7 +59,7 @@ export function BrowserCard({
             type="button"
             onClick={addImage}
             disabled={busy}
-            className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-1.5 bg-canvas/45 text-[12px] font-semibold text-ink-muted opacity-0 backdrop-blur-[1px] transition-opacity hover:text-ink group-hover/card:opacity-100"
+            className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-1.5 bg-canvas/70 text-[12.5px] font-semibold text-ink-muted opacity-0 transition-opacity hover:text-ink group-hover/card:opacity-100"
           >
             {busy ? <Loader2 size={18} className="animate-spin" /> : <ImagePlus size={18} strokeWidth={1.9} />}
             {busy ? "Adding" : "Add image"}
@@ -72,15 +72,15 @@ export function BrowserCard({
       <div className="flex flex-col gap-3 p-4">
         <div className="flex min-w-0 flex-col gap-1">
           <span className="truncate text-[14.5px] font-semibold tracking-tight text-ink">{theme.name}</span>
-          {theme.blurb && <span className="line-clamp-2 text-[12px] leading-relaxed text-ink-muted">{theme.blurb}</span>}
+          {theme.blurb && <span className="line-clamp-2 text-[12.5px] leading-relaxed text-ink-muted">{theme.blurb}</span>}
         </div>
         <div className="flex items-center gap-1.5">
           <button
             type="button"
             onClick={onActivate}
             disabled={active}
-            className={`h-10 flex-1 rounded-[10px] text-[13px] font-semibold transition-opacity ${
-              active ? "bg-elevated text-ink ring-1 ring-edge" : "bg-ink text-canvas hover:opacity-90"
+            className={`h-10 flex-1 rounded-md text-[13px] font-semibold transition-opacity ${
+              active ? "bg-elevated text-ink" : "bg-ink text-canvas hover:opacity-90"
             }`}
           >
             {active ? "Active" : "Apply"}
@@ -119,8 +119,8 @@ function IconButton({
       aria-label={label}
       title={label}
       onClick={onClick}
-      className={`flex h-10 w-10 items-center justify-center rounded-[10px] text-ink-muted ring-1 ring-edge-soft transition-colors ${
-        danger ? "hover:text-danger hover:ring-danger/40" : "hover:text-ink hover:ring-edge"
+      className={`flex h-10 w-10 items-center justify-center rounded-md bg-canvas text-ink-muted transition-colors ${
+        danger ? "hover:text-danger hover:ring-danger" : "hover:text-ink hover:ring-edge"
       }`}
     >
       {children}

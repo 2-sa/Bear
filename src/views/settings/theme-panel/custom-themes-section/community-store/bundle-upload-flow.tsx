@@ -77,14 +77,14 @@ export function BundleUploadFlow({ initialKind = "badge", onClose }: { initialKi
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[220] flex flex-col bg-canvas" role="dialog" aria-label="Share an icon pack">
-      <header data-tauri-drag-region className="flex shrink-0 items-center justify-between gap-4 border-b border-edge-soft bg-surface/40 px-10 py-5">
-        <div data-tauri-drag-region className="flex flex-col">
-          <h1 className="pointer-events-none text-[20px] font-semibold tracking-tight text-ink">Share an icon pack</h1>
+    <div className="fixed inset-0 z-[300] flex flex-col bg-canvas" role="dialog" aria-label="Share an icon pack">
+      <header data-tauri-drag-region className="flex shrink-0 items-start justify-between gap-4 px-10 pb-5 pt-6">
+        <div data-tauri-drag-region className="flex flex-col gap-1">
+          <h1 className="pointer-events-none text-[17px] font-semibold tracking-tight text-ink">Share an icon pack</h1>
           <p className="pointer-events-none text-[12.5px] text-ink-subtle">It goes to a quick review, then it's live for everyone.</p>
         </div>
-        <button onClick={onClose} aria-label="Close" className="flex h-10 w-10 items-center justify-center rounded-full text-ink-muted transition-colors hover:bg-elevated hover:text-ink">
-          <X size={18} strokeWidth={2.2} />
+        <button onClick={onClose} aria-label="Close" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-ink-subtle transition-colors hover:bg-elevated hover:text-ink">
+          <X size={16} strokeWidth={2.2} />
         </button>
       </header>
 
@@ -93,12 +93,12 @@ export function BundleUploadFlow({ initialKind = "badge", onClose }: { initialKi
           <div className="grid w-full max-w-md items-center gap-x-14 gap-y-9 lg:max-w-[860px] lg:grid-cols-[1fr_minmax(0,376px)]">
             <div className="flex flex-col gap-7">
               <div className="flex flex-col gap-3.5">
-                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent/15 text-accent">
+                <span className="flex h-12 w-12 items-center justify-center rounded-md bg-accent-soft text-accent">
                   <Package size={24} strokeWidth={1.9} />
                 </span>
                 <div className="flex flex-col gap-2">
-                  <h2 className="text-balance text-[22px] font-semibold leading-tight tracking-tight text-ink">Your icons, in everyone's library</h2>
-                  <p className="text-balance text-[14px] leading-relaxed text-ink-muted">Create a free account to publish. No email required.</p>
+                  <h2 className="text-balance text-[20px] font-semibold leading-tight tracking-tight text-ink">Your icons, in everyone's library</h2>
+                  <p className="text-balance text-[13.5px] leading-relaxed text-ink-muted">Create a free account to publish. No email required.</p>
                 </div>
               </div>
               <ul className="flex flex-col gap-4">
@@ -147,28 +147,28 @@ export function BundleUploadFlow({ initialKind = "badge", onClose }: { initialKi
       )}
 
       {account && !result && (
-        <footer className="flex shrink-0 items-center justify-between gap-4 border-t border-edge-soft bg-surface/40 px-10 py-4">
+        <footer className="flex shrink-0 items-center justify-end gap-2.5 px-10 pb-6 pt-4">
           <button
             onClick={() => (step === 0 ? onClose() : setStep((s) => s - 1))}
-            className="flex h-11 items-center gap-2 rounded-xl border border-edge-soft px-4 text-[13.5px] font-medium text-ink-muted transition-colors hover:border-edge hover:text-ink"
+            className="flex h-9 items-center gap-2 rounded-md bg-elevated px-4 text-[12.5px] font-semibold text-ink-muted transition-colors hover:text-ink"
           >
-            <ArrowLeft size={15} className="dir-icon" /> {step === 0 ? "Cancel" : "Back"}
+            <ArrowLeft size={16} className="dir-icon" /> {step === 0 ? "Cancel" : "Back"}
           </button>
           {step < STEPS.length - 1 ? (
             <button
               onClick={() => canAdvance && setStep((s) => s + 1)}
               disabled={!canAdvance}
-              className="flex h-11 items-center gap-2 rounded-xl bg-ink px-6 text-[14px] font-semibold text-canvas transition-opacity hover:opacity-90 disabled:opacity-40"
+              className="flex h-9 items-center gap-2 rounded-md bg-ink px-5 text-[12.5px] font-semibold text-canvas transition-opacity hover:opacity-90 disabled:opacity-40"
             >
-              Continue <ArrowRight size={15} className="dir-icon" />
+              Continue <ArrowRight size={16} className="dir-icon" />
             </button>
           ) : (
             <button
               onClick={submit}
               disabled={submitting || !coverBlob || !name.trim() || !iconsReady}
-              className="flex h-11 items-center gap-2 rounded-xl bg-accent px-6 text-[14px] font-semibold text-canvas transition-opacity hover:opacity-90 disabled:opacity-40"
+              className="flex h-9 items-center gap-2 rounded-md bg-ink px-5 text-[12.5px] font-semibold text-canvas transition-opacity hover:opacity-90 disabled:opacity-40"
             >
-              {submitting ? <Loader2 size={16} className="animate-spin" /> : <Upload size={15} strokeWidth={2.2} />}
+              {submitting ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} strokeWidth={2.2} />}
               {submitting ? "Submitting…" : "Submit for review"}
             </button>
           )}
@@ -183,10 +183,10 @@ function StepRail({ step }: { step: number }) {
   return (
     <div className="flex items-center gap-2">
       {STEPS.map((label, i) => (
-        <div key={label} className="flex flex-1 items-center gap-2">
+        <div key={label} className="flex min-w-0 flex-1 items-center gap-2">
           <div className="flex items-center gap-2">
             <span
-              className={`flex h-7 w-7 items-center justify-center rounded-full text-[12px] font-bold transition-colors ${
+              className={`flex h-7 w-7 items-center justify-center rounded-full text-[12.5px] font-bold transition-colors ${
                 i < step ? "bg-accent text-canvas" : i === step ? "bg-ink text-canvas" : "bg-elevated text-ink-subtle"
               }`}
             >
@@ -208,7 +208,7 @@ function StepRail({ step }: { step: number }) {
 function Benefit({ icon: Icon, title, children }: { icon: LucideIcon; title: string; children: React.ReactNode }) {
   return (
     <li className="flex items-start gap-3">
-      <span className="mt-px flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-elevated/60 text-ink-muted">
+      <span className="mt-px flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-surface text-ink-muted">
         <Icon size={16} strokeWidth={2} />
       </span>
       <div className="flex flex-col gap-0.5">
@@ -222,20 +222,20 @@ function Benefit({ icon: Icon, title, children }: { icon: LucideIcon; title: str
 function SuccessView({ share, copied, onCopy, onDone }: { share: string; copied: boolean; onCopy: () => void; onDone: () => void }) {
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-5 px-10 text-center">
-      <span className="harbor-step flex h-16 w-16 items-center justify-center rounded-full bg-accent/15 text-accent">
+      <span className="harbor-step flex h-16 w-16 items-center justify-center rounded-full bg-accent-soft text-accent">
         <Check size={32} strokeWidth={2.5} />
       </span>
       <div className="flex flex-col gap-1.5">
-        <h2 className="font-display text-[26px] font-medium text-ink">Submitted for review</h2>
-        <p className="max-w-[42ch] text-[14px] text-ink-muted">Thanks for sharing. It'll appear in the library once it's approved. You can manage it any time from your uploads.</p>
+        <h2 className="text-[20px] font-semibold tracking-tight text-ink">Submitted for review</h2>
+        <p className="max-w-[42ch] text-[13.5px] text-ink-muted">Thanks for sharing. It'll appear in the library once it's approved. You can manage it any time from your uploads.</p>
       </div>
-      <div className="flex items-center gap-2 rounded-xl border border-edge-soft bg-elevated/40 px-3 py-2">
+      <div className="flex items-center gap-2 rounded-md bg-surface p-2 ps-3">
         <span className="max-w-[280px] truncate text-[12.5px] text-ink-muted">{share}</span>
-        <button onClick={onCopy} className="flex h-8 items-center gap-1.5 rounded-lg bg-ink px-3 text-[12px] font-semibold text-canvas">
-          {copied ? <Check size={13} /> : <Copy size={13} />} {copied ? "Copied" : "Copy link"}
+        <button onClick={onCopy} className="flex h-8 items-center gap-1.5 rounded-md bg-elevated px-3 text-[12.5px] font-semibold text-ink-muted transition-colors hover:text-ink">
+          {copied ? <Check size={14} /> : <Copy size={14} />} {copied ? "Copied" : "Copy link"}
         </button>
       </div>
-      <button onClick={onDone} className="mt-2 h-11 rounded-xl bg-accent px-8 text-[14px] font-semibold text-canvas transition-opacity hover:opacity-90">
+      <button onClick={onDone} className="mt-2 h-9 rounded-md bg-ink px-6 text-[12.5px] font-semibold text-canvas transition-opacity hover:opacity-90">
         Done
       </button>
     </div>

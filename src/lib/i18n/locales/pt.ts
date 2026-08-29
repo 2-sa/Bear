@@ -25,6 +25,8 @@ import addons from "./pt/addons";
 import extra from "./pt/extra";
 import manga from "./pt/manga";
 import controllers from "./pt/controllers";
+
+import bpSources from "./pt/bp-sources";
 import used from "./pt/used";
 
 const pt: Record<string, string> = {
@@ -55,6 +57,7 @@ const pt: Record<string, string> = {
   ...extra,
   ...manga,
   ...controllers,
+  ...bpSources,
   ...used,
 };
 

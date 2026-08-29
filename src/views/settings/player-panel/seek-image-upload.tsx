@@ -50,13 +50,13 @@ export function SeekImageUpload({
 
   return (
     <div
-      className={`flex flex-col gap-2 rounded-xl border bg-canvas/40 p-3 transition-colors duration-200 ${
-        error ? "border-danger/60" : "border-edge-soft"
+      className={`flex flex-col gap-2 rounded-md border bg-canvas p-3 transition-colors duration-200 ${
+        error ? "border-danger" : "border-edge-soft"
       }`}
     >
       <div className="flex items-center gap-3">
         <div
-          className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-raised transition-colors duration-200"
+          className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-md bg-raised transition-colors duration-200"
           style={{
             backgroundImage: value
               ? `radial-gradient(circle at 50% 50%, rgba(255,255,255,0.04), transparent 70%)`
@@ -66,7 +66,7 @@ export function SeekImageUpload({
           <ImageIcon
             size={20}
             strokeWidth={1.6}
-            className={`absolute text-ink-subtle transition-all duration-300 ${
+            className={`absolute text-ink-subtle transition duration-300 ${
               value ? "scale-50 opacity-0" : "scale-100 opacity-100"
             }`}
           />
@@ -74,7 +74,7 @@ export function SeekImageUpload({
             key={value || "empty"}
             src={value || "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="}
             alt=""
-            className={`h-12 w-12 object-contain transition-all duration-300 ease-out ${
+            className={`h-12 w-12 object-contain transition duration-300 ease-out ${
               value ? "translate-y-0 scale-100 opacity-100" : "translate-y-2 scale-75 opacity-0"
             }`}
           />
@@ -84,17 +84,17 @@ export function SeekImageUpload({
             </div>
           )}
         </div>
-        <div className="flex flex-1 flex-col gap-1">
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
           <p className="text-[12.5px] font-medium text-ink">
             {value ? "Custom image loaded" : emptyTitle}
           </p>
-          <p className="text-[11px] leading-snug text-ink-subtle">{hint}</p>
+          <p className="text-[11.5px] leading-snug text-ink-subtle">{hint}</p>
         </div>
         <button
           type="button"
           disabled={busy}
           onClick={() => fileInputRef.current?.click()}
-          className="flex h-9 items-center gap-1.5 rounded-full bg-raised px-3 text-[12px] font-semibold text-ink-muted transition-colors hover:bg-elevated hover:text-ink disabled:cursor-wait disabled:opacity-60"
+          className="flex h-9 items-center gap-1.5 rounded-full bg-raised px-3 text-[12.5px] font-semibold text-ink-muted transition-colors hover:bg-elevated hover:text-ink disabled:cursor-wait disabled:opacity-60"
         >
           <Upload size={12} strokeWidth={2.2} />
           {busy ? "Processing" : value ? "Replace" : "Upload"}
@@ -106,15 +106,15 @@ export function SeekImageUpload({
             onClear();
           }}
           disabled={!value}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-raised text-ink-muted transition-all duration-200 hover:bg-danger hover:text-white disabled:pointer-events-none disabled:scale-90 disabled:opacity-0"
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-raised text-ink-muted transition duration-200 hover:bg-danger hover:text-white disabled:pointer-events-none disabled:scale-90 disabled:opacity-0"
           aria-label="Remove image"
         >
-          <X size={13} strokeWidth={2.2} />
+          <X size={14} strokeWidth={2.2} />
         </button>
       </div>
       {error && (
-        <div className="flex items-start gap-2 rounded-lg bg-danger/15 px-2.5 py-2 text-[11.5px] leading-snug text-danger ring-1 ring-danger/30">
-          <AlertTriangle size={13} strokeWidth={2.4} className="mt-0.5 shrink-0" />
+        <div className="flex items-start gap-2 rounded-md bg-danger/15 px-2.5 py-2 text-[11.5px] leading-snug text-danger ring-1 ring-danger">
+          <AlertTriangle size={14} strokeWidth={2.4} className="mt-0.5 shrink-0" />
           <span>{error}</span>
         </div>
       )}

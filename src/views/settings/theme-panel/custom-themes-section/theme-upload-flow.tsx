@@ -98,14 +98,14 @@ export function ThemeUploadFlow({ onClose }: { onClose: () => void }) {
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[220] flex flex-col bg-canvas" role="dialog" aria-label="Share a theme">
-      <header data-tauri-drag-region className="flex shrink-0 items-center justify-between gap-4 border-b border-edge-soft bg-surface/40 px-10 py-5">
-        <div data-tauri-drag-region className="flex flex-col">
-          <h1 className="pointer-events-none text-[20px] font-semibold tracking-tight text-ink">Share a theme</h1>
+    <div className="fixed inset-0 z-[300] flex flex-col bg-canvas" role="dialog" aria-label="Share a theme">
+      <header data-tauri-drag-region className="flex shrink-0 items-start justify-between gap-4 px-10 pb-5 pt-6">
+        <div data-tauri-drag-region className="flex flex-col gap-1">
+          <h1 className="pointer-events-none text-[17px] font-semibold tracking-tight text-ink">Share a theme</h1>
           <p className="pointer-events-none text-[12.5px] text-ink-subtle">It goes to a quick review, then it's live for everyone.</p>
         </div>
-        <button onClick={onClose} aria-label="Close" className="flex h-10 w-10 items-center justify-center rounded-full text-ink-muted transition-colors hover:bg-elevated hover:text-ink">
-          <X size={18} strokeWidth={2.2} />
+        <button onClick={onClose} aria-label="Close" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-ink-subtle transition-colors hover:bg-elevated hover:text-ink">
+          <X size={16} strokeWidth={2.2} />
         </button>
       </header>
 
@@ -114,14 +114,14 @@ export function ThemeUploadFlow({ onClose }: { onClose: () => void }) {
           <div className="grid w-full max-w-md items-center gap-x-14 gap-y-9 lg:max-w-[860px] lg:grid-cols-[1fr_minmax(0,376px)]">
             <div className="flex flex-col gap-7">
               <div className="flex flex-col gap-3.5">
-                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent/15 text-accent">
+                <span className="flex h-12 w-12 items-center justify-center rounded-md bg-accent-soft text-accent">
                   <Palette size={24} strokeWidth={1.9} />
                 </span>
                 <div className="flex flex-col gap-2">
-                  <h2 className="text-balance text-[22px] font-semibold leading-tight tracking-tight text-ink">
+                  <h2 className="text-balance text-[20px] font-semibold leading-tight tracking-tight text-ink">
                     Your theme, in everyone's library
                   </h2>
-                  <p className="text-balance text-[14px] leading-relaxed text-ink-muted">
+                  <p className="text-balance text-[13.5px] leading-relaxed text-ink-muted">
                     Create a free account to publish. No email required.
                   </p>
                 </div>
@@ -179,38 +179,40 @@ export function ThemeUploadFlow({ onClose }: { onClose: () => void }) {
       )}
 
       {account && !result && (
-        <footer className="flex shrink-0 items-center justify-between gap-4 border-t border-edge-soft bg-surface/40 px-10 py-4">
-          <button
-            onClick={() => (step === 0 ? onClose() : setStep((s) => s - 1))}
-            className="flex h-11 items-center gap-2 rounded-xl border border-edge-soft px-4 text-[13.5px] font-medium text-ink-muted transition-colors hover:border-edge hover:text-ink"
-          >
-            <ArrowLeft size={15} className="dir-icon" /> {step === 0 ? "Cancel" : "Back"}
-          </button>
+        <footer className="flex shrink-0 items-center justify-between gap-4 px-10 pb-6 pt-4">
           <button
             onClick={() => setSheetOpen(true)}
-            className="flex h-11 items-center gap-2 rounded-xl px-4 text-[13px] font-medium text-ink-subtle transition-colors hover:bg-elevated/60 hover:text-ink"
+            className="flex h-9 items-center gap-2 rounded-md bg-elevated px-4 text-[12.5px] font-semibold text-ink-muted transition-colors hover:text-ink"
           >
             <BookOpen size={14} strokeWidth={2.1} />
             API cheat sheet
           </button>
-          {step < STEPS.length - 1 ? (
+          <div className="flex items-center gap-2.5">
             <button
-              onClick={() => canAdvance && setStep((s) => s + 1)}
-              disabled={!canAdvance}
-              className="flex h-11 items-center gap-2 rounded-xl bg-ink px-6 text-[14px] font-semibold text-canvas transition-opacity hover:opacity-90 disabled:opacity-40"
+              onClick={() => (step === 0 ? onClose() : setStep((s) => s - 1))}
+              className="flex h-9 items-center gap-2 rounded-md bg-elevated px-4 text-[12.5px] font-semibold text-ink-muted transition-colors hover:text-ink"
             >
-              Continue <ArrowRight size={15} className="dir-icon" />
+              <ArrowLeft size={16} className="dir-icon" /> {step === 0 ? "Cancel" : "Back"}
             </button>
-          ) : (
-            <button
-              onClick={submit}
-              disabled={submitting || !theme || !coverBlob || !name.trim()}
-              className="flex h-11 items-center gap-2 rounded-xl bg-accent px-6 text-[14px] font-semibold text-canvas transition-opacity hover:opacity-90 disabled:opacity-40"
-            >
-              {submitting ? <Loader2 size={16} className="animate-spin" /> : <Upload size={15} strokeWidth={2.2} />}
-              {submitting ? "Submitting…" : "Submit for review"}
-            </button>
-          )}
+            {step < STEPS.length - 1 ? (
+              <button
+                onClick={() => canAdvance && setStep((s) => s + 1)}
+                disabled={!canAdvance}
+                className="flex h-9 items-center gap-2 rounded-md bg-ink px-5 text-[12.5px] font-semibold text-canvas transition-opacity hover:opacity-90 disabled:opacity-40"
+              >
+                Continue <ArrowRight size={16} className="dir-icon" />
+              </button>
+            ) : (
+              <button
+                onClick={submit}
+                disabled={submitting || !theme || !coverBlob || !name.trim()}
+                className="flex h-9 items-center gap-2 rounded-md bg-ink px-5 text-[12.5px] font-semibold text-canvas transition-opacity hover:opacity-90 disabled:opacity-40"
+              >
+                {submitting ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} strokeWidth={2.2} />}
+                {submitting ? "Submitting…" : "Submit for review"}
+              </button>
+            )}
+          </div>
         </footer>
       )}
       {sheetOpen && <CheatSheet onClose={() => setSheetOpen(false)} />}
@@ -223,10 +225,10 @@ function StepRail({ step }: { step: number }) {
   return (
     <div className="flex items-center gap-2">
       {STEPS.map((label, i) => (
-        <div key={label} className="flex flex-1 items-center gap-2">
+        <div key={label} className="flex min-w-0 flex-1 items-center gap-2">
           <div className="flex items-center gap-2">
             <span
-              className={`flex h-7 w-7 items-center justify-center rounded-full text-[12px] font-bold transition-colors ${
+              className={`flex h-7 w-7 items-center justify-center rounded-full text-[12.5px] font-bold transition-colors ${
                 i < step ? "bg-accent text-canvas" : i === step ? "bg-ink text-canvas" : "bg-elevated text-ink-subtle"
               }`}
             >
@@ -248,7 +250,7 @@ function StepRail({ step }: { step: number }) {
 function ThemeStep({ themes, selected, onSelect }: { themes: CustomTheme[]; selected: CustomTheme | null; onSelect: (t: CustomTheme) => void }) {
   if (themes.length === 0) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-edge px-6 py-16 text-center">
+      <div className="flex h-full flex-col items-center justify-center gap-2 rounded-md bg-surface px-6 py-16 text-center">
         <span className="text-[15px] font-semibold text-ink">No themes to share yet</span>
         <span className="max-w-[38ch] text-[13px] text-ink-muted">Build one in the studio or import a theme file first, then come back to share it.</span>
       </div>
@@ -256,7 +258,7 @@ function ThemeStep({ themes, selected, onSelect }: { themes: CustomTheme[]; sele
   }
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-[14px] text-ink-muted">Pick one of your themes to share.</p>
+      <p className="text-[13.5px] text-ink-muted">Pick one of your themes to share.</p>
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {themes.map((t) => {
           const active = selected?.id === t.id;
@@ -264,8 +266,8 @@ function ThemeStep({ themes, selected, onSelect }: { themes: CustomTheme[]; sele
             <button
               key={t.id}
               onClick={() => onSelect(t)}
-              className={`flex flex-col overflow-hidden rounded-2xl border text-start transition-all ${
-                active ? "border-accent shadow-[0_0_0_2px_var(--color-accent-soft)]" : "border-edge-soft bg-surface hover:border-edge"
+              className={`flex flex-col overflow-hidden rounded-md bg-surface text-start transition ${
+                active ? "shadow-[0_0_0_2px_var(--color-accent)]" : "hover:bg-elevated"
               }`}
             >
               <div className="flex h-20 w-full">
@@ -285,24 +287,24 @@ function ThemeStep({ themes, selected, onSelect }: { themes: CustomTheme[]; sele
 function ShotsStep({ shots, onAdd, onRemove }: { shots: { url: string }[]; onAdd: () => void; onRemove: (i: number) => void }) {
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-[14px] text-ink-muted">Add up to 6 screenshots so people can see your theme in action. Optional, but they sell it.</p>
+      <p className="text-[13.5px] text-ink-muted">Add up to 6 screenshots so people can see your theme in action. Optional, but they sell it.</p>
       <div className="grid gap-3 sm:grid-cols-2">
         {shots.map((s, i) => (
-          <div key={i} className="group relative aspect-video overflow-hidden rounded-xl border border-edge-soft">
+          <div key={i} className="group relative aspect-video overflow-hidden rounded-md bg-surface">
             <img src={s.url} alt="" className="h-full w-full object-cover" />
             <button
               onClick={() => onRemove(i)}
               aria-label="Remove"
-              className="absolute end-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/55 text-white opacity-0 backdrop-blur-sm transition-opacity hover:bg-black/75 group-hover:opacity-100"
+              className="absolute end-2 top-2 flex h-7 w-7 items-center justify-center rounded-md bg-canvas text-ink opacity-0 transition-opacity hover:bg-canvas group-hover:opacity-100"
             >
-              <Trash2 size={13} />
+              <Trash2 size={14} />
             </button>
           </div>
         ))}
         {shots.length < 6 && (
           <button
             onClick={onAdd}
-            className="flex aspect-video flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-edge text-ink-subtle transition-colors hover:border-accent hover:text-ink"
+            className="flex aspect-video flex-col items-center justify-center gap-1.5 rounded-md border border-dashed border-edge bg-surface text-ink-subtle transition-colors hover:border-accent hover:text-ink"
           >
             {shots.length === 0 ? <ImagePlus size={24} strokeWidth={1.6} /> : <Plus size={22} strokeWidth={1.8} />}
             <span className="text-[12.5px] font-medium">Add screenshot</span>
@@ -329,11 +331,11 @@ function DetailsStep({
   return (
     <div className="flex max-w-[460px] flex-col gap-5">
       <Field label="Theme name">
-        <input value={name} onChange={(e) => onName(e.target.value)} maxLength={60} className="h-11 rounded-xl bg-elevated/40 px-3.5 text-[14px] text-ink ring-1 ring-edge-soft focus:outline-none focus:ring-edge" />
+        <input value={name} onChange={(e) => onName(e.target.value)} maxLength={60} className="h-10 rounded-md bg-surface px-3.5 text-[13.5px] text-ink focus:outline-none focus:ring-1 focus:ring-accent" />
       </Field>
       <AuthorIdentity account={account} />
       <Field label="Tagline" hint="One line shown under the name.">
-        <textarea value={blurb} onChange={(e) => onBlurb(e.target.value)} maxLength={160} rows={2} className="resize-none rounded-xl bg-elevated/40 px-3.5 py-2.5 text-[14px] text-ink ring-1 ring-edge-soft placeholder:text-ink-subtle focus:outline-none focus:ring-edge" placeholder="A short, punchy description" />
+        <textarea value={blurb} onChange={(e) => onBlurb(e.target.value)} maxLength={160} rows={2} className="resize-none rounded-md bg-surface px-3.5 py-2.5 text-[13.5px] text-ink placeholder:text-ink-subtle focus:outline-none focus:ring-1 focus:ring-accent" placeholder="A short, punchy description" />
       </Field>
     </div>
   );
@@ -352,7 +354,7 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
 function Benefit({ icon: Icon, title, children }: { icon: LucideIcon; title: string; children: React.ReactNode }) {
   return (
     <li className="flex items-start gap-3">
-      <span className="mt-px flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-elevated/60 text-ink-muted">
+      <span className="mt-px flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-surface text-ink-muted">
         <Icon size={16} strokeWidth={2} />
       </span>
       <div className="flex flex-col gap-0.5">
@@ -366,20 +368,20 @@ function Benefit({ icon: Icon, title, children }: { icon: LucideIcon; title: str
 function SuccessView({ share, copied, onCopy, onDone }: { share: string; copied: boolean; onCopy: () => void; onDone: () => void }) {
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-5 px-10 text-center">
-      <span className="harbor-step flex h-16 w-16 items-center justify-center rounded-full bg-accent/15 text-accent">
+      <span className="harbor-step flex h-16 w-16 items-center justify-center rounded-full bg-accent-soft text-accent">
         <Check size={32} strokeWidth={2.5} />
       </span>
       <div className="flex flex-col gap-1.5">
-        <h2 className="font-display text-[26px] font-medium text-ink">Submitted for review</h2>
-        <p className="max-w-[42ch] text-[14px] text-ink-muted">Thanks for sharing. It'll appear in the library once it's approved. You can manage it any time from your uploads.</p>
+        <h2 className="text-[20px] font-semibold tracking-tight text-ink">Submitted for review</h2>
+        <p className="max-w-[42ch] text-[13.5px] text-ink-muted">Thanks for sharing. It'll appear in the library once it's approved. You can manage it any time from your uploads.</p>
       </div>
-      <div className="flex items-center gap-2 rounded-xl border border-edge-soft bg-elevated/40 px-3 py-2">
+      <div className="flex items-center gap-2 rounded-md bg-surface p-2 ps-3">
         <span className="max-w-[280px] truncate text-[12.5px] text-ink-muted">{share}</span>
-        <button onClick={onCopy} className="flex h-8 items-center gap-1.5 rounded-lg bg-ink px-3 text-[12px] font-semibold text-canvas">
-          {copied ? <Check size={13} /> : <Copy size={13} />} {copied ? "Copied" : "Copy link"}
+        <button onClick={onCopy} className="flex h-8 items-center gap-1.5 rounded-md bg-elevated px-3 text-[12.5px] font-semibold text-ink-muted transition-colors hover:text-ink">
+          {copied ? <Check size={14} /> : <Copy size={14} />} {copied ? "Copied" : "Copy link"}
         </button>
       </div>
-      <button onClick={onDone} className="mt-2 h-11 rounded-xl bg-accent px-8 text-[14px] font-semibold text-canvas transition-opacity hover:opacity-90">
+      <button onClick={onDone} className="mt-2 h-9 rounded-md bg-ink px-6 text-[12.5px] font-semibold text-canvas transition-opacity hover:opacity-90">
         Done
       </button>
     </div>

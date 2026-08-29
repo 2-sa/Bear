@@ -42,18 +42,18 @@ export function NotificationBell({ onOpenTheme }: { onOpenTheme: (themeId: strin
         type="button"
         onClick={toggle}
         aria-label="Notifications"
-        className="relative grid h-9 w-9 place-items-center rounded-full border border-edge-soft bg-elevated/40 text-ink-muted transition-colors hover:border-edge hover:text-ink"
+ className="relative grid h-9 w-9 place-items-center rounded-full bg-elevated text-ink-muted transition-colors hover:bg-raised hover:text-ink"
       >
         <Bell size={16} strokeWidth={2.1} />
         {unread > 0 && (
-          <span className="harbor-pop absolute -end-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-accent px-1 text-[10px] font-bold text-canvas">
+          <span className="harbor-pop absolute -end-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-accent px-1 text-[10.5px] font-bold text-canvas">
             {unread > 9 ? "9+" : unread}
           </span>
         )}
       </button>
 
       {open && (
-        <div className="animate-in fade-in slide-in-from-top-1 absolute end-0 top-11 z-50 w-[340px] overflow-hidden rounded-[6px] border border-edge-soft bg-elevated shadow-[0_30px_80px_-30px_rgba(0,0,0,0.8)] motion-reduce:animate-none">
+ <div className="animate-in fade-in slide-in-from-top-1 absolute end-0 top-11 z-50 w-[340px] overflow-hidden rounded-sm bg-elevated harbor-float motion-reduce:animate-none">
           <div className="flex items-center justify-between border-b border-edge-soft px-4 py-3">
             <span className="text-[13px] font-semibold text-ink">Notifications</span>
             {unread > 0 && (

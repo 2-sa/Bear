@@ -1,13 +1,41 @@
 import en from "./locales/en";
-import ar from "./locales/ar";
-import pt from "./locales/pt";
-import ru from "./locales/ru";
 import { getUiLanguage, useUiLanguage } from "./store";
 import { isRtl, LANGUAGES, type UiLanguage } from "./languages";
 
 type Vars = Record<string, string | number>;
 
-const catalogs: Record<UiLanguage, Record<string, string>> = { en, ar, pt, ru };
+// Only English is wired in here. Arabic, Portuguese and Russian are 1.97MB of
+// the television's 2.95MB render-blocking chunk, 66.7% of it, and a stick
+// showing English pays all of it and reads none of it. Worse than the parse:
+// each locale barrel spreads about 27 sub-objects into one 8,000-property
+// object, so 22,765 properties are materialised and copied again before React
+// exists. Desktop keeps its exact old timing by importing i18n-eager before it
+// mounts; television loads only the language actually selected.
+const catalogs: Partial<Record<UiLanguage, Record<string, string>>> = { en };
+
+let version = 0;
+const listeners = new Set<() => void>();
+
+export function registerUiCatalog(lang: UiLanguage, table: Record<string, string>): void {
+  if (lang === "en" || catalogs[lang]) return;
+  catalogs[lang] = table;
+  reverseCache.delete(lang);
+  version += 1;
+  for (const fn of listeners) fn();
+}
+
+export function uiCatalogVersion(): number {
+  return version;
+}
+
+export function subscribeUiCatalog(fn: () => void): () => void {
+  listeners.add(fn);
+  return () => listeners.delete(fn);
+}
+
+export function uiCatalogLoaded(lang: UiLanguage): boolean {
+  return Boolean(catalogs[lang]);
+}
 
 export type PluralForm = "one" | "few" | "many";
 
@@ -39,16 +67,22 @@ function countFor(key: string, vars?: Vars): number | null {
   return null;
 }
 
-const sourceKeysByTranslation = Object.fromEntries(
-  (Object.keys(catalogs) as UiLanguage[]).map((language) => {
-    const reverse = new Map<string, string>();
-    for (const [key, value] of Object.entries(catalogs[language])) {
-      const base = key.replace(VARIANT_SUFFIX, "");
-      if (!reverse.has(value)) reverse.set(value, base);
-    }
-    return [language, reverse];
-  }),
-) as Record<UiLanguage, Map<string, string>>;
+// Built per language on first use, never for every language at import time.
+// Eagerly it walked all 22,765 non-English entries during boot to serve a
+// function that most sessions never call.
+const reverseCache = new Map<UiLanguage, Map<string, string>>();
+
+function reverseFor(lang: UiLanguage): Map<string, string> {
+  const hit = reverseCache.get(lang);
+  if (hit) return hit;
+  const reverse = new Map<string, string>();
+  for (const [key, value] of Object.entries(catalogs[lang] ?? {})) {
+    const base = key.replace(VARIANT_SUFFIX, "");
+    if (!reverse.has(value)) reverse.set(value, base);
+  }
+  reverseCache.set(lang, reverse);
+  return reverse;
+}
 
 function interpolate(template: string, vars?: Vars): string {
   if (!vars) return template;
@@ -77,7 +111,7 @@ function resolve(lang: UiLanguage, key: string, vars?: Vars): string {
     const active = catalog[key];
     if (active !== undefined) return active;
   }
-  const fallback = catalogs.en[key];
+  const fallback = en[key];
   if (fallback !== undefined) return fallback;
   return key;
 }
@@ -87,7 +121,7 @@ export function t(key: string, vars?: Vars): string {
 }
 
 export function sourceTranslationKey(value: string): string {
-  return sourceKeysByTranslation[getUiLanguage()].get(value) ?? value;
+  return reverseFor(getUiLanguage()).get(value) ?? value;
 }
 
 export function useT(): (key: string, vars?: Vars) => string {

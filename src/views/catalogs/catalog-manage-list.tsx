@@ -133,9 +133,9 @@ function ManageRow({
       }`}
     >
       {catalog.addonLogo ? (
-        <img src={catalog.addonLogo} alt="" draggable={false} className="h-7 w-7 shrink-0 rounded-[6px] object-contain" />
+        <img src={catalog.addonLogo} alt="" draggable={false} className="h-7 w-7 shrink-0 rounded-sm object-contain" />
       ) : (
-        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[6px] bg-canvas text-[11px] font-bold text-ink-subtle ring-1 ring-edge-soft">
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-sm bg-canvas text-[11px] font-bold text-ink-subtle ring-1 ring-edge-soft">
           {catalog.addonName.charAt(0).toUpperCase()}
         </span>
       )}

@@ -132,7 +132,7 @@ export function KidsPlayZone({ onClose }: { onClose: () => void }) {
                     key={a.id}
                     type="button"
                     onClick={() => setActivity(a.id)}
-                    className="kids-card group flex items-center gap-5 rounded-[28px] border-4 border-white/35 bg-white/90 px-7 py-6 text-start shadow-[0_24px_60px_-20px_rgba(0,20,40,0.6)] transition-transform duration-200 hover:scale-[1.03] active:scale-[0.98]"
+                    className="kids-card group flex items-center gap-5 rounded-2xl border-4 border-white/35 bg-white/90 px-7 py-6 text-start shadow-[0_24px_60px_-20px_rgba(0,20,40,0.6)] transition-transform duration-200 hover:scale-[1.03] active:scale-[0.98]"
                     style={{ animationDelay: `${i * 90}ms` }}
                   >
                     <img

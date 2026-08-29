@@ -1,3 +1,4 @@
+import { useT } from "@/lib/i18n";
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Eye, EyeOff, RotateCcw, X } from "lucide-react";
 import {
   CONTROL_META,
@@ -75,7 +76,7 @@ export function FloatingInspector({
 
   return (
     <div className="pointer-events-none absolute inset-x-0 top-6 z-30 flex flex-col items-center gap-2 px-6">
-      <div className="pointer-events-auto flex max-w-full items-stretch gap-1 overflow-x-auto rounded-2xl border border-white/12 bg-black/85 p-2 shadow-[0_24px_60px_rgba(0,0,0,0.55)] backdrop-blur-2xl">
+      <div className="pointer-events-auto flex max-w-full items-stretch gap-1 overflow-x-auto rounded-md border border-white/12 bg-black/85 p-2 harbor-float backdrop-blur-2xl">
         <div className="flex shrink-0 flex-col items-start justify-center px-3 py-1">
           <span className="text-[9.5px] font-semibold uppercase tracking-[0.18em] text-white/40">
             {meta.group}
@@ -125,7 +126,7 @@ export function FloatingInspector({
           <>
             <Divider />
             <Group label="Preview state">
-              <div className="flex items-center gap-0.5 rounded-lg bg-white/8 p-0.5">
+              <div className="flex items-center gap-0.5 rounded-md bg-white/8 p-0.5">
                 {controlStates(selectedId).map((s) => {
                   const active = (previewStates[selectedId] ?? controlStates(selectedId)[0]) === s;
                   return (
@@ -133,7 +134,7 @@ export function FloatingInspector({
                       key={s}
                       type="button"
                       onClick={() => onSetPreviewState(selectedId, s)}
-                      className={`h-8 whitespace-nowrap rounded-md px-2.5 text-[11px] font-medium transition-colors ${
+                      className={`h-8 whitespace-nowrap rounded-md px-2.5 text-[11.5px] font-medium transition-colors ${
                         active ? "bg-white/18 text-white" : "text-white/55 hover:text-white/85"
                       }`}
                     >
@@ -192,7 +193,7 @@ export function FloatingInspector({
             title={control.hidden ? "Show this control" : "Hide this control"}
           />
           <IconBtn
-            icon={<RotateCcw size={13} strokeWidth={2.3} />}
+            icon={<RotateCcw size={14} strokeWidth={2.3} />}
             onClick={onResetControl}
             title="Reset to default"
           />
@@ -208,7 +209,7 @@ export function FloatingInspector({
       </div>
 
       {crowded && (
-        <div className="pointer-events-auto rounded-full border border-amber-300/30 bg-amber-300/10 px-3.5 py-1.5 text-[11px] font-medium text-amber-200/90 backdrop-blur-xl">
+        <div className="pointer-events-auto rounded-full border border-accent/30 bg-accent/10 px-3.5 py-1.5 text-[11.5px] font-medium text-accent/90 backdrop-blur-xl">
           Slot is getting crowded ({peers.length}/{limit}). May overflow on narrow screens.
         </div>
       )}
@@ -242,7 +243,7 @@ function IconBtn({
 }) {
   const tone =
     variant === "active"
-      ? "bg-accent/85 text-canvas hover:bg-accent"
+      ? "bg-accent-soft text-canvas hover:bg-accent"
       : "text-white/85 hover:bg-white/15 hover:text-white";
   return (
     <button
@@ -251,7 +252,7 @@ function IconBtn({
       disabled={disabled}
       title={title}
       aria-label={title}
-      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-all duration-150 active:scale-[0.94] ${
+      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md transition duration-150 active:scale-[0.94] ${
         disabled ? "cursor-not-allowed text-white/25" : tone
       }`}
     >
@@ -263,7 +264,7 @@ function IconBtn({
 function Chip({ children, mono }: { children: React.ReactNode; mono?: boolean }) {
   return (
     <span
-      className={`flex h-9 shrink-0 items-center whitespace-nowrap rounded-lg bg-white/10 px-3 text-[11.5px] text-white/90 ${
+      className={`flex h-9 shrink-0 items-center whitespace-nowrap rounded-md bg-white/10 px-3 text-[11.5px] text-white/90 ${
         mono ? "font-mono tabular-nums" : "font-medium"
       }`}
     >
@@ -310,7 +311,7 @@ function PanelInspector({
   const eyebrow = panelId === "episodes" ? "Series tab" : "Watch Together panel";
   return (
     <div className="pointer-events-none absolute inset-x-0 top-6 z-40 flex flex-col items-center gap-2 px-6">
-      <div className="pointer-events-auto flex max-w-full items-stretch gap-1 overflow-x-auto rounded-2xl border border-white/12 bg-black/85 p-2 shadow-[0_24px_60px_rgba(0,0,0,0.55)] backdrop-blur-2xl">
+      <div className="pointer-events-auto flex max-w-full items-stretch gap-1 overflow-x-auto rounded-md border border-white/12 bg-black/85 p-2 harbor-float backdrop-blur-2xl">
         <div className="flex shrink-0 flex-col items-start justify-center px-3 py-1">
           <span className="text-[9.5px] font-semibold uppercase tracking-[0.18em] text-white/40">
             {eyebrow}
@@ -337,7 +338,7 @@ function PanelInspector({
                       type="button"
                       onClick={() => onSetCorner(panelId, targetCorner)}
                       title={SIDE_LABEL[side]}
-                      className={`flex h-9 items-center whitespace-nowrap rounded-lg px-2.5 text-[11.5px] font-medium transition-colors ${
+                      className={`flex h-9 items-center whitespace-nowrap rounded-md px-2.5 text-[11.5px] font-medium transition-colors ${
                         active ? "bg-white/18 text-white" : "text-white/55 hover:text-white/85"
                       }`}
                     >
@@ -353,7 +354,7 @@ function PanelInspector({
                       type="button"
                       onClick={() => onSetCorner(panelId, c)}
                       title={CORNER_LABEL[c]}
-                      className={`flex h-9 items-center whitespace-nowrap rounded-lg px-2.5 text-[11.5px] font-medium transition-colors ${
+                      className={`flex h-9 items-center whitespace-nowrap rounded-md px-2.5 text-[11.5px] font-medium transition-colors ${
                         active ? "bg-white/18 text-white" : "text-white/55 hover:text-white/85"
                       }`}
                     >
@@ -400,8 +401,9 @@ function VariantPicker({
   value: ControlVariant;
   onChange: (v: ControlVariant) => void;
 }) {
+  const t = useT();
   return (
-    <div className="flex items-center gap-0.5 rounded-lg bg-white/8 p-0.5">
+    <div className="flex items-center gap-0.5 rounded-md bg-white/8 p-0.5">
       {VARIANT_OPTIONS.map((opt) => {
         const active = value === opt.value;
         return (
@@ -409,11 +411,11 @@ function VariantPicker({
             key={opt.value}
             type="button"
             onClick={() => onChange(opt.value)}
-            className={`h-8 whitespace-nowrap rounded-md px-2.5 text-[11px] font-medium transition-colors ${
+            className={`h-8 whitespace-nowrap rounded-md px-2.5 text-[11.5px] font-medium transition-colors ${
               active ? "bg-white/18 text-white" : "text-white/55 hover:text-white/85"
             }`}
           >
-            {opt.label}
+            {t(opt.label)}
           </button>
         );
       })}

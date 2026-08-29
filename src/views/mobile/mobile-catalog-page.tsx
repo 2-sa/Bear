@@ -125,7 +125,7 @@ function GridPoster({ meta, onOpen }: { meta: Meta; onOpen: (m: Meta) => void })
       onClick={() => onOpen(meta)}
       className="text-start transition-transform duration-150 active:scale-[0.96]"
     >
-      <Poster src={src} onError={onError} seed={meta.id} ratio="portrait" lazy className="rounded-[14px]">
+      <Poster src={src} onError={onError} seed={meta.id} ratio="portrait" lazy className="rounded-lg">
         {!settings.rpdbKey && meta.imdbRating && (
           <span className="pointer-events-none absolute bottom-1.5 end-1.5 flex items-center gap-0.5 rounded-md bg-black/70 px-1.5 py-0.5 text-[10.5px] font-bold text-white backdrop-blur-sm">
             <Star size={9} strokeWidth={0} fill="#f5c518" className="text-[#f5c518]" />
@@ -182,7 +182,7 @@ function GridSkeleton() {
       {Array.from({ length: 18 }).map((_, i) => (
         <div
           key={i}
-          className="aspect-[2/3] rounded-[14px] bg-elevated/40 motion-safe:animate-pulse"
+          className="aspect-[2/3] rounded-lg bg-elevated/40 motion-safe:animate-pulse"
         />
       ))}
     </div>

@@ -26,15 +26,27 @@ import {
   type Dir,
 } from "./keyboard-navigation/geometry";
 
-const TV_NAV_KEY: Record<Dir | "back", string> = {
+const TV_NAV_KEY: Record<Dir | "back" | "prevTab" | "nextTab" | "options", string> = {
   up: "ArrowUp",
   down: "ArrowDown",
   left: "ArrowLeft",
   right: "ArrowRight",
   back: "Escape",
+  prevTab: "PageUp",
+  nextTab: "PageDown",
+  options: "ContextMenu",
 };
 
-export function dispatchTvNav(action: Dir | "select" | "back" | "home"): void {
+export function dispatchTvNav(
+  action: Dir | "select" | "back" | "home" | "prevTab" | "nextTab" | "options",
+  /**
+   * This press is the pad's own autorepeat, not a fresh one. A synthetic event
+   * that always reported repeat:false made a held D-pad indistinguishable from
+   * a burst of taps, which is the one thing Big Picture's held-Down escape has
+   * to tell apart.
+   */
+  repeat = false,
+): void {
   if (typeof window === "undefined") return;
   if (action === "home") {
     const homeNav = document.querySelector('[data-harbor-nav="home"]');
@@ -55,7 +67,7 @@ export function dispatchTvNav(action: Dir | "select" | "back" | "home"): void {
   const key = TV_NAV_KEY[action];
   suppressFocusScroll = fromHover;
   window.dispatchEvent(
-    new KeyboardEvent("keydown", { key, code: key, bubbles: true, cancelable: true }),
+    new KeyboardEvent("keydown", { key, code: key, bubbles: true, cancelable: true, repeat }),
   );
   suppressFocusScroll = false;
 }

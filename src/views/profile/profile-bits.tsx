@@ -59,7 +59,7 @@ export function VerifiedCheck({ size = 20 }: { size?: number }) {
         draggable={false}
         alt="Verified"
       />
-      <span className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded-[10px] bg-elevated px-2 py-1 text-[11px] font-medium text-ink opacity-0 shadow-lg ring-1 ring-edge-soft transition-opacity duration-150 group-hover:opacity-100">
+      <span className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded-md bg-elevated px-2 py-1 text-[11px] font-medium text-ink opacity-0 shadow-lg ring-1 ring-edge-soft transition-opacity duration-150 group-hover:opacity-100">
         Verified
       </span>
     </span>
@@ -68,7 +68,7 @@ export function VerifiedCheck({ size = 20 }: { size?: number }) {
 
 export function FeaturedBadge() {
   return (
-    <span className="inline-flex items-center gap-1 rounded-[6px] bg-accent-soft px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-accent">
+    <span className="inline-flex items-center gap-1 rounded-sm bg-accent-soft px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-accent">
       <Star size={14} strokeWidth={2.4} className="fill-accent" />
       Featured
     </span>
@@ -77,7 +77,7 @@ export function FeaturedBadge() {
 
 export function StatPill({ value, label }: { value: string; label: string }) {
   return (
-    <div className="flex flex-col items-center rounded-[10px] bg-surface px-4 py-2.5 ring-1 ring-edge-soft">
+    <div className="flex flex-col items-center rounded-md bg-surface px-4 py-2.5 ring-1 ring-edge-soft">
       <span className="text-[17px] font-semibold tabular-nums text-ink">{value}</span>
       <span className="text-[11px] uppercase tracking-[0.1em] text-ink-subtle">{label}</span>
     </div>

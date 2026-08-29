@@ -1,4 +1,5 @@
-import { Play, Star } from "lucide-react";
+import { Star } from "lucide-react";
+import { Play } from "@/components/icons/play-filled";
 import type { SearchResults } from "@/lib/search";
 import { AwardChips } from "@/components/award-chips";
 import { ResultPoster } from "./result-poster";

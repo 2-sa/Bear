@@ -1,4 +1,5 @@
-import { ArrowUp, ExternalLink, Search, X } from "lucide-react";
+import { ArrowUp, ExternalLink, X } from "lucide-react";
+import { Search } from "@/components/icons/search-icon";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import tmdbLogo from "@/assets/addon-logos/tmdb.png";
@@ -82,7 +83,7 @@ export function TopRankModal() {
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[130] flex items-stretch justify-center bg-canvas/85 backdrop-blur-sm"
+      className="fixed inset-0 z-[175] flex items-stretch justify-center bg-canvas/85 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
       aria-label={t(meta.title)}

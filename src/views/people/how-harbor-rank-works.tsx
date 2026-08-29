@@ -38,7 +38,7 @@ export function HowHarborRankWorks({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[140] flex items-end justify-center bg-canvas/85 backdrop-blur-sm animate-in fade-in duration-150 motion-reduce:animate-none sm:items-center"
+      className="fixed inset-0 z-[185] flex items-end justify-center bg-canvas/85 backdrop-blur-sm animate-in fade-in duration-150 motion-reduce:animate-none sm:items-center"
       role="dialog"
       aria-modal="true"
       aria-label={t("How Bear Rank works")}

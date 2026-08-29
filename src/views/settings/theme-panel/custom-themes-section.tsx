@@ -238,13 +238,13 @@ export function CustomThemesSection() {
       />
 
       {error && (
-        <div className="flex items-center gap-2 rounded-xl border border-danger/40 bg-danger/10 px-3.5 py-2.5 text-[12.5px] text-danger">
+        <div className="flex items-center gap-2 rounded-md border border-danger bg-danger/15 px-3.5 py-2.5 text-[12.5px] text-danger">
           <AlertCircle size={14} strokeWidth={2.2} />
           <span>{error}</span>
           <button
             type="button"
             onClick={() => setError(null)}
-            className="ms-auto rounded px-2 text-[11px] font-semibold uppercase tracking-wider opacity-70 hover:opacity-100"
+            className="ms-auto rounded px-2 text-[11.5px] font-semibold uppercase tracking-wider opacity-70 hover:opacity-100"
           >
             Dismiss
           </button>

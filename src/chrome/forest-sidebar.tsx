@@ -3,6 +3,7 @@ import { useState, type ReactNode } from "react";
 import { HarborMark } from "@/components/icons/harbor-mark";
 import { ProfileChip } from "@/chrome/sidebar/profile-chip";
 import { CollapseToggle } from "@/chrome/sidebar/collapse-toggle";
+import { SidebarBigPictureEntry } from "@/chrome/sidebar/big-picture-entry";
 import { ParentalPinModal } from "@/components/parental-pin-modal";
 import { NAV_ITEMS, applyNavCustomization, type NavItem } from "@/chrome/nav-items";
 import { isRtl, useT, useUiLanguage } from "@/lib/i18n";
@@ -107,8 +108,9 @@ export function ForestSidebar() {
 
           <div className={`relative z-10 shrink-0 px-2.5 pb-3 pt-1 ${collapsed ? "" : "lg:px-3"}`}>
             <MossLine className="mb-2" />
-            <div className={`mb-1 flex ${collapsed ? "justify-center" : ""}`}>
-              <CollapseToggle collapsed={collapsed} />
+            <div className={`mb-1 flex flex-col gap-1 ${collapsed ? "items-center" : ""}`}>
+              <SidebarBigPictureEntry collapsed={collapsed} />
+            <CollapseToggle collapsed={collapsed} />
             </div>
             {locked ? (
               <div

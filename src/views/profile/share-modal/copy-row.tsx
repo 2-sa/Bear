@@ -21,7 +21,7 @@ export function CopyRow({ label, value, primary }: { label: string; value: strin
           value={value}
           onFocus={(ev) => ev.currentTarget.select()}
           spellCheck={false}
-          className={`min-w-0 flex-1 rounded-[10px] bg-elevated px-3 text-ink outline-none ring-1 ring-edge-soft ${
+          className={`min-w-0 flex-1 rounded-md bg-elevated px-3 text-ink outline-none ring-1 ring-edge-soft ${
             primary ? "min-h-11 text-[14px]" : "min-h-9 text-[13px]"
           }`}
         />
@@ -29,7 +29,7 @@ export function CopyRow({ label, value, primary }: { label: string; value: strin
           type="button"
           onClick={() => void copy()}
           aria-label={`Copy ${label}`}
-          className={`inline-flex shrink-0 items-center gap-1.5 rounded-[10px] px-3 text-[13px] font-medium ring-1 transition-colors ${
+          className={`inline-flex shrink-0 items-center gap-1.5 rounded-md px-3 text-[13px] font-medium ring-1 transition-colors ${
             primary ? "min-h-11" : "min-h-9"
           } ${copied ? "bg-accent/15 text-accent ring-accent/40" : "bg-elevated text-ink ring-edge-soft hover:bg-raised"}`}
         >

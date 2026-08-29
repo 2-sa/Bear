@@ -1,7 +1,9 @@
 import { useEffect } from "react";
+import { isBigPictureActive, pushBigPicture } from "@/lib/big-picture";
 import type { Meta } from "@/lib/cinemeta";
 import { useProfiles } from "@/lib/profiles";
 import { useView } from "@/lib/view";
+import { requestBpPlay } from "@/views/big-picture/bp-play-request";
 
 type RemoteOpen =
   | { action: "openMeta"; metaId: string; metaType: string; name?: string; poster?: string }
@@ -63,6 +65,12 @@ export function RemoteOpenBridge() {
         return;
       }
       const meta = toMeta(d);
+      if (isBigPictureActive()) {
+        const metaId = `${meta.type}:${meta.id}`;
+        if (d.action === "playMeta") requestBpPlay(metaId);
+        pushBigPicture({ kind: "detail", metaId });
+        return;
+      }
       if (d.action === "openMeta") {
         openMeta(meta);
         return;

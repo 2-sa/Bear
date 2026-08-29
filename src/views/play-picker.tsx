@@ -1079,7 +1079,7 @@ function SeasonPackEmptyState({
     <div
       role="status"
       aria-live="polite"
-      className="rounded-[24px] border border-edge-soft/70 bg-canvas/80 px-9 py-11"
+      className="rounded-3xl border border-edge-soft/70 bg-canvas/80 px-9 py-11"
     >
       <div className="flex flex-col items-center gap-5 text-center">
         <span className="flex h-12 w-12 items-center justify-center rounded-full bg-elevated text-ink-muted ring-1 ring-edge-soft">

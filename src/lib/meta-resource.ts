@@ -26,6 +26,12 @@ export async function resolveMeta(
   id: string,
 ): Promise<Meta | null> {
   const cinemetaPromise = cinemetaMeta(type, id).catch(() => null);
+  const cinemetaOff = !cinemetaEnabled();
+
+  if (!cinemetaOff && !preferCustomMeta()) {
+    const early = await cinemetaPromise;
+    if (early?.poster) return early;
+  }
 
   const user = authKey ? await userAddons(authKey).catch(() => [] as Addon[]) : [];
   const seen = new Set<string>();
@@ -36,8 +42,6 @@ export async function resolveMeta(
     seen.add(key);
     if (addonAccepts(a, "meta", type, id) && !isCinemeta(a)) candidates.push(a);
   }
-
-  const cinemetaOff = !cinemetaEnabled();
 
   if (candidates.length === 0) {
     return cinemetaOff ? cinemetaMeta(type, id, true).catch(() => null) : cinemetaPromise;

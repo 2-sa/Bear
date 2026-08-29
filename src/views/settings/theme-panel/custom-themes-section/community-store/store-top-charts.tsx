@@ -51,7 +51,7 @@ function ChartColumn({
 }) {
   const rows = themes.slice(0, 5);
   return (
-    <section aria-label={title} className="rounded-[14px] bg-surface p-4 ring-1 ring-edge-soft">
+    <section aria-label={title} className="rounded-md bg-surface p-4 ring-1 ring-edge-soft">
       <SectionHeader icon={<Icon size={16} className="text-ink-subtle" />} label={title} />
       <div className="flex flex-col">
         {rows.length === 0 ? (
@@ -105,10 +105,10 @@ function ChartRow({
     <button
       type="button"
       onClick={() => onOpen(theme)}
-      className="group flex items-center gap-3 rounded-[10px] p-2 text-start outline-none transition-colors hover:bg-elevated focus-visible:ring-2 focus-visible:ring-accent"
+      className="group flex items-center gap-3 rounded-md p-2 text-start outline-none transition-colors hover:bg-elevated focus-visible:ring-2 focus-visible:ring-accent"
     >
       <span
-        className={`grid h-6 w-6 shrink-0 place-items-center rounded-[6px] text-[12px] font-bold tabular-nums ${
+        className={`grid h-6 w-6 shrink-0 place-items-center rounded-sm text-[12.5px] font-bold tabular-nums ${
           top ? "bg-accent text-canvas" : "bg-elevated text-ink-subtle"
         }`}
       >
@@ -121,17 +121,17 @@ function ChartRow({
       </span>
       <span className="shrink-0 ps-1">
         {kind === "rating" && theme.ratingCount > 0 ? (
-          <span className="inline-flex items-center gap-1 text-[12px] font-semibold tabular-nums text-ink-muted">
-            <Star size={11} className="fill-accent text-accent" />
+          <span className="inline-flex items-center gap-1 text-[12.5px] font-semibold tabular-nums text-ink-muted">
+            <Star size={12} className="fill-accent text-accent" />
             {theme.ratingAvg.toFixed(1)}
           </span>
         ) : kind === "downloads" ? (
-          <span className="inline-flex items-center gap-1 text-[12px] font-semibold tabular-nums text-ink-muted">
-            <ArrowDownToLine size={11} strokeWidth={2.2} />
+          <span className="inline-flex items-center gap-1 text-[12.5px] font-semibold tabular-nums text-ink-muted">
+            <ArrowDownToLine size={12} strokeWidth={2.2} />
             {fmtCount(theme.downloads)}
           </span>
         ) : (
-          <span className="text-[11px] font-semibold tabular-nums text-ink-subtle">{relTime(theme.createdAt)}</span>
+          <span className="text-[11.5px] font-semibold tabular-nums text-ink-subtle">{relTime(theme.createdAt)}</span>
         )}
       </span>
     </button>

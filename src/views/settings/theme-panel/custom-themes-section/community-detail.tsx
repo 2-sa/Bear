@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useEscape, useModalExit } from "@/components/modal-shell";
 import { createPortal } from "react-dom";
 import { Check, Download, Loader2, Share2, Star, X } from "lucide-react";
 import { downloadTheme, rateTheme, type StoreTheme } from "@/lib/theme-store";
@@ -10,6 +11,8 @@ export function CommunityDetail({
   theme: StoreTheme;
   onClose: () => void;
 }) {
+  const { closing, close } = useModalExit(onClose);
+  useEscape(close);
   const [t, setT] = useState(theme);
   const [downloading, setDownloading] = useState(false);
   const [done, setDone] = useState(false);
@@ -52,10 +55,10 @@ export function CommunityDetail({
   const shownRating = myRating || Math.round(t.ratingAvg);
 
   return createPortal(
-    <div className="fixed inset-0 z-[230] flex items-center justify-center p-6">
-      <button aria-label="Close" onClick={onClose} className="absolute inset-0 cursor-default bg-canvas/70 backdrop-blur-sm" />
-      <div className="modal-panel relative flex max-h-[88vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-edge-soft bg-elevated shadow-[0_30px_90px_-30px_rgba(0,0,0,0.8)]">
-        <button onClick={onClose} className="absolute end-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-canvas/80 text-ink-muted backdrop-blur-md transition-colors hover:text-ink">
+    <div className={`${closing ? "animate-scrim-out" : "animate-scrim-in"} fixed inset-0 z-[244] flex items-center justify-center p-6`}>
+      <button aria-label="Close" onClick={close} className="absolute inset-0 cursor-default bg-canvas/70 backdrop-blur-sm" />
+      <div className={`modal-panel ${closing ? "animate-dialog-out" : "animate-dialog-in"} relative flex max-h-[88vh] w-full max-w-2xl flex-col overflow-hidden rounded-md bg-elevated harbor-float`}>
+        <button aria-label="Close" onClick={close} className="absolute end-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-canvas/80 text-ink-muted backdrop-blur-md transition-colors hover:text-ink">
           <X size={16} />
         </button>
         <div className="overflow-y-auto [scrollbar-width:thin]">
@@ -72,14 +75,14 @@ export function CommunityDetail({
                 by {t.author} · {t.downloads} downloads · {t.ratingAvg || "-"}/5 ({t.ratingCount})
               </p>
             </div>
-            {t.blurb && <p className="text-[14px] leading-relaxed text-ink-muted">{t.blurb}</p>}
+            {t.blurb && <p className="text-[13.5px] leading-relaxed text-ink-muted">{t.blurb}</p>}
 
             <div className="flex flex-wrap items-center gap-3">
               <button
                 onClick={download}
                 disabled={downloading || done}
-                className={`flex h-11 items-center gap-2 rounded-xl px-5 text-[14px] font-semibold transition-colors disabled:opacity-90 ${
-                  done ? "bg-emerald-400 text-black" : "bg-ink text-canvas hover:opacity-90"
+                className={`flex h-11 items-center gap-2 rounded-md px-5 text-[13.5px] font-semibold transition-colors disabled:opacity-90 ${
+                  done ? "bg-success text-black" : "bg-ink text-canvas hover:opacity-90"
                 }`}
               >
                 {downloading ? <Loader2 size={16} className="animate-spin" /> : done ? <Check key="done" size={16} className="harbor-pop" /> : <Download size={16} />}
@@ -87,14 +90,14 @@ export function CommunityDetail({
               </button>
               <button
                 onClick={share}
-                className="flex h-11 items-center gap-2 rounded-xl border border-edge-soft px-4 text-[13.5px] font-medium text-ink-muted transition-colors hover:border-edge hover:text-ink"
+ className="flex h-11 items-center gap-2 rounded-md px-4 text-[13.5px] font-medium text-ink-muted transition-colors hover:bg-canvas hover:text-ink"
               >
-                {copied ? <Check size={15} /> : <Share2 size={15} />} {copied ? "Copied" : "Share"}
+                {copied ? <Check size={16} /> : <Share2 size={16} />} {copied ? "Copied" : "Share"}
               </button>
               <div className="ms-auto flex items-center gap-0.5" role="group" aria-label="Rate this theme">
                 {[1, 2, 3, 4, 5].map((n) => (
                   <button key={n} onClick={() => rate(n)} aria-label={`Rate ${n} stars`} className="p-0.5">
-                    <Star size={20} className={n <= shownRating ? "fill-amber-300 text-amber-300" : "text-ink-subtle"} />
+                    <Star size={20} className={n <= shownRating ? "fill-amber-300 text-accent" : "text-ink-subtle"} />
                   </button>
                 ))}
               </div>
@@ -104,7 +107,7 @@ export function CommunityDetail({
             {t.screenshots.length > 0 && (
               <div className="flex flex-col gap-2.5">
                 {t.screenshots.map((s, i) => (
-                  <img key={i} src={s} alt="" loading="lazy" className="w-full rounded-xl border border-edge-soft" />
+ <img key={i} src={s} alt="" loading="lazy" className="w-full rounded-md" />
                 ))}
               </div>
             )}

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useModalExit } from "@/components/modal-shell";
 import { createPortal } from "react-dom";
 import { Check, Flag, Package, Share2, Star, X } from "lucide-react";
 import { getBundle, installBundle, rateBundle, reportBundle, type StoreBundle } from "@/lib/bundle-store";
@@ -11,6 +12,7 @@ import { useAcquireState } from "./market/use-acquire";
 const KIND_LABEL: Record<StoreBundle["kind"], string> = { badge: "Badge pack", award: "Award pack" };
 
 export function BundleDetail({ bundle, onClose }: { bundle: StoreBundle; onClose: () => void }) {
+  const { closing, close } = useModalExit(onClose);
   const [t, setT] = useState(bundle);
   const [errMsg, setErrMsg] = useState<string | null>(null);
   const [myRating, setMyRating] = useState(0);
@@ -22,12 +24,12 @@ export function BundleDetail({ bundle, onClose }: { bundle: StoreBundle; onClose
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.stopPropagation();
-        onClose();
+        close();
       }
     };
     document.addEventListener("keydown", onKey, true);
     return () => document.removeEventListener("keydown", onKey, true);
-  }, [onClose]);
+  }, [close]);
 
   const { state, run } = useAcquireState(async () => {
     setErrMsg(null);
@@ -67,15 +69,15 @@ export function BundleDetail({ bundle, onClose }: { bundle: StoreBundle; onClose
   const shownStars = hover || myRating || Math.round(t.ratingAvg);
 
   return createPortal(
-    <div className="fixed inset-0 z-[230] flex items-center justify-center p-4 sm:p-6">
-      <button aria-label="Close" onClick={onClose} className="absolute inset-0 cursor-default bg-canvas/75 backdrop-blur-sm" />
-      <div className="modal-panel relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-[20px] bg-elevated ring-1 ring-edge-soft shadow-[0_40px_120px_-40px_rgba(0,0,0,0.85)]">
+    <div className={`${closing ? "animate-scrim-out" : "animate-scrim-in"} fixed inset-0 z-[244] flex items-center justify-center p-4 sm:p-6`}>
+      <button aria-label="Close" onClick={close} className="absolute inset-0 cursor-default bg-canvas/75 backdrop-blur-sm" />
+      <div className={`modal-panel ${closing ? "animate-dialog-out" : "animate-dialog-in"} relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-md bg-elevated ring-1 ring-edge-soft harbor-float`}>
         <button
-          onClick={onClose}
+          onClick={close}
           aria-label="Close"
           className="absolute end-3 top-3 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-black/45 text-white/90 backdrop-blur-md transition-colors hover:bg-black/65 hover:text-white"
         >
-          <X size={17} />
+          <X size={18} />
         </button>
 
         <div className="min-h-0 overflow-y-auto [scrollbar-width:thin]">
@@ -86,7 +88,7 @@ export function BundleDetail({ bundle, onClose }: { bundle: StoreBundle; onClose
             <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_top,rgba(0,0,0,0.92)_0%,rgba(0,0,0,0.52)_30%,rgba(0,0,0,0.1)_58%,transparent_80%)]" />
             <div className="absolute inset-x-0 bottom-0 flex flex-col gap-1.5 p-6">
               <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-white/12 px-2.5 py-0.5 text-[10.5px] font-bold uppercase tracking-[0.14em] text-white backdrop-blur-sm">
-                <Package size={11} /> {KIND_LABEL[t.kind]}
+                <Package size={12} /> {KIND_LABEL[t.kind]}
               </span>
               <h2 className="font-display text-[clamp(24px,3.4vw,34px)] font-medium leading-tight tracking-tight text-white [text-shadow:0_2px_20px_rgba(0,0,0,0.5)]">
                 {t.name}
@@ -152,7 +154,7 @@ export function BundleDetail({ bundle, onClose }: { bundle: StoreBundle; onClose
             </div>
             {state === "error" && errMsg && <p className="text-[12.5px] text-danger">{errMsg}</p>}
 
-            {t.description && <p className="text-[14px] leading-relaxed text-ink-muted">{t.description}</p>}
+            {t.description && <p className="text-[13.5px] leading-relaxed text-ink-muted">{t.description}</p>}
 
             <div className="h-px bg-edge-soft" />
 

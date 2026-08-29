@@ -49,7 +49,7 @@ export function StoreDiscover({
       <StoreCategoryChips rails={data.moodRails} onPick={onPickMood} />
 
       <StoreRail
-        icon={<Sparkles size={15} strokeWidth={2.2} />}
+        icon={<Sparkles size={16} strokeWidth={2.2} />}
         title="You might like"
         subtitle="Highly rated by the community"
         themes={data.topRated.slice(0, 20)}
@@ -59,7 +59,7 @@ export function StoreDiscover({
       />
 
       <StoreRail
-        icon={<Clock size={15} strokeWidth={2.2} />}
+        icon={<Clock size={16} strokeWidth={2.2} />}
         title="New this week"
         subtitle="Fresh from the community"
         themes={data.fresh.slice(0, 20)}
@@ -75,7 +75,7 @@ export function StoreDiscover({
         return (
           <StoreRail
             key={r.mood}
-            icon={<Icon size={15} strokeWidth={2.2} />}
+            icon={<Icon size={16} strokeWidth={2.2} />}
             title={r.title}
             subtitle={r.blurb}
             themes={r.items.slice(0, 16)}

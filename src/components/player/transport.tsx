@@ -29,6 +29,8 @@ import { renderControl, type ControlContext } from "./transport/control-renderer
 import { SongIdToast } from "@/components/song-id-toast";
 import { useCastModalPlay } from "./use-cast-modal-play";
 
+// This is the mouse-era transport. Big Picture suppresses it outright and
+// renders views/big-picture/player instead, so nothing here scales for ten feet.
 export function Transport({
   snap,
   capabilities,

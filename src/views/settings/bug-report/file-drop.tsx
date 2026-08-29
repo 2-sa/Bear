@@ -61,10 +61,8 @@ export function FileDrop({
           setDragOver(false);
           if (e.dataTransfer?.files?.length) add(e.dataTransfer.files);
         }}
-        className={`flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed px-6 py-9 text-center transition-colors ${
-          dragOver
-            ? "border-ink bg-elevated/70 text-ink"
-            : "border-edge-soft/70 bg-canvas/30 text-ink-muted hover:border-edge hover:text-ink"
+        className={`flex flex-col items-center justify-center gap-2 rounded-md px-6 py-9 text-center transition-colors ${
+          dragOver ? "bg-raised text-ink" : "bg-elevated text-ink-muted hover:bg-raised hover:text-ink"
         }`}
       >
         <ImagePlus size={22} strokeWidth={1.7} />
@@ -90,14 +88,14 @@ export function FileDrop({
         <p className="text-[11.5px] text-danger">{reject}</p>
       )}
       {files.length > 0 && (
-        <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+        <ul className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
           {files.map((f, i) => (
             <li
               key={`${f.name}-${i}`}
-              className="group relative overflow-hidden rounded-xl border border-edge-soft bg-canvas/50"
+              className="group relative overflow-hidden rounded-md bg-elevated"
             >
               <FilePreview file={f} />
-              <div className="flex items-center gap-2 px-2.5 py-2 text-[11px] text-ink-muted">
+              <div className="flex items-center gap-2 px-2.5 py-2 text-[11.5px] text-ink-muted">
                 <span className="truncate" title={f.name}>{f.name}</span>
                 <span className="ms-auto shrink-0 text-ink-subtle">{fmtBytes(f.size)}</span>
               </div>
@@ -105,9 +103,9 @@ export function FileDrop({
                 type="button"
                 onClick={() => remove(i)}
                 aria-label="Remove"
-                className="absolute end-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-canvas/85 text-ink-muted opacity-0 transition-opacity hover:text-ink group-hover:opacity-100"
+                className="absolute end-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-canvas text-ink-muted opacity-0 transition-opacity hover:text-ink group-hover:opacity-100"
               >
-                <X size={13} strokeWidth={2.2} />
+                <X size={14} strokeWidth={2.2} />
               </button>
             </li>
           ))}

@@ -25,6 +25,7 @@ import sync from "./ar/sync";
 import together from "./ar/together";
 import controllers from "./ar/controllers";
 
+import bpSources from "./ar/bp-sources";
 import used from "./ar/used";
 
 const ar: Record<string, string> = {
@@ -54,6 +55,7 @@ const ar: Record<string, string> = {
   ...awards,
   ...addons,
   ...controllers,
+  ...bpSources,
   ...used,
 };
 

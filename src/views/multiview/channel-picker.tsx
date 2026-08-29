@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, Link2, Loader2, Search, Star, Tv, X } from "lucide-react";
+import { ChevronDown, Link2, Loader2, Star, Tv, X } from "lucide-react";
+import { Search } from "@/components/icons/search-icon";
 import { useFavorites } from "@/lib/iptv/favorites";
 import { computeTvgIdCounts, epgProgramsForChannel } from "@/lib/iptv/epg-resolver";
 import { findCurrent } from "@/lib/iptv/xmltv";

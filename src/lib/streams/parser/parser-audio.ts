@@ -2,7 +2,6 @@ import type { DefaultParserResult } from "parse-torrent-title";
 import type { AudioCodec, AudioInfo } from "../types";
 
 const AUDIO_CODEC_RX: Array<[RegExp, AudioCodec]> = [
-  [/\bAtmos\b/i, "Atmos"],
   [/\bTrueHD\b/i, "TrueHD"],
   [/\bDTS-HD\.?MA\b|\bDTS\.?HD\.?MA\b/i, "DTS-HD MA"],
   [/\bDTS\b/i, "DTS"],
@@ -11,6 +10,7 @@ const AUDIO_CODEC_RX: Array<[RegExp, AudioCodec]> = [
   [/\bAAC\b/i, "AAC"],
   [/\bFLAC\b/i, "FLAC"],
   [/\bOpus\b/i, "Opus"],
+  [/\bAtmos\b/i, "Atmos"],
 ];
 
 const CHANNELS_RX = /\b(7\.1|5\.1|6\.1|2\.1|2\.0)\b/;

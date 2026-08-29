@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowDownWideNarrow, ArrowUp, ArrowUpNarrowWide, Check, ChevronDown, ChevronLeft, Layers, Search } from "lucide-react";
+import { ArrowDownWideNarrow, ArrowUp, ArrowUpNarrowWide, Check, ChevronDown, ChevronLeft, Layers } from "lucide-react";
+import { Search } from "@/components/icons/search-icon";
 import { useMobileRemote } from "../mobile-remote";
 import { useRegisterSheet } from "../mobile-sheet-lock";
 import { SHEET_EXIT_CSS, useSheetPresence } from "../remote-extras";

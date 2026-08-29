@@ -183,7 +183,7 @@ function EmptyState() {
   const t = useT();
   const [autoOpen, setAutoOpen] = useState(false);
   return (
-    <div className="flex flex-col items-center justify-center gap-4 rounded-[20px] border border-dashed border-edge-soft bg-elevated/30 px-8 py-20 text-center">
+    <div className="flex flex-col items-center justify-center gap-4 rounded-xl border border-dashed border-edge-soft bg-elevated/30 px-8 py-20 text-center">
       <div className="flex h-14 w-14 items-center justify-center rounded-full bg-elevated text-ink-subtle">
         <DownloadIcon size={26} strokeWidth={1.8} />
       </div>

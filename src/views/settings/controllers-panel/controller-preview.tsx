@@ -19,7 +19,7 @@ export function ControllerPreview({ enabled }: { enabled: boolean }) {
       : t("Press buttons and move the sticks. This mirrors your controller in real time.");
 
   return (
-    <div className="rounded-2xl border border-edge-soft bg-canvas/40 p-5">
+    <div className="rounded-md border border-edge-soft bg-canvas/40 p-5">
       <div className="mb-2 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.14em] text-ink-subtle">
           {t("Live preview")}

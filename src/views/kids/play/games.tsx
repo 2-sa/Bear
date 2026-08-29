@@ -250,7 +250,7 @@ function GamePlayer({ game, onBack }: { game: Game; onBack: () => void }) {
         <div
           ref={frameHostRef}
           onClick={() => frameRef.current?.focus()}
-          className="relative flex items-center justify-center overflow-hidden rounded-[20px] border-4 border-white/35 bg-[#04121e] shadow-[0_28px_70px_-24px_rgba(0,20,40,0.7)]"
+          className="relative flex items-center justify-center overflow-hidden rounded-xl border-4 border-white/35 bg-[#04121e] shadow-[0_28px_70px_-24px_rgba(0,20,40,0.7)]"
           style={
             fullscreen
               ? { width: "100%", height: "100%", borderRadius: 0, borderWidth: 0 }

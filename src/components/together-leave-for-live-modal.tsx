@@ -1,3 +1,4 @@
+import { createPortal } from "react-dom";
 import { useEffect } from "react";
 import { Tv } from "lucide-react";
 import { useView } from "@/lib/view";
@@ -18,9 +19,9 @@ export function TogetherLeaveForLiveModal() {
   if (!pendingLiveSrc) return null;
   const name = pendingLiveSrc.title || "this channel";
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-[130] flex items-center justify-center bg-black/60 px-6 animate-fade-in"
+      className="fixed inset-0 z-[175] flex items-center justify-center bg-black/60 px-6 animate-fade-in"
       onClick={cancelLeavePartyForLive}
     >
       <div
@@ -55,6 +56,7 @@ export function TogetherLeaveForLiveModal() {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

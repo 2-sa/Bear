@@ -6,11 +6,13 @@ const RECENT_GRACE: Duration = Duration::from_secs(60 * 60);
 const ORPHAN_MAX_AGE: Duration = Duration::from_secs(24 * 60 * 60);
 
 fn is_updater_dir(name: &str) -> bool {
-    name.starts_with("Bear-") && name.contains("-updater-")
+    name.starts_with("Harbor-") && name.contains("-updater-")
 }
 
 fn is_orphan_dir(name: &str) -> bool {
-    name.starts_with("bear-beta-hls-") || name == "bear-beta-castsubs"
+    name.starts_with("harbor-hls-")
+        || name.starts_with("harbor-update-")
+        || name == "harbor-castsubs"
 }
 
 pub fn sweep_temp() {
@@ -72,7 +74,7 @@ fn dir_size(path: &PathBuf) -> u64 {
     total
 }
 
-fn bear_beta_temp_dirs() -> Vec<PathBuf> {
+fn harbor_temp_dirs() -> Vec<PathBuf> {
     let dir = std::env::temp_dir();
     let entries = match std::fs::read_dir(&dir) {
         Ok(e) => e,
@@ -85,7 +87,7 @@ fn bear_beta_temp_dirs() -> Vec<PathBuf> {
         if !entry.metadata().map(|m| m.is_dir()).unwrap_or(false) {
             continue;
         }
-        if is_updater_dir(&name) || is_orphan_dir(&name) || name == "bear-beta-trailers" {
+        if is_updater_dir(&name) || is_orphan_dir(&name) || name == "harbor-trailers" {
             out.push(entry.path());
         }
     }
@@ -94,12 +96,12 @@ fn bear_beta_temp_dirs() -> Vec<PathBuf> {
 
 #[tauri::command]
 pub fn temp_usage_bytes() -> u64 {
-    bear_beta_temp_dirs().iter().map(dir_size).sum()
+    harbor_temp_dirs().iter().map(dir_size).sum()
 }
 
 #[tauri::command]
 pub fn temp_clear() -> u64 {
-    let dirs = bear_beta_temp_dirs();
+    let dirs = harbor_temp_dirs();
     let before: u64 = dirs.iter().map(dir_size).sum();
     for path in dirs {
         let _ = std::fs::remove_dir_all(path);
@@ -112,20 +114,21 @@ mod tests {
     use super::*;
 
     #[test]
-    fn matches_only_bear_updater_dirs() {
-        assert!(is_updater_dir("Bear-0.9.116-updater-mbbEi1"));
-        assert!(is_updater_dir("Bear-0.9.117-updater-wTLMpQ"));
-        assert!(!is_updater_dir("Bear-0.9.116"));
+    fn matches_only_harbor_updater_dirs() {
+        assert!(is_updater_dir("Harbor-0.9.113-updater-mbbEi1"));
+        assert!(is_updater_dir("Harbor-0.9.35-updater-wTLMpQ"));
+        assert!(!is_updater_dir("Harbor-0.9.113"));
         assert!(!is_updater_dir("updater-cache"));
         assert!(!is_updater_dir("SomeOtherApp-updater-xyz"));
-        assert!(!is_updater_dir("bear-beta-trailers"));
+        assert!(!is_updater_dir("harbor-trailers"));
     }
 
     #[test]
-    fn matches_only_bear_beta_orphans() {
-        assert!(is_orphan_dir("bear-beta-hls-1234"));
-        assert!(is_orphan_dir("bear-beta-castsubs"));
-        assert!(!is_orphan_dir("bear-beta-trailers"));
+    fn matches_only_harbor_orphans() {
+        assert!(is_orphan_dir("harbor-hls-1234"));
+        assert!(is_orphan_dir("harbor-castsubs"));
+        assert!(is_orphan_dir("harbor-update-0.9.121"));
+        assert!(!is_orphan_dir("harbor-trailers"));
         assert!(!is_orphan_dir("hls-cache"));
     }
 }

@@ -8,10 +8,12 @@ export function IdentifySongButton({
   className,
   tight,
   editing,
+  iconUrl,
 }: {
   className?: string;
   tight?: boolean;
   editing?: boolean;
+  iconUrl?: string;
 }) {
   const { settings } = useSettings();
   const [pending, setPending] = useState(false);
@@ -45,11 +47,20 @@ export function IdentifySongButton({
           "pointer-events-auto inline-flex h-11 w-11 items-center justify-center rounded-full text-white/90 transition hover:bg-white/15 disabled:opacity-50"
         }
       >
-        <AudioLines
-          size={tight ? 18 : 22}
-          strokeWidth={1.9}
-          className={pending ? "animate-pulse" : undefined}
-        />
+        {iconUrl ? (
+          <img
+            src={iconUrl}
+            alt=""
+            draggable={false}
+            className={`h-[22px] w-[22px] select-none object-contain ${pending ? "animate-pulse" : ""}`}
+          />
+        ) : (
+          <AudioLines
+            size={tight ? 18 : 22}
+            strokeWidth={1.9}
+            className={pending ? "animate-pulse" : undefined}
+          />
+        )}
       </button>
     </Tooltip>
   );
