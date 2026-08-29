@@ -18,6 +18,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import "./ebook-book.css";
 import "./ebook-hero.css";
+import { NavArrow } from "@/components/nav-arrow";
 import { Poster } from "@/components/poster";
 import { Row } from "@/components/row";
 import { useAnilist } from "@/lib/anilist/provider";
@@ -54,6 +55,7 @@ import { subscribeEBookExtensions } from "@/lib/ebook/extensions";
 import { subscribeEBookSources } from "@/lib/ebook/sources";
 import { fetchEBookListCollection, flushPendingEBookTracking } from "@/lib/ebook/tracking";
 import { useView } from "@/lib/view";
+import { usePageVisible } from "@/lib/visibility";
 import { openUrl } from "@/lib/window";
 import { useArtGlow } from "./big-picture/bp-art-color";
 import { EBookSourcesView } from "./ebook/ebook-sources-panel";
@@ -401,8 +403,9 @@ export function EBookView() {
   const featuredBooks = (popular ?? []).filter(
     (ebook) => ebook.cover && !/(?:^|\/)default(?:\.[a-z0-9]+)?(?:[?#]|$)/i.test(ebook.cover),
   );
-  const hero = featuredBooks[0] ?? popular?.[0];
-  const shelfBooks = featuredBooks.filter((ebook) => ebook.id !== hero?.id).slice(0, 60);
+  const heroBooks = featuredBooks.slice(0, 5);
+  const heroIds = new Set(heroBooks.map((ebook) => ebook.id));
+  const shelfBooks = featuredBooks.filter((ebook) => !heroIds.has(ebook.id)).slice(0, 60);
   const refreshing = query.trim().length >= 2 ? results === null : sourceItems === null;
   const rails: Rail[] =
     query.trim().length >= 2
@@ -436,7 +439,7 @@ export function EBookView() {
   return (
     <main className="flex-1 overflow-y-auto overflow-x-hidden pb-20">
       <EBookLibraryHero
-        ebook={hero}
+        ebooks={heroBooks}
         shelfBooks={shelfBooks}
         onOpen={(ebook) => openEBook(String(ebook.id))}
       />
@@ -676,24 +679,65 @@ function arrangeFeaturedShelf(books: EBook[], shelfIndex: number): FeaturedShelf
   return items;
 }
 
+const EBOOK_HERO_ROTATE_MS = 9000;
+
 function EBookLibraryHero({
-  ebook,
+  ebooks,
   shelfBooks,
   onOpen,
 }: {
-  ebook?: EBook;
+  ebooks: EBook[];
   shelfBooks: EBook[];
   onOpen: (ebook: EBook) => void;
 }) {
-  const artColor = useArtGlow(ebook?.cover);
+  const [active, setActive] = useState(0);
+  const [shown, setShown] = useState(0);
+  const [visible, setVisible] = useState(true);
+  const [paused, setPaused] = useState(false);
+  const pageVisible = usePageVisible();
+  const current = ebooks[shown];
+  const artColor = useArtGlow(current?.cover);
   const shelves = [0, 1, 2].map((shelfIndex) =>
     shelfBooks.filter((_, bookIndex) => bookIndex % 3 === shelfIndex).slice(0, 20),
   );
   const arrangedShelves = shelves.map(arrangeFeaturedShelf);
+
+  useEffect(() => {
+    if (paused || ebooks.length < 2 || !pageVisible) return;
+    const id = window.setInterval(
+      () => setActive((index) => (index + 1) % ebooks.length),
+      EBOOK_HERO_ROTATE_MS,
+    );
+    return () => window.clearInterval(id);
+  }, [paused, ebooks.length, pageVisible]);
+
+  useEffect(() => {
+    if (active >= ebooks.length) setActive(0);
+  }, [ebooks.length, active]);
+
+  useEffect(() => {
+    if (active === shown) return;
+    setVisible(false);
+    const timer = window.setTimeout(() => {
+      setShown(active);
+      setVisible(true);
+    }, 280);
+    return () => window.clearTimeout(timer);
+  }, [active, shown]);
+
+  const fade: CSSProperties = {
+    transition:
+      "opacity 420ms cubic-bezier(0.22,1,0.36,1), transform 420ms cubic-bezier(0.22,1,0.36,1)",
+    opacity: visible ? 1 : 0,
+    transform: visible ? "translateY(0)" : "translateY(14px)",
+  };
+
   return (
     <section
-      className="ebook-library-hero"
+      className="group ebook-library-hero"
       style={{ "--ebook-hero-accent": artColor ?? "205 116 50" } as CSSProperties}
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
     >
       <div className="ebook-hero-shelves" aria-hidden="true">
         {arrangedShelves.map((shelf, shelfIndex) => (
@@ -759,31 +803,31 @@ function EBookLibraryHero({
           />
         </svg>
 
-        <div className="ebook-hero-copy">
+        <div className="ebook-hero-copy" style={fade}>
           <span className="ebook-hero-kicker">Featured books · Metadata picks</span>
-          <h1>{ebook?.title ?? "A remarkable book for your shelf"}</h1>
+          <h1>{current?.title ?? "A remarkable book for your shelf"}</h1>
           <p>
-            {ebook?.description ||
+            {current?.description ||
               "A living shelf for new worlds, beloved stories, and the books you have yet to meet."}
           </p>
           <div className="ebook-hero-meta">
-            {ebook?.year && <span>{ebook.year}</span>}
-            {ebook?.genres.slice(0, 2).map((genre) => <span key={genre}>{genre}</span>)}
+            {current?.year && <span>{current.year}</span>}
+            {current?.genres.slice(0, 2).map((genre) => <span key={genre}>{genre}</span>)}
           </div>
-          {ebook && (
-            <button type="button" onClick={() => onOpen(ebook)}>
+          {current && (
+            <button type="button" onClick={() => onOpen(current)}>
               <BookOpen size={17} /> Open featured book
             </button>
           )}
         </div>
 
-        <div className="ebook-hero-showcase" aria-hidden="true">
+        <div className="ebook-hero-showcase" aria-hidden="true" style={fade}>
           <div className="ebook-hero-book-shadow" />
           <div className="ebook-hero-book-object">
             <div className="ebook-hero-book-pages" />
             <Poster
-              src={ebook?.cover}
-              seed={`ebook-hero:${ebook?.id ?? "loading"}`}
+              src={current?.cover}
+              seed={`ebook-hero:${current?.id ?? "loading"}`}
               ratio="portrait"
               className="ebook-hero-book-cover"
             />
@@ -791,6 +835,37 @@ function EBookLibraryHero({
           <span className="ebook-hero-edition">Featured pick</span>
         </div>
       </div>
+
+      {ebooks.length > 1 && (
+        <>
+          <NavArrow
+            dir="left"
+            onClick={() => setActive((index) => (index - 1 + ebooks.length) % ebooks.length)}
+            label="Previous featured book"
+            size={38}
+            className="absolute start-2 top-1/2 z-20 h-14 w-14 -translate-y-1/2 opacity-25 group-hover:opacity-100"
+          />
+          <NavArrow
+            dir="right"
+            onClick={() => setActive((index) => (index + 1) % ebooks.length)}
+            label="Next featured book"
+            size={38}
+            className="absolute end-2 top-1/2 z-20 h-14 w-14 -translate-y-1/2 opacity-25 group-hover:opacity-100"
+          />
+          <div className="ebook-hero-stepper">
+            {ebooks.map((ebook, index) => (
+              <button
+                key={ebook.id}
+                type="button"
+                onClick={() => setActive(index)}
+                aria-label={`Show featured book ${index + 1}: ${ebook.title}`}
+                aria-current={index === active ? "true" : undefined}
+                className={index === active ? "is-active" : ""}
+              />
+            ))}
+          </div>
+        </>
+      )}
     </section>
   );
 }

@@ -418,6 +418,35 @@
   transform: rotate(-4deg);
 }
 
+.ebook-hero-stepper {
+  position: absolute;
+  z-index: 10;
+  bottom: 24px;
+  left: clamp(48px, 7vw, 112px);
+  display: flex;
+  gap: 6px;
+}
+
+.ebook-hero-stepper button {
+  width: 16px;
+  height: 6px;
+  padding: 0;
+  border-radius: 999px;
+  background: rgba(42, 48, 45, 0.28);
+  transition:
+    width 200ms ease,
+    background-color 200ms ease;
+}
+
+.ebook-hero-stepper button:hover {
+  background: rgba(42, 48, 45, 0.55);
+}
+
+.ebook-hero-stepper button.is-active {
+  width: 32px;
+  background: rgb(var(--ebook-hero-accent));
+}
+
 @media (max-width: 1050px) {
   .ebook-hero-paper {
     width: 84%;
@@ -491,11 +520,17 @@
   .ebook-hero-shelf-book:nth-child(n + 9) {
     display: none;
   }
+
+  .ebook-hero-stepper {
+    bottom: 18px;
+    left: 38px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .ebook-hero-book-object,
-  .ebook-hero-copy button {
+  .ebook-hero-copy button,
+  .ebook-hero-stepper button {
     transition: none;
   }
 }
