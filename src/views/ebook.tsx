@@ -16,6 +16,7 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import "./ebook-book.css";
 import { Poster } from "@/components/poster";
 import { Row } from "@/components/row";
 import { useAnilist } from "@/lib/anilist/provider";
@@ -94,7 +95,8 @@ function updateSourceItems(current: EBook[] | null, incoming: EBook[], replace =
     const index = groups.findIndex((existing) =>
       (existing.books ?? [existing]).some((book) => incomingIds.has(book.id)),
     );
-    const fallback = index < 0 ? groups.findIndex((existing) => key(existing) === key(ebook)) : index;
+    const fallback =
+      index < 0 ? groups.findIndex((existing) => key(existing) === key(ebook)) : index;
     if (fallback < 0) {
       groups.push(ebook);
       continue;
@@ -150,9 +152,7 @@ export function EBookView() {
   );
   const displayFavorites = useMemo(
     () =>
-      favorites.map(
-        (ebook) => currentItems.get(ebook.id) ?? mergeEBookMetadata([ebook], [])[0],
-      ),
+      favorites.map((ebook) => currentItems.get(ebook.id) ?? mergeEBookMetadata([ebook], [])[0]),
     [currentItems, favorites],
   );
   const loadAnilistLibrary = useCallback(() => {
@@ -194,16 +194,21 @@ export function EBookView() {
           : (list[0]?.id ?? "");
         providerIdRef.current = selected;
         setProviderId(selected);
-        return loadSourceEBookPage(undefined, selected, {}, {
-          onSource: (items) => {
-            if (seq === sourceSeq.current)
-              setSourceItems((current) => updateSourceItems(current, items));
+        return loadSourceEBookPage(
+          undefined,
+          selected,
+          {},
+          {
+            onSource: (items) => {
+              if (seq === sourceSeq.current)
+                setSourceItems((current) => updateSourceItems(current, items));
+            },
+            onMetadata: (items) => {
+              if (seq === sourceSeq.current)
+                setSourceItems((current) => updateSourceItems(current, items, true));
+            },
           },
-          onMetadata: (items) => {
-            if (seq === sourceSeq.current)
-              setSourceItems((current) => updateSourceItems(current, items, true));
-          },
-        });
+        );
       })
       .then((page) => {
         if (!page || seq !== sourceSeq.current) return;
@@ -288,16 +293,21 @@ export function EBookView() {
     setHasMore(false);
     setResults(null);
     searchTimer.current = window.setTimeout(() => {
-      void loadSourceEBookPage(value.trim(), providerId, {}, {
-        onSource: (items) => {
-          if (seq === searchSeq.current)
-            setResults((current) => updateSourceItems(current, items));
+      void loadSourceEBookPage(
+        value.trim(),
+        providerId,
+        {},
+        {
+          onSource: (items) => {
+            if (seq === searchSeq.current)
+              setResults((current) => updateSourceItems(current, items));
+          },
+          onMetadata: (items) => {
+            if (seq === searchSeq.current)
+              setResults((current) => updateSourceItems(current, items, true));
+          },
         },
-        onMetadata: (items) => {
-          if (seq === searchSeq.current)
-            setResults((current) => updateSourceItems(current, items, true));
-        },
-      })
+      )
         .then((page) => {
           if (seq === searchSeq.current) {
             cursorRef.current = page.cursor;
@@ -835,14 +845,46 @@ function EBookCard({ ebook, onOpen }: { ebook: EBook; onOpen: (ebook: EBook) => 
       onClick={() => onOpen(ebook)}
       className="group flex w-full min-w-0 flex-col gap-2 text-start"
     >
-      <div className="transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0.24,1)] group-hover:-translate-y-2 motion-reduce:transition-none motion-reduce:group-hover:translate-y-0">
-        <Poster
-          src={ebook.cover}
-          seed={`ebook:${ebook.id}`}
-          ratio="portrait"
-          lazy
-          className="harbor-card-ring rounded-xl shadow-[0_12px_30px_-18px_rgba(0,0,0,0.8)]"
-        />
+      <div className="bk-book-stage" aria-hidden="true">
+        <div className="bk-book">
+          <div className="bk-front">
+            <div className="bk-cover">
+              <Poster
+                src={ebook.cover}
+                seed={`ebook:${ebook.id}`}
+                ratio="portrait"
+                lazy
+                className="bk-cover-art harbor-card-ring"
+              />
+              {!ebook.cover && (
+                <h2 className="bk-cover-title">
+                  <span>{ebook.authors[0] || "Bear eBooks"}</span>
+                  <span>{ebook.title}</span>
+                </h2>
+              )}
+            </div>
+            <div className="bk-cover-back" />
+          </div>
+
+          <div className="bk-page">
+            <div className="bk-content bk-content-current" />
+            <div className="bk-content" />
+            <div className="bk-content" />
+          </div>
+
+          <div className="bk-back" />
+          <div className="bk-right" />
+
+          <div className="bk-left">
+            <h2>
+              <span>{ebook.authors[0] || "Bear"}</span>
+              <span>{ebook.title}</span>
+            </h2>
+          </div>
+
+          <div className="bk-top" />
+          <div className="bk-bottom" />
+        </div>
       </div>
       <p className="line-clamp-2 min-h-9 text-[13px] font-medium leading-snug text-ink">
         {ebook.title}
@@ -1536,7 +1578,11 @@ function EBookDetails({
           chapter={reading.chapter}
           content={reading.content}
           error={reading.error}
-          volumes={volumeGroups.length ? volumeGroups : [{ volume: "", label: "Chapters", chapters: chapters ?? [reading.chapter] }]}
+          volumes={
+            volumeGroups.length
+              ? volumeGroups
+              : [{ volume: "", label: "Chapters", chapters: chapters ?? [reading.chapter] }]
+          }
           onSelectChapter={readChapter}
           onClose={() => setReading(null)}
         />
