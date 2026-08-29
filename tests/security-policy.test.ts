@@ -220,8 +220,8 @@ test("only our signature-verified update channel is enabled", () => {
     new URL("../src/lib/updater/use-update.ts", import.meta.url),
     "utf8",
   );
-  assert.match(frontend, /https:\/\/github\.com\/2-sa\/Bear\/releases/);
-  assert.doesNotMatch(frontend, /harbor\.site\/updates/);
+  assert.match(frontend, /HARBOR_API_BASE/);
+  assert.doesNotMatch(frontend, /harbor\.site|harborstremio/);
 
   for (const file of ["versions.ts", "release-notes.ts"]) {
     const source = readFileSync(new URL(`../src/lib/updater/${file}`, import.meta.url), "utf8");
