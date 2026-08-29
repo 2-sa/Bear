@@ -48,7 +48,7 @@ export function DualSubtitleSection() {
         icon={<Languages size={16} strokeWidth={2} />}
         label={t("Second subtitle language")}
         desc={t("Shown at the same time as your main subtitle.")}
-        tip={t("Harbor loads it automatically when a track in that language exists. You can also set or clear the second track for one video from the subtitle menu in the player.")}
+        tip={t("Bear loads it automatically when a track in that language exists. You can also set or clear the second track for one video from the subtitle menu in the player.")}
       >
         <Dropdown
           value={settings.secondarySubLang}

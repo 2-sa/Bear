@@ -43,14 +43,14 @@ export function DiscoveryLanguageTab() {
         />
       </Section>
 
-      <Section title={t("Help translate Harbor")}>
+      <Section title={t("Help translate Bear")}>
         <SettingRow
           label={t("Fill the gaps")}
-          desc={t("Harbor was built in English. Multi-language support is partial, so your addons usually catch what Harbor's own filters miss. If you speak another language and want to help, the source is open.")}
+          desc={t("Bear was built in English. Multi-language support is partial, so your addons usually catch what Bear's own filters miss. If you speak another language and want to help, the source is open.")}
         >
           <button
             type="button"
-            onClick={() => openUrl("https://github.com/harborstremio/harbor")}
+            onClick={() => openUrl("https://github.com/2-sa/Bear")}
             className="harbor-press-pop flex h-9 shrink-0 items-center gap-2 rounded-md bg-canvas px-4 text-[12.5px] font-semibold text-ink transition-colors hover:bg-surface"
           >
             <GitHubIcon size={14} strokeWidth={2.2} />

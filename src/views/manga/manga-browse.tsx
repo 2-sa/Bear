@@ -1,4 +1,4 @@
-import { BookCheck, ChevronDown, Clock3, Loader2, Sparkles } from "lucide-react";
+import { BookCheck, ChevronDown, Clock3, Loader2, RefreshCw, Sparkles } from "lucide-react";
 import { Search } from "@/components/icons/search-icon";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useT } from "@/lib/i18n";
@@ -7,6 +7,8 @@ import {
   MANGA_PAGE,
   popularManga,
   popularMangaStream,
+  clearMangaCache,
+  refreshMangaTags,
   searchManga,
   searchMangaStream,
   type MangaSummary,
@@ -57,6 +59,8 @@ export function MangaBrowse({
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [reloadTick, setReloadTick] = useState(0);
+  const [refreshingSources, setRefreshingSources] = useState(false);
+  const [sourceRefreshTick, setSourceRefreshTick] = useState(0);
 
   const offsetRef = useRef(0);
   const seenRef = useRef(new Set<string>());
@@ -84,6 +88,20 @@ export function MangaBrowse({
   );
 
   const reload = useCallback(() => setReloadTick((n) => n + 1), []);
+
+  const refreshSources = useCallback(async () => {
+    if (refreshingSources) return;
+    setRefreshingSources(true);
+    clearMangaCache();
+    setTagId("");
+    try {
+      await refreshMangaTags();
+      setSourceRefreshTick((n) => n + 1);
+      reload();
+    } finally {
+      setRefreshingSources(false);
+    }
+  }, [refreshingSources, reload]);
 
   const sourceRef = useRef(activeMangaSourceId());
   const activeSource = activeMangaSource();
@@ -315,7 +333,22 @@ export function MangaBrowse({
           />
         </div>
         <SourceDropdown />
-        <TagDropdown tagId={tagId} onSelect={setTagId} />
+        <TagDropdown tagId={tagId} onSelect={setTagId} refreshKey={sourceRefreshTick} />
+        {activeSource?.kind === "suwayomi" && (
+          <button
+            type="button"
+            onClick={() => void refreshSources()}
+            disabled={refreshingSources}
+            aria-label={t("Refresh sources")}
+            title={t("Refresh sources")}
+            className="flex items-center justify-center rounded-lg border border-edge-soft bg-elevated/40 p-2 text-ink transition-colors hover:bg-elevated/70 disabled:cursor-wait disabled:opacity-60"
+          >
+            <RefreshCw
+              size={18}
+              className={refreshingSources ? "animate-spin motion-reduce:animate-none" : ""}
+            />
+          </button>
+        )}
         {activeSource?.kind === "suwayomi" && <LanguageDropdown />}
         <ManageServersButton onClick={onManageSources} className="ms-auto me-2" />
       </div>

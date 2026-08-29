@@ -14,7 +14,7 @@ export function AudioLanguageTab() {
     <>
       <Section
         title={t("Audio languages")}
-        subtitle={t("When a release ships multiple audio tracks, Harbor selects the first match from this list.")}
+        subtitle={t("When a release ships multiple audio tracks, Bear selects the first match from this list.")}
       >
         <LanguagesPicker
           value={settings.preferredAudioLangs}

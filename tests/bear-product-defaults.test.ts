@@ -105,12 +105,32 @@ test("Bear-owned defaults survive upstream syncs", async (context) => {
   assert.doesNotMatch(discordNative, /1510339683215736892|harbor_logo/);
 
   const languagePanel = readFileSync(
-    new URL("../src/views/settings/language-panel.tsx", import.meta.url),
+    new URL("../src/views/settings/language-panel/discovery-tab.tsx", import.meta.url),
+    "utf8",
+  );
+  const subtitlesPanel = readFileSync(
+    new URL("../src/views/settings/subtitles-panel.tsx", import.meta.url),
+    "utf8",
+  );
+  const appLanguagePanel = readFileSync(
+    new URL("../src/views/settings/language-panel/app-tab.tsx", import.meta.url),
+    "utf8",
+  );
+  const settingsView = readFileSync(new URL("../src/views/settings.tsx", import.meta.url), "utf8");
+  const settingsNav = readFileSync(
+    new URL("../src/views/settings/nav.tsx", import.meta.url),
+    "utf8",
+  );
+  const settingsGroups = readFileSync(
+    new URL("../src/views/settings/groups.ts", import.meta.url),
     "utf8",
   );
   assert.match(languagePanel, /https:\/\/github\.com\/2-sa\/Bear/);
   assert.doesNotMatch(languagePanel, /https:\/\/github\.com\/harborstremio\/harbor/);
-  assert.match(languagePanel, /<SubtitleStylePanel \/>/);
-  assert.match(languagePanel, /<SubtitleOffsetSettings \/>/);
-  assert.match(languagePanel, /title=\{t\("Metadata language"\)\}/);
+  assert.match(subtitlesPanel, /<SubtitleStylePanel \/>/);
+  assert.match(subtitlesPanel, /<SubtitleOffsetSettings \/>/);
+  assert.match(appLanguagePanel, /title=\{t\("Titles and descriptions"\)\}/);
+  assert.doesNotMatch(settingsView, /SupportPanel|settings\/support-panel/);
+  assert.doesNotMatch(settingsNav, /Support Harbor|IconSupport|section: "support"/);
+  assert.doesNotMatch(settingsGroups, /children: \[[^\]]*"support"/);
 });

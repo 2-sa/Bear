@@ -68,9 +68,9 @@ export const TOP_GROUPS: TopGroup[] = [
   {
     id: "help",
     section: "HELP",
-    label: "Help & support",
-    sub: "Report something broken, or support the project.",
-    children: ["bug", "support"],
+    label: "Help",
+    sub: "Report something broken.",
+    children: ["bug"],
   },
   {
     id: "updates",

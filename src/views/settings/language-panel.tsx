@@ -11,7 +11,7 @@ export function LanguagePanel() {
   const t = useT();
   const [tab, setTab] = useState<Tab>("app");
   const tabs = [
-    { id: "app" as const, label: t("Harbor") },
+    { id: "app" as const, label: t("Bear") },
     { id: "audio" as const, label: t("Audio") },
     { id: "discovery" as const, label: t("What you see") },
   ];

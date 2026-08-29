@@ -39,7 +39,6 @@ const StreamBadgesPanel = lazy(() => import("./settings/stream-badges-panel").th
 const AwardIconsPanel = lazy(() => import("./settings/award-icons-panel").then((m) => ({ default: m.AwardIconsPanel })));
 const WebhooksPanel = lazy(() => import("./settings/webhooks-panel").then((m) => ({ default: m.WebhooksPanel })));
 const BugReportPanel = lazy(() => import("./settings/bug-report-panel").then((m) => ({ default: m.BugReportPanel })));
-const SupportPanel = lazy(() => import("./settings/support-panel").then((m) => ({ default: m.SupportPanel })));
 const RemotesPanel = lazy(() => import("./settings/remotes-panel").then((m) => ({ default: m.RemotesPanel })));
 const TvPanel = lazy(() => import("./settings/tv-panel").then((m) => ({ default: m.TvPanel })));
 const StoragePanel = lazy(() => import("./settings/storage-panel").then((m) => ({ default: m.StoragePanel })));
@@ -70,7 +69,6 @@ const SECTION_PRELOAD: Partial<Record<SectionId, () => Promise<unknown>>> = {
   awardIcons: () => import("./settings/award-icons-panel"),
   webhooks: () => import("./settings/webhooks-panel"),
   bug: () => import("./settings/bug-report-panel"),
-  support: () => import("./settings/support-panel"),
   remotes: () => import("./settings/remotes-panel"),
   tv: () => import("./settings/tv-panel"),
   storage: () => import("./settings/storage-panel"),
@@ -192,10 +190,6 @@ const SECTION_META: Record<SectionId, { label: string; sub: string }> = {
   bug: {
     label: "Report a bug",
     sub: "Send a bug report straight to the Harbor team. Screenshots and screen recordings welcome.",
-  },
-  support: {
-    label: "Support Harbor",
-    sub: "Who keeps the lights on, what Harbor is built on, and where to put money if you want to.",
   },
   remotes: {
     label: "Remotes",
@@ -493,7 +487,6 @@ export function Settings() {
           {active === "webhooks" && <WebhooksPanel />}
 
           {active === "bug" && <BugReportPanel />}
-          {active === "support" && <SupportPanel />}
 
           {active === "remotes" && <RemotesPanel />}
 

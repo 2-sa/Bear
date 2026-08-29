@@ -315,14 +315,6 @@ function IconBug(p: IconProps) {
   );
 }
 
-function IconSupport(p: IconProps) {
-  return (
-    <IconBase {...p}>
-      <path d="M12 20.5s-7.5-4.3-7.5-9.4A4.1 4.1 0 0 1 12 8.4a4.1 4.1 0 0 1 7.5 2.7c0 5.1-7.5 9.4-7.5 9.4z" />
-    </IconBase>
-  );
-}
-
 function IconTheme(p: IconProps) {
   return (
     <IconBase {...p}>
@@ -707,7 +699,6 @@ const NAV_GROUPS: Array<{ heading: string | null; items: NavItem[] }> = [
     heading: "Help",
     items: [
       { id: "bug", label: "Report a bug", Icon: IconBug, keywords: ["report", "feedback", "issue", "crash"] },
-      { id: "support", label: "Support Harbor", Icon: IconSupport, keywords: ["donate", "donation", "support", "elfhosted", "sponsor", "charity", "give", "contribute", "money", "pay"] },
     ],
   },
   {
@@ -1312,11 +1303,6 @@ const SETTINGS_OPTIONS: SettingsOption[] = [
   { label: "Want to fix it yourself?", section: "bug", keywords: ["contribute fix", "pull request", "open repo", "github pr", "browse pull requests"] },
   { label: "What gets sent", section: "bug", keywords: ["diagnostics", "environment details", "privacy", "what data is sent", "no keys"] },
   { label: "Submit bug report", section: "bug", keywords: ["send bug report", "file bug", "submit issue", "report problem"] },
-  { label: "Donating to Harbor", section: "support", anchorTitle: "Donating to Harbor", keywords: ["donate", "donation", "support harbor", "give money", "patreon", "paypal", "fund harbor", "contribute", "tip", "pay for harbor", "subscription"] },
-  { label: "Badges for giving", section: "support", anchorTitle: "Badges for giving", keywords: ["charity badge", "donation badge", "supporter badge", "profile badge", "elfhosted badge", "giving badge", "how do i get a badge"] },
-  { label: "Who pays for the servers", section: "support", anchorTitle: "Who keeps this running", keywords: ["elfhosted", "hosting", "servers", "backend", "who pays", "infrastructure", "sponsor", "running costs"] },
-  { label: "Built on Stremio", section: "support", anchorTitle: "Built on Stremio", keywords: ["stremio", "credit", "foundation", "upstream", "thanks", "support stremio"] },
-  { label: "Charities to give to instead", section: "support", anchorTitle: "If you would rather give it away", keywords: ["charity", "give away", "donate to charity", "good causes", "nonprofit", "where to give"] },
   { label: "Updates", section: "updates", anchorTitle: "Updates", keywords: ["app updates", "new version", "update channel", "auto update"] },
   { label: "Check for updates", section: "updates", anchorTitle: "Updates", keywords: ["update check", "latest version", "check now", "update now", "install update", "restart to update"] },
   { label: "Get beta updates", section: "updates", anchorTitle: "Updates", keywords: ["join beta", "join the beta", "beta program", "early access", "beta channel", "early builds", "prerelease", "beta opt in", "nightly", "back to stable"] },
@@ -1644,7 +1630,6 @@ export function SettingsNav({
     webhooks: webhookActive ? "live" : null,
     hotkeys: null,
     bug: null,
-    support: null,
     remotes: settings.serveWebUi || settings.remoteControlEnabled ? "live" : null,
     tv: null,
     storage: null,

@@ -12,7 +12,7 @@ export function SubtitlesLanguageTab() {
     <>
       <Section
         title={t("Subtitle languages")}
-        subtitle={t("When playback starts, Harbor finds and loads a subtitle in one of these languages. The first available match wins, so put your main language first.")}
+        subtitle={t("When playback starts, Bear finds and loads a subtitle in one of these languages. The first available match wins, so put your main language first.")}
       >
         <LanguagesPicker
           value={settings.preferredSubLangs}
@@ -22,7 +22,7 @@ export function SubtitlesLanguageTab() {
 
       <Section
         title={t("Choosing a track")}
-        subtitle={t("Which subtitle Harbor lands on when more than one is available.")}
+        subtitle={t("Which subtitle Bear lands on when more than one is available.")}
       >
         <ToggleRow
           label={t("Prefer embedded subtitles")}
@@ -50,13 +50,13 @@ export function SubtitlesLanguageTab() {
       >
         <ToggleRow
           label={t("Start with subtitles off")}
-          sub={t("Harbor still finds and loads subtitles so they're one click away in the player, it just won't turn them on automatically.")}
+          sub={t("Bear still finds and loads subtitles so they're one click away in the player, it just won't turn them on automatically.")}
           value={settings.subtitlesOffByDefault}
           onChange={(v) => update({ subtitlesOffByDefault: v })}
         />
         <ToggleRow
           label={t("Choose subtitles before playback")}
-          sub={t("After you pick a source, show a subtitle picker so you can set the exact track and language before the video starts. Off by default, Harbor keeps picking one for you automatically.")}
+          sub={t("After you pick a source, show a subtitle picker so you can set the exact track and language before the video starts. Off by default, Bear keeps picking one for you automatically.")}
           value={settings.subtitlePreselect}
           onChange={(v) => update({ subtitlePreselect: v })}
         />
