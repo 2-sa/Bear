@@ -46,7 +46,11 @@ import {
 } from "@/lib/ebook/sources";
 import { CARD, INPUT, PRIMARY_BTN } from "@/views/manga/manga-sources-panel/shared";
 import { PluginGuide } from "@/views/manga/manga-sources-panel/plugin-guide";
-import { googleBooksApiKey, setGoogleBooksApiKey } from "@/lib/ebook/api";
+import {
+  googleBooksApiKey,
+  setGoogleBooksApiKey,
+  validateGoogleBooksApiKey,
+} from "@/lib/ebook/api";
 import deepseekLogo from "@/assets/ai-logos/deepseek.png";
 import {
   loadEBookTranslationSettings,
@@ -94,7 +98,22 @@ function SectionLabel({ children }: { children: ReactNode }) {
 
 function MetadataProviders() {
   const [key, setKey] = useState(googleBooksApiKey);
-  const [saved, setSaved] = useState(false);
+  const [state, setState] = useState<"idle" | "testing" | "saved" | "error">("idle");
+  const [error, setError] = useState("");
+  const save = async () => {
+    if (state === "testing") return;
+    setState("testing");
+    setError("");
+    try {
+      await validateGoogleBooksApiKey(key);
+      setGoogleBooksApiKey(key);
+      setState("saved");
+      window.setTimeout(() => setState("idle"), 1600);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Could not validate this API key.");
+      setState("error");
+    }
+  };
   return (
     <div className="flex flex-col gap-3">
       <SectionLabel>Metadata</SectionLabel>
@@ -106,26 +125,41 @@ function MetadataProviders() {
             works automatically as the final metadata fallback.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_7.5rem]">
           <input
             type="password"
             value={key}
-            onChange={(event) => setKey(event.target.value)}
+            onChange={(event) => {
+              setKey(event.target.value);
+              setState("idle");
+              setError("");
+            }}
+            onKeyDown={(event) => event.key === "Enter" && void save()}
             placeholder="Google Books API key"
+            autoComplete="off"
             className={`${INPUT} min-w-0 flex-1`}
           />
           <button
             type="button"
-            className={PRIMARY_BTN}
-            onClick={() => {
-              setGoogleBooksApiKey(key);
-              setSaved(true);
-              window.setTimeout(() => setSaved(false), 1200);
-            }}
+            disabled={state === "testing"}
+            aria-live="polite"
+            className={`${PRIMARY_BTN} w-full min-w-[7.5rem] px-5 active:scale-[0.96] disabled:cursor-wait`}
+            onClick={() => void save()}
           >
-            <Check size={17} /> {saved ? "Saved" : "Save"}
+            {state === "testing" ? (
+              <Loader2 size={17} className="animate-spin motion-reduce:animate-none" />
+            ) : (
+              <Check size={17} />
+            )}
+            {state === "testing" ? "Testing" : state === "saved" ? "Saved" : "Save"}
           </button>
         </div>
+        {error && (
+          <p className="flex items-start gap-2 text-[12.5px] leading-relaxed text-danger">
+            <AlertCircle size={15} className="mt-0.5 shrink-0" />
+            <span>{error}</span>
+          </p>
+        )}
       </div>
     </div>
   );

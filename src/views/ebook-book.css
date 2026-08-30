@@ -1,5 +1,5 @@
 .bk-book-stage {
-  --bk-open-center-shift: 40%;
+  --bk-edge-shift: 0px;
   position: relative;
   width: 100%;
   perspective: 1200px;
@@ -367,71 +367,56 @@
   transform: rotateX(-90deg);
 }
 
-.group:hover .bk-book,
-.group:focus-visible .bk-book {
-  transform: translateX(var(--bk-open-center-shift)) translateY(-6px) rotateX(1.5deg)
-    rotateY(-8deg);
+:is(.group:hover, .group:focus-visible) .bk-book {
+  transform: translateX(var(--bk-edge-shift)) translateY(-6px) rotateX(1.5deg) rotateY(-8deg);
 }
 
-.group:hover .bk-front,
-.group:focus-visible .bk-front {
+:is(.group:hover, .group:focus-visible) .bk-front {
   z-index: 0;
   transform: rotateY(-145deg) translateZ(0);
 }
 
-.group:hover .bk-back,
-.group:focus-visible .bk-back {
+:is(.group:hover, .group:focus-visible) .bk-back {
   transform: rotateY(-8deg) translateZ(-8px);
 }
 
-.group:hover .bk-page .bk-content:nth-child(1),
-.group:focus-visible .bk-page .bk-content:nth-child(1) {
+:is(.group:hover, .group:focus-visible) .bk-page .bk-content:nth-child(1) {
   transform: rotateY(-30deg) translateZ(7px);
   transition-duration: 1500ms;
 }
 
-.group:hover .bk-page .bk-content:nth-child(2),
-.group:focus-visible .bk-page .bk-content:nth-child(2) {
+:is(.group:hover, .group:focus-visible) .bk-page .bk-content:nth-child(2) {
   transform: rotateY(-35deg) translateZ(5px);
   transition-duration: 1800ms;
 }
 
-.group:hover .bk-page .bk-content:nth-child(3),
-.group:focus-visible .bk-page .bk-content:nth-child(3) {
+:is(.group:hover, .group:focus-visible) .bk-page .bk-content:nth-child(3) {
   z-index: 8;
   transform: rotateY(-118deg) translateZ(3px);
   transition-duration: 1600ms;
 }
 
-.group:hover .bk-left-page-meta,
-.group:focus-visible .bk-left-page-meta {
+:is(.group:hover, .group:focus-visible) .bk-left-page-meta {
   opacity: 1;
 }
 
-.group:hover .bk-page .bk-content:nth-child(4),
-.group:focus-visible .bk-page .bk-content:nth-child(4) {
+:is(.group:hover, .group:focus-visible) .bk-page .bk-content:nth-child(4) {
   transform: rotateY(-130deg) translateZ(1px);
   transition-duration: 1400ms;
 }
 
-.group:hover .bk-page .bk-content:nth-child(5),
-.group:focus-visible .bk-page .bk-content:nth-child(5) {
+:is(.group:hover, .group:focus-visible) .bk-page .bk-content:nth-child(5) {
   transform: rotateY(-140deg) translateZ(-1px);
   transition-duration: 1200ms;
 }
 
-.group:hover .bk-book-stage::after,
-.group:focus-visible .bk-book-stage::after {
+:is(.group:hover, .group:focus-visible) .bk-book-stage::after {
   opacity: 0.72;
   transform: translateY(5px) scaleX(1.65);
 }
 
 :dir(rtl) .bk-book {
   transform: rotateX(0.6deg) rotateY(2.5deg);
-}
-
-:dir(rtl) .bk-book-stage {
-  --bk-open-center-shift: -40%;
 }
 
 :dir(rtl) .bk-front {
@@ -496,45 +481,36 @@
   transform-origin: right bottom;
 }
 
-:dir(rtl) .group:hover .bk-book,
-:dir(rtl) .group:focus-visible .bk-book {
-  transform: translateX(var(--bk-open-center-shift)) translateY(-6px) rotateX(1.5deg)
-    rotateY(8deg);
+:dir(rtl) :is(.group:hover, .group:focus-visible) .bk-book {
+  transform: translateX(var(--bk-edge-shift)) translateY(-6px) rotateX(1.5deg) rotateY(8deg);
 }
 
-:dir(rtl) .group:hover .bk-front,
-:dir(rtl) .group:focus-visible .bk-front {
+:dir(rtl) :is(.group:hover, .group:focus-visible) .bk-front {
   transform: rotateY(145deg) translateZ(0);
 }
 
-:dir(rtl) .group:hover .bk-back,
-:dir(rtl) .group:focus-visible .bk-back {
+:dir(rtl) :is(.group:hover, .group:focus-visible) .bk-back {
   transform: rotateY(8deg) translateZ(-8px);
 }
 
-:dir(rtl) .group:hover .bk-page .bk-content:nth-child(1),
-:dir(rtl) .group:focus-visible .bk-page .bk-content:nth-child(1) {
+:dir(rtl) :is(.group:hover, .group:focus-visible) .bk-page .bk-content:nth-child(1) {
   transform: rotateY(30deg) translateZ(7px);
 }
 
-:dir(rtl) .group:hover .bk-page .bk-content:nth-child(2),
-:dir(rtl) .group:focus-visible .bk-page .bk-content:nth-child(2) {
+:dir(rtl) :is(.group:hover, .group:focus-visible) .bk-page .bk-content:nth-child(2) {
   transform: rotateY(35deg) translateZ(5px);
 }
 
-:dir(rtl) .group:hover .bk-page .bk-content:nth-child(3),
-:dir(rtl) .group:focus-visible .bk-page .bk-content:nth-child(3) {
+:dir(rtl) :is(.group:hover, .group:focus-visible) .bk-page .bk-content:nth-child(3) {
   z-index: 8;
   transform: rotateY(118deg) translateZ(3px);
 }
 
-:dir(rtl) .group:hover .bk-page .bk-content:nth-child(4),
-:dir(rtl) .group:focus-visible .bk-page .bk-content:nth-child(4) {
+:dir(rtl) :is(.group:hover, .group:focus-visible) .bk-page .bk-content:nth-child(4) {
   transform: rotateY(130deg) translateZ(1px);
 }
 
-:dir(rtl) .group:hover .bk-page .bk-content:nth-child(5),
-:dir(rtl) .group:focus-visible .bk-page .bk-content:nth-child(5) {
+:dir(rtl) :is(.group:hover, .group:focus-visible) .bk-page .bk-content:nth-child(5) {
   transform: rotateY(140deg) translateZ(-1px);
 }
 

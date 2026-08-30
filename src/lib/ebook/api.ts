@@ -455,8 +455,9 @@ const openLibraryAliases = new Map<string, string[]>();
 
 async function cachedJson<T>(url: string, timeoutMs = 8_000): Promise<T> {
   const cacheUrl = new URL(url);
+  const authenticated = cacheUrl.searchParams.has("key");
   cacheUrl.searchParams.delete("key");
-  const key = `harbor.ebook.openlibrary.v1.${cacheUrl}`;
+  const key = `harbor.ebook.openlibrary.v1.${authenticated ? "authenticated" : "anonymous"}.${cacheUrl}`;
   try {
     const cached = JSON.parse(localStorage.getItem(key) ?? "null") as {
       at: number;
@@ -512,6 +513,30 @@ export function setGoogleBooksApiKey(value: string): void {
     ? localStorage.setItem(GOOGLE_BOOKS_KEY, value.trim())
     : localStorage.removeItem(GOOGLE_BOOKS_KEY);
   googleMetadata.clear();
+  googleUnavailableUntil = 0;
+  for (let index = localStorage.length - 1; index >= 0; index -= 1) {
+    const key = localStorage.key(index);
+    if (key?.startsWith("harbor.ebook.openlibrary.v1.") && key.includes("www.googleapis.com"))
+      localStorage.removeItem(key);
+  }
+  window.dispatchEvent(new Event("harbor:ebook-metadata"));
+}
+
+export async function validateGoogleBooksApiKey(value: string): Promise<void> {
+  const key = value.trim();
+  if (!key) return;
+  const url = new URL("https://www.googleapis.com/books/v1/volumes");
+  url.searchParams.set("q", "intitle:book");
+  url.searchParams.set("maxResults", "1");
+  url.searchParams.set("key", key);
+  const response = await safeFetch(url.toString(), { signal: AbortSignal.timeout(10_000) });
+  if (response.ok) return;
+  let message = "Google Books rejected this API key.";
+  try {
+    const data = (await response.json()) as { error?: { message?: string } };
+    if (data.error?.message) message = data.error.message;
+  } catch {}
+  throw new Error(message);
 }
 
 function mapGoogleBook(book: GoogleBook): EBook {
@@ -847,6 +872,171 @@ function mapOpenLibrary(n: OpenLibraryDoc): EBook {
   };
 }
 
+export type EBookCollection = {
+  name: string;
+  books: EBook[];
+};
+
+export async function ebookCollection(ebook: EBook): Promise<EBookCollection | null> {
+  if (!ebook.wikidataId) {
+    const wikidata = (await fetchWikidataMetadata([ebook]).catch(() => []))[0];
+    if (wikidata?.wikidataId) {
+      return ebookCollection({
+        ...ebook,
+        ...wikidata,
+        id: ebook.id,
+      });
+    }
+  }
+  if (ebook.wikidataId && /^Q\d+$/.test(ebook.wikidataId)) {
+    const query = `PREFIX wd: <http://www.wikidata.org/entity/>
+PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+PREFIX p: <http://www.wikidata.org/prop/>
+PREFIX ps: <http://www.wikidata.org/prop/statement/>
+PREFIX pq: <http://www.wikidata.org/prop/qualifier/>
+SELECT DISTINCT ?item ?series ?seriesLabel ?ordinal WHERE {
+  wd:${ebook.wikidataId} wdt:P179 ?series.
+  ?item wdt:P179 ?series.
+  OPTIONAL { ?item p:P179 ?statement. ?statement ps:P179 ?series. ?statement pq:P1545 ?ordinal. }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "${getUiLanguage()},en,ar". }
+}`;
+    const url = new URL("https://query.wikidata.org/sparql");
+    url.searchParams.set("query", query);
+    url.searchParams.set("format", "json");
+    const data = await cachedJson<{
+      results?: {
+        bindings?: Array<{
+          item: { value: string };
+          series: { value: string };
+          seriesLabel?: { value: string };
+          ordinal?: { value: string };
+        }>;
+      };
+    }>(url.toString()).catch(() => null);
+    const bindings = data?.results?.bindings ?? [];
+    const ids = [
+      ...new Set(
+        bindings
+          .map((binding) => binding.item.value.match(/Q\d+$/)?.[0])
+          .filter((id): id is string => !!id),
+      ),
+    ];
+    const seriesId = bindings[0]?.series.value.match(/Q\d+$/)?.[0];
+    if (ids.length > 1) {
+      const entities: Record<string, WikidataEntity> = {};
+      const entityIds = [...new Set([...ids, ...(seriesId ? [seriesId] : [])])];
+      for (let start = 0; start < entityIds.length; start += 50) {
+        const entityUrl = new URL("https://www.wikidata.org/w/api.php");
+        entityUrl.search = new URLSearchParams({
+          action: "wbgetentities",
+          ids: entityIds.slice(start, start + 50).join("|"),
+          props: "labels|descriptions|aliases|claims|sitelinks",
+          languages: [...new Set([getUiLanguage(), "en", "ar", "pt", "ru", "ja"])].join("|"),
+          format: "json",
+          origin: "*",
+        }).toString();
+        const page = await cachedJson<{ entities?: Record<string, WikidataEntity> }>(
+          entityUrl.toString(),
+        ).catch(() => null);
+        Object.assign(entities, page?.entities ?? {});
+      }
+      const ordinal = new Map(
+        bindings.map((binding) => [
+          binding.item.value.match(/Q\d+$/)?.[0] ?? "",
+          Number.parseFloat(binding.ordinal?.value ?? "") || Number.MAX_SAFE_INTEGER,
+        ]),
+      );
+      const unique = new Map<string, EBook>();
+      for (const id of ids.filter((id) => id !== ebook.wikidataId)) {
+        const entity = entities[id];
+        if (!entity) continue;
+        const book = mapWikidata(entity);
+        const key = titleKey(book.title);
+        if (!key || key === titleKey(ebook.title)) continue;
+        const previous = unique.get(key);
+        if (!previous || (!previous.cover && book.cover)) unique.set(key, book);
+      }
+      const books = [...unique.values()].sort(
+          (left, right) =>
+            (ordinal.get(left.wikidataId ?? "") ?? Number.MAX_SAFE_INTEGER) -
+              (ordinal.get(right.wikidataId ?? "") ?? Number.MAX_SAFE_INTEGER) ||
+            (left.year ?? Number.MAX_SAFE_INTEGER) - (right.year ?? Number.MAX_SAFE_INTEGER),
+        );
+      if (books.length) {
+        const seriesLabels = seriesId ? entities[seriesId]?.labels : undefined;
+        const language = getUiLanguage();
+        const name =
+          seriesLabels?.[language]?.value ??
+          seriesLabels?.en?.value ??
+          seriesLabels?.ar?.value ??
+          bindings.find(
+            (binding) =>
+              binding.seriesLabel?.value && !/^Q\d+$/.test(binding.seriesLabel.value),
+          )?.seriesLabel?.value ??
+          "Book";
+        return {
+          name,
+          books,
+        };
+      }
+    }
+  }
+
+  const knownSeries =
+    ebook.seriesTitle && titleKey(ebook.seriesTitle) !== titleKey(ebook.title)
+      ? ebook.seriesTitle
+      : undefined;
+  let series = knownSeries;
+
+  if (!series) {
+    const lookup = new URL("https://openlibrary.org/search.json");
+    lookup.searchParams.set("title", ebook.title);
+    if (ebook.authors[0]) lookup.searchParams.set("author", ebook.authors[0]);
+    lookup.searchParams.set("fields", OPEN_LIBRARY_FIELDS);
+    lookup.searchParams.set("limit", "12");
+    const data = await cachedJson<{ docs?: OpenLibraryDoc[] }>(lookup.toString()).catch(() => null);
+    const candidates = data?.docs ?? [];
+    const exact = candidates.find((doc) => {
+      if (titleKey(doc.title) !== titleKey(ebook.title)) return false;
+      return (
+        !ebook.authors.length ||
+        !doc.author_name?.length ||
+        authorListsMatch(ebook.authors, doc.author_name)
+      );
+    });
+    series = exact?.series?.find(Boolean);
+  }
+
+  if (!series) return null;
+  const url = new URL("https://openlibrary.org/search.json");
+  url.searchParams.set("q", `series:\"${series.replaceAll('"', "")}\"`);
+  url.searchParams.set("fields", OPEN_LIBRARY_FIELDS);
+  url.searchParams.set("limit", "50");
+  const data = await cachedJson<{ docs?: OpenLibraryDoc[] }>(url.toString()).catch(() => null);
+  const seriesKeyValue = titleKey(series);
+  const unique = new Map<string, EBook>();
+  for (const doc of data?.docs ?? []) {
+    if (!(doc.series ?? []).some((value) => titleKey(value) === seriesKeyValue)) continue;
+    if (
+      ebook.authors.length &&
+      doc.author_name?.length &&
+      !authorListsMatch(ebook.authors, doc.author_name)
+    )
+      continue;
+    const book = mapOpenLibrary(doc);
+    if (book.id === ebook.id || titleKey(book.title) === titleKey(ebook.title)) continue;
+    const key = titleKey(book.title);
+    const previous = unique.get(key);
+    if (!previous || (!previous.cover && book.cover)) unique.set(key, book);
+  }
+  const books = [...unique.values()].sort(
+    (left, right) =>
+      (left.year ?? Number.MAX_SAFE_INTEGER) - (right.year ?? Number.MAX_SAFE_INTEGER) ||
+      left.title.localeCompare(right.title, undefined, { numeric: true, sensitivity: "base" }),
+  );
+  return books.length ? { name: series, books } : null;
+}
+
 function alternativeTitles(doc: OpenLibraryDoc): string[] {
   return Array.isArray(doc.alternative_title)
     ? doc.alternative_title
@@ -1146,6 +1336,22 @@ export function mergeEBookMetadata(sources: EBook[], metadata: EBook[]): EBook[]
       volumes: source.volumes,
       score: meta.score ?? source.score,
       siteUrl: meta.siteUrl ?? source.siteUrl,
+    };
+  });
+}
+
+export function attachEBookCollectionSources(metadata: EBook[], sources: EBook[]): EBook[] {
+  const sourceBooks = sources.flatMap((ebook) => ebook.books ?? [ebook]);
+  return metadata.map((book) => {
+    const matches = sourceBooks.filter((source) => verifiedMetadataMatch(source, book));
+    if (!matches.length) return book;
+    const merged = mergeEBookMetadata(matches, [book]);
+    if (!merged.length) return book;
+    const primary = merged[0];
+    const readable = merged.flatMap((ebook) => ebook.books ?? [ebook]);
+    return {
+      ...primary,
+      books: readable.length > 1 ? readable : undefined,
     };
   });
 }
