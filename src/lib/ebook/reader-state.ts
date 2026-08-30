@@ -1,8 +1,7 @@
 import { persistCritical } from "@/lib/storage-recovery";
 
 export type EBookReaderPrefs = {
-  engine: "harbor" | "legacy";
-  mode: "long" | "long-h" | "paged" | "double" | "book";
+  mode: "harbor" | "book";
   doubleGap: number;
   direction: "auto" | "ltr" | "rtl";
   fontSize: number;
@@ -46,8 +45,7 @@ export type EBookAnnotation = {
 
 const PREFS = "harbor.ebook.reader.v1";
 const DEFAULTS: EBookReaderPrefs = {
-  engine: "harbor",
-  mode: "long",
+  mode: "harbor",
   doubleGap: 16,
   direction: "auto",
   fontSize: 19,

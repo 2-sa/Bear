@@ -1,0 +1,224 @@
+.ebook-setup-shell {
+  position: relative;
+  isolation: isolate;
+}
+
+.ebook-setup-shell::before {
+  position: fixed;
+  z-index: -1;
+  inset: 0;
+  background:
+    radial-gradient(circle at 76% 24%, color-mix(in srgb, var(--color-accent) 10%, transparent), transparent 30%),
+    linear-gradient(180deg, color-mix(in srgb, var(--color-elevated) 24%, transparent), transparent 44%);
+  content: "";
+  pointer-events: none;
+}
+
+.ebook-setup-card {
+  display: grid;
+  width: min(100%, 1180px);
+  min-height: 520px;
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 0.72fr);
+  align-items: stretch;
+  gap: clamp(2rem, 6vw, 6.5rem);
+  margin: 0 auto;
+  overflow: hidden;
+  padding: clamp(2rem, 5vw, 4.75rem);
+  border: 1px solid color-mix(in srgb, var(--color-edge) 72%, transparent);
+  border-radius: 34px;
+  background:
+    linear-gradient(118deg, color-mix(in srgb, var(--color-elevated) 90%, transparent), color-mix(in srgb, var(--color-canvas) 74%, transparent)),
+    repeating-linear-gradient(0deg, transparent 0 5px, rgb(255 255 255 / 0.012) 5px 6px);
+  box-shadow: 0 38px 90px -58px rgb(0 0 0 / 0.95), inset 0 1px rgb(255 255 255 / 0.04);
+}
+
+.ebook-setup-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+.ebook-setup-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--color-accent);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.ebook-setup-primary {
+  display: inline-flex;
+  height: 50px;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0 1.4rem;
+  border-radius: 14px;
+  background: var(--color-accent);
+  color: var(--color-canvas);
+  font-size: 14.5px;
+  font-weight: 750;
+  box-shadow: 0 16px 34px -18px color-mix(in srgb, var(--color-accent) 60%, transparent);
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.ebook-setup-primary:hover { transform: translateY(-2px); box-shadow: 0 19px 38px -17px color-mix(in srgb, var(--color-accent) 68%, transparent); }
+.ebook-setup-primary:active { transform: scale(0.97); }
+
+.ebook-setup-trust {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-ink-subtle);
+  font-size: 11.5px;
+}
+
+.ebook-setup-trust svg { color: var(--color-accent); }
+
+.ebook-setup-shelf {
+  position: relative;
+  min-height: 380px;
+  align-self: center;
+  border-radius: 180px 180px 22px 22px;
+  background:
+    radial-gradient(circle at 50% 25%, color-mix(in srgb, var(--color-accent) 12%, transparent), transparent 44%),
+    color-mix(in srgb, var(--color-canvas) 74%, var(--color-elevated));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-edge) 62%, transparent), inset 0 -90px 100px -90px rgb(0 0 0 / 0.8);
+}
+
+.ebook-setup-lamp {
+  position: absolute;
+  top: 55px;
+  left: 50%;
+  width: 3px;
+  height: 58px;
+  background: color-mix(in srgb, var(--color-ink-subtle) 65%, transparent);
+  transform: translateX(-50%);
+}
+
+.ebook-setup-lamp::before {
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  width: 82px;
+  height: 34px;
+  border-radius: 60px 60px 8px 8px;
+  background: color-mix(in srgb, var(--color-accent) 52%, var(--color-elevated));
+  content: "";
+  transform: translateX(-50%);
+}
+
+.ebook-setup-lamp i {
+  position: absolute;
+  top: 51px;
+  left: 50%;
+  width: 156px;
+  height: 130px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--color-accent) 13%, transparent), transparent 78%);
+  clip-path: polygon(36% 0, 64% 0, 100% 100%, 0 100%);
+  transform: translateX(-50%);
+}
+
+.ebook-setup-empty-slot {
+  position: absolute;
+  top: 143px;
+  left: 50%;
+  display: flex;
+  width: 170px;
+  height: 126px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  border: 1px dashed color-mix(in srgb, var(--color-accent) 45%, var(--color-edge));
+  border-radius: 4px 14px 14px 4px;
+  color: var(--color-accent);
+  transform: translateX(-50%);
+}
+
+.ebook-setup-empty-slot span {
+  color: var(--color-ink-subtle);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.ebook-setup-books {
+  position: absolute;
+  right: 9%;
+  bottom: 47px;
+  display: flex;
+  height: 94px;
+  align-items: end;
+  gap: 3px;
+}
+
+.ebook-setup-books i { display: block; width: 21px; height: 76px; border-radius: 3px 3px 0 0; background: color-mix(in srgb, var(--color-accent) 46%, var(--color-elevated)); }
+.ebook-setup-books i:nth-child(2) { height: 91px; background: color-mix(in srgb, var(--color-ink-muted) 42%, var(--color-elevated)); }
+.ebook-setup-books i:nth-child(3) { height: 67px; transform: rotate(-8deg); transform-origin: bottom; }
+.ebook-setup-books i:nth-child(4) { height: 83px; background: color-mix(in srgb, var(--color-danger) 30%, var(--color-elevated)); }
+
+.ebook-setup-shelf-edge {
+  position: absolute;
+  right: 6%;
+  bottom: 35px;
+  left: 6%;
+  height: 13px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--color-accent) 32%, var(--color-raised));
+  box-shadow: 0 8px 16px -8px rgb(0 0 0 / 0.9), inset 0 1px rgb(255 255 255 / 0.08);
+}
+
+.ebook-setup-routes {
+  display: grid;
+  width: min(100%, 1180px);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8rem;
+  margin: 1rem auto 0;
+}
+
+.ebook-setup-route {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: auto auto 1fr auto;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 1rem;
+  border: 1px solid color-mix(in srgb, var(--color-edge-soft) 80%, transparent);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--color-elevated) 52%, transparent);
+  color: var(--color-ink-muted);
+  transition: background-color 180ms ease, border-color 180ms ease, transform 180ms ease;
+}
+
+.ebook-setup-route:hover { border-color: color-mix(in srgb, var(--color-accent) 35%, var(--color-edge)); background: color-mix(in srgb, var(--color-elevated) 82%, transparent); transform: translateY(-2px); }
+.ebook-setup-route:active { transform: scale(0.985); }
+.ebook-setup-route-number { color: var(--color-ink-subtle); font-family: var(--font-display); font-size: 11px; }
+.ebook-setup-route-icon { display: grid; width: 39px; height: 39px; place-items: center; border-radius: 11px; background: color-mix(in srgb, var(--color-accent) 9%, var(--color-canvas)); color: var(--color-accent); }
+.ebook-setup-route strong { display: block; color: var(--color-ink); font-size: 13.5px; }
+.ebook-setup-route small { display: block; margin-top: 2px; color: var(--color-ink-subtle); font-size: 10.5px; line-height: 1.35; }
+.ebook-setup-route-arrow { opacity: 0; transform: translateX(-5px); transition: opacity 180ms ease, transform 180ms ease; }
+.ebook-setup-route:hover .ebook-setup-route-arrow { opacity: 1; transform: none; }
+
+@media (max-width: 980px) {
+  .ebook-setup-card { grid-template-columns: 1fr; }
+  .ebook-setup-shelf { display: none; }
+  .ebook-setup-routes { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 640px) {
+  .ebook-setup-shell { padding-right: 1.25rem; padding-left: 1.25rem; }
+  .ebook-setup-card { min-height: auto; padding: 2rem 1.5rem; border-radius: 24px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ebook-setup-primary,
+  .ebook-setup-route,
+  .ebook-setup-route-arrow { transition: none; }
+}

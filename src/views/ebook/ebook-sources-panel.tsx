@@ -6,19 +6,23 @@ import {
   Check,
   ChevronDown,
   ChevronLeft,
+  Database,
   Download,
   FileText,
   Folder,
   FolderOpen,
   Languages,
+  Library,
   Loader2,
   PackageOpen,
   Plus,
   RefreshCw,
   ShieldCheck,
+  Sparkles,
   Trash2,
   X,
 } from "lucide-react";
+import "./ebook-sources-panel.css";
 import { createPortal } from "react-dom";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
@@ -245,7 +249,9 @@ function TranslationSelect({
                     className={`h-1.5 w-1.5 shrink-0 rounded-full ${active ? "bg-accent" : "bg-edge"}`}
                   />
                   <span className="min-w-0 flex-1">
-                    <span className={`block truncate text-[13.5px] ${active ? "font-semibold" : "font-medium"}`}>
+                    <span
+                      className={`block truncate text-[13.5px] ${active ? "font-semibold" : "font-medium"}`}
+                    >
                       {option.label}
                     </span>
                     {option.sub && (
@@ -315,7 +321,11 @@ function Translation() {
                 label: "DeepSeek V4 Flash",
                 sub: "Fast · recommended for chapters",
               },
-              { value: "deepseek-v4-pro", label: "DeepSeek V4 Pro", sub: "Higher quality · slower" },
+              {
+                value: "deepseek-v4-pro",
+                label: "DeepSeek V4 Pro",
+                sub: "Higher quality · slower",
+              },
             ]}
           />
           <TranslationSelect
@@ -323,8 +333,7 @@ function Translation() {
             value={settings.targetLanguage}
             onChange={(targetLanguage) =>
               patch({
-                targetLanguage:
-                  targetLanguage as EBookTranslationSettings["targetLanguage"],
+                targetLanguage: targetLanguage as EBookTranslationSettings["targetLanguage"],
               })
             }
             options={[
@@ -531,7 +540,7 @@ function CustomSource() {
     }
   };
   return (
-    <div className={`${CARD} overflow-hidden`}>
+    <div className={`${CARD} overflow-hidden ${open ? "xl:col-span-2" : ""}`}>
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}
@@ -850,6 +859,42 @@ function Extensions() {
   );
 }
 
+function WorkspaceSection({
+  id,
+  eyebrow,
+  title,
+  description,
+  icon,
+  children,
+}: {
+  id: string;
+  eyebrow: string;
+  title: string;
+  description: string;
+  icon: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <section id={id} className="ebook-source-workspace-section scroll-mt-6">
+      <header className="ebook-source-workspace-heading">
+        <span className="ebook-source-workspace-icon">{icon}</span>
+        <span className="min-w-0">
+          <span className="block text-[11px] font-bold uppercase tracking-[0.2em] text-accent">
+            {eyebrow}
+          </span>
+          <h2 className="mt-1 font-display text-[27px] font-medium tracking-tight text-ink">
+            {title}
+          </h2>
+          <p className="mt-1 max-w-2xl text-[13.5px] leading-relaxed text-ink-muted">
+            {description}
+          </p>
+        </span>
+      </header>
+      <div className="flex flex-col gap-5">{children}</div>
+    </section>
+  );
+}
+
 export function EBookSourcesView({ onBack }: { onBack: () => void }) {
   const [tick, setTick] = useState(0);
   useEffect(() => {
@@ -865,9 +910,55 @@ export function EBookSourcesView({ onBack }: { onBack: () => void }) {
   const sources = useMemo(() => listEBookSources(), [tick]);
   const installed = useMemo(() => installedEBookPlugins(), [tick]);
   const total = sources.length + installed.length;
+  const enabled = installed.filter((source) => source.enabled).length;
+  const [activeSection, setActiveSection] = useState("ebook-source-library");
+  useEffect(() => {
+    const sections = [
+      "ebook-source-library",
+      "ebook-source-intelligence",
+      "ebook-source-extensions",
+    ]
+      .map((id) => document.getElementById(id))
+      .filter((element): element is HTMLElement => !!element);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((left, right) => right.intersectionRatio - left.intersectionRatio)[0];
+        if (visible?.target.id) setActiveSection(visible.target.id);
+      },
+      { rootMargin: "-12% 0px -58%", threshold: [0.05, 0.25, 0.6] },
+    );
+    sections.forEach((section) => observer.observe(section));
+    return () => observer.disconnect();
+  }, []);
+  const jumpTo = (id: string) => {
+    setActiveSection(id);
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+  const contents = [
+    {
+      id: "ebook-source-library",
+      label: "Library",
+      sub: `${sources.length + installed.length} connected`,
+      icon: <Library size={17} />,
+    },
+    {
+      id: "ebook-source-intelligence",
+      label: "Intelligence",
+      sub: "Metadata & translation",
+      icon: <Sparkles size={17} />,
+    },
+    {
+      id: "ebook-source-extensions",
+      label: "Extensions",
+      sub: `${ebookRepoUrls().length} repositories`,
+      icon: <Blocks size={17} />,
+    },
+  ];
   return (
     <div
-      className="mx-auto flex w-full max-w-2xl flex-col gap-6"
+      className="ebook-sources-shell mx-auto flex w-full max-w-[1180px] flex-col gap-7"
       style={{ animation: "harbor-view-in 0.4s cubic-bezier(0.32,0.72,0.24,1) both" }}
     >
       <div className="flex items-center justify-between gap-3">
@@ -889,42 +980,122 @@ export function EBookSourcesView({ onBack }: { onBack: () => void }) {
           </button>
         )}
       </div>
-      <div className="flex flex-col gap-2.5">
-        <h1 className="font-display text-[34px] font-medium tracking-tight text-ink">
-          eBook sources
-        </h1>
-        <p className="max-w-xl text-[15.5px] leading-relaxed text-ink-muted">
-          Bear does not host eBooks or sources. Open your own folder, connect a custom source, or
-          install extensions from a repository you trust—and mix as many as you like.
-        </p>
-      </div>
-      {installed.length > 0 && (
-        <div className="flex flex-col gap-3">
-          <SectionLabel>Installed sources</SectionLabel>
-          <div className={`${CARD} divide-y divide-edge-soft overflow-hidden`}>
-            {installed.map((source) => (
-              <InstalledSourceRow key={source.id} item={source} />
-            ))}
+      <section className="ebook-sources-hero">
+        <div className="ebook-sources-hero-copy">
+          <span className="ebook-sources-kicker">
+            <BookOpen size={15} /> Bear reading room
+          </span>
+          <h1 className="font-display text-[clamp(38px,5vw,62px)] font-medium leading-[0.98] tracking-[-0.04em] text-ink">
+            Build your own
+            <span className="block text-accent">living library.</span>
+          </h1>
+          <p className="max-w-2xl text-[15px] leading-relaxed text-ink-muted">
+            Connect books you own, trusted reading sources, and metadata services. Bear keeps the
+            shelf coherent while every source stays under your control.
+          </p>
+          <div className="ebook-sources-stats" aria-label="Source overview">
+            <span><strong>{total}</strong><small>Connected</small></span>
+            <span><strong>{enabled}</strong><small>Active</small></span>
+            <span><strong>{ebookRepoUrls().length}</strong><small>Repositories</small></span>
           </div>
         </div>
-      )}
-      {sources.length > 0 && (
-        <div className="flex flex-col gap-3">
-          <SectionLabel>Your sources</SectionLabel>
-          {sources.map((source) => (
-            <SourceRow key={source.id} source={source} />
-          ))}
+        <div className="ebook-sources-bookplate" aria-hidden="true">
+          <div className="ebook-sources-bookplate-mark"><BookOpen size={34} /></div>
+          <p>EX LIBRIS</p>
+          <strong>BEAR</strong>
+          <span>Private reading collection</span>
+          <div className="ebook-sources-spines">
+            <i /><i /><i /><i /><i />
+          </div>
         </div>
-      )}
-      <div className="flex flex-col gap-3">
-        <SectionLabel>Bring your own</SectionLabel>
-        <LocalFolder />
-        <CustomSource />
+      </section>
+
+      <div className="grid items-start gap-7 lg:grid-cols-[240px_minmax(0,1fr)]">
+        <aside className="ebook-sources-contents lg:sticky lg:top-4">
+          <p className="px-3 pb-3 text-[11px] font-bold uppercase tracking-[0.22em] text-ink-subtle">
+            Contents
+          </p>
+          <nav className="flex flex-col gap-1" aria-label="eBook source settings">
+            {contents.map((item, index) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => jumpTo(item.id)}
+                className={`ebook-sources-content-link ${activeSection === item.id ? "is-active" : ""}`}
+              >
+                <span className="ebook-sources-content-number">0{index + 1}</span>
+                <span className="ebook-sources-content-icon">{item.icon}</span>
+                <span className="min-w-0 flex-1 text-start">
+                  <strong>{item.label}</strong>
+                  <small>{item.sub}</small>
+                </span>
+              </button>
+            ))}
+          </nav>
+          <div className="ebook-sources-privacy-note">
+            <ShieldCheck size={17} />
+            <p><strong>Your shelf, your rules.</strong><span>Bear never hosts your books.</span></p>
+          </div>
+        </aside>
+
+        <div className="flex min-w-0 flex-col gap-7">
+          <WorkspaceSection
+            id="ebook-source-library"
+            eyebrow="01 · Collection"
+            title="Library sources"
+            description="Manage every place Bear can read from, whether it lives on disk or across the web."
+            icon={<Library size={22} />}
+          >
+            {installed.length > 0 && (
+              <div className="flex flex-col gap-3">
+                <SectionLabel>Installed sources</SectionLabel>
+                <div className={`${CARD} divide-y divide-edge-soft overflow-hidden`}>
+                  {installed.map((source) => (
+                    <InstalledSourceRow key={source.id} item={source} />
+                  ))}
+                </div>
+              </div>
+            )}
+            {sources.length > 0 && (
+              <div className="flex flex-col gap-3">
+                <SectionLabel>Your sources</SectionLabel>
+                {sources.map((source) => (
+                  <SourceRow key={source.id} source={source} />
+                ))}
+              </div>
+            )}
+            <div className="flex flex-col gap-3">
+              <SectionLabel>Bring your own</SectionLabel>
+              <div className="grid gap-3 xl:grid-cols-2">
+                <LocalFolder />
+                <CustomSource />
+              </div>
+            </div>
+          </WorkspaceSection>
+
+          <WorkspaceSection
+            id="ebook-source-intelligence"
+            eyebrow="02 · Enrichment"
+            title="Library intelligence"
+            description="Shape the metadata and reading language Bear uses without changing your original files."
+            icon={<Database size={22} />}
+          >
+            <MetadataProviders />
+            <Translation />
+          </WorkspaceSection>
+
+          <WorkspaceSection
+            id="ebook-source-extensions"
+            eyebrow="03 · Expand"
+            title="Extension dock"
+            description="Bring trusted source packages aboard through Bear’s isolated extension worker."
+            icon={<Blocks size={22} />}
+          >
+            <Extensions />
+            <PluginGuide kind="ebook" />
+          </WorkspaceSection>
+        </div>
       </div>
-      <MetadataProviders />
-      <Translation />
-      <Extensions />
-      <PluginGuide kind="ebook" />
     </div>
   );
 }

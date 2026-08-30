@@ -75,6 +75,7 @@ import { usePageVisible } from "@/lib/visibility";
 import { openUrl } from "@/lib/window";
 import { useArtGlow } from "./big-picture/bp-art-color";
 import { EBookSourcesView } from "./ebook/ebook-sources-panel";
+import { EBookSetup } from "./ebook/ebook-setup";
 import { EBookReader } from "./ebook/ebook-reader";
 import { MangaRail } from "./manga/manga-rail";
 
@@ -162,6 +163,7 @@ export function EBookView() {
   const uiLanguage = useUiLanguage();
   const [sourceItems, setSourceItems] = useState<EBook[] | null>(null);
   const [providers, setProviders] = useState<EBookProvider[]>([]);
+  const [sourcesReady, setSourcesReady] = useState(false);
   const [providerId, setProviderId] = useState("");
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<EBook[] | null>(null);
@@ -327,6 +329,7 @@ export function EBookView() {
       .then((list) => {
         if (seq !== sourceSeq.current) return null;
         setProviders(list);
+        setSourcesReady(true);
         const requested = requestedProvider ?? providerIdRef.current;
         const selected = list.some((source) => source.id === requested)
           ? requested
@@ -359,7 +362,11 @@ export function EBookView() {
         });
       })
       .catch(() => {
-        if (seq === sourceSeq.current) setSourceItems([]);
+        if (seq === sourceSeq.current) {
+          setProviders([]);
+          setSourcesReady(true);
+          setSourceItems([]);
+        }
       });
   }, []);
 
@@ -523,6 +530,10 @@ export function EBookView() {
         <EBookSourcesView onBack={() => setScreen("browse")} />
       </main>
     );
+  }
+
+  if (sourcesReady && providers.length === 0) {
+    return <EBookSetup onSetup={() => setScreen("sources")} />;
   }
 
   if (screen === "collections") {
