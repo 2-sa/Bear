@@ -24,7 +24,7 @@ function writeCache(c: ScoreCache) {
   } catch {}
 }
 
-async function jikanScore(malId: number): Promise<string | null> {
+export async function jikanScore(malId: number): Promise<string | null> {
   const cache = readCache();
   const hit = cache[malId];
   if (hit && Date.now() - hit.t < TTL_MS) return hit.score;

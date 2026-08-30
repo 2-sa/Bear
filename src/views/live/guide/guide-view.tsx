@@ -12,6 +12,7 @@ import { GuideProgramBlock } from "./guide-program-block";
 import { GuideTimeRuler } from "./guide-time-ruler";
 import {
   CHANNEL_COL_PX,
+  HISTORY_HOURS,
   PX_PER_MS,
   ROW_HEIGHT_PX,
   RULER_HEIGHT_PX,
@@ -94,7 +95,7 @@ export function GuideView({
   };
 
   const { windowStart, windowEnd, windowMinutes } = useMemo(() => {
-    const start = startOfWindow(nowMs, 60);
+    const start = startOfWindow(nowMs, HISTORY_HOURS * 60);
     const minutes = WINDOW_HOURS * 60;
     return { windowStart: start, windowEnd: start + minutes * 60_000, windowMinutes: minutes };
   }, [Math.floor(nowMs / (15 * 60_000))]);
@@ -166,7 +167,7 @@ export function GuideView({
       <div
         ref={scrollRef}
         onScroll={onGridScroll}
-        className="relative overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="guide-scroll relative overflow-x-auto"
       >
         <div
           className="relative"

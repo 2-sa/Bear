@@ -28,9 +28,11 @@ import controllers from "./ru/controllers";
 import plurals from "./ru/plurals";
 
 import used from "./ru/used";
+import sweep from "./ru/sweep";
 
 const ru: Record<string, string> = {
   ...uiFallback,
+  ...sweep,
   ...gap,
   ...chrome,
   ...common,

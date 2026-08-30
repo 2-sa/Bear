@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
+import mangaUpdatesLogo from "@/assets/mangaupdates.png";
 import { ChevronDown, ExternalLink, Loader2, Star } from "lucide-react";
 import { useT } from "@/lib/i18n";
 import { searchManga, type MangaSummary } from "@/lib/manga/api";
@@ -248,19 +249,7 @@ export function MangaUpdatesSection({
 
   return (
     <section className="flex flex-col gap-5">
-      <div className="flex items-baseline justify-between gap-4">
-        <h2 className="text-[22px] font-medium tracking-tight text-ink">{t("About this series")}</h2>
-        {info.url && (
-          <button
-            type="button"
-            onClick={() => openUrl(info.url)}
-            className="inline-flex shrink-0 items-center gap-1.5 text-[12.5px] text-ink-subtle transition-colors hover:text-ink-muted motion-reduce:transition-none"
-          >
-            {t("Data from MangaUpdates")}
-            <ExternalLink size={12.5} />
-          </button>
-        )}
-      </div>
+      <h2 className="text-[22px] font-medium tracking-tight text-ink">{t("About this series")}</h2>
 
       {hasCard && (
         <div className="overflow-hidden rounded-2xl border border-edge-soft bg-surface/40">
@@ -309,12 +298,34 @@ export function MangaUpdatesSection({
                 </div>
               )}
             </div>
-            <ChevronDown
-              size={20}
-              className={`mt-1 shrink-0 text-ink-subtle transition-transform duration-200 group-hover:text-ink-muted ${
-                open ? "rotate-180" : ""
-              }`}
-            />
+            <div className="mt-1 flex shrink-0 items-center gap-3">
+              {info.url && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openUrl(info.url);
+                  }}
+                  onKeyDown={(e) => e.stopPropagation()}
+                  className="inline-flex items-center gap-1.5 text-[12px] text-ink-subtle transition-colors hover:text-ink-muted motion-reduce:transition-none"
+                >
+                  <img
+                    src={mangaUpdatesLogo}
+                    alt=""
+                    draggable={false}
+                    className="h-[14px] w-[14px] rounded-[3px]"
+                  />
+                  MangaUpdates
+                  <ExternalLink size={11} />
+                </button>
+              )}
+              <ChevronDown
+                size={20}
+                className={`text-ink-subtle transition-transform duration-200 group-hover:text-ink-muted ${
+                  open ? "rotate-180" : ""
+                }`}
+              />
+            </div>
           </div>
 
           {open && (

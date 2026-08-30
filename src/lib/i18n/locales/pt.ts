@@ -25,9 +25,11 @@ import extra from "./pt/extra";
 import manga from "./pt/manga";
 import controllers from "./pt/controllers";
 import used from "./pt/used";
+import sweep from "./pt/sweep";
 
 const pt: Record<string, string> = {
   ...uiFallback,
+  ...sweep,
   ...chrome,
   ...common,
   ...catalog,

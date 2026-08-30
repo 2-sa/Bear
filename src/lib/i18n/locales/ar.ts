@@ -25,9 +25,11 @@ import together from "./ar/together";
 import controllers from "./ar/controllers";
 
 import used from "./ar/used";
+import sweep from "./ar/sweep";
 
 const ar: Record<string, string> = {
   ...uiFallback,
+  ...sweep,
   ...chrome,
   ...common,
   ...catalog,

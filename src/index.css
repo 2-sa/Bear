@@ -446,6 +446,118 @@ main[data-kids="on"]::-webkit-scrollbar-thumb:hover {
   background-clip: padding-box;
 }
 
+.guide-scroll {
+  scrollbar-width: auto;
+  scrollbar-color: var(--color-edge) transparent;
+}
+.guide-scroll::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+.guide-scroll::-webkit-scrollbar-track {
+  background: transparent;
+  border-top: 1px solid var(--color-edge-soft);
+}
+.guide-scroll::-webkit-scrollbar-thumb {
+  background: var(--color-edge-soft);
+  border-radius: 0;
+}
+.guide-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--color-edge);
+}
+.guide-scroll::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+.harbor-seg-thumb {
+  transition: left 300ms ease-in-out;
+}
+
+@keyframes harbor-seg-a {
+  from, to { scale: 1 1; }
+  50% { scale: 1.12 0.9; }
+  75% { scale: 0.97 1.04; }
+}
+
+@keyframes harbor-seg-b {
+  from, to { scale: 1 1; }
+  50% { scale: 1.12 0.9; }
+  75% { scale: 0.97 1.04; }
+}
+
+@keyframes voyage-launch-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-voyage-launch-in { animation: voyage-launch-in 260ms ease-in-out both; }
+
+@keyframes harbor-tile-rise {
+  0% { translate: 0 0; scale: 1 1; }
+  50% { translate: 0 -10px; scale: 1.014 0.984; }
+  75% { translate: 0 -4px; scale: 0.995 1.008; }
+  100% { translate: 0 -6px; scale: 1 1; }
+}
+
+@keyframes harbor-tile-art {
+  0% { scale: 1; }
+  55% { scale: 1.062; }
+  100% { scale: 1.045; }
+}
+
+@keyframes harbor-tile-keel {
+  0% { scale: 0 1; }
+  60% { scale: 1.04 1; }
+  100% { scale: 1 1; }
+}
+
+.harbor-tile {
+  translate: 0 0;
+  transition: translate 320ms ease-in-out, box-shadow 320ms ease-in-out;
+}
+
+.harbor-tile:hover {
+  animation: harbor-tile-rise 460ms ease-in-out forwards;
+}
+
+.harbor-tile-art {
+  scale: 1;
+  transition: scale 340ms ease-in-out, filter 340ms ease-in-out, opacity 600ms ease-in-out;
+}
+
+.harbor-tile:hover .harbor-tile-art {
+  animation: harbor-tile-art 520ms ease-in-out forwards;
+}
+
+.harbor-tile-keel {
+  transform-origin: left center;
+  scale: 0 1;
+  transition: scale 260ms ease-in-out;
+}
+
+.harbor-tile:hover .harbor-tile-keel {
+  animation: harbor-tile-keel 440ms 60ms ease-in-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .harbor-seg-thumb {
+    transition: none;
+    animation: none !important;
+  }
+  .harbor-tile,
+  .harbor-tile:hover,
+  .harbor-tile-art,
+  .harbor-tile:hover .harbor-tile-art,
+  .harbor-tile-keel,
+  .harbor-tile:hover .harbor-tile-keel {
+    animation: none !important;
+    transition: none;
+    translate: 0 0;
+    scale: 1 1;
+  }
+  .harbor-tile-keel { scale: 0 1; }
+}
+
 @keyframes harbor-fade-in {
   from { opacity: 0; }
   to { opacity: 1; }

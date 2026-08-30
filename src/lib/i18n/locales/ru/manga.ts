@@ -62,7 +62,6 @@ const manga: Record<string, string> = {
   "Could not save that source.": "Не удалось сохранить источник.",
   "Custom source": "Свой источник",
   Dark: "Тёмная",
-  "Data from MangaUpdates": "Данные с MangaUpdates",
   "Delete download": "Удалить загрузку",
   Direction: "Направление",
   "Do it once on a browse page, once on a series page, once in the reader.":

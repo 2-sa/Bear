@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { Meta } from "@/lib/cinemeta";
 import { useT } from "@/lib/i18n";
 import { useView } from "@/lib/view";
@@ -14,6 +15,8 @@ import { RouteRail } from "./route-rail";
 import { CompletePanel, ExhaustedPanel } from "./voyage-panels";
 import { VoyagePicker } from "./voyage-picker";
 import { VoyageReady } from "./voyage-ready";
+import { VoyageLaunch, type LaunchThumb } from "./voyage-launch";
+import { VoyagePrefetch } from "./voyage-prefetch";
 import { VoyageSailing } from "./voyage-sailing";
 
 export function VoyageRoute({ voyage }: { voyage: Voyage }) {
@@ -32,14 +35,39 @@ export function VoyageRoute({ voyage }: { voyage: Voyage }) {
     else openMeta(meta);
   };
 
-  const start = () => {
+  const [launch, setLaunch] = useState<LaunchThumb[] | null>(null);
+  const firstUp = !sailing ? metaById(voyage, voyage.routeIds[0]) : next;
+
+  const sail = () => {
     const first = metaById(voyage, voyage.routeIds[0]);
     launchVoyage();
     if (first) play(first);
   };
 
+  const start = () => {
+    const thumbs = [...document.querySelectorAll<HTMLImageElement>("[data-voyage-thumb]")]
+      .map((img) => ({ src: img.currentSrc || img.src, rect: img.getBoundingClientRect() }))
+      .filter((thumb) => thumb.src && thumb.rect.width > 0);
+    if (thumbs.length === 0) {
+      sail();
+      return;
+    }
+    setLaunch(thumbs);
+  };
+
   return (
     <div className="flex flex-col gap-6">
+      {firstUp?.type === "movie" && <VoyagePrefetch key={firstUp.id} meta={firstUp} />}
+      {launch && (
+        <VoyageLaunch
+          thumbs={launch}
+          accent={voyage.accent}
+          onDone={() => {
+            setLaunch(null);
+            sail();
+          }}
+        />
+      )}
       <div className="flex flex-col gap-1">
         <span
           className="text-[11px] font-semibold uppercase tracking-[0.2em]"

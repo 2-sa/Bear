@@ -1,4 +1,5 @@
-import { Search } from "lucide-react";
+import { X } from "lucide-react";
+import { Search } from "@/components/icons/search-icon";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePlaylistMutations } from "./live/hooks/use-playlist-mutations";
 import { useLiveActions } from "./live/hooks/use-live-actions";
@@ -114,6 +115,8 @@ export function LiveView({ active }: { active: boolean }) {
     [sources],
   );
   const { index: baseEpg, error: epgError } = useEpg(active ? activeSource : null, epgOnlyUrls);
+  const [epgErrorHidden, setEpgErrorHidden] = useState<string | null>(null);
+  const epgErrorShown = epgError && epgError !== epgErrorHidden ? epgError : null;
   const epg = useXtreamEpgFallback(activeSource, playlist?.channels ?? EMPTY_CHANNELS, baseEpg);
   const nowMs = useNowTick(30_000);
 
@@ -338,10 +341,19 @@ export function LiveView({ active }: { active: boolean }) {
             <ViewModeToggle mode={mode} onChange={setMode} />
           </header>
         )}
-        {epgError && !epg && (
-          <div className="mx-6 mt-2 flex items-center gap-2 rounded-xl border border-danger/40 bg-danger/10 px-4 py-2 text-[12.5px] text-ink-muted">
+        {epgErrorShown && !epg && (
+          <div className="mx-6 mt-2 flex items-center gap-2 rounded-xl border border-danger/40 bg-danger/10 py-2 pe-2 ps-4 text-[12.5px] text-ink-muted">
             <span className="font-semibold text-danger">{t("EPG failed:")}</span>
-            <span className="min-w-0 flex-1 truncate">{epgError}</span>
+            <span className="min-w-0 flex-1 truncate" title={epgErrorShown}>{epgErrorShown}</span>
+            <button
+              type="button"
+              onClick={() => setEpgErrorHidden(epgErrorShown)}
+              aria-label={t("Dismiss")}
+              title={t("Dismiss")}
+              className="grid size-7 shrink-0 place-items-center rounded-md text-ink-subtle transition-colors duration-150 hover:bg-white/[0.08] hover:text-ink active:scale-[0.97]"
+            >
+              <X size={14} strokeWidth={2.4} />
+            </button>
           </div>
         )}
         {mode === "multiview" ? (

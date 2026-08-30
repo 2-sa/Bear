@@ -88,6 +88,7 @@ function SlotPoster({ meta, dim }: { meta: Meta; dim: boolean }) {
     <img
       src={poster.src}
       onError={poster.onError}
+      data-voyage-thumb=""
       alt=""
       draggable={false}
       className={`h-full w-full object-cover ${dim ? "brightness-[0.55]" : ""}`}
