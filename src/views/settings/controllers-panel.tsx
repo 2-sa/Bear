@@ -3,28 +3,28 @@ import { useSettings } from "@/lib/settings";
 import { useT } from "@/lib/i18n";
 import { useGamepads } from "@/lib/gamepad/store";
 import { Section, ToggleRow } from "./shared";
+import { SettingRow } from "./kit";
+import { ButtonGlyph, type GlyphKind } from "./controllers-panel/button-glyphs";
 import { ControllerPreview } from "./controllers-panel/controller-preview";
 import { CursorSection } from "./controllers-panel/cursor-section";
 
-const BROWSE_MAP: Array<{ control: string; action: string }> = [
-  { control: "D-pad", action: "Move focus" },
-  { control: "A / Cross", action: "Click cursor" },
-  { control: "Right stick", action: "Move cursor" },
-  { control: "Left stick", action: "Scroll" },
-  { control: "B / Circle", action: "Back" },
-  { control: "Menu / Options", action: "Home" },
+type MapRow = { glyph: GlyphKind; action: string };
+
+const BROWSE_MAP: MapRow[] = [
+  { glyph: "dpad", action: "Move focus" },
+  { glyph: "south", action: "Select" },
+  { glyph: "east", action: "Back" },
+  { glyph: "center", action: "Home" },
 ];
 
-const PLAYER_MAP: Array<{ control: string; action: string }> = [
-  { control: "A / Cross", action: "Click cursor" },
-  { control: "Right stick", action: "Move cursor" },
-  { control: "Left stick", action: "Scroll" },
-  { control: "X / Square", action: "Subtitles" },
-  { control: "Y / Triangle", action: "Stats overlay" },
-  { control: "Bumpers (LB / RB)", action: "Previous or next episode" },
-  { control: "D-pad left / right", action: "Seek back or forward" },
-  { control: "D-pad up / down", action: "Volume up or down" },
-  { control: "B / Circle", action: "Exit player" },
+const PLAYER_MAP: MapRow[] = [
+  { glyph: "south", action: "Play or pause" },
+  { glyph: "west", action: "Subtitles" },
+  { glyph: "north", action: "Stats overlay" },
+  { glyph: "bumpers", action: "Previous or next episode" },
+  { glyph: "triggers", action: "Seek back or forward" },
+  { glyph: "dpadVertical", action: "Volume up or down" },
+  { glyph: "east", action: "Exit player" },
 ];
 
 export function ControllersPanel() {
@@ -168,21 +168,19 @@ export function ControllersPanel() {
   );
 }
 
-function MapGroup({ heading, rows }: { heading: string; rows: Array<{ control: string; action: string }> }) {
+function MapGroup({ heading, rows }: { heading: string; rows: MapRow[] }) {
   const t = useT();
   return (
     <div className="flex flex-col gap-1.5">
       <h4 className="px-1 text-[10.5px] font-semibold uppercase tracking-[0.18em] text-ink-subtle">{heading}</h4>
       {rows.map((row) => (
-        <div
-          key={row.control + row.action}
-          className="flex items-center gap-4 rounded-xl border border-edge-soft bg-canvas/40 px-4 py-3"
-        >
-          <span className="min-w-0 flex-1 text-[14px] font-medium text-ink">{t(row.action)}</span>
-          <span className="flex h-8 shrink-0 items-center justify-center rounded-lg border border-edge bg-elevated px-3 text-[12.5px] font-semibold text-ink">
-            {t(row.control)}
+        <SettingRow key={row.glyph + row.action} label={t(row.action)}>
+          <span className="flex shrink-0 items-center gap-3 text-ink">
+            <ButtonGlyph kind={row.glyph} pad="xbox" />
+            <span className="h-4 w-px bg-edge-soft" />
+            <ButtonGlyph kind={row.glyph} pad="ps" />
           </span>
-        </div>
+        </SettingRow>
       ))}
     </div>
   );

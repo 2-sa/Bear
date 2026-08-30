@@ -40,7 +40,6 @@ const DPAD_ARMS: Array<{ b: GpButton; box: (cx: number, cy: number) => [number, 
   { b: "dright", box: (cx, cy) => [cx + ARM_GAP, cy - ARM_HALF, ARM_LONG - ARM_GAP, ARM_HALF * 2] },
 ];
 
-/** How far a cap may slide before it touches the innermost ring that stays put. */
 function travelOf(art: PadArt, k: "stickL" | "stickR"): number {
   const well = art.stickWell[k] ?? Infinity;
   const radii = art.parts
@@ -111,8 +110,6 @@ export function ControllerSvg({ layout, compact }: { layout: Layout; compact?: b
   const capL = useRef<SVGGElement>(null);
   const capR = useRef<SVGGElement>(null);
 
-  // Axis events fire on a 0.004 threshold, so re-rendering the whole pad on each
-  // one thrashes the SVG. Drive the two caps straight through the DOM instead.
   const travelL = useMemo(() => travelOf(art, "stickL"), [art]);
   const travelR = useMemo(() => travelOf(art, "stickR"), [art]);
 
@@ -121,8 +118,6 @@ export function ControllerSvg({ layout, compact }: { layout: Layout; compact?: b
       const ax = liveAxes();
       const set = (g: SVGGElement | null, x: number, y: number, reach: number) => {
         if (!g) return;
-        // Clamp the vector, not each axis, or a diagonal reaches 1.41x and the
-        // cap slides out past its own well.
         const mag = Math.hypot(x, y);
         const k = mag > 1 ? 1 / mag : 1;
         const dx = x * k * reach;

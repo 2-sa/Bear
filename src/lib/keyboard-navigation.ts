@@ -102,9 +102,6 @@ function clearTvFocusRing() {
   lastFocusedEl = null;
 }
 
-// An outline follows the element's own border-radius, so a square button filling a
-// rounded card draws a square ring inside it. Borrow the parent's radius when the
-// focused element has none of its own.
 function borrowRadius(el: HTMLElement) {
   if (getComputedStyle(el).borderRadius !== "0px") return;
   const parent = el.parentElement;

@@ -4,6 +4,7 @@ import { GamepadCursor } from "@/components/gamepad-cursor";
 import { tvHover } from "@/lib/keyboard-navigation";
 import { useGamepadCapture } from "@/lib/gamepad/capture";
 import { useLiveGamepad } from "@/lib/gamepad/live";
+import { useGamepads } from "@/lib/gamepad/store";
 import { useGamepad } from "@/lib/gamepad/use-gamepad";
 import { useSettings } from "@/lib/settings";
 
@@ -34,6 +35,7 @@ export function GamepadRunner() {
   const hoverPath = useRef<HTMLElement[]>([]);
   const controllerField = useRef<TextField | null>(null);
   const [keyboard, setKeyboard] = useState<TextField | null>(null);
+  const pads = useGamepads();
   const captured = useGamepadCapture();
   const capturedRef = useRef(captured);
   capturedRef.current = captured;
@@ -156,6 +158,16 @@ export function GamepadRunner() {
     observer.observe(document.body, { childList: true, subtree: true });
     return () => { window.removeEventListener("keydown", close); observer.disconnect(); };
   }, [keyboard]);
+
+  useEffect(() => {
+    if (pads.length > 0) return;
+    active.current = false;
+    cursor.current?.style.setProperty("opacity", "0");
+    for (const el of hoverPath.current) el.removeAttribute("data-gamepad-hover");
+    hoverPath.current = [];
+    hovered.current = null;
+    tvHover(null);
+  }, [pads]);
 
   useEffect(() => {
     const select = (e: Event) => { controllerField.current = isTextField(e.target) ? e.target : null; };
