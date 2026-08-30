@@ -1,15 +1,22 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { HarborMark } from "@/components/icons/harbor-mark";
+import { GamepadCursor } from "@/components/gamepad-cursor";
 import { tvHover } from "@/lib/keyboard-navigation";
+import { useGamepadCapture } from "@/lib/gamepad/capture";
 import { useLiveGamepad } from "@/lib/gamepad/live";
 import { useGamepad } from "@/lib/gamepad/use-gamepad";
 import { useSettings } from "@/lib/settings";
 
 function hoverCss(rules: CSSRuleList): string {
-  return Array.from(rules).map((rule) => rule instanceof CSSStyleRule && rule.selectorText.includes(":hover")
-    ? `${rule.selectorText.replaceAll(":hover", "[data-gamepad-hover]")}{${rule.style.cssText}${hoverCss(rule.cssRules)}}`
-    : "cssRules" in rule ? `${rule.cssText.slice(0, rule.cssText.indexOf("{"))}{${hoverCss((rule as CSSGroupingRule).cssRules)}}` : "").join("");
+  return Array.from(rules).map((rule) => {
+    if (rule instanceof CSSKeyframesRule) return "";
+    if (rule instanceof CSSStyleRule && rule.selectorText.includes(":hover")) {
+      return `${rule.selectorText.replaceAll(":hover", "[data-gamepad-hover]")}{${rule.style.cssText}${hoverCss(rule.cssRules)}}`;
+    }
+    if (!("cssRules" in rule)) return "";
+    const inner = hoverCss((rule as CSSGroupingRule).cssRules);
+    return inner ? `${rule.cssText.slice(0, rule.cssText.indexOf("{"))}{${inner}}` : "";
+  }).join("");
 }
 
 type TextField = HTMLInputElement | HTMLTextAreaElement;
@@ -27,6 +34,9 @@ export function GamepadRunner() {
   const hoverPath = useRef<HTMLElement[]>([]);
   const controllerField = useRef<TextField | null>(null);
   const [keyboard, setKeyboard] = useState<TextField | null>(null);
+  const captured = useGamepadCapture();
+  const capturedRef = useRef(captured);
+  capturedRef.current = captured;
   axes.current = live.axes;
 
   useEffect(() => {
@@ -53,6 +63,11 @@ export function GamepadRunner() {
     const tick = (now: number) => {
       const dt = Math.min((now - previous) / 1000, 0.05);
       previous = now;
+      if (capturedRef.current) {
+        cursor.current?.style.setProperty("opacity", "0");
+        frame = requestAnimationFrame(tick);
+        return;
+      }
       const { ly, rx, ry } = axes.current;
       const deadzone = settings.controllerDeadzone;
       const x = Math.abs(rx) < deadzone ? 0 : rx;
@@ -100,7 +115,7 @@ export function GamepadRunner() {
   }, [settings.controllerDeadzone, settings.controllerCursorSpeed]);
 
   useEffect(() => {
-    if (!live.buttons.south) return;
+    if (captured || !live.buttons.south) return;
     const selectedField = document.activeElement === controllerField.current ? controllerField.current : null;
     if (!active.current && !selectedField) return;
     if (keyboard && document.activeElement instanceof HTMLButtonElement && document.activeElement.closest("[data-controller-keyboard]")) {
@@ -123,15 +138,15 @@ export function GamepadRunner() {
     }
     const clickable = target?.closest<HTMLElement>("button,a,input,select,textarea,[role='button'],[tabindex]");
     (clickable ?? (target instanceof HTMLElement ? target : null))?.click();
-  }, [live.buttons.south]);
+  }, [live.buttons.south, captured]);
 
   useEffect(() => {
-    if (live.buttons.west && keyboard) typeInto(keyboard, "Backspace");
-  }, [live.buttons.west, keyboard]);
+    if (!captured && live.buttons.west && keyboard) typeInto(keyboard, "Backspace");
+  }, [live.buttons.west, keyboard, captured]);
 
   useEffect(() => {
-    if (live.buttons.north && keyboard) typeInto(keyboard, " ");
-  }, [live.buttons.north, keyboard]);
+    if (!captured && live.buttons.north && keyboard) typeInto(keyboard, " ");
+  }, [live.buttons.north, keyboard, captured]);
 
   useEffect(() => {
     if (!keyboard) return;
@@ -149,15 +164,23 @@ export function GamepadRunner() {
   }, []);
 
   useEffect(() => {
-    if (live.buttons.west && !keyboard && document.documentElement.hasAttribute("data-player-chrome-mounted"))
+    if (!captured && live.buttons.west && !keyboard && document.documentElement.hasAttribute("data-player-chrome-mounted"))
       document.querySelector<HTMLElement>("[data-player-subtitles]")?.click();
-  }, [live.buttons.west, keyboard]);
+  }, [live.buttons.west, keyboard, captured]);
 
   return createPortal(
     <>
       {keyboard?.isConnected && <ControllerKeyboard input={keyboard} size={settings.controllerKeyboardSize} onClose={() => setKeyboard(null)} />}
-      <div ref={cursor} className="pointer-events-none fixed left-0 top-0 z-[2147483647] h-10 w-10 text-accent opacity-0 drop-shadow-lg">
-        <HarborMark className="h-full w-full" />
+      <div
+        ref={cursor}
+        className="pointer-events-none fixed left-0 top-0 z-[2147483647] text-accent opacity-0 drop-shadow-lg"
+        style={{ width: settings.controllerCursorSize, height: settings.controllerCursorSize }}
+      >
+        <GamepadCursor
+          id={settings.controllerCursor}
+          image={settings.controllerCursorImage}
+          className="h-full w-full"
+        />
       </div>
     </>,
     document.body,

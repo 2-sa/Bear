@@ -1,6 +1,7 @@
-import { Flame, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { FlameStreak } from "@/components/icons/flame-streak";
 import { useT } from "@/lib/i18n";
 import { closeVoyage, useVoyage } from "@/lib/voyage/store";
 import { VoyageChooser } from "./voyage-chooser";
@@ -54,7 +55,7 @@ export function VoyageModal() {
 
         {streak > 1 && (
           <span className="absolute start-4 top-4 z-30 flex items-center gap-1 rounded-md bg-white/[0.06] px-2.5 py-1 text-[11px] font-semibold text-ink-muted">
-            <Flame size={12} strokeWidth={2.2} fill="currentColor" className="text-accent" />
+            <FlameStreak size={13} className="text-accent" />
             <span className="tabular-nums">{streak}</span>
             <span className="text-ink-subtle">{t("day streak")}</span>
           </span>

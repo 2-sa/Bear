@@ -80,6 +80,7 @@ import { RemindersRunner } from "@/lib/reminders-runner";
 import { MangaTrackingRunner } from "@/lib/manga-tracking";
 import { RemoteHostMount } from "@/lib/remote/host-mount";
 import { RemoteOpenBridge } from "@/lib/remote/remote-open-bridge";
+import { ControllerConnectedToast } from "@/components/controller-connected-toast";
 import { GamepadRunner } from "@/components/gamepad-runner";
 import { ProfileIdentitySync } from "@/lib/profile-identity-sync";
 import { HarborAvatarSync } from "@/components/harbor-avatar-sync";
@@ -396,6 +397,7 @@ export function App({ onReady }: { onReady?: () => void }) {
                                                   <RemoteHostMount />
                                                   <RemoteOpenBridge />
                                                   <GamepadRunner />
+                                                  <ControllerConnectedToast />
                                                   <DiscordPresence />
                                                   <WatchPresenceRunner />
                                                   <ContextMenu />

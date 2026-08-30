@@ -18,6 +18,11 @@ import {
   sanitizeSubtitleOffsetPosition,
   sanitizeSubtitleOffsetSize,
 } from "@/lib/player/subtitle-offset";
+import {
+  sanitizeControllerCursor,
+  sanitizeControllerCursorImage,
+  sanitizeControllerCursorSize,
+} from "@/lib/gamepad/cursor";
 
 const RETIRED_GEMINI = new Set([
   "gemini-2.0-flash",
@@ -286,6 +291,9 @@ export function loadStoredSettings(rawKey: string = STORAGE_KEY): Settings {
         typeof parsed.fullscreenClockEnabled === "boolean"
           ? parsed.fullscreenClockEnabled
           : DEFAULT.fullscreenClockEnabled,
+      controllerCursor: sanitizeControllerCursor(parsed.controllerCursor),
+      controllerCursorImage: sanitizeControllerCursorImage(parsed.controllerCursorImage),
+      controllerCursorSize: sanitizeControllerCursorSize(parsed.controllerCursorSize),
       fullscreenClockFormat: sanitizeFullscreenClockFormat(parsed.fullscreenClockFormat),
       fullscreenClockStyle: sanitizeFullscreenClockStyle(parsed.fullscreenClockStyle),
       fullscreenClockShowSeconds:

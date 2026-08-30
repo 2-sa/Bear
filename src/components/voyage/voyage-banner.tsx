@@ -1,4 +1,4 @@
-import { Flame } from "lucide-react";
+import { FlameStreak } from "@/components/icons/flame-streak";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Meta } from "@/lib/cinemeta";
 import { useT } from "@/lib/i18n";
@@ -95,7 +95,7 @@ export function VoyageBanner({ pool }: { pool: Meta[] }) {
           {t("Bear Voyages")}
           {streak > 1 && (
             <span className="ms-2 inline-flex items-center gap-1 rounded-full bg-elevated/70 px-2 py-0.5 align-middle text-ink">
-              <Flame size={11} strokeWidth={2.2} fill="currentColor" style={{ color: accent }} />
+              <FlameStreak size={14} style={{ color: accent }} />
               <span className="tabular-nums">{streak}</span>
             </span>
           )}

@@ -1,3 +1,4 @@
+import { DEFAULT_CONTROLLER_CURSOR_SIZE } from "@/lib/gamepad/cursor";
 import { DEFAULT_THEME } from "@/lib/theme";
 import { DEFAULT_FULLSCREEN_CLOCK_SIZE_PX } from "@/lib/local-time";
 import type { Settings } from "./types";
@@ -94,6 +95,9 @@ export const DEFAULT: Settings = {
   controllerBackgroundInput: false,
   controllerDeadzone: 0.35,
   controllerCursorSpeed: 900,
+  controllerCursor: "dot",
+  controllerCursorImage: "",
+  controllerCursorSize: DEFAULT_CONTROLLER_CURSOR_SIZE,
   controllerKeyboardSize: 100,
   controllerRepeatMs: 140,
   controllerInitialDelayMs: 400,

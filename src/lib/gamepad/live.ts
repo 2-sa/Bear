@@ -34,6 +34,30 @@ export function resetLiveGamepad(): void {
   emit();
 }
 
+export function subscribeLive(cb: () => void): () => void {
+  listeners.add(cb);
+  return () => {
+    listeners.delete(cb);
+  };
+}
+
+export function liveAxes(): LiveGamepad["axes"] {
+  return state.axes;
+}
+
+/** Buttons keep their identity across axis events, so a subscriber that only
+ * cares about presses does not re-render while a stick is moving. */
+export function useLiveButtons(): LiveGamepad["buttons"] {
+  return useSyncExternalStore(
+    (cb) => {
+      listeners.add(cb);
+      return () => listeners.delete(cb);
+    },
+    () => state.buttons,
+    () => EMPTY.buttons,
+  );
+}
+
 export function useLiveGamepad(): LiveGamepad {
   return useSyncExternalStore(
     (cb) => {

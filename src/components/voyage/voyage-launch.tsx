@@ -8,12 +8,48 @@ export type LaunchThumb = { src: string; rect: DOMRect };
 
 const RECT_W = 134.938;
 const RECT_H = 211.844;
+const SAIL_FRAMES = [80, 110, 140];
 const FLIGHT_MS = 820;
 const SETTLE_MS = 140;
 const CROSSFADE_MS = 240;
 
 function reduced(): boolean {
   return typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+}
+
+type ContentBox = { minX: number; maxX: number; cx: number; cy: number; span: number };
+
+function measureContent(svg: SVGSVGElement, anim: AnimationItem): ContentBox | null {
+  let minX = Infinity;
+  let maxX = -Infinity;
+  let minY = Infinity;
+  let maxY = -Infinity;
+  for (const frame of SAIL_FRAMES) {
+    anim.goToAndStop(frame, true);
+    let box: DOMRect | null = null;
+    try {
+      box = svg.getBBox() as DOMRect;
+    } catch {
+      box = null;
+    }
+    if (!box || box.width <= 0) continue;
+    minX = Math.min(minX, box.x);
+    maxX = Math.max(maxX, box.x + box.width);
+    minY = Math.min(minY, box.y);
+    maxY = Math.max(maxY, box.y + box.height);
+  }
+  if (!Number.isFinite(minX) || maxX <= minX) return null;
+  return { minX, maxX, cx: (minX + maxX) / 2, cy: (minY + maxY) / 2, span: maxX - minX };
+}
+
+function frameStage(svg: SVGSVGElement, stage: HTMLElement, content: ContentBox): void {
+  const width = stage.clientWidth;
+  const height = stage.clientHeight;
+  if (width <= 0 || height <= 0) return;
+  const vbW = content.span;
+  const vbH = vbW * (height / width);
+  svg.setAttribute("viewBox", `${content.cx - vbW / 2} ${content.cy - vbH / 2} ${vbW} ${vbH}`);
+  svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
 }
 
 function paintPosters(svg: SVGSVGElement, sources: string[]): void {
@@ -48,11 +84,9 @@ function paintPosters(svg: SVGSVGElement, sources: string[]): void {
 
 export function VoyageLaunch({
   thumbs,
-  accent,
   onDone,
 }: {
   thumbs: LaunchThumb[];
-  accent: string;
   onDone: () => void;
 }) {
   const t = useT();
@@ -64,6 +98,7 @@ export function VoyageLaunch({
   const [targets, setTargets] = useState<DOMRect[] | null>(null);
   const [sailing, setSailing] = useState(false);
   const startedRef = useRef(false);
+  const contentRef = useRef<{ svg: SVGSVGElement; content: ContentBox } | null>(null);
 
   const castRef = useRef<LaunchThumb[]>([]);
   if (castRef.current.length === 0) castRef.current = thumbs.slice(0, 3);
@@ -89,6 +124,11 @@ export function VoyageLaunch({
       const svg = stage.querySelector("svg");
       if (!svg) return;
       paintPosters(svg, cast.map((c) => c.src));
+      const content = measureContent(svg, anim);
+      if (content) {
+        contentRef.current = { svg, content };
+        frameStage(svg, stage, content);
+      }
       anim.goToAndStop(0, true);
       const found = cast.map((_, i) => {
         const slots = svg.querySelectorAll<SVGGElement>(`.vy-poster-${i}`);
@@ -173,6 +213,16 @@ export function VoyageLaunch({
     return () => window.clearTimeout(timer);
   }, [targets]);
 
+  useEffect(() => {
+    const onResize = () => {
+      const stage = stageRef.current;
+      const held = contentRef.current;
+      if (stage && held) frameStage(held.svg, stage, held.content);
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
   const skip = () => doneRef.current();
 
   useEffect(() => {
@@ -191,12 +241,6 @@ export function VoyageLaunch({
       tabIndex={0}
       aria-label={t("Skip the launch")}
     >
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-40"
-        style={{ background: `radial-gradient(60% 50% at 50% 45%, ${accent}, transparent 70%)` }}
-      />
-
       <div
         ref={stageRef}
         aria-hidden

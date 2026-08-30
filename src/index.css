@@ -492,28 +492,74 @@ main[data-kids="on"]::-webkit-scrollbar-thumb:hover {
 
 .animate-voyage-launch-in { animation: voyage-launch-in 260ms ease-in-out both; }
 
+@keyframes harbor-flicker-sway {
+  0%, 100% { transform: rotate(0deg) translateX(0); }
+  34% { transform: rotate(5deg) translateX(0.4px); }
+  67% { transform: rotate(-4deg) translateX(-0.3px); }
+}
+
+@keyframes harbor-flicker-body {
+  0% { transform: translateY(0) scale(1, 1); }
+  22% { transform: translateY(-1px) scale(0.84, 1.2); }
+  46% { transform: translateY(0.7px) scale(1.14, 0.88); }
+  68% { transform: translateY(-0.35px) scale(0.94, 1.08); }
+  86% { transform: translateY(0.15px) scale(1.04, 0.97); }
+  100% { transform: translateY(0) scale(1, 1); }
+}
+
+@keyframes harbor-flicker-core {
+  0% { transform: scale(1, 1); opacity: 0.45; }
+  30% { transform: scale(1.3, 0.74); opacity: 0.85; }
+  56% { transform: scale(0.76, 1.28); opacity: 0.3; }
+  79% { transform: scale(1.09, 0.93); opacity: 0.65; }
+  100% { transform: scale(1, 1); opacity: 0.45; }
+}
+
+.harbor-flame {
+  overflow: visible;
+  transform-origin: 50% 90%;
+  animation: harbor-flicker-sway 2300ms ease-in-out infinite;
+}
+
+.harbor-flame-body,
+.harbor-flame-core {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+
+.harbor-flame-body { animation: harbor-flicker-body 1400ms ease-in-out infinite; }
+.harbor-flame-core { animation: harbor-flicker-core 1100ms ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .harbor-flame,
+  .harbor-flame-body,
+  .harbor-flame-core {
+    animation: none;
+  }
+}
+
 @keyframes harbor-tile-rise {
-  0% { translate: 0 0; scale: 1 1; }
-  50% { translate: 0 -10px; scale: 1.014 0.984; }
-  75% { translate: 0 -4px; scale: 0.995 1.008; }
-  100% { translate: 0 -6px; scale: 1 1; }
+  0% { transform: translateY(0) scale(1, 1); }
+  50% { transform: translateY(-10px) scale(1.014, 0.984); }
+  75% { transform: translateY(-4px) scale(0.995, 1.008); }
+  100% { transform: translateY(-6px) scale(1, 1); }
 }
 
 @keyframes harbor-tile-art {
-  0% { scale: 1; }
-  55% { scale: 1.062; }
-  100% { scale: 1.045; }
+  0% { transform: scale(1); }
+  55% { transform: scale(1.062); }
+  100% { transform: scale(1.045); }
 }
 
 @keyframes harbor-tile-keel {
-  0% { scale: 0 1; }
-  60% { scale: 1.04 1; }
-  100% { scale: 1 1; }
+  0% { transform: scaleX(0); }
+  60% { transform: scaleX(1.04); }
+  100% { transform: scaleX(1); }
 }
 
 .harbor-tile {
-  translate: 0 0;
-  transition: translate 320ms ease-in-out, box-shadow 320ms ease-in-out;
+  transform: translateY(0);
+  transition: transform 320ms ease-in-out, box-shadow 320ms ease-in-out;
 }
 
 .harbor-tile:hover {
@@ -521,8 +567,8 @@ main[data-kids="on"]::-webkit-scrollbar-thumb:hover {
 }
 
 .harbor-tile-art {
-  scale: 1;
-  transition: scale 340ms ease-in-out, filter 340ms ease-in-out, opacity 600ms ease-in-out;
+  transform: scale(1);
+  transition: transform 340ms ease-in-out, filter 340ms ease-in-out, opacity 600ms ease-in-out;
 }
 
 .harbor-tile:hover .harbor-tile-art {
@@ -531,8 +577,8 @@ main[data-kids="on"]::-webkit-scrollbar-thumb:hover {
 
 .harbor-tile-keel {
   transform-origin: left center;
-  scale: 0 1;
-  transition: scale 260ms ease-in-out;
+  transform: scaleX(0);
+  transition: transform 260ms ease-in-out;
 }
 
 .harbor-tile:hover .harbor-tile-keel {
@@ -552,10 +598,9 @@ main[data-kids="on"]::-webkit-scrollbar-thumb:hover {
   .harbor-tile:hover .harbor-tile-keel {
     animation: none !important;
     transition: none;
-    translate: 0 0;
-    scale: 1 1;
+    transform: none;
   }
-  .harbor-tile-keel { scale: 0 1; }
+  .harbor-tile-keel { transform: scaleX(0); }
 }
 
 @keyframes harbor-fade-in {

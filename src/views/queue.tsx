@@ -2,6 +2,8 @@ import { NavChevron } from "@/components/nav-arrow";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FeedHero } from "@/components/feed-hero";
 import { Poster } from "@/components/poster";
+import type { Meta } from "@/lib/cinemeta";
+import { peekCachedLogo, resolveLogo } from "@/lib/logo";
 import { extendPool, getPool, type FeedItem } from "@/lib/feed";
 import { rankByAffinity } from "@/lib/feed/rank";
 import { blockQueueItem, filterQueuePool, shuffleQueuePool, snoozeQueueItem } from "@/lib/feed/skipped";
@@ -324,14 +326,64 @@ function Strip({
                   className="pointer-events-none absolute inset-0 rounded-[10px] shadow-[inset_0_0_0_2px_var(--color-accent)]"
                 />
               )}
-              <span className="absolute start-1.5 top-1.5 rounded-md bg-canvas/85 px-1.5 py-0.5 text-[9.5px] font-semibold uppercase tracking-[0.12em] text-ink">
-                {item.tag}
-              </span>
+              <span
+                aria-hidden
+                className="pointer-events-none absolute inset-x-0 bottom-0 h-2/3 rounded-b-md"
+                style={{
+                  background:
+                    "linear-gradient(to top, color-mix(in oklch, var(--color-canvas), transparent 8%) 0%, color-mix(in oklch, var(--color-canvas), transparent 55%) 46%, transparent 100%)",
+                }}
+              />
+              <QueueCardTitle meta={item.meta} />
             </button>
           );
         })}
       </div>
     </div>
+  );
+}
+
+function useQueueLogo(meta: Meta): string | undefined {
+  const { settings } = useSettings();
+  const [logo, setLogo] = useState<string | undefined>(() => peekCachedLogo(settings.tmdbKey, meta));
+  useEffect(() => {
+    let cancelled = false;
+    const cached = peekCachedLogo(settings.tmdbKey, meta);
+    if (cached) {
+      setLogo(cached);
+      return;
+    }
+    setLogo(undefined);
+    resolveLogo(settings.tmdbKey, meta)
+      .then((url) => {
+        if (!cancelled && url) setLogo(url);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [meta, settings.tmdbKey]);
+  return logo;
+}
+
+function QueueCardTitle({ meta }: { meta: Meta }) {
+  const logo = useQueueLogo(meta);
+  const [failed, setFailed] = useState(false);
+  if (logo && !failed) {
+    return (
+      <img
+        src={logo}
+        alt={meta.name}
+        draggable={false}
+        onError={() => setFailed(true)}
+        className="pointer-events-none absolute bottom-2 start-2.5 end-2.5 max-h-[38px] w-auto max-w-[82%] object-contain object-left-bottom drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]"
+      />
+    );
+  }
+  return (
+    <span className="pointer-events-none absolute bottom-2 start-2.5 end-2.5 line-clamp-2 text-start text-[12.5px] font-semibold leading-tight text-ink [text-shadow:0_1px_6px_rgba(0,0,0,0.85)]">
+      {meta.name}
+    </span>
   );
 }
 

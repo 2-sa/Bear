@@ -43,7 +43,11 @@ export function dispatchTvNav(action: Dir | "select" | "back" | "home"): void {
   }
   if (action === "select") {
     const active = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    if (active && !isEditable(active)) active.click();
+    const target = hoveredEl ?? active;
+    if (target && !isEditable(target)) {
+      if (target !== active) target.focus({ preventScroll: true });
+      target.click();
+    }
     return;
   }
   const anchor = action !== "back" ? hoveredEl : null;
@@ -68,9 +72,10 @@ function ensureFocusStyles() {
   style.setAttribute("data-tv-focus-styles", "true");
   style.textContent = `
     html:not([data-input-modality="pointer"]) [data-tv-focused="true"] {
-      outline: none !important;
-      box-shadow: 0 0 0 2px var(--color-canvas), 0 0 0 5px var(--tv-focus-ring, var(--color-accent)), 0 0 0 7px rgba(0,0,0,0.45) !important;
-      transition: box-shadow 120ms ease;
+      outline: 2.5px solid var(--tv-focus-ring, var(--color-accent)) !important;
+      outline-offset: 3px;
+      box-shadow: 0 0 0 7px color-mix(in oklch, var(--tv-focus-ring, var(--color-accent)) 16%, transparent) !important;
+      transition: outline-color 120ms ease, box-shadow 120ms ease;
       z-index: 20;
       position: relative;
     }
@@ -93,7 +98,19 @@ export function tvHover(el: HTMLElement | null) {
 
 function clearTvFocusRing() {
   lastFocusedEl?.removeAttribute("data-tv-focused");
+  lastFocusedEl?.style.removeProperty("border-radius");
   lastFocusedEl = null;
+}
+
+// An outline follows the element's own border-radius, so a square button filling a
+// rounded card draws a square ring inside it. Borrow the parent's radius when the
+// focused element has none of its own.
+function borrowRadius(el: HTMLElement) {
+  if (getComputedStyle(el).borderRadius !== "0px") return;
+  const parent = el.parentElement;
+  if (!parent) return;
+  const radius = getComputedStyle(parent).borderRadius;
+  if (radius && radius !== "0px") el.style.borderRadius = radius;
 }
 
 type InputModality = "pointer" | "keys";
@@ -132,6 +149,7 @@ function focusElement(el: HTMLElement) {
   ensureFocusStyles();
   if (lastFocusedEl && lastFocusedEl !== el) clearTvFocusRing();
   el.setAttribute("data-tv-focused", "true");
+  borrowRadius(el);
   lastFocusedEl = el;
 
   el.focus({ preventScroll: true });

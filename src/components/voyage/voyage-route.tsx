@@ -61,7 +61,6 @@ export function VoyageRoute({ voyage }: { voyage: Voyage }) {
       {launch && (
         <VoyageLaunch
           thumbs={launch}
-          accent={voyage.accent}
           onDone={() => {
             setLaunch(null);
             sail();

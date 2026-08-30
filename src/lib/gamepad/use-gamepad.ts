@@ -5,19 +5,32 @@ import { makeSafeTauriUnlisten } from "@/lib/tauri-unlisten";
 import { useSettings } from "@/lib/settings";
 import { useView } from "@/lib/view";
 import { dispatchTvNav } from "@/lib/keyboard-navigation";
+import { isGamepadCaptured } from "./capture";
 import { publishGamepads } from "./store";
 import { resetLiveGamepad, setLiveAxis, setLiveButton } from "./live";
 import { startWebGamepadSource } from "./web-source";
-import type { GamepadEventPayload, GamepadInfo, GpButton } from "./protocol";
+import type { GamepadEventPayload, GamepadInfo, GpAxis, GpButton } from "./protocol";
 import {
+  NAV_AXIS,
   NAV_BUTTON,
   NAV_REPEATABLE,
+  PLAYER_AXIS,
   PLAYER_BUTTON,
   PLAYER_REPEATABLE,
   type PlayerKey,
 } from "./mapping";
 
 const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
+
+const CONTROLLER_ACTIVITY = "harbor:controller-activity";
+const NAV_WHEN_CONTROLS_UP = new Set<GpButton>(["dup", "ddown", "dleft", "dright", "south"]);
+
+function controlsUp(): boolean {
+  return (
+    typeof document !== "undefined" &&
+    document.documentElement.hasAttribute("data-player-chrome-visible")
+  );
+}
 
 function synthKey({ key, code }: PlayerKey): void {
   const init = { key, code, bubbles: true, cancelable: true };
@@ -75,10 +88,12 @@ export function useGamepad(): void {
   }, [backgroundInput]);
 
   const cfgRef = useRef({
+    deadzone: settings.controllerDeadzone,
     repeatMs: settings.controllerRepeatMs,
     initialDelayMs: settings.controllerInitialDelayMs,
   });
   cfgRef.current = {
+    deadzone: settings.controllerDeadzone,
     repeatMs: settings.controllerRepeatMs,
     initialDelayMs: settings.controllerInitialDelayMs,
   };
@@ -93,6 +108,7 @@ export function useGamepad(): void {
     if (!isTauri || !enabled) return;
 
     const repeats = new Map<string, { delay: number | null; interval: number | null }>();
+    const axisDir = new Map<GpAxis, "neg" | "pos" | null>();
     const stopRepeat = (id: string) => {
       const r = repeats.get(id);
       if (!r) return;
@@ -100,36 +116,53 @@ export function useGamepad(): void {
       if (r.interval != null) window.clearInterval(r.interval);
       repeats.delete(id);
     };
-    const startRepeat = (id: string, fire: () => void) => {
+    const startRepeat = (id: string, fire: (repeat: boolean) => void) => {
       stopRepeat(id);
-      fire();
+      fire(false);
       const r: { delay: number | null; interval: number | null } = { delay: null, interval: null };
       r.delay = window.setTimeout(
         () => {
           r.delay = null;
-          r.interval = window.setInterval(fire, Math.max(40, cfgRef.current.repeatMs));
+          r.interval = window.setInterval(() => fire(true), Math.max(40, cfgRef.current.repeatMs));
         },
         Math.max(0, cfgRef.current.initialDelayMs),
       );
       repeats.set(id, r);
     };
     const stopAll = () => {
-      for (const id of repeats.keys()) stopRepeat(id);
+      for (const id of [...repeats.keys()]) stopRepeat(id);
     };
 
-    const fireButton = (button: GpButton) => {
+    const fireButton = (button: GpButton, repeat = false) => {
+      if (isGamepadCaptured()) return;
       if (playerRef.current) {
-        const key = PLAYER_BUTTON[button];
-        if (key) synthKey(key);
-        return;
+        window.dispatchEvent(new Event(CONTROLLER_ACTIVITY));
+        if (!(controlsUp() && NAV_WHEN_CONTROLS_UP.has(button))) {
+          const key = PLAYER_BUTTON[button];
+          if (key) synthKey(key);
+          return;
+        }
       }
       const nav = NAV_BUTTON[button];
       if (nav && !keyboardNav(nav)) {
-        dispatchTvNav(nav);
+        dispatchTvNav(nav, repeat);
         document.activeElement?.dispatchEvent(new CustomEvent("harbor-controller-focus", { bubbles: true }));
       }
     };
 
+    const fireAxis = (axis: GpAxis, dir: "neg" | "pos", repeat = false) => {
+      if (isGamepadCaptured()) return;
+      if (playerRef.current) {
+        window.dispatchEvent(new Event(CONTROLLER_ACTIVITY));
+        if (!axisNavigates(axis)) {
+          const key = PLAYER_AXIS[axis]?.[dir];
+          if (key) synthKey(key);
+          return;
+        }
+      }
+      const nav = NAV_AXIS[axis]?.[dir];
+      if (nav) dispatchTvNav(nav, repeat);
+    };
     const onButton = (button: GpButton, pressed: boolean) => {
       if (!pressed) {
         stopRepeat(`btn:${button}`);
@@ -138,10 +171,28 @@ export function useGamepad(): void {
       const repeatable = playerRef.current
         ? PLAYER_REPEATABLE.has(button)
         : NAV_REPEATABLE.has(button);
-      if (repeatable) startRepeat(`btn:${button}`, () => fireButton(button));
+      if (repeatable) startRepeat(`btn:${button}`, (repeat) => fireButton(button, repeat));
       else fireButton(button);
     };
 
+    const axisNavigates = (axis: GpAxis) =>
+      !playerRef.current || (controlsUp() && !!NAV_AXIS[axis] && axis !== "ry");
+
+    const onAxis = (axis: GpAxis, value: number) => {
+      const mapped = axisNavigates(axis) ? NAV_AXIS[axis] : PLAYER_AXIS[axis];
+      const dz = Math.max(0.05, cfgRef.current.deadzone);
+      const dir: "neg" | "pos" | null = !mapped
+        ? null
+        : value <= -dz
+          ? "neg"
+          : value >= dz
+            ? "pos"
+            : null;
+      if ((axisDir.get(axis) ?? null) === dir) return;
+      axisDir.set(axis, dir);
+      stopRepeat(`axis:${axis}`);
+      if (dir) startRepeat(`axis:${axis}`, (r) => fireAxis(axis, dir, r));
+    };
     let unlisten: (() => void) | undefined;
     let cancelled = false;
 
@@ -164,6 +215,7 @@ export function useGamepad(): void {
           break;
         case "axis":
           setLiveAxis(p.axis, p.value);
+          onAxis(p.axis, p.value);
           break;
       }
     }).then((raw) => {
@@ -180,6 +232,7 @@ export function useGamepad(): void {
       },
       onAxis: (axis, value) => {
         setLiveAxis(axis, value);
+        onAxis(axis, value);
       },
       onPads: (pads) => {
         webPads = pads;
@@ -191,6 +244,7 @@ export function useGamepad(): void {
       cancelled = true;
       stopAll();
       stopWebSource();
+      axisDir.clear();
       webPads = [];
       resetLiveGamepad();
       unlisten?.();

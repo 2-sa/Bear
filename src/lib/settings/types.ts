@@ -1,3 +1,4 @@
+import type { ControllerCursorId } from "@/lib/gamepad/cursor";
 import type { ThemeSettings } from "@/lib/theme";
 import type { CustomList } from "@/lib/lists/types";
 import type { SourceRow } from "@/lib/custom-sources";
@@ -144,6 +145,9 @@ export type Settings = {
   controllerBackgroundInput: boolean;
   controllerDeadzone: number;
   controllerCursorSpeed: number;
+  controllerCursor: ControllerCursorId;
+  controllerCursorImage: string;
+  controllerCursorSize: number;
   controllerKeyboardSize: number;
   controllerRepeatMs: number;
   controllerInitialDelayMs: number;
