@@ -23,6 +23,7 @@ export type EBook = {
   banner?: string;
   description: string;
   year?: number;
+  publishedAt?: string;
   status?: string;
   genres: string[];
   chapters?: number;
@@ -70,13 +71,19 @@ export const EBOOK_CATEGORIES = {
 
 export type EBookCategoryGroup = keyof typeof EBOOK_CATEGORIES;
 
+export type EBookAdaptations = {
+  manga: string[];
+  anime: string[];
+  liveAction: string[];
+};
+
 export type RawEBook = {
   id: number;
   title: { english: string | null; romaji: string | null; native: string | null };
   coverImage: { extraLarge: string | null; large: string | null } | null;
   bannerImage: string | null;
   description: string | null;
-  startDate: { year: number | null } | null;
+  startDate: { year: number | null; month?: number | null; day?: number | null } | null;
   status: string | null;
   genres: string[];
   chapters: number | null;
@@ -93,7 +100,7 @@ const FIELDS = `
   coverImage { extraLarge large }
   bannerImage
   description(asHtml: false)
-  startDate { year }
+  startDate { year month day }
   status
   genres
   chapters
@@ -246,6 +253,13 @@ function clean(text: string | null): string {
     .trim();
 }
 
+function fuzzyDate(value: RawEBook["startDate"]): string | undefined {
+  if (!value?.year) return undefined;
+  if (!value.month) return String(value.year);
+  if (!value.day) return `${value.year}-${String(value.month).padStart(2, "0")}`;
+  return `${value.year}-${String(value.month).padStart(2, "0")}-${String(value.day).padStart(2, "0")}`;
+}
+
 export function mapEBook(n: RawEBook): EBook {
   const language = getUiLanguage();
   const localized =
@@ -273,6 +287,7 @@ export function mapEBook(n: RawEBook): EBook {
     banner: n.bannerImage ?? undefined,
     description: clean(n.description),
     year: n.startDate?.year ?? undefined,
+    publishedAt: fuzzyDate(n.startDate),
     status: n.status?.replaceAll("_", " ").toLowerCase(),
     genres: n.genres ?? [],
     chapters: n.chapters ?? undefined,
@@ -304,8 +319,81 @@ export async function browseNewReleases(): Promise<EBook[]> {
 }
 
 export async function recommendedEBooks(ebook: EBook): Promise<EBook[]> {
+  if (!ebook.genres.length) {
+    const metadata = await fetchEBookMetadata([ebook]).catch(() => []);
+    ebook = mergeEBookMetadata([ebook], metadata)[0] ?? ebook;
+  }
+  const normalizeGenre = (genre: string) =>
+    genre
+      .normalize("NFKD")
+      .toLocaleLowerCase()
+      .replace(/[^\p{L}\p{N}]+/gu, " ")
+      .trim();
+  const categoryGenres = [
+    ...Object.keys(EBOOK_CATEGORIES),
+    ...Object.values(EBOOK_CATEGORIES).flat(),
+  ];
+  const recommendationGenres = [
+    ...new Set([
+      ...ebook.genres,
+      ...categoryGenres.filter((category) => {
+        const normalizedCategory = normalizeGenre(category);
+        return ebook.genres.some((genre) => {
+          const normalizedGenre = normalizeGenre(genre);
+          if (!normalizedGenre) return false;
+          return (
+            normalizedGenre === normalizedCategory ||
+            normalizedGenre.includes(normalizedCategory) ||
+            normalizedCategory.includes(normalizedGenre)
+          );
+        });
+      }),
+    ]),
+  ];
+  const currentGenres = recommendationGenres.map(normalizeGenre).filter(Boolean);
+  const genreOverlap = (candidate: EBook) => {
+    const candidateGenres = candidate.genres.map(normalizeGenre).filter(Boolean);
+    return currentGenres.reduce(
+      (score, wanted) =>
+        score +
+        (candidateGenres.some(
+          (genre) => genre === wanted || genre.includes(wanted) || wanted.includes(genre),
+        )
+          ? 1
+          : 0),
+      0,
+    );
+  };
+  const rankByGenre = (items: EBook[]) =>
+    items
+      .filter((item) => item.id !== ebook.id && item.title !== ebook.title)
+      .map((item) => ({ item, overlap: genreOverlap(item) }))
+      .filter(({ overlap }) => overlap > 0)
+      .sort(
+        (left, right) =>
+          right.overlap - left.overlap || (right.item.score ?? 0) - (left.item.score ?? 0),
+      )
+      .map(({ item }) => item);
+  const uniqueRecommendations = (items: EBook[]) => [
+    ...new Map(
+      items
+        .filter((item) => item.id !== ebook.id && titleKey(item.title) !== titleKey(ebook.title))
+        .map((item) => [titleKey(item.seriesTitle || item.title), item]),
+    ).values(),
+  ];
+
+  if (!currentGenres.length) {
+    const metadataQuery = ebook.authors[0] || ebook.seriesTitle || ebook.title;
+    const metadataMatches = await searchEBooks(metadataQuery).catch(() => []);
+    const relatedMetadata = uniqueRecommendations(metadataMatches).slice(0, 18);
+    if (relatedMetadata.length) return relatedMetadata;
+    return uniqueRecommendations(await browsePopularEBooks().catch(() => [])).slice(0, 18);
+  }
+
+  const genreCandidates: Array<Promise<EBook[]>> = [];
   if (ebook.anilistId) {
-    const data = await anilistRequest<{
+    genreCandidates.push(
+      anilistRequest<{
       Media: {
         recommendations: {
           nodes: Array<{ mediaRecommendation: (RawEBook & { format?: string }) | null }>;
@@ -322,17 +410,26 @@ export async function recommendedEBooks(ebook: EBook): Promise<EBook[]> {
       { id: ebook.anilistId },
       undefined,
       true,
-    ).catch(() => null);
-    const direct = (data?.Media?.recommendations.nodes ?? [])
-      .map((node) => node.mediaRecommendation)
-      .filter((item): item is RawEBook & { format?: string } => !!item && item.format === "NOVEL")
-      .map(mapEBook);
-    if (direct.length) return direct;
+      )
+        .then((data) =>
+          rankByGenre(
+            (data.Media?.recommendations.nodes ?? [])
+              .map((node) => node.mediaRecommendation)
+              .filter(
+                (item): item is RawEBook & { format?: string } =>
+                  !!item && item.format === "NOVEL",
+              )
+              .map(mapEBook),
+          ),
+        )
+        .catch(() => []),
+    );
   }
-  const genres = ebook.genres.slice(0, 3);
-  const data = await anilistRequest<{ Page: { media: RawEBook[] } | null }>(
-    genres.length
-      ? `query ($genres: [String]) {
+  const genres = recommendationGenres.slice(0, 3);
+  genreCandidates.push(
+    anilistRequest<{ Page: { media: RawEBook[] } | null }>(
+      genres.length
+        ? `query ($genres: [String]) {
           Page(page: 1, perPage: 18) {
             media(type: MANGA, format: NOVEL, genre_in: $genres, sort: POPULARITY_DESC, isAdult: false) { ${FIELDS} }
           }
@@ -342,17 +439,46 @@ export async function recommendedEBooks(ebook: EBook): Promise<EBook[]> {
             media(type: MANGA, format: NOVEL, sort: POPULARITY_DESC, isAdult: false) { ${FIELDS} }
           }
         }`,
-    genres.length ? { genres } : undefined,
-    undefined,
-    true,
+      genres.length ? { genres } : undefined,
+      undefined,
+      true,
+    )
+      .then((data) => rankByGenre((data.Page?.media ?? []).map(mapEBook)))
+      .catch(() => []),
   );
-  const related = (data.Page?.media ?? [])
-    .map(mapEBook)
-    .filter((item) => item.id !== ebook.id && item.title !== ebook.title);
-  if (related.length || !genres.length) return related;
-  return (await browseEBooks("POPULARITY_DESC")).filter(
-    (item) => item.id !== ebook.id && item.title !== ebook.title,
+
+  genreCandidates.push(
+    ...recommendationGenres.slice(0, 5).map((genre) =>
+      browseEBookCategory(genre)
+        .then((items) => {
+          const books = uniqueRecommendations(items);
+          const ranked = rankByGenre(books);
+          return ranked.length ? ranked : books;
+        })
+        .catch(() => []),
+    ),
   );
+
+  // Start the general metadata fallback now, but only use it if every
+  // genre-specific provider returns no books. This removes the request waterfall.
+  const popularMetadataPromise = browsePopularEBooks()
+    .then(uniqueRecommendations)
+    .catch(() => []);
+  try {
+    return await Promise.any(
+      genreCandidates.map(async (request) => {
+        const items = await request;
+        if (!items.length) throw new Error("Empty recommendation result");
+        return items.slice(0, 18);
+      }),
+    );
+  } catch {}
+
+  const popularMetadata = await popularMetadataPromise;
+  const rankedPopularMetadata = rankByGenre(popularMetadata);
+  if (rankedPopularMetadata.length) return rankedPopularMetadata;
+  if (popularMetadata.length) return popularMetadata.slice(0, 18);
+  throw new Error("Recommendation providers are temporarily unavailable");
 }
 
 export async function fetchAniListEBookMetadata(ebooks: EBook[]): Promise<EBook[]> {
@@ -561,6 +687,7 @@ function mapGoogleBook(book: GoogleBook): EBook {
     cover: cover?.replace(/^http:/, "https:"),
     description: clean(info.description ?? null),
     year: Number(info.publishedDate?.match(/\d{4}/)?.[0]) || undefined,
+    publishedAt: info.publishedDate,
     genres: info.categories ?? [],
     score: info.averageRating ? info.averageRating * 20 : undefined,
     siteUrl: info.infoLink,
@@ -739,6 +866,7 @@ function mapWikidata(entity: WikidataEntity, summary?: WikipediaSummary | null):
       commonsImage(cover),
     description,
     year: Number(date?.time?.match(/[+-](\d{4})/)?.[1]) || undefined,
+    publishedAt: date?.time?.match(/[+-](\d{4}-\d{2}-\d{2})/)?.[1],
     genres: [],
     siteUrl: `https://www.wikidata.org/wiki/${entity.id}`,
   };
@@ -867,6 +995,7 @@ function mapOpenLibrary(n: OpenLibraryDoc): EBook {
       ? (n.first_sentence[0] ?? "")
       : (n.first_sentence ?? ""),
     year: n.first_publish_year,
+    publishedAt: n.first_publish_year ? String(n.first_publish_year) : undefined,
     genres: n.subject?.slice(0, 8) ?? [],
     siteUrl: `https://openlibrary.org/works/${key}`,
   };
@@ -1331,6 +1460,7 @@ export function mergeEBookMetadata(sources: EBook[], metadata: EBook[]): EBook[]
             ? metadataGenres
             : ebook.genres,
       year: meta.year ?? source.year,
+      publishedAt: meta.publishedAt ?? source.publishedAt,
       status: meta.status ?? source.status,
       chapters: source.chapters,
       volumes: source.volumes,
@@ -1381,6 +1511,7 @@ export async function ebookDetail(id: string): Promise<EBook | null> {
         : undefined,
       description,
       year: Number(data.first_publish_date?.match(/\d{4}/)?.[0]) || undefined,
+      publishedAt: data.first_publish_date,
       genres: data.subjects?.slice(0, 8) ?? [],
       siteUrl: `https://openlibrary.org/works/${key}`,
     };
@@ -1394,4 +1525,91 @@ export async function ebookDetail(id: string): Promise<EBook | null> {
     true,
   );
   return data.Media ? mapEBook(data.Media) : null;
+}
+
+const ebookAdaptationCache = new Map<string, Promise<EBookAdaptations>>();
+
+export function ebookAdaptations(ebook: EBook): Promise<EBookAdaptations> {
+  const cacheKey = `${ebook.anilistId ?? ""}:${ebook.wikidataId ?? ""}`;
+  const cached = ebookAdaptationCache.get(cacheKey);
+  if (cached) return cached;
+
+  const request = (async () => {
+    const result: EBookAdaptations = { manga: [], anime: [], liveAction: [] };
+    const add = (kind: keyof EBookAdaptations, title?: string | null) => {
+      const value = title?.trim();
+      if (value && !result[kind].includes(value)) result[kind].push(value);
+    };
+
+    const aniList = ebook.anilistId
+      ? anilistRequest<{
+          Media: {
+            relations: {
+              edges: Array<{
+                relationType: string | null;
+                node: {
+                  type: "ANIME" | "MANGA";
+                  format: string | null;
+                  title: { english: string | null; romaji: string | null; native: string | null };
+                } | null;
+              }>;
+            } | null;
+          } | null;
+        }>(
+          `query ($id: Int) {
+            Media(id: $id, type: MANGA, format: NOVEL) {
+              relations {
+                edges {
+                  relationType
+                  node { type format title { english romaji native } }
+                }
+              }
+            }
+          }`,
+          { id: ebook.anilistId },
+          undefined,
+          true,
+        ).catch(() => null)
+      : Promise.resolve(null);
+
+    const wikidata = ebook.wikidataId
+      ? (() => {
+          const query = `PREFIX wd: <http://www.wikidata.org/entity/>
+PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX schema: <http://schema.org/>
+SELECT DISTINCT ?adaptation ?label ?description WHERE {
+  ?adaptation wdt:P144 wd:${ebook.wikidataId}; rdfs:label ?label.
+  FILTER(LANG(?label) = "en")
+  OPTIONAL { ?adaptation schema:description ?description. FILTER(LANG(?description) = "en") }
+} LIMIT 30`;
+          const url = new URL("https://query.wikidata.org/sparql");
+          url.searchParams.set("query", query);
+          url.searchParams.set("format", "json");
+          return cachedJson<{
+            results?: { bindings?: Array<{ label?: { value?: string }; description?: { value?: string } }> };
+          }>(url.toString()).catch(() => null);
+        })()
+      : Promise.resolve(null);
+
+    const [aniListData, wikidataData] = await Promise.all([aniList, wikidata]);
+    for (const edge of aniListData?.Media?.relations?.edges ?? []) {
+      if (edge.relationType !== "ADAPTATION" || !edge.node) continue;
+      const title = edge.node.title.english || edge.node.title.romaji || edge.node.title.native;
+      if (edge.node.type === "ANIME") add("anime", title);
+      else if (edge.node.type === "MANGA" && edge.node.format !== "NOVEL") add("manga", title);
+    }
+    for (const binding of wikidataData?.results?.bindings ?? []) {
+      const description = binding.description?.value?.toLocaleLowerCase() ?? "";
+      const title = binding.label?.value;
+      if (/\bmanga\b/.test(description)) add("manga", title);
+      else if (/\banime\b/.test(description)) add("anime", title);
+      else if (/live.action|television|tv series|film|movie/.test(description))
+        add("liveAction", title);
+    }
+    return result;
+  })();
+
+  ebookAdaptationCache.set(cacheKey, request);
+  return request;
 }

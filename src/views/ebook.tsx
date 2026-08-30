@@ -1,4 +1,5 @@
 import {
+  ArrowUp,
   BookOpen,
   Bookmark,
   Check,
@@ -25,8 +26,8 @@ import {
   useState,
   type CSSProperties,
 } from "react";
-import "./ebook-book.css";
 import "./ebook-hero.css";
+import "./ebook-showcase.css";
 import { NavArrow } from "@/components/nav-arrow";
 import { CoverImg } from "@/components/cover-img";
 import { Poster } from "@/components/poster";
@@ -38,10 +39,12 @@ import {
   attachEBookCollectionSources,
   browsePopularEBooks,
   ebookCollection,
+  ebookAdaptations,
   ebookDetail,
   mergeEBookMetadata,
   recommendedEBooks,
   type EBook,
+  type EBookAdaptations,
   type EBookCategoryGroup,
 } from "@/lib/ebook/api";
 import {
@@ -787,22 +790,15 @@ export function EBookView() {
           </div>
         </div>
         {categoryGroup === "Genre" && !browseAll && query.trim().length < 2 ? (
-          <div className="flex flex-col gap-9">
-            {genreRails.map((rail) => (
-              <EBookRail
-                key={`genre:${rail.title}:${providerId}`}
-                title={rail.title}
-                subtitle={`${rail.items.length} ${rail.items.length === 1 ? "book" : "books"}`}
-                items={rail.items}
-                onOpen={(ebook) => openEBook(String(ebook.id))}
-              />
-            ))}
-            {sourceItems !== null && genreRails.length === 0 && (
-              <p className="py-10 text-center text-[14px] text-ink-muted">
-                No genre metadata is available from this catalog.
-              </p>
-            )}
-          </div>
+          <EBookGenreRails
+            rails={genreRails}
+            resetKey={`${providerId}:${category}`}
+            sourceLoaded={sourceItems !== null}
+            loadingMore={loadingMore}
+            hasMore={hasMore}
+            onLoadMore={loadMore}
+            onOpen={(ebook) => openEBook(String(ebook.id))}
+          />
         ) : (
           <EBookGrid
             items={query.trim().length >= 2 ? results : catalog}
@@ -1230,6 +1226,72 @@ function EBookRail({
   );
 }
 
+function EBookGenreRails({
+  rails,
+  resetKey,
+  sourceLoaded,
+  loadingMore,
+  hasMore,
+  onLoadMore,
+  onOpen,
+}: {
+  rails: Array<{ title: string; items: EBook[] }>;
+  resetKey: string;
+  sourceLoaded: boolean;
+  loadingMore: boolean;
+  hasMore: boolean;
+  onLoadMore: () => void;
+  onOpen: (ebook: EBook) => void;
+}) {
+  const [visibleCount, setVisibleCount] = useState(3);
+  const sentinel = useRef<HTMLDivElement>(null);
+
+  useEffect(() => setVisibleCount(3), [resetKey]);
+
+  useEffect(() => {
+    const node = sentinel.current;
+    if (!node || loadingMore || (visibleCount >= rails.length && !hasMore)) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        if (visibleCount < rails.length) {
+          setVisibleCount((count) => Math.min(count + 3, rails.length));
+        } else if (hasMore) {
+          onLoadMore();
+        }
+      },
+      { rootMargin: "700px 0px" },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [hasMore, loadingMore, onLoadMore, rails.length, visibleCount]);
+
+  if (sourceLoaded && rails.length === 0) {
+    return (
+      <p className="py-10 text-center text-[14px] text-ink-muted">
+        No genre metadata is available from this catalog.
+      </p>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-9">
+      {rails.slice(0, visibleCount).map((rail) => (
+        <EBookRail
+          key={`genre:${rail.title}:${resetKey}`}
+          title={rail.title}
+          subtitle={`${rail.items.length} ${rail.items.length === 1 ? "book" : "books"}`}
+          items={rail.items}
+          onOpen={onOpen}
+        />
+      ))}
+      <div ref={sentinel} className="flex h-8 items-center justify-center">
+        {loadingMore && <Loader2 size={18} className="animate-spin text-ink-subtle" />}
+      </div>
+    </div>
+  );
+}
+
 function EBookGrid({
   items,
   loadingMore,
@@ -1284,127 +1346,28 @@ function EBookGrid({
   );
 }
 
-function EBookBookStage({
-  ebook,
-  rearColor,
-}: {
-  ebook: EBook;
-  rearColor: string | null;
-}) {
-  return (
-    <div
-      className="bk-book-stage"
-      aria-hidden="true"
-      style={{ "--bk-poster-color": rearColor ?? "85 72 59" } as CSSProperties}
-    >
-      <div className="bk-book">
-        <div className="bk-front">
-          <div className="bk-cover">
-            <Poster
-              src={ebook.cover}
-              seed={`ebook:${ebook.id}`}
-              ratio="portrait"
-              lazy
-              className="bk-cover-art harbor-card-ring"
-            />
-            {!ebook.cover && (
-              <h2 className="bk-cover-title">
-                <span>{ebook.authors[0] || "Bear eBooks"}</span>
-                <span>{ebook.title}</span>
-              </h2>
-            )}
-          </div>
-          <div className="bk-cover-back">
-            {(ebook.internalCover || ebook.cover) && (
-              <img
-                src={ebook.internalCover || ebook.cover}
-                alt=""
-                className="bk-internal-cover"
-                loading="lazy"
-              />
-            )}
-          </div>
-        </div>
-        <div className="bk-page">
-          <div className="bk-content bk-content-current" />
-          <div className="bk-content">
-            <div className="bk-story-page">
-              <strong>{ebook.title}</strong>
-              <p>{ebook.description || "No story summary is available."}</p>
-            </div>
-          </div>
-          <div className="bk-content">
-            <div className="bk-left-page-meta">
-              <strong>{ebook.genres.slice(0, 3).join(" · ") || "eBook"}</strong>
-              {ebook.score != null && (
-                <span>★ {(ebook.score > 10 ? ebook.score / 10 : ebook.score).toFixed(1)}</span>
-              )}
-            </div>
-          </div>
-          <div className="bk-content" />
-          <div className="bk-content" />
-        </div>
-        <div className="bk-back">
-          <span>{ebook.title}</span>
-          <small>{ebook.authors[0] || "Bear eBooks"}</small>
-        </div>
-        <div className="bk-left">
-          <h2>
-            <span>{ebook.authors[0] || "Bear"}</span>
-            <span>{ebook.title}</span>
-          </h2>
-        </div>
-        <div className="bk-top" />
-        <div className="bk-bottom" />
-      </div>
-    </div>
-  );
-}
-
 function EBookCard({ ebook, onOpen }: { ebook: EBook; onOpen: (ebook: EBook) => void }) {
-  const rearColor = useArtGlow(ebook.cover);
   const titleLanguage = useContext(EBookTitleLanguageContext);
   const displayTitle = ebookTitleForLanguage(ebook, titleLanguage);
-  const displayEbook = displayTitle === ebook.title ? ebook : { ...ebook, title: displayTitle };
-  const cardRef = useRef<HTMLButtonElement>(null);
-
-  const alignEdgeBook = useCallback(() => {
-    const card = cardRef.current;
-    const stage = card?.querySelector<HTMLElement>(".bk-book-stage");
-    const rail = card?.closest<HTMLElement>(".harbor-row-track");
-    if (!stage || !rail) return;
-
-    const bookRect = stage.getBoundingClientRect();
-    const railRect = rail.getBoundingClientRect();
-    const neededRoom = bookRect.width * 0.82;
-    const leftRoom = bookRect.left - railRect.left;
-    let shift = 0;
-
-    if (leftRoom < neededRoom) {
-      shift = Math.min(bookRect.width * 0.65, neededRoom - leftRoom);
-    }
-
-    stage.style.setProperty("--bk-edge-shift", `${shift}px`);
-  }, []);
-
-  const resetEdgeBook = useCallback(() => {
-    cardRef.current
-      ?.querySelector<HTMLElement>(".bk-book-stage")
-      ?.style.removeProperty("--bk-edge-shift");
-  }, []);
-
   return (
     <button
-      ref={cardRef}
       type="button"
       onClick={() => onOpen(ebook)}
-      onPointerEnter={alignEdgeBook}
-      onPointerLeave={resetEdgeBook}
-      onFocus={alignEdgeBook}
-      onBlur={resetEdgeBook}
-      className="group relative z-0 flex w-full min-w-0 flex-col gap-2 text-start hover:z-20 focus-visible:z-20"
+      className="group flex w-full min-w-0 flex-col gap-2 text-start"
     >
-      <EBookBookStage ebook={displayEbook} rearColor={rearColor} />
+      <div className="ebook-card-showcase">
+        <div className="ebook-card-showcase-book">
+          <div className="ebook-card-showcase-rear" aria-hidden="true" />
+          <div className="ebook-card-showcase-pages" aria-hidden="true" />
+          <Poster
+            src={ebook.cover}
+            seed={`ebook:${ebook.id}`}
+            ratio="portrait"
+            lazy
+            className="ebook-card-showcase-cover harbor-card-ring"
+          />
+        </div>
+      </div>
       <p className="line-clamp-2 min-h-9 text-[13px] font-medium leading-snug text-ink">
         {displayTitle}
       </p>
@@ -1446,7 +1409,6 @@ function EBookChapterSection({
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<"newest" | "oldest">("oldest");
   const [pagination, setPagination] = useState({ key: "", count: 30 });
-  const loadMoreRef = useRef<HTMLDivElement>(null);
   const [view, setView] = useState<"grid" | "list">(() =>
     typeof localStorage !== "undefined" &&
     localStorage.getItem("harbor.ebook.chapterview") === "list"
@@ -1504,22 +1466,6 @@ function EBookChapterSection({
   }, [query, selected, sort]);
   const pageKey = `${sourceRoute}\0${selectedVolume}\0${sort}\0${view}\0${query}`;
   const visibleCount = pagination.key === pageKey ? pagination.count : 30;
-  useEffect(() => {
-    const node = loadMoreRef.current;
-    if (!node || visibleCount >= ordered.length) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting)
-          setPagination((page) => ({
-            key: pageKey,
-            count: Math.min((page.key === pageKey ? page.count : 30) + 30, ordered.length),
-          }));
-      },
-      { rootMargin: "400px" },
-    );
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, [ordered.length, pageKey, visibleCount]);
   const rendered = ordered.slice(0, visibleCount);
 
   if (loading || chapters === null)
@@ -1727,12 +1673,29 @@ function EBookChapterSection({
         </div>
       )}
       {visibleCount < ordered.length && (
-        <div
-          ref={loadMoreRef}
-          className="flex h-12 items-center justify-center gap-2 text-[13px] text-ink-subtle"
-        >
-          <Loader2 size={15} className="animate-spin motion-reduce:animate-none" /> Loading more
-          chapters...
+        <div className="flex items-center justify-center gap-2">
+          <button
+            type="button"
+            onClick={() =>
+              setPagination((page) => ({
+                key: pageKey,
+                count: Math.min((page.key === pageKey ? page.count : 30) + 30, ordered.length),
+              }))
+            }
+            className="flex h-11 items-center justify-center rounded-full border border-edge-soft bg-surface/60 px-6 text-[13.5px] font-semibold text-ink transition-colors hover:border-edge hover:bg-elevated"
+          >
+            Show more chapters
+            <span className="ms-2 text-[12px] font-normal text-ink-subtle">
+              {ordered.length - visibleCount} remaining
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setPagination({ key: pageKey, count: ordered.length })}
+            className="h-9 rounded-full px-3 text-[12px] font-semibold text-ink-muted transition-colors hover:bg-elevated hover:text-ink"
+          >
+            Show all
+          </button>
         </div>
       )}
     </section>
@@ -1753,6 +1716,58 @@ function EBookChapterMeta({ chapter }: { chapter: EBookChapter }) {
   );
 }
 
+function EBookInformation({ ebook }: { ebook: EBook }) {
+  const [adaptations, setAdaptations] = useState<EBookAdaptations | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    setAdaptations(null);
+    void ebookAdaptations(ebook).then((value) => {
+      if (active) setAdaptations(value);
+    });
+    return () => {
+      active = false;
+    };
+  }, [ebook.id, ebook.anilistId, ebook.wikidataId]);
+
+  const adaptationValue = (items: string[] | undefined) =>
+    adaptations === null ? "Checking metadata…" : items?.length ? items.join(" · ") : "Not available";
+  const score =
+    ebook.score == null
+      ? null
+      : ebook.score > 10
+        ? `${(ebook.score / 10).toFixed(1)} / 10`
+        : `${ebook.score.toFixed(1)} / 10`;
+  const rows = [
+    { label: "Author", value: ebook.authors.join(" · ") || "Not available" },
+    { label: "First aired", value: ebook.publishedAt || (ebook.year ? String(ebook.year) : "Not available") },
+    { label: "Status", value: ebook.status || "Not available" },
+    { label: "Genres", value: ebook.genres.join(" · ") || "Not available" },
+    { label: "Rating", value: score || "Not available" },
+    { label: "Manga adaptation", value: adaptationValue(adaptations?.manga) },
+    { label: "Anime adaptation", value: adaptationValue(adaptations?.anime) },
+    { label: "Live show adaptation", value: adaptationValue(adaptations?.liveAction) },
+  ];
+
+  return (
+    <section className="pt-12">
+      <h3 className="mb-6 text-[22px] font-medium tracking-tight text-ink">Information</h3>
+      <dl className="grid grid-cols-1 gap-x-12 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+        {rows.map((row) => (
+          <div key={row.label} className="flex flex-col gap-1.5">
+            <dt className="text-[12px] font-medium uppercase tracking-[0.18em] text-ink-subtle">
+              {row.label}
+            </dt>
+            <dd className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[14.5px] text-ink">
+              {row.value}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+  );
+}
+
 function EBookDetails({
   ebook,
   onBack,
@@ -1767,7 +1782,11 @@ function EBookDetails({
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
   const [descriptionClipped, setDescriptionClipped] = useState(false);
   const descriptionRef = useRef<HTMLParagraphElement>(null);
+  const detailScrollRef = useRef<HTMLElement>(null);
+  const [showScrollTop, setShowScrollTop] = useState(false);
   const [recommendations, setRecommendations] = useState<EBook[] | null>(null);
+  const [recommendationsError, setRecommendationsError] = useState(false);
+  const [recommendationsAttempt, setRecommendationsAttempt] = useState(0);
   const [chapters, setChapters] = useState<EBookChapter[] | null>(null);
   const [sourceOptions, setSourceOptions] = useState<EBook[]>([]);
   const [sourceRoute, setSourceRoute] = useState<string | null>(null);
@@ -1784,6 +1803,14 @@ function EBookDetails({
     .map((book) => book.id)
     .join("\0");
   const genreKey = ebook?.genres.join("\0");
+  useEffect(() => {
+    const element = detailScrollRef.current;
+    if (!element) return;
+    const update = () => setShowScrollTop(element.scrollTop > 600);
+    update();
+    element.addEventListener("scroll", update, { passive: true });
+    return () => element.removeEventListener("scroll", update);
+  }, [ebookId]);
   useEffect(() => setSaved(ebookId ? ebookInLibrary(ebookId) : false), [ebookId]);
   useEffect(() => setFavorite(ebookId ? ebookIsFavorite(ebookId) : false), [ebookId]);
   useEffect(() => {
@@ -1801,11 +1828,22 @@ function EBookDetails({
   }, [descriptionExpanded, ebook?.description, ebookId]);
   useEffect(() => {
     if (!ebook) return;
+    let active = true;
     setRecommendations(null);
+    setRecommendationsError(false);
     void recommendedEBooks(ebook)
-      .then(setRecommendations)
-      .catch(() => setRecommendations([]));
-  }, [ebookId, ebook?.anilistId, genreKey]);
+      .then((items) => {
+        if (active) setRecommendations(items);
+      })
+      .catch(() => {
+        if (!active) return;
+        setRecommendations([]);
+        setRecommendationsError(true);
+      });
+    return () => {
+      active = false;
+    };
+  }, [ebookId, ebook?.anilistId, genreKey, recommendationsAttempt]);
   useEffect(() => {
     setReading(null);
     if (!ebook) return;
@@ -1919,7 +1957,10 @@ function EBookDetails({
       );
   };
   return (
-    <main className="relative flex-1 overflow-y-auto overflow-x-hidden px-12 pb-20 pt-24">
+    <main
+      ref={detailScrollRef}
+      className="relative flex-1 overflow-y-auto overflow-x-hidden px-12 pb-20 pt-24"
+    >
       <div className="flex flex-col gap-10 pb-4">
         <div className="relative -mx-12 -mt-24 min-h-[360px] overflow-hidden">
           <div className="absolute inset-0 z-0">
@@ -2111,13 +2152,32 @@ function EBookDetails({
               </div>
             </section>
           )}
-          <EBookRail
-            title="Recommended eBooks"
-            subtitle="Books readers may also enjoy"
-            items={recommendations}
-            onOpen={onOpen}
-            hideEmpty
-          />
+          {recommendationsError ? (
+            <section className="flex items-center justify-between gap-4 rounded-2xl border border-edge-soft bg-elevated/25 px-5 py-4">
+              <div>
+                <h2 className="text-[18px] font-semibold text-ink">Recommended eBooks</h2>
+                <p className="text-[13px] text-ink-subtle">
+                  Recommendations are temporarily unavailable.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setRecommendationsAttempt((attempt) => attempt + 1)}
+                className="rounded-full border border-edge-soft bg-canvas/50 px-4 py-2 text-[13px] font-medium text-ink transition-colors hover:bg-elevated"
+              >
+                Retry
+              </button>
+            </section>
+          ) : (
+            <EBookRail
+              title="Recommended eBooks"
+              subtitle="Books readers may also enjoy"
+              items={recommendations}
+              onOpen={onOpen}
+              hideEmpty
+            />
+          )}
+          <EBookInformation ebook={ebook} />
         </div>
       </div>
       {reading && (
@@ -2138,6 +2198,19 @@ function EBookDetails({
           onSelectChapter={readChapter}
           onClose={() => setReading(null)}
         />
+      )}
+      {showScrollTop && !reading && (
+        <div className="animate-in fade-in slide-in-from-bottom-3 fixed bottom-7 end-7 z-[60]">
+          <button
+            type="button"
+            onClick={() => detailScrollRef.current?.scrollTo({ top: 0, behavior: "smooth" })}
+            aria-label="Scroll to top"
+            className="flex h-14 items-center gap-2.5 rounded-full bg-accent px-6 text-canvas shadow-[0_16px_40px_-10px_rgba(0,0,0,0.7)] transition-transform duration-200 hover:scale-105 active:scale-95"
+          >
+            <ArrowUp size={24} strokeWidth={2.6} />
+            <span className="text-[16px] font-bold">Top</span>
+          </button>
+        </div>
       )}
     </main>
   );
