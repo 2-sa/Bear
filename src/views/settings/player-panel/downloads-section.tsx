@@ -1,6 +1,6 @@
 import { downloadDir } from "@tauri-apps/api/path";
 import { open } from "@tauri-apps/plugin-dialog";
-import { revealItemInDir } from "@tauri-apps/plugin-opener";
+import { revealScopedItem } from "@/lib/reveal";
 import { FolderOpen, RotateCcw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useSettings } from "@/lib/settings";
@@ -47,7 +47,7 @@ export function DownloadsSection() {
   const revealCurrent = async () => {
     if (!current) return;
     try {
-      await revealItemInDir(current);
+      await revealScopedItem(current);
     } catch {
       return;
     }

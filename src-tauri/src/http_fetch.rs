@@ -46,10 +46,22 @@ fn is_blocked_ip(ip: IpAddr) -> bool {
     };
     match ip {
         IpAddr::V4(v4) => {
-            v4.is_loopback() || v4.is_link_local() || v4.is_unspecified() || v4.is_broadcast()
+            let octets = v4.octets();
+            v4.is_private()
+                || v4.is_loopback()
+                || v4.is_link_local()
+                || v4.is_unspecified()
+                || v4.is_broadcast()
+                || v4.is_multicast()
+                || (octets[0] == 100 && (64..=127).contains(&octets[1]))
         }
         IpAddr::V6(v6) => {
-            v6.is_loopback() || v6.is_unspecified() || (v6.segments()[0] & 0xffc0) == 0xfe80
+            let first = v6.segments()[0];
+            v6.is_loopback()
+                || v6.is_unspecified()
+                || v6.is_multicast()
+                || v6.is_unique_local()
+                || (first & 0xffc0) == 0xfe80
         }
     }
 }
@@ -68,12 +80,24 @@ fn host_is_blocked_literal(url: &reqwest::Url) -> bool {
     }
 }
 
-async fn validate_target(url: &reqwest::Url) -> Result<(), String> {
+async fn validate_target(
+    url: &reqwest::Url,
+    allowed_private_host: Option<&str>,
+) -> Result<(), String> {
+    if url.scheme() != "http" && url.scheme() != "https" {
+        return Err(format!("blocked target scheme: {}", url.scheme()));
+    }
     let host = match url.host_str() {
         Some(h) => h.trim_start_matches('[').trim_end_matches(']').to_string(),
         None => return Ok(()),
     };
+    let private_allowed = allowed_private_host
+        .map(|allowed| allowed.eq_ignore_ascii_case(&host))
+        .unwrap_or(false);
     if host_is_blocked_literal(url) {
+        if private_allowed {
+            return Ok(());
+        }
         return Err(format!("blocked internal target: {}", host));
     }
     if host.parse::<IpAddr>().is_ok() {
@@ -87,11 +111,14 @@ async fn validate_target(url: &reqwest::Url) -> Result<(), String> {
             .to_socket_addrs()
             .map(|it| it.map(|a| a.ip()).collect::<Vec<_>>())
     })
-    .await;
-    if let Ok(Ok(ips)) = resolved {
-        if ips.into_iter().any(is_blocked_ip) {
-            return Err(format!("blocked internal target: {}", host));
+    .await
+    .map_err(|error| format!("target lookup task failed for {host}: {error}"))?
+    .map_err(|error| format!("target lookup failed for {host}: {error}"))?;
+    if resolved.into_iter().any(is_blocked_ip) {
+        if private_allowed {
+            return Ok(());
         }
+        return Err(format!("blocked internal target: {}", host));
     }
     Ok(())
 }
@@ -179,6 +206,8 @@ pub struct HarborFetchArgs {
     pub body: Option<String>,
     pub timeout_ms: Option<u64>,
     pub response_type: Option<String>,
+    #[serde(default)]
+    pub allow_private_network: bool,
 }
 
 #[derive(Debug, Serialize)]
@@ -214,7 +243,11 @@ async fn harbor_fetch_inner(
         reqwest::Method::from_bytes(method.as_bytes()).map_err(|e| format!("method: {}", e))?;
 
     let mut current_url = reqwest::Url::parse(&args.url).map_err(|e| format!("url: {}", e))?;
-    validate_target(&current_url).await?;
+    let allowed_private_host = args
+        .allow_private_network
+        .then(|| current_url.host_str().map(str::to_string))
+        .flatten();
+    validate_target(&current_url, allowed_private_host.as_deref()).await?;
 
     let original_host = current_url.host_str().map(|s| s.to_string());
     let cf = current_url.host_str().and_then(crate::cf_solver::cf_cached);
@@ -300,7 +333,7 @@ async fn harbor_fetch_inner(
         if next_url.scheme() != "http" && next_url.scheme() != "https" {
             return Err(format!("redirect bad scheme: {}", next_url.scheme()));
         }
-        validate_target(&next_url).await?;
+        validate_target(&next_url, allowed_private_host.as_deref()).await?;
         if !same_host(&current_url, &next_url) {
             strip_headers(&mut headers, &["cookie", "referer", "origin"]);
         }
@@ -403,7 +436,7 @@ async fn harbor_upload_inner(args: HarborUploadArgs) -> Result<HarborFetchRespon
     let _permit = acquire_fetch_permit().await?;
     let client = http_client()?;
     let url = reqwest::Url::parse(&args.url).map_err(|e| format!("url: {}", e))?;
-    validate_target(&url).await?;
+    validate_target(&url, None).await?;
 
     let bytes = base64::engine::general_purpose::STANDARD
         .decode(args.data_base64.as_bytes())

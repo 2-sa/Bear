@@ -1,6 +1,6 @@
 import { downloadDir as systemDownloadDir } from "@tauri-apps/api/path";
 import { exists, mkdir, remove } from "@tauri-apps/plugin-fs";
-import { revealItemInDir } from "@tauri-apps/plugin-opener";
+import { revealScopedItem } from "@/lib/reveal";
 import { useSyncExternalStore } from "react";
 import type { Meta } from "@/lib/cinemeta";
 import type { PlayEpisode } from "@/lib/view";
@@ -415,7 +415,7 @@ export async function revealDownload(id: string): Promise<void> {
   const d = items.get(id);
   if (!d) return;
   try {
-    await revealItemInDir(d.path);
+    await revealScopedItem(d.path);
   } catch {
     /* opener unavailable */
   }

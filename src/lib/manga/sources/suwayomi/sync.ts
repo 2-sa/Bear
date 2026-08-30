@@ -1,4 +1,4 @@
-import { safeFetch } from "@/lib/safe-fetch";
+import { safeLocalFetch } from "@/lib/safe-fetch";
 import { decodeChapterId, isDigits, makeServer, type SuwayomiServer } from "./model";
 
 export type SyncTarget = { server: SuwayomiServer; mangaId: string; key: string };
@@ -25,7 +25,7 @@ async function gqlUpdate(
     }
   }`;
   try {
-    const res = await safeFetch(`${server.base}/api/graphql`, {
+    const res = await safeLocalFetch(`${server.base}/api/graphql`, {
       method: "POST",
       headers: headersFor(server, { "content-type": "application/json" }),
       body: JSON.stringify({
@@ -54,11 +54,14 @@ async function restUpdate(
   if (isRead) form.read = "true";
   const body = new URLSearchParams(form).toString();
   try {
-    const res = await safeFetch(`${server.base}/api/v1/manga/${mangaId}/chapter/${index}`, {
-      method: "PATCH",
-      headers: headersFor(server, { "content-type": "application/x-www-form-urlencoded" }),
-      body,
-    });
+    const res = await safeLocalFetch(
+      `${server.base}/api/v1/manga/${mangaId}/chapter/${index}`,
+      {
+        method: "PATCH",
+        headers: headersFor(server, { "content-type": "application/x-www-form-urlencoded" }),
+        body,
+      },
+    );
     return res.ok;
   } catch {
     return false;

@@ -1,6 +1,6 @@
 import { convertFileSrc } from "@tauri-apps/api/core";
-import { fetch as tauriHttpFetch } from "@tauri-apps/plugin-http";
 import { fetchTrailer, type Quality } from "@/lib/trailer";
+import { safeBinaryFetch } from "@/lib/safe-fetch";
 
 const IS_TAURI = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
@@ -42,7 +42,7 @@ async function writeBytes(bytes: Uint8Array, filename: string, ext: string, mime
 
 export async function saveImageToDisk(url: string, baseName: string): Promise<SaveOutcome> {
   const ext = extFromUrl(url, "jpg");
-  const res = IS_TAURI ? await tauriHttpFetch(url) : await fetch(url);
+  const res = await safeBinaryFetch(url);
   const bytes = new Uint8Array(await res.arrayBuffer());
   const mime = res.headers.get("content-type") ?? "image/jpeg";
   return writeBytes(bytes, `${baseName}.${ext}`, ext, mime);

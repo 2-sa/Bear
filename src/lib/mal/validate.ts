@@ -1,15 +1,8 @@
 import { getSession, setSession } from "./session";
 import { ensureRefreshed } from "./auth";
+import { safeFetch } from "@/lib/safe-fetch";
 
 let inflight: Promise<void> | null = null;
-
-async function tauriFetch(input: string, init?: RequestInit): Promise<Response> {
-  if ("__TAURI_INTERNALS__" in window) {
-    const { fetch: tauriFetchFn } = await import("@tauri-apps/plugin-http");
-    return tauriFetchFn(input, init as Record<string, unknown>) as unknown as Response;
-  }
-  return fetch(input, init);
-}
 
 export function validateMalSession(): Promise<void> {
   if (inflight) return inflight;
@@ -23,7 +16,7 @@ async function run(): Promise<void> {
   const session = getSession();
   if (!session) return;
   try {
-    const res = await tauriFetch("https://api.myanimelist.net/v2/users/@me", {
+    const res = await safeFetch("https://api.myanimelist.net/v2/users/@me", {
       headers: { Authorization: `Bearer ${session.accessToken}` },
     });
     if (res.status === 401) {

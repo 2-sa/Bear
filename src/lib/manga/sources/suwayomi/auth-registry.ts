@@ -31,6 +31,14 @@ export function soleSuwayomiBase(): string | undefined {
   return knownBases.size === 1 ? [...knownBases][0] : undefined;
 }
 
+export function isKnownSuwayomiUrl(url: string): boolean {
+  if (!url) return false;
+  for (const base of knownBases) {
+    if (url === base || url.startsWith(base + "/")) return true;
+  }
+  return false;
+}
+
 export function suwayomiAuthFor(url: string): string | undefined {
   if (!url || authByBase.size === 0) return undefined;
   let best: string | undefined;

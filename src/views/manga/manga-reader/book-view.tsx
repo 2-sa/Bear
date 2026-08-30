@@ -1,4 +1,6 @@
 import { useEffect, useRef } from "react";
+import { isKnownSuwayomiUrl } from "@/lib/manga/sources/suwayomi/auth-registry";
+import { safeBinaryFetch, safeLocalBinaryFetch } from "@/lib/safe-fetch";
 import {
   fitLevel,
   hasNativeZoom,
@@ -220,14 +222,14 @@ export function BookFlip({
         if (h) hosts.add(h);
       }
     }
-    const httpMod = hosts.size ? import("@tauri-apps/plugin-http") : null;
-    if (httpMod) {
+    if (hosts.size) {
       window.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {
         const u =
           typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
         const host = hostOf(u);
         if (host && hosts.has(host)) {
-          return httpMod.then((m) => (m.fetch as unknown as typeof fetch)(u, { headers: IMG_HEADERS }));
+          const guardedFetch = isKnownSuwayomiUrl(u) ? safeLocalBinaryFetch : safeBinaryFetch;
+          return guardedFetch(u, { ...init, headers: IMG_HEADERS });
         }
         return origFetch(input, init);
       }) as typeof fetch;

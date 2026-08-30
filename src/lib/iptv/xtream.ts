@@ -1,4 +1,5 @@
 import type { IptvChannel } from "./types";
+import { safeLocalFetch } from "@/lib/safe-fetch";
 
 export type XtreamCreds = {
   base: string;
@@ -74,30 +75,10 @@ export async function xtreamFetch(url: string): Promise<unknown> {
 }
 
 async function xtreamFetchText(url: string): Promise<string> {
-  if (typeof window !== "undefined" && "__TAURI_INTERNALS__" in window) {
-    const { fetch: tauriFetch } = await import("@tauri-apps/plugin-http");
-    let res: Response;
-    try {
-      res = await tauriFetch(url, {
-        method: "GET",
-        headers: {
-          "User-Agent": XTREAM_UA,
-          Accept: "application/json, */*",
-        },
-        connectTimeout: 30_000,
-        maxRedirections: 5,
-      } as unknown as RequestInit);
-    } catch (e) {
-      if (!/scope|not allowed/i.test(String(e))) throw e;
-      const { safeFetch } = await import("@/lib/safe-fetch");
-      res = await safeFetch(url, {
-        headers: { "User-Agent": XTREAM_UA, Accept: "application/json, */*" },
-      });
-    }
-    if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
-    return res.text();
-  }
-  const res = await fetch(url, { cache: "no-store" });
+  const res = await safeLocalFetch(url, {
+    cache: "no-store",
+    headers: { "User-Agent": XTREAM_UA, Accept: "application/json, */*" },
+  });
   if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
   return res.text();
 }

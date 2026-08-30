@@ -45,8 +45,8 @@ function LocationCard() {
   const reveal = async () => {
     if (!shown) return;
     try {
-      const { revealItemInDir } = await import("@tauri-apps/plugin-opener");
-      await revealItemInDir(shown);
+      const { revealScopedItem } = await import("@/lib/reveal");
+      await revealScopedItem(shown);
     } catch {
       return;
     }

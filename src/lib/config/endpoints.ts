@@ -13,6 +13,11 @@ export const BEAR_PUBLIC_CONTENT_BASE = resolveBase(
   "https://api.7mood.net",
 );
 
+export const BEAR_UPDATE_MANIFEST_URL =
+  "https://github.com/2-sa/Bear/releases/download/beta-channel/latest.json";
+
+export const BEAR_RELEASES_URL = "https://github.com/2-sa/Bear/releases";
+
 export const HARBOR_TRAKT_BASE = resolveBase(
   import.meta.env.VITE_HARBOR_TRAKT_BASE,
   HARBOR_API_BASE,

@@ -1,6 +1,7 @@
 import { MAL_AUTHORIZE_URL, MAL_CLIENT_ID, MAL_TOKEN_PROXY } from "./config";
 import { getSession, setSession } from "./session";
 import type { MalSession } from "./types";
+import { safeFetch } from "@/lib/safe-fetch";
 
 function generateVerifier(): string {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
@@ -41,14 +42,6 @@ export function extractMalCode(input: string): string {
   return trimmed.replace(/^["'\s]+|["'\s]+$/g, "");
 }
 
-async function tauriFetch(input: string, init?: RequestInit): Promise<Response> {
-  if ("__TAURI_INTERNALS__" in window) {
-    const { fetch: tauriFetchFn } = await import("@tauri-apps/plugin-http");
-    return tauriFetchFn(input, init as Record<string, unknown>) as unknown as Response;
-  }
-  return fetch(input, init);
-}
-
 export async function completeAuthorization(pastedCode: string): Promise<MalSession> {
   const code = extractMalCode(pastedCode);
   if (!code) throw new Error("Paste the code from MyAnimeList to continue");
@@ -74,7 +67,7 @@ async function exchangeCode(
   code: string,
   codeVerifier: string,
 ): Promise<{ access_token: string; refresh_token: string; expires_in: number }> {
-  const res = await tauriFetch(MAL_TOKEN_PROXY, {
+  const res = await safeFetch(MAL_TOKEN_PROXY, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -97,7 +90,7 @@ export async function refreshAccessToken(): Promise<MalSession | null> {
   const current = getSession();
   if (!current?.refreshToken) return null;
   try {
-    const res = await tauriFetch(MAL_TOKEN_PROXY, {
+    const res = await safeFetch(MAL_TOKEN_PROXY, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -143,7 +136,7 @@ export function ensureRefreshed(): Promise<MalSession | null> {
 }
 
 async function fetchUserName(accessToken: string): Promise<string> {
-  const res = await tauriFetch("https://api.myanimelist.net/v2/users/@me", {
+  const res = await safeFetch("https://api.myanimelist.net/v2/users/@me", {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
   if (!res.ok) return "unknown";

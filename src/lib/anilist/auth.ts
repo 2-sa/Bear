@@ -7,6 +7,7 @@ import {
 import { fetchViewer } from "./queries";
 import { setSession } from "./session";
 import type { AnilistSession } from "./types";
+import { safeFetch } from "@/lib/safe-fetch";
 
 const DEFAULT_TOKEN_TTL_SEC = 31536000;
 
@@ -52,9 +53,7 @@ export async function completeAuthorization(pastedCode: string): Promise<Anilist
 }
 
 async function exchangeCode(code: string): Promise<string> {
-  const isTauri = "__TAURI__" in window || "__TAURI_INTERNALS__" in window;
-  const post = isTauri ? (await import("@tauri-apps/plugin-http")).fetch : fetch;
-  const res = await post(ANILIST_TOKEN_EXCHANGE_URL, {
+  const res = await safeFetch(ANILIST_TOKEN_EXCHANGE_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "application/json" },
     body: JSON.stringify({ code }),

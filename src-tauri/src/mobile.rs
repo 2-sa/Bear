@@ -59,7 +59,6 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_shell::init())
-        .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_deep_link::init())
@@ -76,6 +75,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             lan_ip,
             crate::harbor_take_pending_file,
+            crate::reveal_scoped_item,
             crate::harbor_set_webview_memory_low,
             crate::harbor_set_webview_visible,
             crate::harbor_set_context_menu,

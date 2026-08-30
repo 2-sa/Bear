@@ -244,16 +244,16 @@ export function useTrackAutoload(params: {
         episode: searchEpisode,
         langs,
       });
-      const movieHashStageKey = `${key}|moviehash`;
-      const shouldResolveMovieHash =
-        settings.subtitleAutoSync && !autoSubStagesRef.current.has(movieHashStageKey);
-      if (shouldResolveMovieHash) autoSubStagesRef.current.add(movieHashStageKey);
-      const movieHashPromise = shouldResolveMovieHash ? resolveVideoHash(src) : null;
       const b = bridgeRef.current;
       if (!b || autoSubLoadKeyRef.current !== key) {
         console.warn("[subs/autoload] no bridge ready, skipping");
         return;
       }
+      const movieHashStageKey = `${key}|moviehash`;
+      const shouldResolveMovieHash =
+        settings.subtitleAutoSync && !autoSubStagesRef.current.has(movieHashStageKey);
+      if (shouldResolveMovieHash) autoSubStagesRef.current.add(movieHashStageKey);
+      const movieHashPromise = shouldResolveMovieHash ? resolveVideoHash(src) : null;
       const base = {
         src,
         settings,

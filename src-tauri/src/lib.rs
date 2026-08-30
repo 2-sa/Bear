@@ -538,6 +538,27 @@ fn harbor_take_pending_file() -> Option<String> {
     pending_open_file().lock().ok().and_then(|mut g| g.take())
 }
 
+#[cfg(desktop)]
+#[tauri::command]
+fn reveal_scoped_item(app: tauri::AppHandle, path: String) -> Result<(), String> {
+    use tauri_plugin_fs::FsExt;
+    use tauri_plugin_opener::OpenerExt;
+
+    let target = std::fs::canonicalize(&path).map_err(|e| format!("resolve reveal path: {e}"))?;
+    if !app.fs_scope().is_allowed(&target) {
+        return Err("reveal path is outside the application file scope".into());
+    }
+    app.opener()
+        .reveal_item_in_dir(&target)
+        .map_err(|e| format!("reveal item: {e}"))
+}
+
+#[cfg(mobile)]
+#[tauri::command]
+fn reveal_scoped_item(_app: tauri::AppHandle, _path: String) -> Result<(), String> {
+    Err("revealing files is not supported on mobile".into())
+}
+
 // Android runs an entirely separate builder in `mobile.rs`. Desktop keeps this
 // one verbatim: the `cfg_attr(mobile, ...)` that used to sit here expanded to
 // nothing on desktop, so the emitted code is unchanged.
@@ -602,7 +623,6 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_shell::init())
-        .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
@@ -956,6 +976,7 @@ pub fn run() {
             deeplink_set_stremio,
             deeplink_is_stremio_registered,
             harbor_take_pending_file,
+            reveal_scoped_item,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")

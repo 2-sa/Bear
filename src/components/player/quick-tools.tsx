@@ -1,4 +1,4 @@
-import { revealItemInDir } from "@tauri-apps/plugin-opener";
+import { revealScopedItem } from "@/lib/reveal";
 import { Camera, FolderOpen, Repeat, X } from "lucide-react";
 import type { AbLoopState } from "@/views/player/hooks/use-ab-loop";
 import type { FrameGrabToast } from "@/views/player/hooks/use-frame-grab";
@@ -90,7 +90,7 @@ function FrameToast({ toast }: { toast: FrameGrabToast }) {
         {toast.kind === "ok" && toast.path && (
           <button
             type="button"
-            onClick={() => void revealItemInDir(toast.path as string)}
+            onClick={() => void revealScopedItem(toast.path as string)}
             className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-[12px] font-semibold text-white transition-colors hover:bg-white/25"
           >
             <FolderOpen size={12} strokeWidth={2.2} />

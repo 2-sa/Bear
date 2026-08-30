@@ -220,7 +220,9 @@ test("only our signature-verified update channel is enabled", () => {
     new URL("../src/lib/updater/use-update.ts", import.meta.url),
     "utf8",
   );
-  assert.match(frontend, /HARBOR_API_BASE/);
+  assert.match(frontend, /BEAR_UPDATE_MANIFEST_URL/);
+  assert.match(frontend, /BEAR_RELEASES_URL/);
+  assert.doesNotMatch(frontend, /HARBOR_API_BASE/);
   assert.doesNotMatch(frontend, /harbor\.site|harborstremio/);
 
   for (const file of ["versions.ts", "release-notes.ts"]) {
@@ -402,12 +404,22 @@ test("private network requests require an explicit local-service opt-in", () => 
   assert.match(nativeFetch, /allow_private_network/);
   assert.match(nativeFetch, /\.is_private\(\)/);
   assert.match(nativeFetch, /\.is_unique_local\(\)/);
-  assert.match(nativeFetch, /100\s*\.\.=\s*127/);
+  assert.match(nativeFetch, /octets\[0\]\s*==\s*100/);
+  assert.match(nativeFetch, /64\s*\.\.=\s*127/);
 
   const safeFetch = readFileSync(new URL("../src/lib/safe-fetch.ts", import.meta.url), "utf8");
   assert.match(safeFetch, /allowPrivateNetwork/);
   assert.match(safeFetch, /isPrivateNetworkUrl/);
   assert.match(safeFetch, /private network/i);
+
+  const capability = readFileSync(
+    new URL("../src-tauri/capabilities/default.json", import.meta.url),
+    "utf8",
+  );
+  assert.doesNotMatch(capability, /"http:default"/);
+  for (const file of sourceFiles(new URL("../src/", import.meta.url), [".ts", ".tsx"])) {
+    assert.doesNotMatch(readFileSync(file, "utf8"), /@tauri-apps\/plugin-http/, file.pathname);
+  }
 });
 
 test("update discovery and manual fallback stay on Bear's signed GitHub channel", () => {
@@ -450,7 +462,10 @@ test("downloaded shaders are immutable and checksum verified before installation
     assert.match(source, /Sha256/);
     assert.match(source, /expected_sha256/i);
     assert.doesNotMatch(source, /githubusercontent\.com\/[^/]+\/[^/]+\/(?:master|main)\//);
-    assert.doesNotMatch(source, /gist\.githubusercontent\.com\/[^\s"']+\/raw\//);
+    assert.doesNotMatch(
+      source,
+      /gist\.githubusercontent\.com\/[^\s"']+\/raw\/(?![a-f0-9]{40}\/)/,
+    );
     assert.match(source, /checksum|integrity/i);
   }
 });

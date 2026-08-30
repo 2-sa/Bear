@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { chapterPages } from "@/lib/manga/api";
+import { isKnownSuwayomiUrl } from "@/lib/manga/sources/suwayomi/auth-registry";
+import { safeBinaryFetch, safeLocalBinaryFetch } from "@/lib/safe-fetch";
 
 export type MangaDownloadStatus = "idle" | "downloading" | "paused" | "done" | "error";
 
@@ -316,7 +318,6 @@ async function downloadChapterWithControl(
 
     const { join } = await import("@tauri-apps/api/path");
     const { mkdir, writeFile } = await import("@tauri-apps/plugin-fs");
-    const { fetch: tauriFetch } = await import("@tauri-apps/plugin-http");
 
     const base = getMangaDownloadDir() || (await defaultMangaDownloadDir());
     const dir = await join(base, safeName(mangaId), safeName(chapterId));
@@ -324,10 +325,11 @@ async function downloadChapterWithControl(
 
     const fetchBytes = async (url: string): Promise<Uint8Array> => {
       try {
-        const r = await tauriFetch(url, { headers: IMG_HEADERS });
+        const guardedFetch = isKnownSuwayomiUrl(url) ? safeLocalBinaryFetch : safeBinaryFetch;
+        const r = await guardedFetch(url, { headers: IMG_HEADERS });
         if (r.ok) return new Uint8Array(await r.arrayBuffer());
       } catch {
-        /* direct fetch blocked (e.g. local Suwayomi server) - fall back to the in-app proxy */
+        /* fall back to the in-app image proxy */
       }
       const r = await fetch(`/manga-img?u=${encodeURIComponent(url)}`);
       if (!r.ok) throw new Error(`page fetch failed: ${r.status}`);

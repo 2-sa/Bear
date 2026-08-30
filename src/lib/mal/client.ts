@@ -1,6 +1,7 @@
 import { MAL_API_BASE } from "./config";
 import { getSession } from "./session";
 import { resolveMalRequestUrl } from "./url";
+import { safeFetch } from "@/lib/safe-fetch";
 
 export class MalApiError extends Error {
   constructor(
@@ -9,14 +10,6 @@ export class MalApiError extends Error {
   ) {
     super(`MAL HTTP ${status}: ${body.slice(0, 200)}`);
   }
-}
-
-async function tauriFetch(input: string, init?: RequestInit): Promise<Response> {
-  if ("__TAURI_INTERNALS__" in window) {
-    const { fetch: tauriFetchFn } = await import("@tauri-apps/plugin-http");
-    return tauriFetchFn(input, init as Record<string, unknown>) as unknown as Response;
-  }
-  return fetch(input, init);
 }
 
 export async function malRequest<T>(
@@ -32,7 +25,7 @@ export async function malRequest<T>(
 
   const requestUrl = resolveMalRequestUrl(MAL_API_BASE, path);
 
-  let res = await tauriFetch(requestUrl, {
+  let res = await safeFetch(requestUrl, {
     method: options.method ?? "GET",
     headers,
     body: options.body?.toString(),
@@ -43,7 +36,7 @@ export async function malRequest<T>(
     const refreshed = await ensureRefreshed();
     if (refreshed) {
       headers["Authorization"] = `Bearer ${refreshed.accessToken}`;
-      res = await tauriFetch(requestUrl, {
+      res = await safeFetch(requestUrl, {
         method: options.method ?? "GET",
         headers,
         body: options.body?.toString(),

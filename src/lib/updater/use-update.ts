@@ -1,7 +1,8 @@
 import { useSyncExternalStore } from "react";
 import { check } from "@tauri-apps/plugin-updater";
-import { HARBOR_API_BASE } from "@/lib/config/endpoints";
+import { BEAR_RELEASES_URL, BEAR_UPDATE_MANIFEST_URL } from "@/lib/config/endpoints";
 import { t } from "@/lib/i18n";
+import { safeFetch } from "@/lib/safe-fetch";
 import {
   launchHandoff,
   probeHandoff,
@@ -109,7 +110,7 @@ async function runningPrerelease(): Promise<boolean> {
   try {
     const [{ getVersion }, res] = await Promise.all([
       import("@tauri-apps/api/app"),
-      fetch(`${HARBOR_API_BASE}/updates/latest.json`, { cache: "no-store" }),
+      safeFetch(BEAR_UPDATE_MANIFEST_URL, { cache: "no-store" }),
     ]);
     if (!res.ok) return false;
     const stable = (await res.json()) as { version?: string };
@@ -142,13 +143,11 @@ export async function checkForUpdate(manual = false): Promise<void> {
   set({ status: "checking", manualCheck: manual, error: null });
   try {
     const wantBeta = betaChannel();
-    let beta = wantBeta;
     let update = await check(wantBeta ? BETA_HEADERS : undefined);
     if (!update && !wantBeta && (await runningPrerelease())) {
-      beta = true;
       update = await check(BETA_HEADERS);
     }
-    const plan = await readHandoffPlan(beta ? BETA_HEADERS : undefined).catch(() => null);
+    const plan = await readHandoffPlan().catch(() => null);
     if (plan) {
       handle = update ? (update as unknown as UpdateHandle) : null;
       const version = plan.version || update?.version || "";
@@ -298,35 +297,12 @@ function cmpVersion(a: string, b: string): number {
 
 export async function openManualDownload(): Promise<void> {
   const { openUrl } = await import("@/lib/window");
-  let target = HARBOR_API_BASE;
-  try {
-    const { safeFetch } = await import("@/lib/safe-fetch");
-    const beta = betaChannel() || (await runningPrerelease());
-    const res = await safeFetch(
-      `${HARBOR_API_BASE}/updates/latest.json`,
-      beta ? BETA_HEADERS : undefined,
-    );
-    const manifest = (await res.json()) as { platforms?: Record<string, { url?: string }> };
-    const platforms = manifest.platforms ?? {};
-    const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
-    const want = ua.includes("Windows") ? "windows" : ua.includes("Mac") ? "darwin" : "linux";
-    const key =
-      Object.keys(platforms).find((k) => k.toLowerCase().startsWith(want)) ??
-      Object.keys(platforms)[0];
-    const url = key ? platforms[key]?.url : undefined;
-    if (typeof url === "string" && url) {
-      target = url.endsWith(".app.tar.gz") ? `${url.slice(0, -".app.tar.gz".length)}.dmg` : url;
-    }
-  } catch {
-    /* fall back to the site download */
-  }
-  openUrl(target);
+  openUrl(BEAR_RELEASES_URL);
 }
 
 export async function openHandoffDownload(): Promise<void> {
-  const url = state.handoff?.url;
   const { openUrl } = await import("@/lib/window");
-  openUrl(url || HARBOR_API_BASE);
+  openUrl(BEAR_RELEASES_URL);
 }
 
 function clearPending(): void {
@@ -346,9 +322,7 @@ async function detectFailedHandoff(pending: {
     return false;
   }
   clearPending();
-  const plan = await readHandoffPlan(
-    betaChannel() ? BETA_HEADERS : undefined,
-  ).catch(() => null);
+  const plan = await readHandoffPlan().catch(() => null);
   set({
     status: "error",
     installFailed: true,

@@ -1,5 +1,6 @@
 import { Channel, invoke } from "@tauri-apps/api/core";
-import { HARBOR_API_BASE } from "@/lib/config/endpoints";
+import { BEAR_UPDATE_MANIFEST_URL } from "@/lib/config/endpoints";
+import { safeFetch } from "@/lib/safe-fetch";
 
 export type HandoffProbe = {
   supported: boolean;
@@ -52,13 +53,10 @@ export async function probeHandoff(): Promise<HandoffProbe | null> {
   }
 }
 
-export async function readHandoffPlan(init?: RequestInit): Promise<HandoffPlan | null> {
+export async function readHandoffPlan(): Promise<HandoffPlan | null> {
   const probe = await probeHandoff();
   if (!probe?.supported || !probe.managed) return null;
-  const res = await fetch(`${HARBOR_API_BASE}/updates/latest.json`, {
-    cache: "no-store",
-    ...init,
-  });
+  const res = await safeFetch(BEAR_UPDATE_MANIFEST_URL, { cache: "no-store" });
   if (!res.ok) return null;
   const manifest = (await res.json()) as Manifest;
   const entry = manifest.installer?.[probe.platformKey];

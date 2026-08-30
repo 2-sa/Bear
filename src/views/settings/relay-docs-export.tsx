@@ -106,8 +106,8 @@ export function SavePill({ path, onDismiss }: { path: string; onDismiss: () => v
   const t = useT();
   const reveal = async () => {
     try {
-      const { revealItemInDir } = await import("@tauri-apps/plugin-opener");
-      await revealItemInDir(path);
+      const { revealScopedItem } = await import("@/lib/reveal");
+      await revealScopedItem(path);
     } catch {
       /* best-effort */
     }

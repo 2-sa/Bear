@@ -1,8 +1,5 @@
-import { fetch as tauriHttpFetch } from "@tauri-apps/plugin-http";
-import { safeFetch } from "@/lib/safe-fetch";
-
-const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
-const probeFetch: typeof fetch = isTauri ? (tauriHttpFetch as unknown as typeof fetch) : safeFetch;
+import { safeFetch, safeLocalFetch } from "@/lib/safe-fetch";
+import { isBundledEngineUrl } from "@/lib/stremio-server";
 
 const MIN_REAL_SIZE_BYTES = 5 * 1024 * 1024;
 const PREFLIGHT_TIMEOUT_MS = 1200;
@@ -49,7 +46,8 @@ async function probe(url: string, signal?: AbortSignal): Promise<PreflightResult
   const timer = window.setTimeout(() => ctrl.abort(), PREFLIGHT_TIMEOUT_MS);
   let rangeRes: Response | null = null;
   try {
-    rangeRes = await probeFetch(url, {
+    const guardedFetch = isBundledEngineUrl(url) ? safeLocalFetch : safeFetch;
+    rangeRes = await guardedFetch(url, {
       method: "GET",
       headers: { Range: "bytes=0-1" },
       redirect: "follow",

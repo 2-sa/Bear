@@ -1,4 +1,4 @@
-import { fetch as tauriHttpFetch } from "@tauri-apps/plugin-http";
+import { safeFetch } from "@/lib/safe-fetch";
 
 const CACHE_KEY = "harbor.animefillercache.v2";
 const TTL_MS = 14 * 24 * 60 * 60 * 1000;
@@ -6,7 +6,6 @@ const NEG_TTL_MS = 24 * 60 * 60 * 1000;
 const AFL = "https://www.animefillerlist.com/shows";
 const JIKAN = "https://api.jikan.moe/v4";
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Harbor";
-const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
 type FillerEntry = { fillers: number[]; t: number; ok?: boolean };
 type FillerCache = Record<string, FillerEntry>;
@@ -69,7 +68,7 @@ async function malInfo(malId: number): Promise<{ titles: string[]; year?: number
   try {
     const ac = new AbortController();
     const timer = setTimeout(() => ac.abort(), 8000);
-    const r = await fetch(`${JIKAN}/anime/${malId}`, { signal: ac.signal }).finally(() =>
+    const r = await safeFetch(`${JIKAN}/anime/${malId}`, { signal: ac.signal }).finally(() =>
       clearTimeout(timer),
     );
     if (!r.ok) return { titles: [] };
@@ -116,9 +115,7 @@ function slugCandidates(titles: string[], year?: number): string[] {
 async function fetchShow(slug: string): Promise<string | null> {
   try {
     const url = `${AFL}/${slug}`;
-    const r = isTauri
-      ? await tauriHttpFetch(url, { method: "GET", headers: { "User-Agent": UA } })
-      : await fetch(url);
+    const r = await safeFetch(url, { method: "GET", headers: { "User-Agent": UA } });
     if (!r.ok) return null;
     return await r.text();
   } catch {

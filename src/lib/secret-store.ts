@@ -29,12 +29,13 @@ export function getAllSecrets(): Record<string, string> {
   return { ...store };
 }
 
-async function persist(): Promise<void> {
-  if (!rustAvailable) return;
+async function persist(): Promise<boolean> {
+  if (!rustAvailable) return false;
   try {
     await invoke("secrets_write", { content: JSON.stringify(store) });
+    return true;
   } catch {
-    void 0;
+    return false;
   }
 }
 
@@ -67,16 +68,18 @@ export async function loadSecrets(): Promise<void> {
     }
   } catch {
     rustAvailable = false;
-    return;
   }
 
   let migrated = false;
+  const legacyKeys: string[] = [];
   try {
     for (let i = localStorage.length - 1; i >= 0; i -= 1) {
       const key = localStorage.key(i);
       if (!key || !isSecretKey(key)) continue;
       const val = localStorage.getItem(key);
-      if (val != null && store[key] == null) {
+      if (val == null) continue;
+      legacyKeys.push(key);
+      if (store[key] == null) {
         store[key] = val;
         migrated = true;
       }
@@ -85,50 +88,33 @@ export async function loadSecrets(): Promise<void> {
     void 0;
   }
 
-  if (migrated) {
-    await persist();
-    try {
-      for (const key of Object.keys(store)) {
-        if (isSecretKey(key)) localStorage.removeItem(key);
+  if (legacyKeys.length > 0) {
+    const persisted = !migrated || (await persist());
+    if (!rustAvailable || persisted) {
+      try {
+        for (const key of legacyKeys) localStorage.removeItem(key);
+      } catch {
+        void 0;
       }
-    } catch {
-      void 0;
     }
+  }
+}
+
+function removeLegacyLocalSecret(key: string): void {
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    void 0;
   }
 }
 
 export function getSecret(key: string): string | null {
-  if (rustAvailable) {
-    if (store[key] != null) return store[key];
-    try {
-      return localStorage.getItem(key);
-    } catch {
-      return null;
-    }
-  }
-  try {
-    return localStorage.getItem(key);
-  } catch {
-    return null;
-  }
+  return store[key] ?? null;
 }
 
 export function setSecret(key: string, value: string | null): void {
-  if (rustAvailable) {
-    if (value == null) delete store[key];
-    else store[key] = value;
-    schedulePersist();
-    try {
-      localStorage.removeItem(key);
-    } catch {
-      void 0;
-    }
-    return;
-  }
-  try {
-    if (value == null) localStorage.removeItem(key);
-    else localStorage.setItem(key, value);
-  } catch {
-    void 0;
-  }
+  if (value == null) delete store[key];
+  else store[key] = value;
+  if (rustAvailable) schedulePersist();
+  removeLegacyLocalSecret(key);
 }

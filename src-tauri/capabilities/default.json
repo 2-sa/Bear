@@ -31,13 +31,6 @@
         { "url": "http://*/**" }
       ]
     },
-    {
-      "identifier": "http:default",
-      "allow": [
-        { "url": "https://*:*/**" },
-        { "url": "http://*:*/**" }
-      ]
-    },
     "clipboard-manager:allow-read-text",
     "dialog:default",
     "dialog:allow-open",
@@ -63,6 +56,8 @@
         { "path": "$APPCACHE/**" },
         { "path": "$APPLOCALDATA/**" },
         { "path": "$TEMP/**" },
+        { "path": "$DOWNLOAD" },
+        { "path": "$DOWNLOAD/**" },
         { "path": "$PICTURE/Bear" },
         { "path": "$PICTURE/Bear/**" }
       ],
@@ -72,10 +67,6 @@
         { "path": "$APPDATA/settings.json" },
         { "path": "$APPDATA/settings.json.tmp" }
       ]
-    },
-    {
-      "identifier": "opener:allow-reveal-item-in-dir",
-      "allow": [{ "path": "**" }]
     }
   ]
 }

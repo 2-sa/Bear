@@ -60,6 +60,7 @@ export function MangaBrowse({
   const [hasMore, setHasMore] = useState(true);
   const [reloadTick, setReloadTick] = useState(0);
   const [refreshingSources, setRefreshingSources] = useState(false);
+  const [sourceRefreshError, setSourceRefreshError] = useState<string | null>(null);
   const [sourceRefreshTick, setSourceRefreshTick] = useState(0);
 
   const offsetRef = useRef(0);
@@ -92,16 +93,19 @@ export function MangaBrowse({
   const refreshSources = useCallback(async () => {
     if (refreshingSources) return;
     setRefreshingSources(true);
+    setSourceRefreshError(null);
     clearMangaCache();
     setTagId("");
     try {
       await refreshMangaTags();
       setSourceRefreshTick((n) => n + 1);
       reload();
+    } catch {
+      setSourceRefreshError(t("Could not refresh manga sources. Check the server and try again."));
     } finally {
       setRefreshingSources(false);
     }
-  }, [refreshingSources, reload]);
+  }, [refreshingSources, reload, t]);
 
   const sourceRef = useRef(activeMangaSourceId());
   const activeSource = activeMangaSource();
@@ -353,6 +357,11 @@ export function MangaBrowse({
         <ManageServersButton onClick={onManageSources} className="ms-auto me-2" />
       </div>
       <div className="-mt-3 flex flex-wrap items-center gap-2 border-b border-edge-soft/60 pb-4">
+        {sourceRefreshError && (
+          <p role="alert" className="w-full text-sm text-danger">
+            {sourceRefreshError}
+          </p>
+        )}
         <FilterButton
           active={sortMode === "latest"}
           onClick={() => setSortMode("latest")}

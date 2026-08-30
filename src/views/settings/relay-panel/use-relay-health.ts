@@ -1,12 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { fetch as tauriFetchImpl } from "@tauri-apps/plugin-http";
+import { safeLocalFetch } from "@/lib/safe-fetch";
 import { relayOutdated } from "@/lib/together/relay-version";
-
-const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
-const safeFetch: typeof fetch = (input, init) =>
-  isTauri
-    ? (tauriFetchImpl(input as string, init as RequestInit) as Promise<Response>)
-    : fetch(input, init);
 
 export type RelayTest = {
   ok: boolean;
@@ -32,7 +26,7 @@ function httpBaseOf(url: string): string {
 
 async function fetchRelayVersion(url: string): Promise<{ healthMs: number; version: number | null }> {
   const t0 = performance.now();
-  const r = await safeFetch(`${httpBaseOf(url)}/health`, { method: "GET" });
+  const r = await safeLocalFetch(`${httpBaseOf(url)}/health`, { method: "GET" });
   const healthMs = Math.round(performance.now() - t0);
   if (!r.ok) throw new Error(`Worker health check returned ${r.status}`);
   let version: number | null = null;

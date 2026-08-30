@@ -1,6 +1,6 @@
 import { downloadDir as systemDownloadDir } from "@tauri-apps/api/path";
 import { open } from "@tauri-apps/plugin-dialog";
-import { revealItemInDir } from "@tauri-apps/plugin-opener";
+import { revealScopedItem } from "@/lib/reveal";
 import { ChevronDown, FolderOpen, RotateCcw } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useSettings } from "@/lib/settings";
@@ -80,7 +80,7 @@ export function SaveLocationChip() {
             </span>
             <button
               type="button"
-              onClick={() => current && void revealItemInDir(current)}
+              onClick={() => current && void revealScopedItem(current)}
               title={current ? t("{path} (open folder)", { path: current }) : undefined}
               className="truncate text-start font-mono text-[12.5px] text-ink-muted transition-colors hover:text-ink"
             >

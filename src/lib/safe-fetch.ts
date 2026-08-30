@@ -1,5 +1,4 @@
 import { invoke } from "@tauri-apps/api/core";
-import { fetch as tauriFetchImpl } from "@tauri-apps/plugin-http";
 import { TrackerBlockedError, isBlockedUrl, noteBlocked } from "./privacy/blocklist";
 
 const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
@@ -10,7 +9,7 @@ declare global {
   }
 }
 
-type BridgeKind = "direct" | "directFail" | "harborFetch" | "pluginHttp";
+type BridgeKind = "direct" | "directFail" | "harborFetch";
 
 type BridgeCounts = {
   total: Record<BridgeKind, number>;
@@ -18,7 +17,7 @@ type BridgeCounts = {
 };
 
 const bridgeCounts: BridgeCounts = {
-  total: { direct: 0, directFail: 0, harborFetch: 0, pluginHttp: 0 },
+  total: { direct: 0, directFail: 0, harborFetch: 0 },
   byHost: {},
 };
 if (typeof window !== "undefined") window.__harborFetchCounts = bridgeCounts;
@@ -27,6 +26,49 @@ function urlOf(input: RequestInfo | URL): string {
   if (typeof input === "string") return input;
   if (input instanceof URL) return input.href;
   return input.url;
+}
+
+function isPrivateIpv4(host: string): boolean {
+  const match = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(host);
+  if (!match) return false;
+  const octets = match.slice(1).map(Number);
+  if (octets.some((part) => part < 0 || part > 255)) return false;
+  const [a, b] = octets;
+  return (
+    a === 0 ||
+    a === 10 ||
+    a === 127 ||
+    (a === 100 && b >= 64 && b <= 127) ||
+    (a === 169 && b === 254) ||
+    (a === 172 && b >= 16 && b <= 31) ||
+    (a === 192 && b === 168) ||
+    a >= 224
+  );
+}
+
+export function isPrivateNetworkUrl(raw: string): boolean {
+  try {
+    const url = new URL(raw);
+    const host = url.hostname.toLowerCase().replace(/^\[|\]$/g, "");
+    if (host === "localhost" || host.endsWith(".localhost")) return true;
+    if (host.endsWith(".local") || host.endsWith(".internal")) return true;
+    if (isPrivateIpv4(host)) return true;
+    if (host === "::" || host === "::1") return true;
+    if (
+      host.startsWith("fc") ||
+      host.startsWith("fd") ||
+      /^fe[89ab]/.test(host) ||
+      host.startsWith("ff") ||
+      host.startsWith("::ffff:") ||
+      host.startsWith("64:ff9b:")
+    ) {
+      return true;
+    }
+    const embedded = /(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/.exec(host)?.[1];
+    return !!embedded && isPrivateIpv4(embedded);
+  } catch {
+    return false;
+  }
 }
 
 function countCrossing(kind: BridgeKind, url: string): void {
@@ -95,14 +137,6 @@ const TAURI_DIRECT_HOSTS = new Set([
 const DIRECT_FAIL_LIMIT = 2;
 const directFailures = new Map<string, number>();
 
-export function allowDirectHost(url: string): void {
-  try {
-    const u = new URL(url);
-    if (u.protocol !== "https:") return;
-    TAURI_DIRECT_HOSTS.add(u.hostname);
-  } catch {}
-}
-
 function tauriDirectHost(url: string): string | null {
   try {
     const host = new URL(url).hostname;
@@ -164,7 +198,12 @@ type HarborFetchResponse = {
   headers?: Record<string, string>;
 };
 
-async function tauriHarborFetch(input: string, init?: RequestInit): Promise<Response> {
+async function tauriHarborFetch(
+  input: string,
+  init?: RequestInit,
+  allowPrivateNetwork = false,
+  responseType?: "base64",
+): Promise<Response> {
   countCrossing("harborFetch", input);
   const headers: Record<string, string> = {};
   if (init?.headers) {
@@ -188,33 +227,19 @@ async function tauriHarborFetch(input: string, init?: RequestInit): Promise<Resp
       headers,
       body,
       timeoutMs: 30000,
+      allowPrivateNetwork,
+      responseType,
     },
   });
-  return new Response(resp.body, {
+  let responseBody: BodyInit = resp.body;
+  if (responseType === "base64") {
+    const bytes = Uint8Array.from(atob(resp.body), (character) => character.charCodeAt(0));
+    responseBody = bytes.buffer as ArrayBuffer;
+  }
+  return new Response(responseBody, {
     status: resp.status,
     headers: resp.headers ?? (resp.contentType ? { "content-type": resp.contentType } : {}),
   });
-}
-
-function isIdempotent(method: string | undefined): boolean {
-  const m = (method ?? "GET").toUpperCase();
-  return m === "GET" || m === "HEAD" || m === "OPTIONS";
-}
-
-// The Tauri http plugin rejects an aborted request with a plain Error("Request cancelled").
-// Normalize it to a standard AbortError so callers (and the global rejection handler) treat
-// a cancel as the benign abort it is instead of surfacing the app-wide error screen.
-function normalizeAbort(p: Promise<Response>): Promise<Response> {
-  return p.catch((e: unknown) => {
-    const msg = (e as { message?: string } | undefined)?.message ?? "";
-    if (/request cancell?ed/i.test(msg)) throw new DOMException("Aborted", "AbortError");
-    throw e;
-  });
-}
-
-function pluginHttpFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
-  countCrossing("pluginHttp", urlOf(input));
-  return normalizeAbort(tauriFetchImpl(input, init) as Promise<Response>);
 }
 
 const HARBOR_FETCH_DEADLINE_MS = 35000;
@@ -248,42 +273,101 @@ function withDeadline(p: Promise<Response>, signal?: AbortSignal | null): Promis
   });
 }
 
+async function requestInit(
+  input: RequestInfo | URL,
+  init?: RequestInit,
+): Promise<RequestInit | undefined> {
+  if (!(input instanceof Request)) return init;
+  const method = (init?.method ?? input.method).toUpperCase();
+  let body = init?.body;
+  if (body === undefined && method !== "GET" && method !== "HEAD") {
+    body = await input.clone().text();
+  }
+  return {
+    method,
+    headers: init?.headers ?? input.headers,
+    body,
+    signal: init?.signal ?? input.signal,
+  };
+}
+
+async function tauriFetch(
+  input: RequestInfo | URL,
+  init: RequestInit | undefined,
+  allowPrivateNetwork: boolean,
+  responseType?: "base64",
+): Promise<Response> {
+  const target = urlOf(input);
+  const normalizedInit = await requestInit(input, init);
+  if (allowPrivateNetwork) {
+    return withDeadline(
+      tauriHarborFetch(target, normalizedInit, true, responseType),
+      normalizedInit?.signal,
+    );
+  }
+  const directHost = tauriDirectHost(target);
+  if (directHost && !(input instanceof Request)) {
+    countCrossing("direct", target);
+    const attempt = fetch(input, normalizedInit).catch((error: unknown) => {
+      if (isCancellation(error)) throw error;
+      countCrossing("directFail", target);
+      directFailures.set(directHost, (directFailures.get(directHost) ?? 0) + 1);
+      return tauriHarborFetch(target, normalizedInit, false, responseType);
+    });
+    return withDeadline(attempt, normalizedInit?.signal);
+  }
+  const exec = tauriHarborFetch(target, normalizedInit, false, responseType);
+  return withDeadline(exec, normalizedInit?.signal);
+}
+
+function blockedTracker(target: string): Promise<Response> | null {
+  if (!isBlockedUrl(target)) return null;
+  noteBlocked();
+  let host = target;
+  try {
+    host = new URL(target).hostname;
+  } catch {}
+  return Promise.reject(new TrackerBlockedError(host));
+}
+
 export const safeFetch: typeof fetch = (input, init) => {
-  const target = typeof input === "string" ? input : input instanceof URL ? input.href : null;
-  if (target && isBlockedUrl(target)) {
-    noteBlocked();
-    let host = target;
-    try {
-      host = new URL(target).hostname;
-    } catch {}
-    return Promise.reject(new TrackerBlockedError(host));
+  const target = urlOf(input);
+  const tracker = blockedTracker(target);
+  if (tracker) return tracker;
+  if (isPrivateNetworkUrl(target)) {
+    return Promise.reject(new Error(`blocked private network target: ${target}`));
   }
-  if (isTauri) {
-    if (typeof input === "string") {
-      const directHost = tauriDirectHost(input);
-      if (directHost) {
-        countCrossing("direct", input);
-        const attempt = fetch(input, init).catch((e: unknown) => {
-          if (isCancellation(e)) throw e;
-          countCrossing("directFail", input);
-          directFailures.set(directHost, (directFailures.get(directHost) ?? 0) + 1);
-          return tauriHarborFetch(input, init);
-        });
-        return withDeadline(attempt, init?.signal);
-      }
-      const exec = isIdempotent(init?.method)
-        ? tauriHarborFetch(input, init).catch((e: unknown) => {
-            if (isCancellation(e)) throw e;
-            return pluginHttpFetch(input, init);
-          })
-        : tauriHarborFetch(input, init);
-      return withDeadline(exec, init?.signal);
-    }
-    return pluginHttpFetch(input, init);
-  }
+  if (isTauri) return tauriFetch(input, init, false);
   if (typeof input === "string") {
     const r = rewriteForWeb(input, init);
     return fetch(r.url, r.init);
   }
+  return fetch(input, init);
+};
+
+export const safeLocalFetch: typeof fetch = (input, init) => {
+  const target = urlOf(input);
+  const tracker = blockedTracker(target);
+  if (tracker) return tracker;
+  if (isTauri) return tauriFetch(input, init, true);
+  return fetch(input, init);
+};
+
+export const safeBinaryFetch: typeof fetch = (input, init) => {
+  const target = urlOf(input);
+  const tracker = blockedTracker(target);
+  if (tracker) return tracker;
+  if (isPrivateNetworkUrl(target)) {
+    return Promise.reject(new Error(`blocked private network target: ${target}`));
+  }
+  if (isTauri) return tauriFetch(input, init, false, "base64");
+  return fetch(input, init);
+};
+
+export const safeLocalBinaryFetch: typeof fetch = (input, init) => {
+  const target = urlOf(input);
+  const tracker = blockedTracker(target);
+  if (tracker) return tracker;
+  if (isTauri) return tauriFetch(input, init, true, "base64");
   return fetch(input, init);
 };

@@ -10,6 +10,7 @@ import {
 } from "./persistent-cache";
 import type { IptvChannel, IptvPlaylist, IptvPlaylistSource } from "./types";
 import { clearSeriesInfoCache } from "./xtream-vod";
+import { safeLocalFetch } from "@/lib/safe-fetch";
 
 const cache = new Map<string, IptvPlaylist>();
 const inflight = new Map<string, Promise<IptvPlaylist>>();
@@ -175,30 +176,13 @@ export async function fetchM3uText(url: string): Promise<string> {
 }
 
 async function iptvFetch(url: string): Promise<Response> {
-  if (typeof window !== "undefined" && "__TAURI_INTERNALS__" in window) {
-    const { fetch: tauriFetch } = await import("@tauri-apps/plugin-http");
-    try {
-      return await tauriFetch(url, {
-        method: "GET",
-        headers: {
-          "User-Agent": "VLC/3.0.20 LibVLC/3.0.20",
-          Accept: "audio/x-mpegurl, application/x-mpegURL, application/octet-stream, */*",
-        },
-        connectTimeout: CONNECT_TIMEOUT_S * 1000,
-        maxRedirections: 5,
-      } as unknown as RequestInit);
-    } catch (e) {
-      if (!/scope|not allowed/i.test(String(e))) throw e;
-      const { safeFetch } = await import("@/lib/safe-fetch");
-      return safeFetch(url, {
-        headers: {
-          "User-Agent": "VLC/3.0.20 LibVLC/3.0.20",
-          Accept: "audio/x-mpegurl, application/x-mpegURL, application/octet-stream, */*",
-        },
-      });
-    }
-  }
-  return fetch(url, { cache: "no-store" });
+  return safeLocalFetch(url, {
+    cache: "no-store",
+    headers: {
+      "User-Agent": "VLC/3.0.20 LibVLC/3.0.20",
+      Accept: "audio/x-mpegurl, application/x-mpegURL, application/octet-stream, */*",
+    },
+  });
 }
 
 function httpErrorMessage(status: number, statusText: string): string {

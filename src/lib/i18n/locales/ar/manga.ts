@@ -189,6 +189,8 @@ const manga: Record<string, string> = {
   "Readers also recommend": "يوصي القرّاء أيضًا",
   "Reading mode": "وضع القراءة",
   "Refresh sources": "تحديث المصادر",
+  "Could not refresh manga sources. Check the server and try again.":
+    "تعذّر تحديث مصادر المانجا. تحقق من الخادم وحاول مرة أخرى.",
   "Related series": "سلاسل ذات صلة",
   "Remove all": "إزالة الكل",
   "Remove favorite": "إزالة من المفضّلة",

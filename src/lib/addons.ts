@@ -1,6 +1,6 @@
 import { cachedCatalogRow } from "@/lib/addon-catalog-cache";
 import { runLanes } from "@/lib/run-lanes";
-import { allowDirectHost, safeFetch as fetch } from "@/lib/safe-fetch";
+import { safeFetch as fetch } from "@/lib/safe-fetch";
 import type { AddonOrigin, Meta } from "./cinemeta";
 import { fetchManifestAt, filterEnabled, loadInstalled } from "./addon-store";
 
@@ -226,7 +226,6 @@ async function fetchWithTimeout(url: string, timeoutMs = 8000): Promise<Response
   const t = setTimeout(() => ac.abort(), timeoutMs);
   try {
     const al = addonAcceptLanguage();
-    allowDirectHost(url);
     return await fetch(url, { signal: ac.signal, headers: al ? { "Accept-Language": al } : undefined });
   } catch {
     return null;

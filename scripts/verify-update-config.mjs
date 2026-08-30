@@ -11,12 +11,15 @@ function fail(message) {
 }
 
 const root = new URL("../", import.meta.url);
-const [packageJson, tauriConfig, cargoToml, updaterSource] = await Promise.all([
-  readFile(new URL("package.json", root), "utf8").then(JSON.parse),
-  readFile(new URL("src-tauri/tauri.conf.json", root), "utf8").then(JSON.parse),
-  readFile(new URL("src-tauri/Cargo.toml", root), "utf8"),
-  readFile(new URL("src/lib/updater/use-update.ts", root), "utf8"),
-]);
+const [packageJson, tauriConfig, cargoToml, updaterSource, handoffSource, endpointSource] =
+  await Promise.all([
+    readFile(new URL("package.json", root), "utf8").then(JSON.parse),
+    readFile(new URL("src-tauri/tauri.conf.json", root), "utf8").then(JSON.parse),
+    readFile(new URL("src-tauri/Cargo.toml", root), "utf8"),
+    readFile(new URL("src/lib/updater/use-update.ts", root), "utf8"),
+    readFile(new URL("src/lib/updater/handoff.ts", root), "utf8"),
+    readFile(new URL("src/lib/config/endpoints.ts", root), "utf8"),
+  ]);
 
 const cargoVersion = cargoToml.match(/^version\s*=\s*"([^"]+)"/m)?.[1];
 const versions = new Set([packageJson.version, tauriConfig.version, cargoVersion]);
@@ -43,7 +46,15 @@ try {
 if (!decodedPublicKey.includes("minisign public key")) {
   fail("the updater public key is not a minisign public key");
 }
-if (!updaterSource.includes(EXPECTED_RELEASES_URL) || updaterSource.includes("harbor.site/updates")) {
+if (
+  !endpointSource.includes(EXPECTED_ENDPOINT) ||
+  !endpointSource.includes(EXPECTED_RELEASES_URL) ||
+  !updaterSource.includes("BEAR_UPDATE_MANIFEST_URL") ||
+  !updaterSource.includes("BEAR_RELEASES_URL") ||
+  !handoffSource.includes("BEAR_UPDATE_MANIFEST_URL") ||
+  updaterSource.includes("HARBOR_API_BASE") ||
+  handoffSource.includes("HARBOR_API_BASE")
+) {
   fail("manual update downloads must point only to our GitHub Releases page");
 }
 if (tauriConfig.productName !== EXPECTED_PRODUCT_NAME || tauriConfig.identifier !== EXPECTED_IDENTIFIER) {
