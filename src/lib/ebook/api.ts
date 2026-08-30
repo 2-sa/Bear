@@ -1,4 +1,5 @@
 import { anilistRequest } from "@/lib/anilist/client";
+import { animeRelations } from "@/lib/anilist/relations";
 import { getUiLanguage } from "@/lib/i18n";
 import { safeFetch } from "@/lib/safe-fetch";
 
@@ -71,10 +72,29 @@ export const EBOOK_CATEGORIES = {
 
 export type EBookCategoryGroup = keyof typeof EBOOK_CATEGORIES;
 
+export type EBookAdaptationKind = "manga" | "anime" | "liveAction";
+
+export type EBookAdaptation = {
+  id: string;
+  kind: EBookAdaptationKind;
+  title: string;
+  altTitles?: string[];
+  source: "anilist" | "wikidata" | "mangadex" | "metadata";
+  anilistId?: number;
+  wikidataId?: string;
+  poster?: string;
+  year?: number;
+  format?: string;
+  relation?: string;
+  description?: string;
+  siteUrl?: string;
+  seasons?: number;
+};
+
 export type EBookAdaptations = {
-  manga: string[];
-  anime: string[];
-  liveAction: string[];
+  manga: EBookAdaptation[];
+  anime: EBookAdaptation[];
+  liveAction: EBookAdaptation[];
 };
 
 export type RawEBook = {
@@ -182,7 +202,10 @@ function metadataCandidates(ebook: EBook): string[] {
     ...new Set([
       ...candidates,
       ...candidates.map((title) =>
-        title.replace(/\b(?:a|an|the)\b/gi, " ").replace(/\s+/g, " ").trim(),
+        title
+          .replace(/\b(?:a|an|the)\b/gi, " ")
+          .replace(/\s+/g, " ")
+          .trim(),
       ),
     ]),
   ].filter(Boolean);
@@ -193,7 +216,12 @@ function authorListsMatch(left: string[], right: string[]): boolean {
     right.some((b) => {
       const x = titleKey(a);
       const y = titleKey(b);
-      return x === y || (x.length > 4 && y.length > 4 && (x.includes(y) || y.includes(x)));
+      const tokenKey = (value: string) => value.split(" ").filter(Boolean).sort().join(" ");
+      return (
+        x === y ||
+        tokenKey(x) === tokenKey(y) ||
+        (x.length > 4 && y.length > 4 && (x.includes(y) || y.includes(x)))
+      );
     }),
   );
 }
@@ -215,7 +243,12 @@ function verifiedMetadataMatch(source: EBook, metadata: EBook): boolean {
     identityTitleKey,
   );
   if (!metadataTitles.some((title) => sourceTitles.has(title))) return false;
-  if (metadata.source === "anilist") return true;
+  if (metadata.source === "anilist")
+    return (
+      source.authors.length > 0 &&
+      metadata.authors.length > 0 &&
+      authorListsMatch(source.authors, metadata.authors)
+    );
   if (metadata.source === "wikidata") {
     if (
       !/\b(?:(?:web|light)\s+)?novel\b|\b(?:book|novel) series\b|\bliterary work\b/i.test(
@@ -394,30 +427,29 @@ export async function recommendedEBooks(ebook: EBook): Promise<EBook[]> {
   if (ebook.anilistId) {
     genreCandidates.push(
       anilistRequest<{
-      Media: {
-        recommendations: {
-          nodes: Array<{ mediaRecommendation: (RawEBook & { format?: string }) | null }>;
-        };
-      } | null;
-    }>(
-      `query ($id: Int) {
+        Media: {
+          recommendations: {
+            nodes: Array<{ mediaRecommendation: (RawEBook & { format?: string }) | null }>;
+          };
+        } | null;
+      }>(
+        `query ($id: Int) {
           Media(id: $id, type: MANGA, format: NOVEL) {
             recommendations(perPage: 18, sort: RATING_DESC) {
               nodes { mediaRecommendation { ${FIELDS} format } }
             }
           }
         }`,
-      { id: ebook.anilistId },
-      undefined,
-      true,
+        { id: ebook.anilistId },
+        undefined,
+        true,
       )
         .then((data) =>
           rankByGenre(
             (data.Media?.recommendations.nodes ?? [])
               .map((node) => node.mediaRecommendation)
               .filter(
-                (item): item is RawEBook & { format?: string } =>
-                  !!item && item.format === "NOVEL",
+                (item): item is RawEBook & { format?: string } => !!item && item.format === "NOVEL",
               )
               .map(mapEBook),
           ),
@@ -434,7 +466,7 @@ export async function recommendedEBooks(ebook: EBook): Promise<EBook[]> {
             media(type: MANGA, format: NOVEL, genre_in: $genres, sort: POPULARITY_DESC, isAdult: false) { ${FIELDS} }
           }
         }`
-      : `query {
+        : `query {
           Page(page: 1, perPage: 18) {
             media(type: MANGA, format: NOVEL, sort: POPULARITY_DESC, isAdult: false) { ${FIELDS} }
           }
@@ -635,9 +667,9 @@ export function googleBooksApiKey(): string {
 }
 
 export function setGoogleBooksApiKey(value: string): void {
-  value.trim()
-    ? localStorage.setItem(GOOGLE_BOOKS_KEY, value.trim())
-    : localStorage.removeItem(GOOGLE_BOOKS_KEY);
+  const trimmed = value.trim();
+  if (trimmed) localStorage.setItem(GOOGLE_BOOKS_KEY, trimmed);
+  else localStorage.removeItem(GOOGLE_BOOKS_KEY);
   googleMetadata.clear();
   googleUnavailableUntil = 0;
   for (let index = localStorage.length - 1; index >= 0; index -= 1) {
@@ -713,7 +745,7 @@ async function fetchGoogleMetadata(ebooks: EBook[]): Promise<EBook[]> {
       if (!ebook.googleBooksId)
         url.searchParams.set(
           "q",
-          ebook.isbn ? `isbn:${ebook.isbn}` : `intitle:\"${lookupTitle(candidate)}\"`,
+          ebook.isbn ? `isbn:${ebook.isbn}` : `intitle:"${lookupTitle(candidate)}"`,
         );
       if (!ebook.googleBooksId) url.searchParams.set("maxResults", "5");
       if (!ebook.googleBooksId) url.searchParams.set("langRestrict", getUiLanguage());
@@ -796,7 +828,10 @@ function wikidataLanguage(value: string): string {
 }
 
 function sparqlString(value: string): string {
-  return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/[\r\n]+/g, " ");
+  return value
+    .replace(/\\/g, "\\\\")
+    .replace(/"/g, '\\"')
+    .replace(/[\r\n]+/g, " ");
 }
 
 function claim(entity: WikidataEntity, property: string): unknown {
@@ -860,10 +895,7 @@ function mapWikidata(entity: WikidataEntity, summary?: WikipediaSummary | null):
       entity.id,
     altTitle: aliases.length ? [...new Set(aliases)].join("|") : undefined,
     authors: creditedAuthors(description),
-    cover:
-      summary?.originalimage?.source ??
-      summary?.thumbnail?.source ??
-      commonsImage(cover),
+    cover: summary?.originalimage?.source ?? summary?.thumbnail?.source ?? commonsImage(cover),
     description,
     year: Number(date?.time?.match(/[+-](\d{4})/)?.[1]) || undefined,
     publishedAt: date?.time?.match(/[+-](\d{4}-\d{2}-\d{2})/)?.[1],
@@ -960,10 +992,7 @@ SELECT DISTINCT ?matched ?item ?itemDescription WHERE {
         const owner = ebook.seriesTitle || ebook.title;
         const entity = [...(ids.get(ebook.id) ?? [])]
           .map((id) => entities[id])
-          .find(
-            (candidate) =>
-              candidate && verifiedMetadataMatch(ebook, mapWikidata(candidate)),
-          );
+          .find((candidate) => candidate && verifiedMetadataMatch(ebook, mapWikidata(candidate)));
         if (entity) {
           const summary = await wikipediaSummary(entity);
           wikidataMetadata.set(metadataRequestKey(ebook), {
@@ -1086,11 +1115,11 @@ SELECT DISTINCT ?item ?series ?seriesLabel ?ordinal WHERE {
         if (!previous || (!previous.cover && book.cover)) unique.set(key, book);
       }
       const books = [...unique.values()].sort(
-          (left, right) =>
-            (ordinal.get(left.wikidataId ?? "") ?? Number.MAX_SAFE_INTEGER) -
-              (ordinal.get(right.wikidataId ?? "") ?? Number.MAX_SAFE_INTEGER) ||
-            (left.year ?? Number.MAX_SAFE_INTEGER) - (right.year ?? Number.MAX_SAFE_INTEGER),
-        );
+        (left, right) =>
+          (ordinal.get(left.wikidataId ?? "") ?? Number.MAX_SAFE_INTEGER) -
+            (ordinal.get(right.wikidataId ?? "") ?? Number.MAX_SAFE_INTEGER) ||
+          (left.year ?? Number.MAX_SAFE_INTEGER) - (right.year ?? Number.MAX_SAFE_INTEGER),
+      );
       if (books.length) {
         const seriesLabels = seriesId ? entities[seriesId]?.labels : undefined;
         const language = getUiLanguage();
@@ -1099,8 +1128,7 @@ SELECT DISTINCT ?item ?series ?seriesLabel ?ordinal WHERE {
           seriesLabels?.en?.value ??
           seriesLabels?.ar?.value ??
           bindings.find(
-            (binding) =>
-              binding.seriesLabel?.value && !/^Q\d+$/.test(binding.seriesLabel.value),
+            (binding) => binding.seriesLabel?.value && !/^Q\d+$/.test(binding.seriesLabel.value),
           )?.seriesLabel?.value ??
           "Book";
         return {
@@ -1195,9 +1223,7 @@ async function fetchOpenLibraryMetadata(ebooks: EBook[]): Promise<EBook[]> {
   );
   const titles = [
     ...new Set(
-      pending
-        .filter((ebook) => !ebook.openLibraryId && !ebook.isbn)
-        .flatMap(metadataCandidates),
+      pending.filter((ebook) => !ebook.openLibraryId && !ebook.isbn).flatMap(metadataCandidates),
     ),
   ];
   for (let start = 0; start < titles.length; start += 12) {
@@ -1206,7 +1232,7 @@ async function fetchOpenLibraryMetadata(ebooks: EBook[]): Promise<EBook[]> {
       "q",
       titles
         .slice(start, start + 12)
-        .map((title) => `title:\"${title.replace(/[\\\"]+/g, " ")}\"`)
+        .map((title) => `title:"${title.replace(/[\\"]+/g, " ")}"`)
         .join(" OR "),
     );
     url.searchParams.set("fields", OPEN_LIBRARY_FIELDS);
@@ -1232,9 +1258,7 @@ async function fetchOpenLibraryMetadata(ebooks: EBook[]): Promise<EBook[]> {
     const cacheKey = metadataRequestKey(source);
     openLibraryMetadata.set(
       cacheKey,
-      exact
-        ? { ...mapOpenLibrary(exact), seriesTitle: source.seriesTitle || source.title }
-        : null,
+      exact ? { ...mapOpenLibrary(exact), seriesTitle: source.seriesTitle || source.title } : null,
     );
     openLibraryAliases.set(cacheKey, exact ? alternativeTitles(exact) : []);
   }
@@ -1261,8 +1285,7 @@ export async function fetchEBookMetadata(ebooks: EBook[]): Promise<EBook[]> {
   for (const ebook of unresolved) {
     const owner = ebook.seriesTitle || ebook.title;
     for (const alias of openLibraryAliases.get(metadataRequestKey(ebook)) ?? []) {
-      if (titleKey(alias) !== titleKey(owner))
-        aliasOwners.set(titleKey(alias), { alias, owner });
+      if (titleKey(alias) !== titleKey(owner)) aliasOwners.set(titleKey(alias), { alias, owner });
     }
   }
   const aliasMatches = aliasOwners.size
@@ -1530,26 +1553,85 @@ export async function ebookDetail(id: string): Promise<EBook | null> {
 const ebookAdaptationCache = new Map<string, Promise<EBookAdaptations>>();
 
 export function ebookAdaptations(ebook: EBook): Promise<EBookAdaptations> {
-  const cacheKey = `${ebook.anilistId ?? ""}:${ebook.wikidataId ?? ""}`;
+  const cacheKey = `${ebook.anilistId ?? ""}:${ebook.wikidataId ?? ""}:${identityTitleKey(
+    ebook.seriesTitle || ebook.title,
+  )}`;
   const cached = ebookAdaptationCache.get(cacheKey);
   if (cached) return cached;
 
   const request = (async () => {
     const result: EBookAdaptations = { manga: [], anime: [], liveAction: [] };
-    const add = (kind: keyof EBookAdaptations, title?: string | null) => {
-      const value = title?.trim();
-      if (value && !result[kind].includes(value)) result[kind].push(value);
+    const add = (
+      kind: EBookAdaptationKind,
+      value: string | Omit<EBookAdaptation, "kind"> | null | undefined,
+    ) => {
+      if (!value) return;
+      const title = (typeof value === "string" ? value : value.title).trim();
+      if (!title) return;
+      const item: EBookAdaptation =
+        typeof value === "string"
+          ? {
+              id: `metadata:${kind}:${identityTitleKey(title)}`,
+              kind,
+              title,
+              source: "metadata",
+            }
+          : { ...value, kind, title };
+      const duplicate = result[kind].some(
+        (existing) =>
+          existing.id === item.id ||
+          identityTitleKey(existing.title) === identityTitleKey(item.title),
+      );
+      if (!duplicate) result[kind].push(item);
     };
+    const matchedMetadata = await fetchEBookMetadata([ebook]).catch(() => []);
+    const adaptationAnilistId =
+      ebook.anilistId ?? matchedMetadata.find((metadata) => metadata.anilistId)?.anilistId;
+    const adaptationWikidataId =
+      ebook.wikidataId ?? matchedMetadata.find((metadata) => metadata.wikidataId)?.wikidataId;
 
-    const aniList = ebook.anilistId
+    const englishTitle = [
+      ebook.title,
+      ...(ebook.altTitle?.split("|") ?? []),
+      ebook.seriesTitle,
+      ...(ebook.books ?? []).flatMap((book) => [book.title, ...(book.altTitle?.split("|") ?? [])]),
+    ].find((title): title is string => !!title && /\p{Script=Latin}/u.test(title));
+    const mangaDex = englishTitle
+      ? (() => {
+          const url = new URL("https://api.mangadex.org/manga");
+          url.searchParams.set("title", englishTitle);
+          url.searchParams.set("limit", "10");
+          url.searchParams.set("includes[]", "author");
+          url.searchParams.append("includes[]", "cover_art");
+          url.searchParams.set("order[relevance]", "desc");
+          return cachedJson<{
+            data?: Array<{
+              id?: string;
+              attributes?: {
+                title?: Record<string, string>;
+                altTitles?: Array<Record<string, string>>;
+              };
+              relationships?: Array<{
+                type?: string;
+                attributes?: { name?: string; fileName?: string };
+              }>;
+            }>;
+          }>(url.toString()).catch(() => null);
+        })()
+      : Promise.resolve(null);
+
+    const aniList = adaptationAnilistId
       ? anilistRequest<{
           Media: {
             relations: {
               edges: Array<{
                 relationType: string | null;
                 node: {
+                  id: number;
                   type: "ANIME" | "MANGA";
                   format: string | null;
+                  seasonYear: number | null;
+                  coverImage: { large: string | null } | null;
                   title: { english: string | null; romaji: string | null; native: string | null };
                 } | null;
               }>;
@@ -1561,51 +1643,214 @@ export function ebookAdaptations(ebook: EBook): Promise<EBookAdaptations> {
               relations {
                 edges {
                   relationType
-                  node { type format title { english romaji native } }
+                  node { id type format seasonYear coverImage { large } title { english romaji native } }
                 }
               }
             }
           }`,
-          { id: ebook.anilistId },
+          { id: adaptationAnilistId },
           undefined,
           true,
         ).catch(() => null)
       : Promise.resolve(null);
 
-    const wikidata = ebook.wikidataId
+    const wikidata = adaptationWikidataId
       ? (() => {
           const query = `PREFIX wd: <http://www.wikidata.org/entity/>
 PREFIX wdt: <http://www.wikidata.org/prop/direct/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX schema: <http://schema.org/>
-SELECT DISTINCT ?adaptation ?label ?description WHERE {
-  ?adaptation wdt:P144 wd:${ebook.wikidataId}; rdfs:label ?label.
+SELECT DISTINCT ?adaptation ?label ?description ?image WHERE {
+  ?adaptation wdt:P144 wd:${adaptationWikidataId}; rdfs:label ?label.
   FILTER(LANG(?label) = "en")
   OPTIONAL { ?adaptation schema:description ?description. FILTER(LANG(?description) = "en") }
+  OPTIONAL { ?adaptation wdt:P18 ?image. }
 } LIMIT 30`;
           const url = new URL("https://query.wikidata.org/sparql");
           url.searchParams.set("query", query);
           url.searchParams.set("format", "json");
           return cachedJson<{
-            results?: { bindings?: Array<{ label?: { value?: string }; description?: { value?: string } }> };
+            results?: {
+              bindings?: Array<{
+                adaptation?: { value?: string };
+                label?: { value?: string };
+                description?: { value?: string };
+                image?: { value?: string };
+              }>;
+            };
           }>(url.toString()).catch(() => null);
         })()
       : Promise.resolve(null);
 
-    const [aniListData, wikidataData] = await Promise.all([aniList, wikidata]);
-    for (const edge of aniListData?.Media?.relations?.edges ?? []) {
+    const [mangaDexData, aniListData, wikidataData] = await Promise.all([
+      mangaDex,
+      aniList,
+      wikidata,
+    ]);
+    const knownAuthors = [
+      ...new Set([
+        ...ebook.authors,
+        ...(ebook.books ?? []).flatMap((book) => book.authors),
+        ...matchedMetadata.flatMap((metadata) => metadata.authors),
+      ]),
+    ].filter(Boolean);
+    let mangaDexHighConfidence = false;
+    if (englishTitle) {
+      const wanted = identityTitleKey(englishTitle);
+      const wantedTokens = new Set(wanted.split(" ").filter(Boolean));
+      const scored = (mangaDexData?.data ?? [])
+        .flatMap((item) => {
+          const titles = [
+            ...Object.values(item.attributes?.title ?? {}),
+            ...(item.attributes?.altTitles ?? []).flatMap((title) => Object.values(title)),
+          ];
+          const authors = (item.relationships ?? [])
+            .filter((relationship) => relationship.type === "author")
+            .map((relationship) => relationship.attributes?.name?.trim() ?? "")
+            .filter(Boolean);
+          const coverFile = (item.relationships ?? []).find(
+            (relationship) => relationship.type === "cover_art",
+          )?.attributes?.fileName;
+          const poster =
+            item.id && coverFile
+              ? `https://uploads.mangadex.org/covers/${item.id}/${coverFile}.256.jpg`
+              : undefined;
+          return titles.map((title) => {
+            const candidate = identityTitleKey(title);
+            const candidateTokens = new Set(candidate.split(" ").filter(Boolean));
+            const intersection = [...wantedTokens].filter((token) =>
+              candidateTokens.has(token),
+            ).length;
+            const union = new Set([...wantedTokens, ...candidateTokens]).size;
+            const confidence =
+              candidate === wanted
+                ? 1
+                : wantedTokens.size >= 2 &&
+                    candidateTokens.size >= 2 &&
+                    (candidate.includes(wanted) || wanted.includes(candidate))
+                  ? 0.9
+                  : union
+                    ? intersection / union
+                    : 0;
+            return {
+              id: item.id,
+              title,
+              altTitles: titles.filter((value) => value !== title),
+              confidence,
+              authors,
+              poster,
+            };
+          });
+        })
+        .sort((left, right) => right.confidence - left.confidence);
+      const verified = scored.find(
+        (candidate) =>
+          candidate.confidence >= 0.86 &&
+          knownAuthors.length > 0 &&
+          authorListsMatch(knownAuthors, candidate.authors),
+      );
+      if (verified) {
+        add("manga", {
+          id: verified.id
+            ? `mangadex:${verified.id}`
+            : `metadata:manga:${identityTitleKey(verified.title)}`,
+          title: verified.title,
+          altTitles: verified.altTitles,
+          source: "mangadex",
+          poster: verified.poster,
+          siteUrl: verified.id ? `https://mangadex.org/title/${verified.id}` : undefined,
+        });
+        mangaDexHighConfidence = true;
+      }
+    }
+    const relationEdges = aniListData?.Media?.relations?.edges ?? [];
+    const animeEdges = relationEdges.filter(
+      (edge) => edge.relationType === "ADAPTATION" && edge.node?.type === "ANIME",
+    );
+    const seasonMetadata = await Promise.all(
+      animeEdges.map(async (edge) => {
+        const node = edge.node!;
+        const relations = await animeRelations(node.id).catch(() => []);
+        const seasonFormats = new Set(["TV", "TV_SHORT", "ONA"]);
+        const seasons = [
+          ...(seasonFormats.has(node.format ?? "")
+            ? [
+                {
+                  id: node.id,
+                  name: node.title.english || node.title.romaji || node.title.native || "",
+                  year: node.seasonYear ?? undefined,
+                  format: node.format ?? undefined,
+                  poster: node.coverImage?.large ?? undefined,
+                },
+              ]
+            : []),
+          ...relations.filter((relation) => seasonFormats.has(relation.format ?? "")),
+        ];
+        const uniqueSeasons = [...new Map(seasons.map((season) => [season.id, season])).values()];
+        const root = [...uniqueSeasons].sort(
+          (left, right) =>
+            (left.year ?? Number.MAX_SAFE_INTEGER) - (right.year ?? Number.MAX_SAFE_INTEGER),
+        )[0];
+        const title = root?.name || node.title.english || node.title.romaji || node.title.native;
+        return title
+          ? {
+              id: `anilist:${root?.id ?? node.id}`,
+              title,
+              source: "anilist" as const,
+              anilistId: root?.id ?? node.id,
+              poster: root?.poster ?? node.coverImage?.large ?? undefined,
+              year: root?.year ?? node.seasonYear ?? undefined,
+              format: root?.format ?? node.format ?? undefined,
+              relation: edge.relationType ?? undefined,
+              seasons: uniqueSeasons.length > 1 ? uniqueSeasons.length : undefined,
+              siteUrl: `https://anilist.co/anime/${root?.id ?? node.id}`,
+            }
+          : null;
+      }),
+    );
+    seasonMetadata.forEach((item) => add("anime", item));
+
+    for (const edge of relationEdges) {
       if (edge.relationType !== "ADAPTATION" || !edge.node) continue;
       const title = edge.node.title.english || edge.node.title.romaji || edge.node.title.native;
-      if (edge.node.type === "ANIME") add("anime", title);
-      else if (edge.node.type === "MANGA" && edge.node.format !== "NOVEL") add("manga", title);
+      if (!mangaDexHighConfidence && edge.node.type === "MANGA" && edge.node.format !== "NOVEL")
+        add("manga", {
+          id: `anilist:${edge.node.id}`,
+          title: title ?? "",
+          altTitles: [
+            edge.node.title.english,
+            edge.node.title.romaji,
+            edge.node.title.native,
+          ].filter((value): value is string => !!value && value !== title),
+          source: "anilist",
+          anilistId: edge.node.id,
+          poster: edge.node.coverImage?.large ?? undefined,
+          year: edge.node.seasonYear ?? undefined,
+          format: edge.node.format ?? undefined,
+          relation: edge.relationType ?? undefined,
+          siteUrl: `https://anilist.co/manga/${edge.node.id}`,
+        });
     }
     for (const binding of wikidataData?.results?.bindings ?? []) {
       const description = binding.description?.value?.toLocaleLowerCase() ?? "";
       const title = binding.label?.value;
-      if (/\bmanga\b/.test(description)) add("manga", title);
-      else if (/\banime\b/.test(description)) add("anime", title);
+      if (!title) continue;
+      const wikidataId = binding.adaptation?.value?.match(/Q\d+$/)?.[0];
+      const adaptation = {
+        id: wikidataId
+          ? `wikidata:${wikidataId}`
+          : `metadata:adaptation:${identityTitleKey(title)}`,
+        title,
+        source: "wikidata" as const,
+        wikidataId,
+        description: binding.description?.value,
+        poster: binding.image?.value?.replace(/^http:/, "https:"),
+        siteUrl: wikidataId ? `https://www.wikidata.org/wiki/${wikidataId}` : undefined,
+      };
+      if (/\bmanga\b/.test(description)) add("manga", adaptation);
+      else if (/\banime\b/.test(description)) add("anime", adaptation);
       else if (/live.action|television|tv series|film|movie/.test(description))
-        add("liveAction", title);
+        add("liveAction", adaptation);
     }
     return result;
   })();

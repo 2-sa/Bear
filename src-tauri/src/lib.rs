@@ -16,6 +16,7 @@ mod discord_rp;
 mod dlna;
 mod download;
 mod dvr;
+mod ebook_tts;
 mod fonts;
 mod fullscreen;
 mod gamepad;
@@ -675,6 +676,9 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             crash_report::take_startup_crash_report,
+            ebook_tts::ebook_tts_synthesize,
+            ebook_tts::ebook_tts_cancel,
+            ebook_tts::ebook_tts_voices,
             harbor_flush_done,
             harbor_startup_ready,
             close_aux_windows,

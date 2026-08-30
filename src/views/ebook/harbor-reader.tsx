@@ -12,6 +12,7 @@ import {
   Highlighter,
   Languages,
   Link2,
+  Loader2,
   MessageSquareText,
   Moon,
   Pause,
@@ -23,6 +24,7 @@ import {
   Sun,
   Trash2,
   Type,
+  Upload,
   X,
 } from "lucide-react";
 import type { EBookChapter, EBookChapterContent } from "@/lib/ebook/providers";
@@ -43,6 +45,14 @@ import {
 } from "@/lib/ebook/reader-state";
 import { translateEBookChapter } from "@/lib/ebook/translation";
 import { BookFlip, type BookApi } from "@/views/manga/manga-reader/book-view";
+import { useCustomFonts } from "@/lib/custom-fonts";
+import {
+  cancelNarration,
+  clearNarrationCache,
+  fetchEdgeNarrationVoices,
+  synthesizeNarration,
+  type EdgeNarrationVoice,
+} from "@/lib/ebook/narration";
 
 type Props = {
   profile: string;
@@ -69,6 +79,10 @@ const fontFamily = {
   arabic: '"Traditional Arabic", "Noto Naskh Arabic", serif',
   classic: '"Book Antiqua", Palatino, serif',
 };
+const readerFontFamily = (prefs: EBookReaderPrefs) =>
+  prefs.customFontId
+    ? `"harbor-font-${prefs.customFontId}", Georgia, serif`
+    : fontFamily[prefs.font];
 
 const paper = {
   dark: { desk: "#090a0c", page: "#17181b", ink: "#e9e3d8", muted: "#8f8b84" },
@@ -96,6 +110,217 @@ const trackerColors = [
   "#8fc9c2",
   "#b4cfa2",
 ];
+const narrationVoices = [
+  { id: "en-US-AvaNeural", label: "Ava", tone: "American · Female", locale: "en-US" },
+  { id: "en-US-AndrewNeural", label: "Andrew", tone: "American · Male", locale: "en-US" },
+  { id: "en-US-AriaNeural", label: "Aria", tone: "American · Female", locale: "en-US" },
+  { id: "en-US-GuyNeural", label: "Guy", tone: "American · Male", locale: "en-US" },
+  { id: "en-US-JennyNeural", label: "Jenny", tone: "American · Female", locale: "en-US" },
+  { id: "en-GB-SoniaNeural", label: "Sonia", tone: "British · Female", locale: "en-GB" },
+  { id: "en-GB-RyanNeural", label: "Ryan", tone: "British · Male", locale: "en-GB" },
+  { id: "en-GB-LibbyNeural", label: "Libby", tone: "British · Female", locale: "en-GB" },
+  { id: "en-AU-NatashaNeural", label: "Natasha", tone: "Australian · Female", locale: "en-AU" },
+  { id: "en-AU-WilliamNeural", label: "William", tone: "Australian · Male", locale: "en-AU" },
+  { id: "en-CA-ClaraNeural", label: "Clara", tone: "Canadian · Female", locale: "en-CA" },
+  { id: "en-CA-LiamNeural", label: "Liam", tone: "Canadian · Male", locale: "en-CA" },
+  { id: "ar-SA-ZariyahNeural", label: "زارية", tone: "Saudi · Female", locale: "ar-SA" },
+  { id: "ar-SA-HamedNeural", label: "حامد", tone: "Saudi · Male", locale: "ar-SA" },
+  { id: "ar-EG-SalmaNeural", label: "سلمى", tone: "Egyptian · Female", locale: "ar-EG" },
+  { id: "ar-EG-ShakirNeural", label: "شاكر", tone: "Egyptian · Male", locale: "ar-EG" },
+  { id: "ar-AE-FatimaNeural", label: "فاطمة", tone: "Emirati · Female", locale: "ar-AE" },
+  { id: "ar-AE-HamdanNeural", label: "حمدان", tone: "Emirati · Male", locale: "ar-AE" },
+  { id: "ar-KW-NouraNeural", label: "نورة", tone: "Kuwaiti · Female", locale: "ar-KW" },
+  { id: "ar-KW-FahedNeural", label: "فهد", tone: "Kuwaiti · Male", locale: "ar-KW" },
+] as const;
+type ReaderNarrationVoice = EdgeNarrationVoice & { label: string; tone: string };
+const fallbackNarrationVoices: ReaderNarrationVoice[] = narrationVoices.map((voice) => ({
+  ...voice,
+  name: voice.label,
+  gender: voice.tone.includes("Female") ? "Female" : "Male",
+}));
+
+function VoicePicker({
+  voices,
+  value,
+  disabled,
+  colors,
+  onChange,
+}: {
+  voices: ReaderNarrationVoice[];
+  value: string;
+  disabled: boolean;
+  colors: (typeof paper)[keyof typeof paper];
+  onChange: (voice: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const root = useRef<HTMLDivElement>(null);
+  const selected = voices.find((voice) => voice.id === value) ?? fallbackNarrationVoices[0];
+  const selectedLanguage = selected.locale.split("-")[0].toLocaleLowerCase();
+  const [activeLanguage, setActiveLanguage] = useState(selectedLanguage);
+  const languageGroups = useMemo(() => {
+    const groups = new Map<string, ReaderNarrationVoice[]>();
+    for (const voice of voices) {
+      const code = voice.locale.split("-")[0].toLocaleLowerCase();
+      const group = groups.get(code) ?? [];
+      group.push(voice);
+      groups.set(code, group);
+    }
+    const displayNames = new Intl.DisplayNames([navigator.language || "en"], { type: "language" });
+    return [...groups.entries()]
+      .map(([code, items]) => ({
+        code,
+        name: displayNames.of(code) ?? code.toLocaleUpperCase(),
+        voices: items,
+      }))
+      .sort((left, right) => {
+        if (left.code === selectedLanguage) return -1;
+        if (right.code === selectedLanguage) return 1;
+        return left.name.localeCompare(right.name);
+      });
+  }, [selectedLanguage, voices]);
+  const filtered = useMemo(() => {
+    const languageVoices =
+      languageGroups.find((group) => group.code === activeLanguage)?.voices ?? voices;
+    const needle = query.trim().toLocaleLowerCase();
+    if (!needle) return languageVoices;
+    return languageVoices.filter((voice) =>
+      `${voice.label} ${voice.name} ${voice.locale} ${voice.gender} ${voice.tone}`
+        .toLocaleLowerCase()
+        .includes(needle),
+    );
+  }, [activeLanguage, languageGroups, query, voices]);
+
+  useEffect(() => {
+    if (!open) return;
+    const close = (event: PointerEvent) => {
+      if (!root.current?.contains(event.target as Node)) setOpen(false);
+    };
+    window.addEventListener("pointerdown", close);
+    return () => window.removeEventListener("pointerdown", close);
+  }, [open]);
+
+  useEffect(() => {
+    if (open) setActiveLanguage(selectedLanguage);
+  }, [open, selectedLanguage]);
+
+  return (
+    <div ref={root} className="relative">
+      <button
+        type="button"
+        disabled={disabled}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => setOpen((current) => !current)}
+        className="flex h-10 min-w-[168px] max-w-[220px] items-center gap-2 rounded-xl border px-2.5 text-start transition hover:border-accent/60 hover:bg-white/[.04] disabled:cursor-wait disabled:opacity-50"
+        style={{ borderColor: `${colors.muted}45` }}
+        title="Choose an Edge TTS voice before generating audio"
+      >
+        <Headphones size={15} className="shrink-0 text-accent" />
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-xs font-semibold" style={{ color: colors.ink }}>
+            {selected.label}
+          </span>
+          <span className="block truncate text-[9px] uppercase tracking-[.12em]" style={{ color: colors.muted }}>
+            {selected.locale} · {selected.gender}
+          </span>
+        </span>
+        <ChevronDown size={13} className={`shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <div
+          className="absolute bottom-[calc(100%+10px)] start-0 z-[140] w-[520px] overflow-hidden rounded-2xl border bg-[#111214]/[.98] p-2 shadow-2xl backdrop-blur-xl"
+          style={{ borderColor: `${colors.muted}38` }}
+        >
+          <div className="mb-2 flex items-center gap-2 rounded-xl border bg-black/20 px-3" style={{ borderColor: `${colors.muted}30` }}>
+            <Search size={14} style={{ color: colors.muted }} />
+            <input
+              autoFocus
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={`Search ${languageGroups.find((group) => group.code === activeLanguage)?.name ?? "voices"}`}
+              className="h-10 min-w-0 flex-1 bg-transparent text-xs text-white outline-none placeholder:text-white/35"
+            />
+            <span className="text-[10px] tabular-nums text-white/35">{filtered.length}</span>
+          </div>
+          <div className="grid min-h-[280px] grid-cols-[158px_minmax(0,1fr)] gap-2">
+            <nav
+              aria-label="Voice languages"
+              className="max-h-[310px] space-y-1 overflow-y-auto overscroll-contain border-e border-white/[.07] pe-2"
+            >
+              <div className="mb-1 flex items-center gap-2 px-2 py-1 text-[9px] font-bold uppercase tracking-[.17em] text-white/30">
+                <Languages size={12} /> Language
+              </div>
+              {languageGroups.map((group) => {
+                const active = group.code === activeLanguage;
+                return (
+                  <button
+                    key={group.code}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => {
+                      setActiveLanguage(group.code);
+                      setQuery("");
+                    }}
+                    className={`flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-start transition ${active ? "bg-accent/15 text-accent" : "text-white/60 hover:bg-white/[.05] hover:text-white"}`}
+                  >
+                    <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-white/[.05] text-[9px] font-bold uppercase">
+                      {group.code}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate text-[11px] font-semibold">{group.name}</span>
+                    <span className="text-[9px] tabular-nums opacity-45">{group.voices.length}</span>
+                  </button>
+                );
+              })}
+            </nav>
+            <div
+              role="listbox"
+              aria-label={`${languageGroups.find((group) => group.code === activeLanguage)?.name ?? "Edge TTS"} voices`}
+              className="max-h-[310px] space-y-1 overflow-y-auto overscroll-contain pe-1"
+            >
+              {filtered.map((voice) => {
+                const active = voice.id === value;
+                return (
+                <button
+                  key={voice.id}
+                  type="button"
+                  role="option"
+                  aria-selected={active}
+                  onClick={() => {
+                    onChange(voice.id);
+                    setOpen(false);
+                    setQuery("");
+                  }}
+                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-start transition ${active ? "bg-accent/15 text-accent" : "text-white/85 hover:bg-white/[.06]"}`}
+                >
+                  <span className="grid h-8 min-w-10 shrink-0 place-items-center rounded-lg bg-white/[.05] px-1.5 text-[9px] font-bold uppercase">
+                    {voice.locale}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-xs font-semibold">{voice.label}</span>
+                    <span className="mt-0.5 block truncate text-[10px] text-white/40">
+                      {voice.locale} · {voice.gender}
+                    </span>
+                  </span>
+                  {active && <Check size={15} className="shrink-0" />}
+                </button>
+                );
+              })}
+              {!filtered.length && (
+                <p className="px-3 py-8 text-center text-xs text-white/40">No matching voices</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+const formatAudioTime = (seconds: number) => {
+  if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
+  const whole = Math.floor(seconds);
+  return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, "0")}`;
+};
 const trackerGutter = 8;
 const trackerRect = (rect: DOMRect) => ({
   top: rect.top - 2,
@@ -185,10 +410,33 @@ export function HarborReader({
   onClose,
 }: Props) {
   const [prefs, setPrefs] = useState<EBookReaderPrefs>(loadEBookReaderPrefs);
+  const [availableNarrationVoices, setAvailableNarrationVoices] =
+    useState<ReaderNarrationVoice[]>(fallbackNarrationVoices);
   const [panel, setPanel] = useState<"settings" | "search" | "bookmarks" | "annotations" | null>(
     null,
   );
   const [chaptersOpen, setChaptersOpen] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    void fetchEdgeNarrationVoices()
+      .then((voices) => {
+        if (!active || !voices.length) return;
+        setAvailableNarrationVoices(
+          voices
+            .map((voice) => ({
+              ...voice,
+              label: voice.name.replace(/^Microsoft\s+/i, "").replace(/\s+Online.*$/i, ""),
+              tone: `${voice.locale} · ${voice.gender}`,
+            }))
+            .sort((left, right) => left.locale.localeCompare(right.locale) || left.label.localeCompare(right.label)),
+        );
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, []);
   const [volumeMenuOpen, setVolumeMenuOpen] = useState(false);
   const currentVolume =
     volumes.find((volume) => volume.chapters.some((item) => item.id === chapter.id)) ?? volumes[0];
@@ -203,6 +451,17 @@ export function HarborReader({
   const [showFutureResults, setShowFutureResults] = useState(false);
   const [current, setCurrent] = useState(0);
   const [speaking, setSpeaking] = useState(false);
+  const [narrationPaused, setNarrationPaused] = useState(false);
+  const [narrationLoading, setNarrationLoading] = useState(false);
+  const [narrationNotice, setNarrationNotice] = useState("");
+  const [generationPercent, setGenerationPercent] = useState(0);
+  const [audioPosition, setAudioPosition] = useState(0);
+  const [audioDuration, setAudioDuration] = useState(0);
+  const audio = useRef<HTMLAudioElement | null>(null);
+  const audioUrl = useRef("");
+  const narrationRun = useRef(0);
+  const narrationRequestId = useRef("");
+  const narrationLine = useRef(-1);
   const [readerText, setReaderText] = useState(content.text ?? "");
   const originalTitle = chapter.title || bookTitle;
   const originalText = content.originalText ?? content.text ?? "";
@@ -273,7 +532,7 @@ export function HarborReader({
       page: colors.page,
       ink: colors.ink,
       muted: colors.muted,
-      fontFamily: fontFamily[prefs.font],
+      fontFamily: readerFontFamily(prefs),
       fontSize: prefs.fontSize,
       lineHeight: prefs.lineHeight,
       cover: chapterIndex === 0 ? internalCover || bookCover : undefined,
@@ -303,6 +562,7 @@ export function HarborReader({
     effectiveDirection,
     internalCover,
     prefs.font,
+    prefs.customFontId,
     prefs.fontSize,
     prefs.lineHeight,
     prefs.mode,
@@ -632,12 +892,41 @@ export function HarborReader({
       window.clearTimeout(annotationHideTimer.current);
       cancelAnimationFrame(traceFrame.current);
       window.speechSynthesis?.cancel();
+      if (narrationRequestId.current) void cancelNarration(narrationRequestId.current);
+      audio.current?.pause();
+      if (audioUrl.current) URL.revokeObjectURL(audioUrl.current);
     };
   }, []);
 
   const stopSpeech = () => {
+    narrationRun.current += 1;
+    if (narrationRequestId.current) void cancelNarration(narrationRequestId.current);
+    narrationRequestId.current = "";
+    audio.current?.pause();
+    audio.current = null;
+    if (audioUrl.current) URL.revokeObjectURL(audioUrl.current);
+    audioUrl.current = "";
     window.speechSynthesis?.cancel();
     setSpeaking(false);
+    setNarrationPaused(false);
+    setNarrationLoading(false);
+    setGenerationPercent(0);
+    setAudioPosition(0);
+    setAudioDuration(0);
+    narrationLine.current = -1;
+    if (!prefs.mouseLineTrack) setTrace(null);
+  };
+
+  const toggleNarrationPause = () => {
+    if (narrationPaused) {
+      if (audio.current) void audio.current.play();
+      else window.speechSynthesis?.resume();
+      setNarrationPaused(false);
+      return;
+    }
+    audio.current?.pause();
+    window.speechSynthesis?.pause();
+    setNarrationPaused(true);
   };
 
   const translateChapter = async () => {
@@ -679,11 +968,12 @@ export function HarborReader({
     onSelectChapter(target);
   };
 
-  const speakFrom = (index = current) => {
+  const speakWithDevice = (index = current) => {
     if (!("speechSynthesis" in window) || !paragraphs.length) return;
     window.speechSynthesis.cancel();
     speechIndex.current = index;
     setSpeaking(true);
+    setNarrationPaused(false);
     const next = () => {
       const text = paragraphs[speechIndex.current];
       if (!text) return setSpeaking(false);
@@ -699,6 +989,113 @@ export function HarborReader({
       window.speechSynthesis.speak(utterance);
     };
     next();
+  };
+
+  const speakFrom = async (index = current) => {
+    stopSpeech();
+    const run = ++narrationRun.current;
+    const requestId = globalThis.crypto?.randomUUID?.() ?? `reader-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    narrationRequestId.current = requestId;
+    const chapterText = paragraphs.slice(index).join("\n\n").trim();
+    if (!chapterText) return;
+    const spokenParagraphs = paragraphs.slice(index);
+    const spokenWeights = spokenParagraphs.map((text) => Math.max(1, text.trim().length));
+    const totalWeight = spokenWeights.reduce((total, weight) => total + weight, 0);
+    const spokenWordEnds: number[] = [];
+    spokenParagraphs.reduce((total, text) => {
+      const count = text.match(/[\p{L}\p{N}'’]+/gu)?.length ?? 1;
+      const next = total + count;
+      spokenWordEnds.push(next);
+      return next;
+    }, 0);
+    const paragraphForTime = (
+      position: number,
+      duration: number,
+      boundaries: Array<{ offsetMs: number }>,
+    ) => {
+      if (boundaries.length) {
+        const targetMs = position * 1_000;
+        let low = 0;
+        let high = boundaries.length;
+        while (low < high) {
+          const middle = (low + high) >>> 1;
+          if (boundaries[middle].offsetMs <= targetMs) low = middle + 1;
+          else high = middle;
+        }
+        const spokenWord = Math.max(0, low - 1);
+        const paragraphOffset = spokenWordEnds.findIndex((end) => spokenWord < end);
+        if (paragraphOffset >= 0) return index + paragraphOffset;
+      }
+      if (!duration || !totalWeight) return index;
+      const target = Math.min(1, Math.max(0, position / duration)) * totalWeight;
+      let accumulated = 0;
+      for (let offset = 0; offset < spokenWeights.length; offset += 1) {
+        accumulated += spokenWeights[offset];
+        if (target <= accumulated) return index + offset;
+      }
+      return paragraphs.length - 1;
+    };
+    setSpeaking(true);
+    setNarrationPaused(false);
+    setNarrationLoading(true);
+    setGenerationPercent(1);
+    setNarrationNotice("");
+    try {
+      const selectedVoice =
+        availableNarrationVoices.find((voice) => voice.id === prefs.narrationVoice) ??
+        fallbackNarrationVoices.find((voice) => voice.id === prefs.narrationVoice) ??
+        fallbackNarrationVoices[0];
+      const { blob, boundaries } = await synthesizeNarration(
+        requestId,
+        chapterText,
+        selectedVoice.id,
+        selectedVoice.locale,
+        (progress) => setGenerationPercent(progress.percent),
+      );
+      if (run !== narrationRun.current) return;
+      if (narrationRequestId.current === requestId) narrationRequestId.current = "";
+      setGenerationPercent(100);
+      const url = URL.createObjectURL(blob);
+      audioUrl.current = url;
+      const player = new Audio(url);
+      audio.current = player;
+      setAudioPosition(0);
+      setAudioDuration(0);
+      player.ondurationchange = () =>
+        setAudioDuration(Number.isFinite(player.duration) ? player.duration : 0);
+      player.ontimeupdate = () => {
+        setAudioPosition(player.currentTime);
+        const line = paragraphForTime(player.currentTime, player.duration, boundaries);
+        if (line === narrationLine.current) return;
+        narrationLine.current = line;
+        goTo(line);
+        window.requestAnimationFrame(() => updateTrace());
+      };
+      goTo(index);
+      setNarrationLoading(false);
+      await new Promise<void>((resolve, reject) => {
+        player.onended = () => resolve();
+        player.onerror = () => reject(new Error("The generated audio could not be played"));
+        void player.play().catch(reject);
+      });
+      URL.revokeObjectURL(url);
+      audioUrl.current = "";
+      if (run === narrationRun.current) {
+        setSpeaking(false);
+        setGenerationPercent(0);
+        narrationLine.current = -1;
+        if (!prefs.mouseLineTrack) setTrace(null);
+      }
+    } catch (error) {
+      if (run !== narrationRun.current) return;
+      setSpeaking(false);
+      setNarrationLoading(false);
+      setGenerationPercent(0);
+      setNarrationNotice(
+        `${error instanceof Error ? error.message : "Edge TTS failed"}. Using the device voice.`,
+      );
+      speakWithDevice(current);
+    }
   };
 
   const addBookmark = (index = current) => {
@@ -914,7 +1311,14 @@ export function HarborReader({
         style={{ background: `${colors.desk}df`, borderColor: `${colors.muted}35` }}
       >
         <div className="flex items-center gap-1">
-          <button className="reader-icon" onClick={onClose} aria-label="Close reader">
+          <button
+            className="reader-icon"
+            onClick={() => {
+              stopSpeech();
+              onClose();
+            }}
+            aria-label="Close reader"
+          >
             <X size={20} />
           </button>
           <button
@@ -1018,7 +1422,7 @@ export function HarborReader({
             background: colors.page,
             color: colors.ink,
             WebkitUserSelect: "text",
-            fontFamily: fontFamily[prefs.font],
+            fontFamily: readerFontFamily(prefs),
             fontSize: `${prefs.fontSize}px`,
             lineHeight: prefs.lineHeight,
           }}
@@ -1206,17 +1610,76 @@ export function HarborReader({
             </span>
           </div>
         )}
+        <VoicePicker
+          voices={availableNarrationVoices}
+          value={prefs.narrationVoice}
+          disabled={narrationLoading}
+          colors={colors}
+          onChange={(voice) => {
+            stopSpeech();
+            patchPrefs({ narrationVoice: voice });
+          }}
+        />
         <button
           className="reader-icon reader-icon-accent"
-          onClick={speaking ? stopSpeech : () => speakFrom()}
-          aria-label={speaking ? "Stop reading" : "Read aloud"}
+          onClick={speaking ? toggleNarrationPause : () => void speakFrom()}
+          aria-label={
+            speaking
+              ? narrationPaused
+                ? "Resume narration"
+                : "Pause narration"
+              : "Read chapter with Edge TTS"
+          }
+          title={narrationNotice || "Read the complete chapter with Edge TTS"}
         >
-          {speaking ? (
+          {narrationLoading ? (
+            <Loader2 size={18} className="animate-spin" />
+          ) : speaking && !narrationPaused ? (
             <Pause size={18} fill="currentColor" />
           ) : (
             <Play size={18} fill="currentColor" />
           )}
         </button>
+        {narrationLoading && (
+          <div
+            className="flex min-w-[62px] items-center gap-1 pe-2 text-[11px] font-semibold tabular-nums"
+            style={{ color: colors.muted }}
+            title="Complete-chapter generation progress"
+          >
+            <span>≈{generationPercent}%</span>
+          </div>
+        )}
+        {(speaking || audioDuration > 0) && (
+          <div className="flex w-[clamp(170px,19vw,280px)] items-center gap-2 px-2">
+            <span className="w-9 text-end text-[10px] tabular-nums" style={{ color: colors.muted }}>
+              {formatAudioTime(audioPosition)}
+            </span>
+            <input
+              type="range"
+              min={0}
+              max={Math.max(audioDuration, 0.01)}
+              step={0.05}
+              value={Math.min(audioPosition, Math.max(audioDuration, 0.01))}
+              disabled={!audio.current || !audioDuration}
+              onChange={(event) => {
+                const next = Number(event.target.value);
+                if (!audio.current || !Number.isFinite(next)) return;
+                audio.current.currentTime = next;
+                setAudioPosition(next);
+              }}
+              aria-label="Audio position"
+              className="ebook-audio-seeker h-5 min-w-0 flex-1 cursor-pointer disabled:cursor-wait disabled:opacity-35"
+              style={
+                {
+                  "--audio-progress": `${audioDuration ? (audioPosition / audioDuration) * 100 : 0}%`,
+                } as React.CSSProperties
+              }
+            />
+            <span className="w-9 text-[10px] tabular-nums" style={{ color: colors.muted }}>
+              -{formatAudioTime(Math.max(0, audioDuration - audioPosition))}
+            </span>
+          </div>
+        )}
         <div className="px-3 text-xs tabular-nums" style={{ color: colors.muted }}>
           {Math.round(
             prefs.mode === "book"
@@ -1399,7 +1862,12 @@ export function HarborReader({
           </div>
           <div className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {panel === "settings" && (
-              <Settings prefs={prefs} patch={patchPrefs} colors={colors} />
+              <Settings
+                prefs={prefs}
+                patch={patchPrefs}
+                colors={colors}
+                narrationVoices={availableNarrationVoices}
+              />
             )}
             {panel === "search" && (
               <div>
@@ -1602,7 +2070,7 @@ export function HarborReader({
           onClose={() => setEditing(null)}
         />
       )}
-      <style>{`.reader-icon{display:grid;width:42px;height:42px;place-items:center;border-radius:999px;color:inherit;transition:.16s ease}.reader-icon:hover{background:rgba(127,127,127,.16);transform:translateY(-1px)}.reader-icon:active{transform:scale(.92)}.reader-icon:disabled{pointer-events:none;opacity:.28}.reader-icon-accent{background:var(--color-accent);color:#111}.reader-language-toggle{display:flex;width:auto;gap:6px;padding:0 12px;font-size:11px;font-weight:700}.reader-current{border-radius:4px}.reader-annotation{color:inherit;border-radius:3px;padding:.04em .02em;cursor:pointer}.reader-annotation:hover{outline:1px solid color-mix(in srgb,var(--color-accent) 60%,transparent)}`}</style>
+      <style>{`.reader-icon{display:grid;width:42px;height:42px;place-items:center;border-radius:999px;color:inherit;transition:.16s ease}.reader-icon:hover{background:rgba(127,127,127,.16);transform:translateY(-1px)}.reader-icon:active{transform:scale(.92)}.reader-icon:disabled{pointer-events:none;opacity:.28}.reader-icon-accent{background:var(--color-accent);color:#111}.reader-language-toggle{display:flex;width:auto;gap:6px;padding:0 12px;font-size:11px;font-weight:700}.reader-current{border-radius:4px}.reader-annotation{color:inherit;border-radius:3px;padding:.04em .02em;cursor:pointer}.reader-annotation:hover{outline:1px solid color-mix(in srgb,var(--color-accent) 60%,transparent)}.ebook-audio-seeker{appearance:none;background:transparent}.ebook-audio-seeker::-webkit-slider-runnable-track{height:4px;border-radius:99px;background:linear-gradient(90deg,var(--color-accent) var(--audio-progress),rgba(127,127,127,.28) var(--audio-progress))}.ebook-audio-seeker::-webkit-slider-thumb{appearance:none;width:12px;height:12px;margin-top:-4px;border:2px solid var(--color-accent);border-radius:50%;background:#111;box-shadow:0 0 0 3px color-mix(in srgb,var(--color-accent) 18%,transparent);transition:transform .15s}.ebook-audio-seeker:hover::-webkit-slider-thumb{transform:scale(1.2)}`}</style>
     </div>
   );
 }
@@ -1854,12 +2322,24 @@ function Settings({
   prefs,
   patch,
   colors,
+  narrationVoices,
 }: {
   prefs: EBookReaderPrefs;
   patch: (value: Partial<EBookReaderPrefs>) => void;
   colors: (typeof paper)[keyof typeof paper];
+  narrationVoices: ReaderNarrationVoice[];
 }) {
   const [adjustmentsOpen, setAdjustmentsOpen] = useState(true);
+  const [audioCacheStatus, setAudioCacheStatus] = useState("");
+  const { fonts, busy: fontBusy, error: fontError, addFont, removeFont } = useCustomFonts();
+  const fontInput = useRef<HTMLInputElement>(null);
+  const importFont = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    const id = await addFont(file);
+    if (id) patch({ customFontId: id });
+  };
   return (
     <div className="space-y-6">
       <Setting label="Reading mode">
@@ -1882,6 +2362,43 @@ function Settings({
           ))}
         </div>
       </Setting>
+      <Setting label="Narrator voice">
+        <div className="grid grid-cols-2 gap-2">
+          {narrationVoices.map((voice) => {
+            const active = prefs.narrationVoice === voice.id;
+            return (
+              <button
+                key={voice.id}
+                type="button"
+                aria-pressed={active}
+                onClick={() => patch({ narrationVoice: voice.id })}
+                className={`rounded-xl border px-3 py-2.5 text-start transition ${active ? "border-accent bg-accent/10 text-accent" : "hover:bg-white/5"}`}
+                style={{ borderColor: active ? undefined : `${colors.muted}35` }}
+              >
+                <span className="block text-sm font-semibold">{voice.label}</span>
+                <span className="mt-0.5 block text-[10px] uppercase tracking-[.14em] opacity-55">
+                  {voice.tone}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+        <p className="mt-2 text-[11px] leading-relaxed" style={{ color: colors.muted }}>
+          Microsoft Edge neural voices. Generated chapters stay saved for 30 days.
+        </p>
+        <button
+          type="button"
+          onClick={async () => {
+            await clearNarrationCache();
+            setAudioCacheStatus("Saved audio deleted");
+          }}
+          className="mt-3 flex h-10 w-full items-center justify-center gap-2 rounded-xl border text-xs font-semibold transition hover:border-red-400/60 hover:text-red-400"
+          style={{ borderColor: `${colors.muted}35` }}
+        >
+          <Trash2 size={14} /> Delete saved audio
+        </button>
+        {audioCacheStatus && <p className="mt-2 text-center text-[11px] text-emerald-400">{audioCacheStatus}</p>}
+      </Setting>
       <Setting label="Paper">
         <div className="grid grid-cols-3 gap-2">
           {(["dark", "dim", "light"] as const).map((background) => (
@@ -1903,10 +2420,11 @@ function Settings({
           {(["literary", "arabic", "classic"] as const).map((font) => (
             <button
               key={font}
-              onClick={() => patch({ font })}
-              className={`rounded-xl border px-2 py-3 capitalize ${prefs.font === font ? "border-accent text-accent" : ""}`}
+              onClick={() => patch({ font, customFontId: undefined })}
+              className={`rounded-xl border px-2 py-3 capitalize ${!prefs.customFontId && prefs.font === font ? "border-accent text-accent" : ""}`}
               style={{
-                borderColor: prefs.font === font ? undefined : `${colors.muted}35`,
+                borderColor:
+                  !prefs.customFontId && prefs.font === font ? undefined : `${colors.muted}35`,
                 fontFamily: fontFamily[font],
               }}
             >
@@ -1914,6 +2432,59 @@ function Settings({
             </button>
           ))}
         </div>
+        {fonts.length > 0 && (
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            {fonts.map((font) => {
+              const active = prefs.customFontId === font.id;
+              return (
+                <div
+                  key={font.id}
+                  className={`group relative rounded-xl border transition ${active ? "border-accent bg-accent/10 text-accent" : "hover:bg-white/5"}`}
+                  style={{ borderColor: active ? undefined : `${colors.muted}35` }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => patch({ customFontId: font.id })}
+                    className="w-full px-3 py-3 pe-9 text-start"
+                    style={{ fontFamily: `"harbor-font-${font.id}", serif` }}
+                  >
+                    <span className="block truncate text-base">Aa أب</span>
+                    <span className="mt-1 block truncate text-[11px] opacity-60">{font.name}</span>
+                  </button>
+                  <button
+                    type="button"
+                    aria-label={`Remove ${font.name}`}
+                    onClick={() => {
+                      removeFont(font.id);
+                      if (active) patch({ customFontId: undefined });
+                    }}
+                    className="absolute end-2 top-2 grid h-7 w-7 place-items-center rounded-lg opacity-55 transition hover:bg-red-500/15 hover:text-red-400 hover:opacity-100"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+        <button
+          type="button"
+          disabled={fontBusy}
+          onClick={() => fontInput.current?.click()}
+          className="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-dashed text-sm font-medium transition hover:border-accent/60 hover:text-accent disabled:opacity-60"
+          style={{ borderColor: `${colors.muted}45` }}
+        >
+          {fontBusy ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
+          {fontBusy ? "Importing font…" : "Import font"}
+        </button>
+        <input
+          ref={fontInput}
+          type="file"
+          accept=".ttf,.otf,.woff,.woff2,font/ttf,font/otf,font/woff,font/woff2"
+          onChange={importFont}
+          className="sr-only"
+        />
+        {fontError && <p className="mt-2 text-xs text-red-400">{fontError}</p>}
       </Setting>
       <section>
         <button

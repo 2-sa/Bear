@@ -13,6 +13,8 @@ export type EBookReaderPrefs = {
   mouseLineTrack: boolean;
   lineTrackColor: string;
   font: "literary" | "arabic" | "classic";
+  customFontId?: string;
+  narrationVoice: string;
 };
 
 export type EBookBookmark = {
@@ -57,6 +59,7 @@ const DEFAULTS: EBookReaderPrefs = {
   mouseLineTrack: false,
   lineTrackColor: "#ff9f4d",
   font: "literary",
+  narrationVoice: "en-US-AvaNeural",
 };
 
 const safe = (value: string) => encodeURIComponent(value);
@@ -69,7 +72,11 @@ const progressKey = (profile: string, bookId: string, chapterId: string) =>
 
 export function loadEBookReaderPrefs(): EBookReaderPrefs {
   try {
-    return { ...DEFAULTS, ...JSON.parse(localStorage.getItem(PREFS) || "{}") };
+    const value = { ...DEFAULTS, ...JSON.parse(localStorage.getItem(PREFS) || "{}") };
+    if (["alloy", "nova", "shimmer", "onyx", "echo", "fable"].includes(value.narrationVoice)) {
+      value.narrationVoice = DEFAULTS.narrationVoice;
+    }
+    return value;
   } catch {
     return DEFAULTS;
   }
@@ -124,7 +131,8 @@ export function loadEBookAnnotations(profile: string, bookId: string): EBookAnno
 export function saveEBookAnnotation(
   profile: string,
   bookId: string,
-  annotation: Omit<EBookAnnotation, "id" | "createdAt"> & Partial<Pick<EBookAnnotation, "id" | "createdAt">>,
+  annotation: Omit<EBookAnnotation, "id" | "createdAt"> &
+    Partial<Pick<EBookAnnotation, "id" | "createdAt">>,
 ): EBookAnnotation[] {
   const items = loadEBookAnnotations(profile, bookId);
   const next = {

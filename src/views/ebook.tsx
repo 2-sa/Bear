@@ -15,6 +15,7 @@ import {
   RefreshCw,
   Search,
   Settings,
+  X,
 } from "lucide-react";
 import {
   createContext,
@@ -44,6 +45,7 @@ import {
   mergeEBookMetadata,
   recommendedEBooks,
   type EBook,
+  type EBookAdaptation,
   type EBookAdaptations,
   type EBookCategoryGroup,
 } from "@/lib/ebook/api";
@@ -102,7 +104,8 @@ function ebookTitleForLanguage(ebook: EBook, language: EBookTitleLanguage): stri
     language === "ar"
       ? candidates.find((title) => /[\u0600-\u06ff]/.test(title))
       : candidates.find(
-          (title) => /[a-z]/i.test(title) && !/[\u0600-\u06ff\u3040-\u30ff\u3400-\u9fff]/.test(title),
+          (title) =>
+            /[a-z]/i.test(title) && !/[\u0600-\u06ff\u3040-\u30ff\u3400-\u9fff]/.test(title),
         );
   return match ?? ebook.title;
 }
@@ -179,10 +182,12 @@ export function EBookView() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [popular, setPopular] = useState<EBook[] | null>(null);
   const [metadataVersion, setMetadataVersion] = useState(0);
-  const [featuredCollections, setFeaturedCollections] = useState<Array<{
-    name: string;
-    books: EBook[];
-  }>>([]);
+  const [featuredCollections, setFeaturedCollections] = useState<
+    Array<{
+      name: string;
+      books: EBook[];
+    }>
+  >([]);
   const [collectionSources, setCollectionSources] = useState<EBook[]>([]);
   const searchSeq = useRef(0);
   const searchTimer = useRef<number | undefined>(undefined);
@@ -581,7 +586,8 @@ export function EBookView() {
   for (const ebook of sourceItems ?? []) {
     for (const genre of ebook.genres) {
       const name = genre.trim();
-      if (!name || (category && name.toLocaleLowerCase() !== category.toLocaleLowerCase())) continue;
+      if (!name || (category && name.toLocaleLowerCase() !== category.toLocaleLowerCase()))
+        continue;
       const books = genreGroups.get(name) ?? [];
       if (!books.some((book) => book.id === ebook.id)) books.push(ebook);
       genreGroups.set(name, books);
@@ -594,8 +600,6 @@ export function EBookView() {
     (ebook) => ebook.cover && !/(?:^|\/)default(?:\.[a-z0-9]+)?(?:[?#]|$)/i.test(ebook.cover),
   );
   const heroBooks = featuredBooks.slice(0, 5);
-  const heroIds = new Set(heroBooks.map((ebook) => ebook.id));
-  const shelfBooks = featuredBooks.filter((ebook) => !heroIds.has(ebook.id)).slice(0, 60);
   const refreshing = query.trim().length >= 2 ? results === null : sourceItems === null;
   const rails: Rail[] =
     query.trim().length >= 2
@@ -628,199 +632,207 @@ export function EBookView() {
 
   return (
     <EBookTitleLanguageContext.Provider value={titleLanguage}>
-    <main className="flex-1 overflow-y-auto overflow-x-hidden pb-20">
-      <EBookLibraryHero
-        ebooks={heroBooks}
-        shelfBooks={shelfBooks}
-        onOpen={(ebook) => openEBook(String(ebook.id))}
-      />
+      <main className="flex-1 overflow-y-auto overflow-x-hidden pb-20">
+        <EBookLibraryHero ebooks={heroBooks} onOpen={(ebook) => openEBook(String(ebook.id))} />
 
-      <div className="flex w-full flex-col gap-9 px-12 pt-8">
-        {rails.map((rail) => (
-          <EBookRail
-            key={`${rail.title}:${providerId}`}
-            {...rail}
-            onOpen={(ebook) => openEBook(String(ebook.id))}
-          />
-        ))}
-        {resolvedCollections.length > 0 && (
-          <div className="mb-9 mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <button
-              type="button"
-              onClick={() => setScreen("collections")}
-              className="group flex h-full min-h-[84px] items-center gap-4 rounded-2xl border border-edge-soft bg-elevated/40 px-6 py-4 text-start transition-all duration-300 hover:bg-elevated/70 active:scale-[0.99]"
-            >
-              <span className="relative grid h-12 w-16 shrink-0 place-items-center">
-                <span className="absolute h-10 w-7 -translate-x-2.5 -rotate-[18deg] overflow-hidden rounded-[5px] bg-elevated shadow-[0_4px_10px_-4px_rgba(0,0,0,0.6)] ring-1 ring-edge-soft transition-transform duration-300 ease-out group-hover:-translate-x-4 group-hover:-rotate-[28deg]">
-                  {collectionBooks[1]?.cover && (
-                    <CoverImg src={collectionBooks[1].cover} alt="" className="h-full w-full object-cover" />
-                  )}
+        <div className="flex w-full flex-col gap-9 px-12 pt-8">
+          {rails.map((rail) => (
+            <EBookRail
+              key={`${rail.title}:${providerId}`}
+              {...rail}
+              onOpen={(ebook) => openEBook(String(ebook.id))}
+            />
+          ))}
+          {resolvedCollections.length > 0 && (
+            <div className="mb-9 mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={() => setScreen("collections")}
+                className="group flex h-full min-h-[84px] items-center gap-4 rounded-2xl border border-edge-soft bg-elevated/40 px-6 py-4 text-start transition-all duration-300 hover:bg-elevated/70 active:scale-[0.99]"
+              >
+                <span className="relative grid h-12 w-16 shrink-0 place-items-center">
+                  <span className="absolute h-10 w-7 -translate-x-2.5 -rotate-[18deg] overflow-hidden rounded-[5px] bg-elevated shadow-[0_4px_10px_-4px_rgba(0,0,0,0.6)] ring-1 ring-edge-soft transition-transform duration-300 ease-out group-hover:-translate-x-4 group-hover:-rotate-[28deg]">
+                    {collectionBooks[1]?.cover && (
+                      <CoverImg
+                        src={collectionBooks[1].cover}
+                        alt=""
+                        className="h-full w-full object-cover"
+                      />
+                    )}
+                  </span>
+                  <span className="absolute h-10 w-7 translate-x-2.5 rotate-[18deg] overflow-hidden rounded-[5px] bg-raised shadow-[0_4px_10px_-4px_rgba(0,0,0,0.6)] ring-1 ring-edge-soft transition-transform duration-300 ease-out group-hover:translate-x-4 group-hover:rotate-[28deg]">
+                    {collectionBooks[2]?.cover && (
+                      <CoverImg
+                        src={collectionBooks[2].cover}
+                        alt=""
+                        className="h-full w-full object-cover"
+                      />
+                    )}
+                  </span>
+                  <span className="absolute h-10 w-7 overflow-hidden rounded-[5px] bg-gradient-to-br from-accent to-accent/60 shadow-[0_6px_14px_-4px_rgba(0,0,0,0.7)] ring-1 ring-white/10 transition-transform duration-300 ease-out group-hover:-translate-y-1">
+                    {collectionBooks[0]?.cover && (
+                      <CoverImg
+                        src={collectionBooks[0].cover}
+                        alt=""
+                        className="h-full w-full object-cover"
+                      />
+                    )}
+                  </span>
                 </span>
-                <span className="absolute h-10 w-7 translate-x-2.5 rotate-[18deg] overflow-hidden rounded-[5px] bg-raised shadow-[0_4px_10px_-4px_rgba(0,0,0,0.6)] ring-1 ring-edge-soft transition-transform duration-300 ease-out group-hover:translate-x-4 group-hover:rotate-[28deg]">
-                  {collectionBooks[2]?.cover && (
-                    <CoverImg src={collectionBooks[2].cover} alt="" className="h-full w-full object-cover" />
-                  )}
-                </span>
-                <span className="absolute h-10 w-7 overflow-hidden rounded-[5px] bg-gradient-to-br from-accent to-accent/60 shadow-[0_6px_14px_-4px_rgba(0,0,0,0.7)] ring-1 ring-white/10 transition-transform duration-300 ease-out group-hover:-translate-y-1">
-                  {collectionBooks[0]?.cover && (
-                    <CoverImg src={collectionBooks[0].cover} alt="" className="h-full w-full object-cover" />
-                  )}
-                </span>
-              </span>
-              <div className="flex min-w-0 flex-1 flex-col">
-                <span className="text-[15.5px] font-semibold text-ink">Collections</span>
-                <span className="truncate text-[13px] text-ink-muted">
-                  Complete book series from metadata
-                </span>
-              </div>
-              <ChevronRight
-                size={22}
-                className="shrink-0 text-ink-subtle transition-transform group-hover:translate-x-1"
-              />
-            </button>
+                <div className="flex min-w-0 flex-1 flex-col">
+                  <span className="text-[15.5px] font-semibold text-ink">Collections</span>
+                  <span className="truncate text-[13px] text-ink-muted">
+                    Complete book series from metadata
+                  </span>
+                </div>
+                <ChevronRight
+                  size={22}
+                  className="shrink-0 text-ink-subtle transition-transform group-hover:translate-x-1"
+                />
+              </button>
+            </div>
+          )}
+          <div className="mb-[-1rem] mt-1">
+            <h2 className="text-[22px] font-medium tracking-tight text-ink">Browse eBooks</h2>
+            <p className="text-[13px] text-ink-subtle">
+              {providers.find((source) => source.id === providerId)?.name ?? "Installed sources"}
+            </p>
           </div>
-        )}
-        <div className="mb-[-1rem] mt-1">
-          <h2 className="text-[22px] font-medium tracking-tight text-ink">Browse eBooks</h2>
-          <p className="text-[13px] text-ink-subtle">
-            {providers.find((source) => source.id === providerId)?.name ?? "Installed sources"}
-          </p>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="contents">
+              <label className="flex h-12 min-w-0 max-w-sm flex-1 items-center gap-3 rounded-2xl border border-edge-soft bg-elevated/45 px-4 text-ink-muted focus-within:border-edge focus-within:bg-elevated/70">
+                <Search size={18} />
+                <input
+                  value={query}
+                  onChange={(event) => search(event.target.value)}
+                  placeholder="Search eBooks"
+                  className="min-w-0 flex-1 bg-transparent text-[14px] text-ink outline-none placeholder:text-ink-subtle"
+                />
+              </label>
+              <button
+                type="button"
+                aria-label="Refresh eBook source"
+                title="Refresh source"
+                disabled={refreshing}
+                onClick={() => (query.trim().length >= 2 ? search(query) : loadSources())}
+                className="grid h-12 w-12 shrink-0 place-items-center rounded-xl border border-edge-soft bg-elevated/45 text-ink-muted transition-colors hover:border-edge hover:bg-elevated/70 hover:text-ink disabled:pointer-events-none disabled:opacity-60"
+              >
+                <RefreshCw
+                  size={17}
+                  className={refreshing ? "animate-spin motion-reduce:animate-none" : ""}
+                />
+              </button>
+              <button
+                type="button"
+                onClick={() => setScreen("sources")}
+                aria-label="Manage eBook sources"
+                title="Manage eBook sources"
+                className="order-3 me-2 flex items-center gap-2 rounded-lg border border-edge-soft bg-elevated/40 px-3 py-2 text-[13px] text-ink transition-colors hover:bg-elevated/70"
+              >
+                <Settings size={20} className="text-ink" />
+              </button>
+            </div>
+            <div className="order-2">
+              <EBookBrowseDropdown
+                label="Language"
+                value={titleLanguage}
+                options={[
+                  { id: "auto", label: "Auto" },
+                  { id: "en", label: "English" },
+                  { id: "ar", label: "Arabic" },
+                  { id: "original", label: "Original" },
+                ]}
+                onSelect={(value) => setTitleLanguage(value as EBookTitleLanguage)}
+              />
+            </div>
+            <div
+              className="order-1 ms-auto flex w-fit max-w-full flex-wrap items-center gap-2 rounded-2xl bg-elevated/30 p-2 ring-1 ring-edge-soft/50"
+              aria-label="Filter eBooks"
+            >
+              <EBookBrowseDropdown
+                label="Type"
+                value={categoryGroup}
+                options={[
+                  { id: "Genre", label: "Genre" },
+                  { id: "Fiction", label: "Fiction" },
+                  { id: "Non-fiction", label: "Non-fiction" },
+                ]}
+                onSelect={(value) => {
+                  setCategoryGroup(value as EBookBrowseType);
+                  setBrowseAll(false);
+                  setCategory("");
+                  setQuery("");
+                  setResults(null);
+                }}
+              />
+              <EBookBrowseDropdown
+                label="Catalog"
+                value={providerId}
+                badge={providers.find((source) => source.id === providerId)?.name?.charAt(0)}
+                options={providers.map((source) => ({ id: source.id, label: source.name }))}
+                onSelect={(id) => {
+                  providerIdRef.current = id;
+                  setProviderId(id);
+                  setQuery("");
+                  setResults(null);
+                  loadSources(id);
+                }}
+              />
+              <EBookBrowseDropdown
+                label="Genre"
+                value={category}
+                options={[
+                  { id: "", label: "All genres" },
+                  ...Array.from(
+                    new Set(
+                      categoryGroup && categoryGroup !== "Genre"
+                        ? EBOOK_CATEGORIES[categoryGroup]
+                        : Object.values(EBOOK_CATEGORIES).flat(),
+                    ),
+                  ).map((item) => ({ id: item, label: item })),
+                ]}
+                onSelect={(value) => {
+                  setBrowseAll(false);
+                  setCategory(value);
+                  setQuery("");
+                  setResults(null);
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  setBrowseAll(true);
+                  setCategory("");
+                  setQuery("");
+                  setResults(null);
+                }}
+                className="flex h-10 items-center gap-2 rounded-full bg-ink px-5 text-[13.5px] font-semibold text-canvas transition-transform hover:scale-[1.02] active:scale-[0.97]"
+              >
+                Browse
+              </button>
+            </div>
+          </div>
+          {categoryGroup === "Genre" && !browseAll && query.trim().length < 2 ? (
+            <EBookGenreRails
+              rails={genreRails}
+              resetKey={`${providerId}:${category}`}
+              sourceLoaded={sourceItems !== null}
+              loadingMore={loadingMore}
+              hasMore={hasMore}
+              onLoadMore={loadMore}
+              onOpen={(ebook) => openEBook(String(ebook.id))}
+            />
+          ) : (
+            <EBookGrid
+              items={query.trim().length >= 2 ? results : catalog}
+              loadingMore={loadingMore}
+              hasMore={hasMore}
+              onEndReached={loadMore}
+              onOpen={(ebook) => openEBook(String(ebook.id))}
+            />
+          )}
         </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="contents">
-            <label className="flex h-12 min-w-0 max-w-sm flex-1 items-center gap-3 rounded-2xl border border-edge-soft bg-elevated/45 px-4 text-ink-muted focus-within:border-edge focus-within:bg-elevated/70">
-              <Search size={18} />
-              <input
-                value={query}
-                onChange={(event) => search(event.target.value)}
-                placeholder="Search eBooks"
-                className="min-w-0 flex-1 bg-transparent text-[14px] text-ink outline-none placeholder:text-ink-subtle"
-              />
-            </label>
-            <button
-              type="button"
-              aria-label="Refresh eBook source"
-              title="Refresh source"
-              disabled={refreshing}
-              onClick={() => (query.trim().length >= 2 ? search(query) : loadSources())}
-              className="grid h-12 w-12 shrink-0 place-items-center rounded-xl border border-edge-soft bg-elevated/45 text-ink-muted transition-colors hover:border-edge hover:bg-elevated/70 hover:text-ink disabled:pointer-events-none disabled:opacity-60"
-            >
-              <RefreshCw
-                size={17}
-                className={refreshing ? "animate-spin motion-reduce:animate-none" : ""}
-              />
-            </button>
-            <button
-              type="button"
-              onClick={() => setScreen("sources")}
-              aria-label="Manage eBook sources"
-              title="Manage eBook sources"
-              className="order-3 me-2 flex items-center gap-2 rounded-lg border border-edge-soft bg-elevated/40 px-3 py-2 text-[13px] text-ink transition-colors hover:bg-elevated/70"
-            >
-              <Settings size={20} className="text-ink" />
-            </button>
-          </div>
-          <div className="order-2">
-            <EBookBrowseDropdown
-              label="Language"
-              value={titleLanguage}
-              options={[
-                { id: "auto", label: "Auto" },
-                { id: "en", label: "English" },
-                { id: "ar", label: "Arabic" },
-                { id: "original", label: "Original" },
-              ]}
-              onSelect={(value) => setTitleLanguage(value as EBookTitleLanguage)}
-            />
-          </div>
-          <div
-            className="order-1 ms-auto flex w-fit max-w-full flex-wrap items-center gap-2 rounded-2xl bg-elevated/30 p-2 ring-1 ring-edge-soft/50"
-            aria-label="Filter eBooks"
-          >
-            <EBookBrowseDropdown
-              label="Type"
-              value={categoryGroup}
-              options={[
-                { id: "Genre", label: "Genre" },
-                { id: "Fiction", label: "Fiction" },
-                { id: "Non-fiction", label: "Non-fiction" },
-              ]}
-              onSelect={(value) => {
-                setCategoryGroup(value as EBookBrowseType);
-                setBrowseAll(false);
-                setCategory("");
-                setQuery("");
-                setResults(null);
-              }}
-            />
-            <EBookBrowseDropdown
-              label="Catalog"
-              value={providerId}
-              badge={providers.find((source) => source.id === providerId)?.name?.charAt(0)}
-              options={providers.map((source) => ({ id: source.id, label: source.name }))}
-              onSelect={(id) => {
-                providerIdRef.current = id;
-                setProviderId(id);
-                setQuery("");
-                setResults(null);
-                loadSources(id);
-              }}
-            />
-            <EBookBrowseDropdown
-              label="Genre"
-              value={category}
-              options={[
-                { id: "", label: "All genres" },
-                ...Array.from(
-                  new Set(
-                    categoryGroup && categoryGroup !== "Genre"
-                      ? EBOOK_CATEGORIES[categoryGroup]
-                      : Object.values(EBOOK_CATEGORIES).flat(),
-                  ),
-                ).map((item) => ({ id: item, label: item })),
-              ]}
-              onSelect={(value) => {
-                setBrowseAll(false);
-                setCategory(value);
-                setQuery("");
-                setResults(null);
-              }}
-            />
-            <button
-              type="button"
-              onClick={() => {
-                setBrowseAll(true);
-                setCategory("");
-                setQuery("");
-                setResults(null);
-              }}
-              className="flex h-10 items-center gap-2 rounded-full bg-ink px-5 text-[13.5px] font-semibold text-canvas transition-transform hover:scale-[1.02] active:scale-[0.97]"
-            >
-              Browse
-            </button>
-          </div>
-        </div>
-        {categoryGroup === "Genre" && !browseAll && query.trim().length < 2 ? (
-          <EBookGenreRails
-            rails={genreRails}
-            resetKey={`${providerId}:${category}`}
-            sourceLoaded={sourceItems !== null}
-            loadingMore={loadingMore}
-            hasMore={hasMore}
-            onLoadMore={loadMore}
-            onOpen={(ebook) => openEBook(String(ebook.id))}
-          />
-        ) : (
-          <EBookGrid
-            items={query.trim().length >= 2 ? results : catalog}
-            loadingMore={loadingMore}
-            hasMore={hasMore}
-            onEndReached={loadMore}
-            onOpen={(ebook) => openEBook(String(ebook.id))}
-          />
-        )}
-      </div>
-    </main>
+      </main>
     </EBookTitleLanguageContext.Provider>
   );
 }
@@ -899,58 +911,13 @@ function EBookBrowseDropdown({
   );
 }
 
-type FeaturedShelfItem =
-  | { kind: "spine"; book: EBook; lean: "upright" | "left" | "right"; height: number }
-  | { kind: "stack"; books: EBook[] };
-
-const SHELF_STACKS = [
-  new Map([
-    [5, 2],
-    [13, 1],
-  ]),
-  new Map([
-    [2, 5],
-    [15, 4],
-  ]),
-  new Map([
-    [7, 1],
-    [16, 2],
-  ]),
-];
-const SHELF_LEANS_RIGHT = [new Set([1, 8, 16]), new Set([8, 12]), new Set([1, 10])];
-const SHELF_LEANS_LEFT = [new Set([3, 10, 18]), new Set([10, 14]), new Set([3, 12])];
-
-function arrangeFeaturedShelf(books: EBook[], shelfIndex: number): FeaturedShelfItem[] {
-  const items: FeaturedShelfItem[] = [];
-  const stacks = SHELF_STACKS[shelfIndex] ?? new Map<number, number>();
-  const leansRight = SHELF_LEANS_RIGHT[shelfIndex] ?? new Set<number>();
-  const leansLeft = SHELF_LEANS_LEFT[shelfIndex] ?? new Set<number>();
-  for (let bookIndex = 0; bookIndex < books.length; bookIndex += 1) {
-    const stackSize = Math.min(stacks.get(bookIndex) ?? 0, books.length - bookIndex);
-    if (stackSize > 0) {
-      items.push({ kind: "stack", books: books.slice(bookIndex, bookIndex + stackSize) });
-      bookIndex += stackSize - 1;
-      continue;
-    }
-    items.push({
-      kind: "spine",
-      book: books[bookIndex],
-      lean: leansRight.has(bookIndex) ? "right" : leansLeft.has(bookIndex) ? "left" : "upright",
-      height: [82, 96, 88, 76, 92, 84][bookIndex % 6],
-    });
-  }
-  return items;
-}
-
 const EBOOK_HERO_ROTATE_MS = 9000;
 
 function EBookLibraryHero({
   ebooks,
-  shelfBooks,
   onOpen,
 }: {
   ebooks: EBook[];
-  shelfBooks: EBook[];
   onOpen: (ebook: EBook) => void;
 }) {
   const titleLanguage = useContext(EBookTitleLanguageContext);
@@ -964,10 +931,6 @@ function EBookLibraryHero({
     ? ebookTitleForLanguage(current, titleLanguage)
     : "A remarkable book for your shelf";
   const artColor = useArtGlow(current?.cover);
-  const shelves = [0, 1, 2].map((shelfIndex) =>
-    shelfBooks.filter((_, bookIndex) => bookIndex % 3 === shelfIndex).slice(0, 20),
-  );
-  const arrangedShelves = shelves.map(arrangeFeaturedShelf);
 
   useEffect(() => {
     if (paused || ebooks.length < 2 || !pageVisible) return;
@@ -1006,46 +969,8 @@ function EBookLibraryHero({
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
-      <div className="ebook-hero-shelves" aria-hidden="true">
-        {arrangedShelves.map((shelf, shelfIndex) => (
-          <div className="ebook-hero-shelf" key={shelfIndex}>
-            <div className="ebook-hero-books">
-              {shelf.map((item) =>
-                item.kind === "stack" ? (
-                  <div className="ebook-hero-shelf-stack" key={`stack:${item.books[0].id}`}>
-                    {item.books.map((book, stackIndex) => (
-                      <div
-                        className="ebook-hero-horizontal-book"
-                        key={book.id}
-                        style={{ "--horizontal-book-step": stackIndex } as CSSProperties}
-                      >
-                        <img src={book.cover} alt="" draggable={false} decoding="async" />
-                        <span>{ebookTitleForLanguage(book, titleLanguage)}</span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div
-                    className={`ebook-hero-shelf-book ebook-hero-shelf-book--${item.lean}`}
-                    key={item.book.id}
-                    style={{ "--shelf-book-height": `${item.height}%` } as CSSProperties}
-                  >
-                    <img
-                      className="ebook-hero-spine-art"
-                      src={item.book.cover}
-                      alt=""
-                      draggable={false}
-                      decoding="async"
-                    />
-                    <span className="ebook-hero-spine-title">
-                      {ebookTitleForLanguage(item.book, titleLanguage)}
-                    </span>
-                  </div>
-                ),
-              )}
-            </div>
-          </div>
-        ))}
+      <div className="ebook-hero-library-photo" aria-hidden="true">
+        <img src="/ebook-hero-open-books.png" alt="" draggable={false} decoding="async" />
       </div>
 
       <div className="ebook-hero-paper">
@@ -1081,7 +1006,9 @@ function EBookLibraryHero({
           </p>
           <div className="ebook-hero-meta">
             {current?.year && <span>{current.year}</span>}
-            {current?.genres.slice(0, 2).map((genre) => <span key={genre}>{genre}</span>)}
+            {current?.genres.slice(0, 2).map((genre) => (
+              <span key={genre}>{genre}</span>
+            ))}
           </div>
           {current && (
             <button type="button" onClick={() => onOpen(current)}>
@@ -1217,12 +1144,7 @@ function EBookRail({
         <h2 className="text-[20px] font-semibold tracking-tight text-ink">{title}</h2>
         <p className="text-[13px] text-ink-subtle">{subtitle}</p>
       </div>
-      <Row
-        min={144}
-        shape="portrait"
-        scrollKey={`ebook:${title}`}
-        onEndReached={onEndReached}
-      >
+      <Row min={144} shape="portrait" scrollKey={`ebook:${title}`} onEndReached={onEndReached}>
         {items === null
           ? Array.from({ length: 8 }, (_, index) => (
               <div
@@ -1729,10 +1651,21 @@ function EBookChapterMeta({ chapter }: { chapter: EBookChapter }) {
 
 function EBookInformation({ ebook }: { ebook: EBook }) {
   const [adaptations, setAdaptations] = useState<EBookAdaptations | null>(null);
+  const [adaptationStatus, setAdaptationStatus] = useState<{
+    id: string;
+    state: "resolving";
+  } | null>(null);
+  const [adaptationChoices, setAdaptationChoices] = useState<{
+    title: string;
+    items: Array<{ id: string; title: string; cover?: string }>;
+  } | null>(null);
+  const { openManga, openMeta } = useView();
 
   useEffect(() => {
     let active = true;
     setAdaptations(null);
+    setAdaptationStatus(null);
+    setAdaptationChoices(null);
     void ebookAdaptations(ebook).then((value) => {
       if (active) setAdaptations(value);
     });
@@ -1741,8 +1674,6 @@ function EBookInformation({ ebook }: { ebook: EBook }) {
     };
   }, [ebook.id, ebook.anilistId, ebook.wikidataId]);
 
-  const adaptationValue = (items: string[] | undefined) =>
-    adaptations === null ? "Checking metadata…" : items?.length ? items.join(" · ") : "Not available";
   const score =
     ebook.score == null
       ? null
@@ -1751,14 +1682,118 @@ function EBookInformation({ ebook }: { ebook: EBook }) {
         : `${ebook.score.toFixed(1)} / 10`;
   const rows = [
     { label: "Author", value: ebook.authors.join(" · ") || "Not available" },
-    { label: "First aired", value: ebook.publishedAt || (ebook.year ? String(ebook.year) : "Not available") },
+    {
+      label: "First aired",
+      value: ebook.publishedAt || (ebook.year ? String(ebook.year) : "Not available"),
+    },
     { label: "Status", value: ebook.status || "Not available" },
     { label: "Genres", value: ebook.genres.join(" · ") || "Not available" },
     { label: "Rating", value: score || "Not available" },
-    { label: "Manga adaptation", value: adaptationValue(adaptations?.manga) },
-    { label: "Anime adaptation", value: adaptationValue(adaptations?.anime) },
-    { label: "Live show adaptation", value: adaptationValue(adaptations?.liveAction) },
   ];
+  const adaptationItems = adaptations
+    ? [...adaptations.anime, ...adaptations.manga, ...adaptations.liveAction]
+    : [];
+
+  const openAdaptation = async (item: EBookAdaptation) => {
+    if (item.kind === "anime" && item.anilistId) {
+      openMeta(
+        {
+          id: `anilist:${item.anilistId}`,
+          type: "anime",
+          name: item.title,
+          poster: item.poster,
+          description: item.description,
+          releaseInfo: item.year ? String(item.year) : undefined,
+          animeFormat: item.format,
+        },
+        { exact: true },
+      );
+      return;
+    }
+    if (item.kind === "anime") {
+      const { searchAnime } = await import("@/lib/search");
+      const matches = await searchAnime(item.title).catch(() => []);
+      const titleKey = item.title.toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu, "");
+      const match =
+        matches.find(
+          (candidate) =>
+            candidate.name.toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu, "") === titleKey,
+        ) ?? matches[0];
+      if (!match) return;
+      const id = match.kitsuId
+        ? `kitsu:${match.kitsuId}`
+        : match.malId
+          ? `mal:${match.malId}`
+          : `anilist:${match.anilistId}`;
+      openMeta(
+        {
+          id,
+          type: "anime",
+          name: match.name,
+          poster: match.poster ?? item.poster,
+          background: match.background ?? match.poster ?? item.poster,
+          description: match.overview || item.description,
+          releaseInfo: match.year ?? (item.year ? String(item.year) : undefined),
+          imdbRating: match.score > 0 ? match.score.toFixed(1) : undefined,
+          animeFormat: match.format ?? item.format,
+        },
+        { exact: true },
+      );
+      return;
+    }
+    if (item.kind === "manga") {
+      setAdaptationStatus({ id: item.id, state: "resolving" });
+      const { searchMangaAcrossSources } = await import("@/lib/manga/api");
+      const normalizeTitle = (title: string) =>
+        title
+          .normalize("NFKD")
+          .toLocaleLowerCase()
+          .replace(/[^\p{L}\p{N}]+/gu, "");
+      const queries = [
+        item.title,
+        ...(item.altTitles ?? []),
+        ebook.title,
+        ...(ebook.altTitle?.split("|") ?? []),
+        ebook.seriesTitle,
+      ]
+        .map((title) => title?.trim() ?? "")
+        .filter(Boolean)
+        .filter(
+          (title, index, all) =>
+            all.findIndex((candidate) => normalizeTitle(candidate) === normalizeTitle(title)) ===
+            index,
+        )
+        .slice(0, 8);
+      const results = await Promise.all(
+        queries.map((query) => searchMangaAcrossSources(query).catch(() => [])),
+      );
+      const wanted = new Set(queries.map(normalizeTitle));
+      const matches = results.flat();
+      const exactMatches = matches.filter(
+        (candidate) =>
+          wanted.has(normalizeTitle(candidate.title)) ||
+          (candidate.altTitle != null && wanted.has(normalizeTitle(candidate.altTitle))),
+      );
+      const candidates = [
+        ...new Map(
+          (exactMatches.length ? exactMatches : matches).map((candidate) => [
+            candidate.id,
+            candidate,
+          ]),
+        ).values(),
+      ].slice(0, 3);
+      setAdaptationStatus(null);
+      if (candidates.length === 1) {
+        openManga(candidates[0].id);
+        return;
+      }
+      if (candidates.length > 1) {
+        setAdaptationChoices({ title: item.title, items: candidates });
+      }
+      return;
+    }
+    if (item.siteUrl) await openUrl(item.siteUrl);
+  };
 
   return (
     <section className="pt-12">
@@ -1775,6 +1810,148 @@ function EBookInformation({ ebook }: { ebook: EBook }) {
           </div>
         ))}
       </dl>
+      <div className="mt-10 border-t border-border/60 pt-8">
+        <h4 className="text-[12px] font-medium uppercase tracking-[0.18em] text-ink-subtle">
+          Adaptations
+        </h4>
+        {adaptations === null ? (
+          <div className="mt-5 grid grid-cols-2 gap-x-5 gap-y-8 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+            {[0, 1, 2, 3, 4, 5].map((key) => (
+              <div key={key}>
+                <div className="aspect-[2/3] animate-pulse rounded-xl bg-surface-2" />
+                <div className="mt-3 h-3.5 w-4/5 animate-pulse rounded-full bg-surface-2" />
+                <div className="mt-2 h-3 w-2/5 animate-pulse rounded-full bg-surface-2" />
+              </div>
+            ))}
+          </div>
+        ) : adaptationItems.length ? (
+          <div className="mt-5 grid grid-cols-2 gap-x-5 gap-y-8 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+            {adaptationItems.map((item) => {
+              const itemStatus = adaptationStatus?.id === item.id ? adaptationStatus.state : null;
+              const details = [
+                item.kind === "liveAction"
+                  ? "Live action"
+                  : item.kind === "anime"
+                    ? "Anime"
+                    : "Manga",
+                item.format?.replaceAll("_", " "),
+                item.year ? String(item.year) : undefined,
+                item.seasons ? `${item.seasons} seasons` : undefined,
+              ].filter(Boolean);
+              return (
+                <button
+                  key={`${item.kind}:${item.id}`}
+                  type="button"
+                  onClick={() => void openAdaptation(item)}
+                  disabled={itemStatus === "resolving"}
+                  aria-busy={itemStatus === "resolving"}
+                  aria-label={`Open ${details[0]} adaptation: ${item.title}`}
+                  className="group min-w-0 text-left outline-none disabled:cursor-wait"
+                >
+                  <span className="relative flex aspect-[2/3] w-full items-center justify-center overflow-hidden rounded-xl bg-surface-2 shadow-[0_14px_34px_rgba(0,0,0,0.22)] ring-1 ring-white/8 transition duration-300 ease-out group-hover:-translate-y-1.5 group-hover:shadow-[0_20px_44px_rgba(0,0,0,0.34)] group-hover:ring-accent/45 group-focus-visible:ring-2 group-focus-visible:ring-accent">
+                    {item.poster ? (
+                      <img
+                        src={item.poster}
+                        alt={`${item.title} adaptation poster`}
+                        className="h-full w-full object-cover transition duration-500 ease-out group-hover:scale-[1.025]"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <BookOpen className="h-8 w-8 text-ink-subtle" aria-hidden />
+                    )}
+                    <span className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 bg-gradient-to-t from-black/80 via-black/35 to-transparent px-3 pb-3 pt-10 opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100">
+                      <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-white/85">
+                        View {details[0]}
+                      </span>
+                      <ExternalLink className="h-3.5 w-3.5 shrink-0 text-white" aria-hidden />
+                    </span>
+                    {itemStatus === "resolving" && (
+                      <span className="absolute inset-0 flex items-center justify-center bg-black/55 backdrop-blur-[2px]">
+                        <Loader2 className="h-6 w-6 animate-spin text-white" aria-hidden />
+                      </span>
+                    )}
+                  </span>
+                  <span className="mt-3 block min-w-0 px-0.5">
+                    <span className="line-clamp-2 text-[14px] font-semibold leading-snug text-ink transition-colors group-hover:text-accent">
+                      {item.title}
+                    </span>
+                    <span className="mt-1.5 block truncate text-[11.5px] text-ink-subtle">
+                      {details.join(" · ")}
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="mt-3 text-[14px] text-ink-subtle">No adaptations found.</p>
+        )}
+      </div>
+      {adaptationChoices && (
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 p-6 backdrop-blur-md"
+          role="presentation"
+          onClick={() => setAdaptationChoices(null)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="ebook-adaptation-picker-title"
+            className="w-full max-w-3xl rounded-[28px] border border-white/10 bg-surface p-6 shadow-2xl sm:p-8"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-5">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">
+                  Manga adaptation
+                </p>
+                <h5
+                  id="ebook-adaptation-picker-title"
+                  className="mt-2 text-xl font-semibold text-ink"
+                >
+                  Best Match for {adaptationChoices.title}
+                </h5>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAdaptationChoices(null)}
+                aria-label="Close Manga selection"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-ink-muted transition hover:bg-white/10 hover:text-ink"
+              >
+                <X className="h-4 w-4" aria-hidden />
+              </button>
+            </div>
+            <div className="mt-7 grid grid-cols-1 gap-5 sm:grid-cols-3">
+              {adaptationChoices.items.map((choice) => (
+                <button
+                  key={choice.id}
+                  type="button"
+                  onClick={() => {
+                    setAdaptationChoices(null);
+                    openManga(choice.id);
+                  }}
+                  className="group min-w-0 text-left outline-none"
+                >
+                  <span className="flex aspect-[2/3] w-full items-center justify-center overflow-hidden rounded-2xl bg-surface-2 ring-1 ring-white/10 transition duration-200 group-hover:-translate-y-1 group-hover:ring-accent/60 group-focus-visible:ring-2 group-focus-visible:ring-accent">
+                    {choice.cover ? (
+                      <img
+                        src={choice.cover}
+                        alt={`${choice.title} poster`}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <BookOpen className="h-9 w-9 text-ink-subtle" aria-hidden />
+                    )}
+                  </span>
+                  <span className="mt-3 block line-clamp-2 text-[14px] font-semibold leading-snug text-ink transition-colors group-hover:text-accent">
+                    {choice.title}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
