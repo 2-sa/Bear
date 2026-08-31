@@ -197,6 +197,7 @@ pub async fn harbor_fetch(
     args: HarborFetchArgs,
 ) -> Result<HarborFetchResponse, String> {
     let timeout = Duration::from_millis(args.timeout_ms.unwrap_or(DEFAULT_TIMEOUT_MS));
+    let _permit = acquire_fetch_permit().await?;
     run_with_deadline(timeout, harbor_fetch_inner(app, args)).await
 }
 
@@ -204,8 +205,6 @@ async fn harbor_fetch_inner(
     app: tauri::AppHandle,
     args: HarborFetchArgs,
 ) -> Result<HarborFetchResponse, String> {
-    let _permit = acquire_fetch_permit().await?;
-
     let client = http_client()?;
     let timeout = Duration::from_millis(args.timeout_ms.unwrap_or(DEFAULT_TIMEOUT_MS));
 
@@ -343,18 +342,21 @@ async fn harbor_fetch_inner(
     };
 
     if is_cloudflare_challenge(status, cf_mitigated.as_deref(), &body) {
-        eprintln!("[cf] challenge detected ({}) for {}", status, args.url);
         if let Some(h) = original_host.as_deref() {
             crate::cf_solver::cf_invalidate(h);
         }
-        if let Ok(solved) = crate::cf_solver::cf_fetch(app, args.url.clone()).await {
-            return Ok(HarborFetchResponse {
-                status: 200,
-                ok: true,
-                body: solved,
-                content_type: None,
-                headers: HashMap::new(),
-            });
+        let solver_ok = original_host.as_deref().map(solver_host_allowed).unwrap_or(false);
+        if solver_ok {
+            eprintln!("[cf] challenge detected ({}) for {}", status, args.url);
+            if let Ok(solved) = crate::cf_solver::cf_fetch(app, args.url.clone()).await {
+                return Ok(HarborFetchResponse {
+                    status: 200,
+                    ok: true,
+                    body: solved,
+                    content_type: None,
+                    headers: HashMap::new(),
+                });
+            }
         }
     }
 
@@ -367,16 +369,33 @@ async fn harbor_fetch_inner(
     })
 }
 
+const BACKGROUND_PROVIDER_HOSTS: &[&str] =
+    &["api.theintrodb.org", "api.introdb.app", "api.skipdb.tv"];
+
+fn solver_host_allowed(host: &str) -> bool {
+    let host = host.trim_end_matches('.').to_ascii_lowercase();
+    !BACKGROUND_PROVIDER_HOSTS.contains(&host.as_str())
+}
+
+fn is_cloudflare_hard_block(body: &str) -> bool {
+    body.contains("Sorry, you have been blocked")
+        || body.contains("error code: 1020")
+        || body.contains("Error 1015")
+        || body.contains("You are being rate limited")
+}
+
 fn is_cloudflare_challenge(status: u16, cf_mitigated: Option<&str>, body: &str) -> bool {
+    if is_cloudflare_hard_block(body) {
+        return false;
+    }
     if cf_mitigated == Some("challenge") {
         return true;
     }
-    if !matches!(status, 403 | 429 | 503) {
+    if !matches!(status, 403 | 503) {
         return false;
     }
     body.contains("Just a moment")
-        || body.contains("challenge-platform")
-        || body.contains("__cf_chl")
-        || body.contains("cf-please-wait")
         || body.contains("cf_chl_opt")
+        || body.contains("challenge-form")
+        || body.contains("cf-please-wait")
 }

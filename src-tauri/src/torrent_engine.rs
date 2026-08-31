@@ -58,6 +58,9 @@ fn engine() -> &'static Mutex<EngineState> {
 }
 
 pub const LAN_SERVER_PORT: u16 = 11470;
+const LAN_FALLBACK_PORTS: [u16; 10] = [
+    11480, 11481, 11482, 11483, 11484, 11485, 11486, 11487, 11488, 11489,
+];
 
 const CACHE_SWEEP_INITIAL_DELAY_SECS: u64 = 60;
 const CACHE_SWEEP_INTERVAL_SECS: u64 = 30 * 60;
@@ -185,13 +188,14 @@ fn spawn_cache_sweeper(app: AppHandle) -> CacheSweeper {
                 .await;
                 match result {
                     Ok(Some(stats)) => eprintln!(
-                        "[torrent-engine] cache sweep completed in {:?}: scanned={} deleted={} reclaimed_bytes={} errors={} cancelled={}",
+                        "[torrent-engine] cache sweep completed in {:?}: scanned={} deleted={} reclaimed_bytes={} errors={} cancelled={} first_error={:?}",
                         started.elapsed(),
                         stats.scanned,
                         stats.deleted,
                         stats.reclaimed_bytes,
                         stats.errors,
                         stats.cancelled,
+                        stats.first_error,
                     ),
                     Ok(None) => eprintln!("[torrent-engine] cache sweep skipped; another sweep is active"),
                     Err(error) => eprintln!("[torrent-engine] cache sweep task failed: {error}"),
@@ -741,14 +745,33 @@ pub fn lan_status() -> (bool, Option<u16>, Option<String>) {
     (st.lan_server.is_some(), st.lan_port, st.lan_error.clone())
 }
 
+async fn bind_lan_listener() -> Result<(TcpListener, u16), String> {
+    let mut first_error: Option<String> = None;
+    for port in std::iter::once(LAN_SERVER_PORT).chain(LAN_FALLBACK_PORTS) {
+        match TcpListener::bind(SocketAddr::from(([0, 0, 0, 0], port))).await {
+            Ok(listener) => return Ok((listener, port)),
+            Err(e) => {
+                if first_error.is_none() {
+                    first_error = Some(format!("port {port} unavailable: {e}"));
+                }
+            }
+        }
+    }
+    Err(first_error.unwrap_or_else(|| format!("port {LAN_SERVER_PORT} unavailable")))
+}
+
 pub async fn start_lan_server(app: &AppHandle) -> Result<u16, String> {
-    let session = ensure_session(app).await?;
-    stop_lan_server();
-    let listener = match TcpListener::bind(SocketAddr::from(([0, 0, 0, 0], LAN_SERVER_PORT))).await
-    {
-        Ok(l) => l,
+    let session = match ensure_session(app).await {
+        Ok(s) => s,
         Err(e) => {
-            let msg = format!("port {LAN_SERVER_PORT} unavailable: {e}");
+            engine().lock().unwrap().lan_error = Some(e.clone());
+            return Err(e);
+        }
+    };
+    stop_lan_server();
+    let (listener, port) = match bind_lan_listener().await {
+        Ok(bound) => bound,
+        Err(msg) => {
             engine().lock().unwrap().lan_error = Some(msg.clone());
             return Err(msg);
         }
@@ -761,9 +784,9 @@ pub async fn start_lan_server(app: &AppHandle) -> Result<u16, String> {
     });
     let mut st = engine().lock().unwrap();
     st.lan_server = Some(server);
-    st.lan_port = Some(LAN_SERVER_PORT);
+    st.lan_port = Some(port);
     st.lan_error = None;
-    Ok(LAN_SERVER_PORT)
+    Ok(port)
 }
 
 pub fn stop_lan_server() {

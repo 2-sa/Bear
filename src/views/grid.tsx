@@ -2,15 +2,18 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { BackToTop } from "@/components/back-to-top";
 import { PickCard } from "@/components/pick-card";
+import { TV_CARD_MIN } from "@/components/row";
 import type { Meta } from "@/lib/cinemeta";
 import { useT } from "@/lib/i18n";
 import { layoutHasGlobalBack } from "@/lib/theme";
+import { useSettings } from "@/lib/settings";
 import { useScrollMemory, useView, type GridSpec } from "@/lib/view";
 
 const PAGE_CAP = 40;
 
 export function GridView({ grid }: { grid: GridSpec }) {
   const { goBack } = useView();
+  const { settings } = useSettings();
   const t = useT();
   const scrollRef = useRef<HTMLElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -58,7 +61,14 @@ export function GridView({ grid }: { grid: GridSpec }) {
 
   const body = (
     <>
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-x-4 gap-y-8">
+      <div
+        className="grid gap-x-4 gap-y-8"
+        style={{
+          gridTemplateColumns: `repeat(auto-fill, minmax(${
+            settings.rowCardStyle === "tv" && !hero ? TV_CARD_MIN : 150
+          }px, 1fr))`,
+        }}
+      >
         {metas.map((m, i) => (
           <PickCard key={`${m.id}-${i}`} meta={m} kids={!!hero} />
         ))}

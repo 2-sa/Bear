@@ -6,6 +6,7 @@ import type { PlayerSrc } from "@/lib/view";
 import { videoIdFor } from "./use-stremio-sync";
 import { useSettings } from "@/lib/settings";
 import { playbackStartupProfile } from "@/lib/player/startup-profile";
+import { isLivePlaybackSrc } from "@/lib/player/live-src";
 import { releaseStreamProxy, retainStreamProxy } from "@/lib/stream-proxy";
 
 const RESUME_PROMPT_MIN_SEC = 30;
@@ -73,10 +74,7 @@ export function useBridgeLoad(params: {
     const isFirstLoad = firstLoadRef.current;
     firstLoadRef.current = false;
     const isAutoRetry = (src.attempt ?? 0) > 0;
-    const isLive =
-      !!src.meta.id?.startsWith("iptv:") ||
-      (!!src.meta.type &&
-        !["movie", "series", "anime"].includes(String(src.meta.type).toLowerCase()));
+    const isLive = isLivePlaybackSrc(src);
     let cancelled = false;
     (async () => {
       const openingVid = videoIdFor(

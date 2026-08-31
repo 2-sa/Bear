@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { markAnimeWatching, syncAnimeProgress } from "@/lib/anilist/sync";
 import { markMalWatching, syncMalProgress } from "@/lib/mal/sync";
+import { animeIdentityEligible, resolveAnimeIdentity } from "@/lib/streams/anime-identity";
 import { profileFromMeta } from "@/lib/discover/profile";
 import { trackEvent } from "@/lib/discover/store";
 import { isExternalPlaylistId } from "@/lib/iptv/vod";
@@ -145,19 +146,31 @@ export function useResumeAutosave(params: {
     }
     if (pos < TASTE_MIN_SEC) return;
     const trackId = s.episode?.sourceMetaId ?? animeTrackId(s);
-    if (anilistAutoSyncRef.current && trackId) {
-      void markAnimeWatching(trackId, s.meta.name);
-    }
-    if (malAutoSyncRef.current && trackId) {
-      void markMalWatching(trackId, s.meta.name);
-    }
     const absEp = s.episode?.absoluteNumber;
     const trackEp = s.episode?.sourceMetaId ? ep : (s.episode?.imdbEpisode ?? ep);
-    if (finished && anilistAutoSyncRef.current && trackId) {
-      void syncAnimeProgress(trackId, trackEp, s.meta.name, absEp);
-    }
-    if (finished && malAutoSyncRef.current && trackId) {
-      void syncMalProgress(trackId, trackEp, s.meta.name, absEp);
+    const fireTrackers = (tid: string, tep: number | undefined): void => {
+      if (anilistAutoSyncRef.current) void markAnimeWatching(tid, s.meta.name);
+      if (malAutoSyncRef.current) void markMalWatching(tid, s.meta.name);
+      if (!finished) return;
+      if (anilistAutoSyncRef.current) void syncAnimeProgress(tid, tep, s.meta.name, absEp);
+      if (malAutoSyncRef.current) void syncMalProgress(tid, tep, s.meta.name, absEp);
+    };
+    if (trackId) {
+      fireTrackers(trackId, trackEp);
+    } else if (
+      (anilistAutoSyncRef.current || malAutoSyncRef.current) &&
+      animeIdentityEligible(id, s.episode)
+    ) {
+      void resolveAnimeIdentity(id, latestRef.current.resolvedImdbId, {
+        season: cs,
+        episode: ep,
+        imdbSeason: s.episode?.imdbSeason,
+        imdbEpisode: s.episode?.imdbEpisode,
+      })
+        .then((identity) => {
+          if (identity) fireTrackers(`kitsu:${identity.kitsuId}`, identity.number);
+        })
+        .catch(() => {});
     }
     const kind = finished ? "watched" : "play";
     const key = `${id}|${kind}`;

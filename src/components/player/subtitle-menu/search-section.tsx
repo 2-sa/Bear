@@ -204,6 +204,7 @@ export function SearchSection(props: SubtitleMenuProps) {
         filename: playing?.filename ?? undefined,
       };
       const searchOpts: SearchOptions = {
+        timeoutMs: 8_000,
         providers: {
           wyzie: titleOnly ? true : enabled.wyzie === true,
           addons: enabled.addons ?? true,

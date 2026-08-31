@@ -1,6 +1,6 @@
 import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { PickCard } from "@/components/pick-card";
-import { Row } from "@/components/row";
+import { Row, usePosterRow } from "@/components/row";
 import type { Meta } from "@/lib/cinemeta";
 import { type Spotlight } from "@/lib/feed/genre-spotlights";
 import { useT } from "@/lib/i18n";
@@ -92,6 +92,7 @@ export function SpotlightSection({
   genreId: number;
 }) {
   const t = useT();
+  const posterRow = usePosterRow();
   const { settings } = useSettings();
   const { openPerson } = useView();
   const claim = useClaimSeenIds(`spotlight:${spotlight.name}`);
@@ -191,7 +192,7 @@ export function SpotlightSection({
   );
 
   return (
-    <Row title={title}>
+    <Row {...posterRow} title={title}>
       <button
         type="button"
         onClick={() => personId != null && openPerson(personId)}
@@ -230,12 +231,10 @@ export function SpotlightSection({
       </button>
       {items
         ? items.map((m) => (
-            <div key={m.id} className="w-36 shrink-0">
-              <PickCard meta={m} />
-            </div>
+            <PickCard key={m.id} meta={m} />
           ))
         : Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="aspect-[2/3] w-36 shrink-0 animate-pulse rounded-xl bg-elevated/40" />
+            <div key={i} className={`${posterRow.shape === "landscape" ? "aspect-[16/9]" : "aspect-[2/3]"} animate-pulse rounded-xl bg-elevated/40`} />
           ))}
     </Row>
   );

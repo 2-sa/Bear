@@ -44,6 +44,7 @@
   },
   "bundle": {
     "active": true,
+    "category": "Video",
     "fileAssociations": [
       {
         "ext": ["mkv", "mp4", "avi", "mov", "webm", "m4v"],

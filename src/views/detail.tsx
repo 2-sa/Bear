@@ -28,9 +28,10 @@ import {
   meta as fetchCinemetaMeta,
   narrowMediaType,
   isAddonNativeMeta,
+  hasEmbeddedStreams,
   type Meta,
 } from "@/lib/cinemeta";
-import { fetchAddonMeta } from "@/lib/addons";
+import { addonBasesForOrigin, fetchAddonMeta, gatherCatalogAddons } from "@/lib/addons";
 import { resolveMeta } from "@/lib/meta-resource";
 import { useMdblistScores } from "@/lib/providers/mdblist";
 import { lastPlayedEpisode, readResumeEntry, saveResumeMs } from "@/lib/resume";
@@ -231,6 +232,7 @@ export function DetailView({
   const [detectedKitsu, setDetectedKitsu] = useState<number | null>(null);
   const [detectingAnime, setDetectingAnime] = useState(false);
   const failedKitsu = useRef<number | null>(null);
+  const addonMetaTriedRef = useRef<string | null>(null);
   const [streamers, setStreamers] = useState<KitsuStreamer[]>([]);
   const [backdrops, setBackdrops] = useState<string[]>([]);
   const [backdropIdx, setBackdropIdx] = useState(0);
@@ -472,6 +474,7 @@ export function DetailView({
     setDetectedKitsu(null);
     setDetectingAnime(false);
     failedKitsu.current = null;
+    addonMetaTriedRef.current = null;
     setStreamers([]);
     setBackdrops([]);
     setBackdropIdx(0);
@@ -596,20 +599,35 @@ export function DetailView({
 
   useEffect(() => {
     if (meta.type !== "series" && !addonNative) return;
-    const base = meta.addonOrigin?.base;
-    if (!base) return;
-    if (cinemetaFull?.videos && cinemetaFull.videos.length > 0) return;
+    const origin = meta.addonOrigin;
+    if (!origin) return;
+    if (addonMetaTriedRef.current === meta.id) return;
+    const held = cinemetaFull?.videos;
+    if (held && held.length > 0 && (!addonNative || hasEmbeddedStreams(held))) return;
+    addonMetaTriedRef.current = meta.id;
     let cancelled = false;
-    fetchAddonMeta(base, meta.type, meta.id)
-      .then((full) => {
-        if (cancelled || !full?.videos?.length) return;
+    void (async () => {
+      const attempt = async (base: string) => {
+        const full = await fetchAddonMeta(base, meta.type, meta.id).catch(() => null);
+        if (cancelled || !full?.videos?.length) return false;
         setCinemetaFull(full);
-      })
-      .catch(() => {});
+        return true;
+      };
+      const direct = origin.base ? origin.base.replace(/\/manifest\.json$/, "") : null;
+      if (direct && (await attempt(direct))) return;
+      if (cancelled) return;
+      const addons = await gatherCatalogAddons(authKey).catch(() => []);
+      if (cancelled) return;
+      for (const base of addonBasesForOrigin(addons, origin)) {
+        if (base === direct) continue;
+        if (await attempt(base)) return;
+        if (cancelled) return;
+      }
+    })();
     return () => {
       cancelled = true;
     };
-  }, [meta.id, meta.type, meta.addonOrigin?.base, addonNative, cinemetaFull?.videos?.length]);
+  }, [meta.id, meta.type, meta.addonOrigin, addonNative, authKey, cinemetaFull?.videos?.length]);
 
   useEffect(() => {
     if (meta.type !== "series") return;

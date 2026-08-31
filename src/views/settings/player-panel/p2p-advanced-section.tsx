@@ -16,6 +16,7 @@ const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window
 
 const RETENTIONS: Array<{ h: number; label: string }> = [
   { h: 0, label: "Off" },
+  { h: 12, label: "12 hours" },
   { h: 24, label: "1 day" },
   { h: 72, label: "3 days" },
   { h: 168, label: "1 week" },
@@ -25,6 +26,7 @@ const RETENTIONS: Array<{ h: number; label: string }> = [
 const CACHE_LIMITS: Array<{ gb: number; label: string }> = [
   { gb: 0, label: "Unlimited" },
   { gb: 10, label: "10 GB" },
+  { gb: 20, label: "20 GB" },
   { gb: 25, label: "25 GB" },
   { gb: 50, label: "50 GB" },
   { gb: 100, label: "100 GB" },

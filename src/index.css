@@ -469,6 +469,43 @@ main[data-kids="on"]::-webkit-scrollbar-thumb:hover {
   background: transparent;
 }
 
+@keyframes pad-press {
+  from { transform: scale(1, 1); }
+  50% { transform: scale(0.87, 0.83); }
+  75% { transform: scale(0.92, 0.9); }
+  to { transform: scale(0.9, 0.87); }
+}
+
+@keyframes pad-release {
+  from { transform: scale(0.9, 0.87); }
+  50% { transform: scale(1.05, 1.07); }
+  75% { transform: scale(0.98, 0.97); }
+  to { transform: scale(1, 1); }
+}
+
+@keyframes pad-sink {
+  from { transform: translateY(0); }
+  50% { transform: translateY(4.6px); }
+  75% { transform: translateY(3px); }
+  to { transform: translateY(3.6px); }
+}
+
+@keyframes pad-rise {
+  from { transform: translateY(3.6px); }
+  50% { transform: translateY(-1.6px); }
+  75% { transform: translateY(0.6px); }
+  to { transform: translateY(0); }
+}
+
+.pad-press { animation: pad-press 130ms ease-in-out forwards; }
+.pad-release { animation: pad-release 240ms ease-in-out forwards; }
+.pad-sink { animation: pad-sink 130ms ease-in-out forwards; }
+.pad-rise { animation: pad-rise 240ms ease-in-out forwards; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pad-press, .pad-release, .pad-sink, .pad-rise { animation: none; }
+}
+
 .harbor-seg-thumb {
   transition: left 300ms ease-in-out;
 }

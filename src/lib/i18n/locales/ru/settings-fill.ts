@@ -78,8 +78,6 @@ const settingsFill: Record<string, string> = {
   "Turns your phone into a remote for this computer: play, pause, seek, volume, and casting, all from the couch. Open the Wi-Fi address on your phone's browser.": "Превращает телефон в пульт для этого компьютера: воспроизведение, пауза, перемотка, громкость и трансляция прямо с дивана. Откройте адрес Wi-Fi в браузере телефона.",
   "Manga reader remote": "Пульт читалки манги",
   "Control the manga flipbook from your phone while reading on the big screen: turn pages, zoom, and switch modes. The reader also shows this link while you read.": "Управляйте листалкой манги с телефона, читая на большом экране: перелистывание, масштаб и смена режимов. Читалка также показывает эту ссылку во время чтения.",
-  "Manga remote (this computer)": "Пульт манги (этот компьютер)",
-  "Manga remote (Wi-Fi)": "Пульт манги (Wi-Fi)",
   "Flip the switch above and the phone remote and manga reader remote addresses appear here.": "Включите переключатель выше, и здесь появятся адреса пульта для телефона и пульта читалки манги.",
   "On a beta that's giving you trouble? Pick an earlier build below and run its installer over your current copy. Your library, settings, and downloads all stay put.": "Проблемы с бета-версией? Выберите более раннюю сборку ниже и запустите её установщик поверх текущей копии. Библиотека, настройки и загрузки останутся на месте.",
   "While beta updates are on, Harbor offers the newest build again on its next check. Turn beta updates off above to stay on an earlier one.": "Пока бета-обновления включены, при следующей проверке Harbor снова предложит новейшую сборку. Отключите бета-обновления выше, чтобы остаться на прежней.",

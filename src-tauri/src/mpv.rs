@@ -220,7 +220,10 @@ fn force_c_numeric_locale() {}
 #[tauri::command]
 pub async fn mpv_probe(_app: AppHandle) -> MpvProbe {
     force_c_numeric_locale();
-    match Mpv::with_initializer(|init| init.set_property("media-controls", "no")) {
+    match Mpv::with_initializer(|init| {
+        let _ = init.set_property("media-controls", "no");
+        Ok(())
+    }) {
         Ok(mpv) => {
             let version = mpv
                 .get_property::<String>("mpv-version")
@@ -293,8 +296,11 @@ pub async fn mpv_audio_devices(state: State<'_, MpvState>) -> Result<Vec<AudioDe
         return Ok(read_audio_devices(&mpv));
     }
     force_c_numeric_locale();
-    let mpv = Mpv::with_initializer(|init| init.set_property("media-controls", "no"))
-        .map_err(|e| format!("mpv init: {}", e))?;
+    let mpv = Mpv::with_initializer(|init| {
+        let _ = init.set_property("media-controls", "no");
+        Ok(())
+    })
+    .map_err(|e| format!("mpv init: {}", e))?;
     Ok(read_audio_devices(&mpv))
 }
 
@@ -1885,6 +1891,7 @@ pub async fn mpv_screenshot_data_url(state: State<'_, MpvState>) -> Result<Strin
     let path_str = temp.to_string_lossy().to_string();
     let _ = mpv.set_property("screenshot-format", "jpg");
     let _ = mpv.set_property("screenshot-jpeg-quality", "72");
+    let _ = mpv.set_property("screenshot-high-bit-depth", "no");
     // X-Ray samples frequently. Software screenshots avoid reinitializing the
     // live video renderer for every sample, which can retain large 4K surfaces.
     let _ = mpv.set_property("screenshot-sw", "yes");

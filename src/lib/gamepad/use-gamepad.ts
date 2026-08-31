@@ -101,8 +101,8 @@ export function useGamepad(): void {
   const playerRef = useRef(!!player);
   playerRef.current = !!player;
 
-  const backgroundRef = useRef(backgroundInput);
-  backgroundRef.current = backgroundInput;
+  const backgroundInputRef = useRef(backgroundInput);
+  backgroundInputRef.current = backgroundInput;
 
   useEffect(() => {
     if (!isTauri || !enabled) return;
@@ -225,7 +225,6 @@ export function useGamepad(): void {
     });
 
     const stopWebSource = startWebGamepadSource({
-      inputAllowed: () => document.hasFocus() || backgroundRef.current,
       onButton: (button, isPressed) => {
         setLiveButton(button, isPressed);
         onButton(button, isPressed);
@@ -238,6 +237,7 @@ export function useGamepad(): void {
         webPads = pads;
         publishMerged();
       },
+      inputAllowed: () => backgroundInputRef.current || document.hasFocus(),
     });
 
     return () => {

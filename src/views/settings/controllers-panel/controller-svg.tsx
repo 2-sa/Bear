@@ -3,6 +3,7 @@ import type { GpButton } from "@/lib/gamepad/protocol";
 import { liveAxes, subscribeLive, useLiveButtons } from "@/lib/gamepad/live";
 import { DUALSENSE_ART, XBOX_ART, type PadArt, type PadPart } from "./pad-art";
 import { detectLayout, type Layout } from "./controller-shape";
+import { useLatchedButtons } from "./use-latched-buttons";
 
 export { detectLayout };
 export type { Layout };
@@ -29,15 +30,15 @@ const BUTTON: Record<string, GpButton> = {
   bumperR: "rb",
 };
 
-const ARM_LONG = 76;
-const ARM_HALF = 30;
-const ARM_GAP = 10;
+const ARM_HUB = 18;
+const ARM_TIP = 82;
+const ARM_HALF = 26;
 
 const DPAD_ARMS: Array<{ b: GpButton; box: (cx: number, cy: number) => [number, number, number, number] }> = [
-  { b: "dup", box: (cx, cy) => [cx - ARM_HALF, cy - ARM_LONG, ARM_HALF * 2, ARM_LONG - ARM_GAP] },
-  { b: "ddown", box: (cx, cy) => [cx - ARM_HALF, cy + ARM_GAP, ARM_HALF * 2, ARM_LONG - ARM_GAP] },
-  { b: "dleft", box: (cx, cy) => [cx - ARM_LONG, cy - ARM_HALF, ARM_LONG - ARM_GAP, ARM_HALF * 2] },
-  { b: "dright", box: (cx, cy) => [cx + ARM_GAP, cy - ARM_HALF, ARM_LONG - ARM_GAP, ARM_HALF * 2] },
+  { b: "dup", box: (cx, cy) => [cx - ARM_HALF, cy - ARM_TIP, ARM_HALF * 2, ARM_TIP - ARM_HUB] },
+  { b: "ddown", box: (cx, cy) => [cx - ARM_HALF, cy + ARM_HUB, ARM_HALF * 2, ARM_TIP - ARM_HUB] },
+  { b: "dleft", box: (cx, cy) => [cx - ARM_TIP, cy - ARM_HALF, ARM_TIP - ARM_HUB, ARM_HALF * 2] },
+  { b: "dright", box: (cx, cy) => [cx + ARM_HUB, cy - ARM_HALF, ARM_TIP - ARM_HUB, ARM_HALF * 2] },
 ];
 
 function travelOf(art: PadArt, k: "stickL" | "stickR"): number {
@@ -82,6 +83,33 @@ function isCap(part: PadPart, art: PadArt): boolean {
   return part.r !== undefined && part.r < (art.stickWell[k] ?? Infinity);
 }
 
+const PUSHES = new Set([
+  "faceN",
+  "faceE",
+  "faceS",
+  "faceW",
+  "dpadU",
+  "dpadD",
+  "dpadL",
+  "dpadR",
+  "view",
+  "menu",
+  "create",
+  "options",
+  "guide",
+  "mic",
+]);
+
+const SINKS = new Set(["bumperL", "bumperR"]);
+
+const STICK_PRESS = 0.965;
+
+const LATCH_MS = 170;
+
+function pressAbout(cx: number, cy: number, scale: number): string {
+  return `translate(${cx} ${cy}) scale(${scale}) translate(${-cx} ${-cy})`;
+}
+
 type Slot = { part?: PadPart; caps?: PadPart[]; stick?: "stickL" | "stickR"; key: string };
 
 function buildSequence(art: PadArt): Slot[] {
@@ -105,10 +133,18 @@ function buildSequence(art: PadArt): Slot[] {
 
 export function ControllerSvg({ layout, compact }: { layout: Layout; compact?: boolean }) {
   const art = ART[layout];
-  const buttons = useLiveButtons();
+  const live = useLiveButtons();
+  const buttons = useLatchedButtons(live, LATCH_MS);
   const down = (b: GpButton | undefined) => !!(b && buttons[b]);
   const capL = useRef<SVGGElement>(null);
   const capR = useRef<SVGGElement>(null);
+  const applyRef = useRef<() => void>(() => {});
+  const sunk = useRef({ l: false, r: false });
+  sunk.current = { l: down("lstick"), r: down("rstick") };
+  const everPressed = useRef(new Set<string>());
+  for (const [part, btn] of Object.entries(BUTTON)) {
+    if (buttons[btn]) everPressed.current.add(part);
+  }
 
   const travelL = useMemo(() => travelOf(art, "stickL"), [art]);
   const travelR = useMemo(() => travelOf(art, "stickR"), [art]);
@@ -116,20 +152,34 @@ export function ControllerSvg({ layout, compact }: { layout: Layout; compact?: b
   useEffect(() => {
     const apply = () => {
       const ax = liveAxes();
-      const set = (g: SVGGElement | null, x: number, y: number, reach: number) => {
+      const set = (
+        g: SVGGElement | null,
+        x: number,
+        y: number,
+        reach: number,
+        centre: [number, number] | undefined,
+        pressed: boolean,
+      ) => {
         if (!g) return;
         const mag = Math.hypot(x, y);
         const k = mag > 1 ? 1 / mag : 1;
         const dx = x * k * reach;
         const dy = y * k * reach;
-        g.setAttribute("transform", `translate(${dx.toFixed(2)} ${dy.toFixed(2)})`);
+        let tf = `translate(${dx.toFixed(2)} ${dy.toFixed(2)})`;
+        if (pressed && centre) tf += ` ${pressAbout(centre[0], centre[1], STICK_PRESS)}`;
+        g.setAttribute("transform", tf);
       };
-      set(capL.current, ax.lx, ax.ly, travelL);
-      set(capR.current, ax.rx, ax.ry, travelR);
+      set(capL.current, ax.lx, ax.ly, travelL, art.centers.stickL, sunk.current.l);
+      set(capR.current, ax.rx, ax.ry, travelR, art.centers.stickR, sunk.current.r);
     };
+    applyRef.current = apply;
     apply();
     return subscribeLive(apply);
-  }, [layout, travelL, travelR]);
+  }, [layout, travelL, travelR, art]);
+
+  useEffect(() => {
+    applyRef.current();
+  }, [buttons]);
   const dpad = art.centers.dpad;
   const cross = [...art.parts].reverse().find((p) => p.k === "dpad")?.d;
   const [bx, by, bw, bh] = art.box;
@@ -210,12 +260,43 @@ export function ControllerSvg({ layout, compact }: { layout: Layout; compact?: b
           );
         }
         const part = slot.part!;
-        const on = down(part.k ? BUTTON[part.k] : undefined);
-        const tint = on && (part.k === "guide" ? part.f !== art.guideWindow : !!part.b);
+        const k = part.k;
+        const on = down(k ? BUTTON[k] : undefined);
+        const centre = k ? art.centers[k] : undefined;
+        const tintable = k === "guide" ? part.f !== art.guideWindow : !!part.b;
+        const tint = on && tintable;
+        const pushes = !!k && PUSHES.has(k) && !!centre;
+        const sinks = !!k && SINKS.has(k) && tintable;
+        const primed = !!k && everPressed.current.has(k);
+        const cls = pushes
+          ? on
+            ? "pad-press"
+            : primed
+              ? "pad-release"
+              : undefined
+          : sinks
+            ? on
+              ? "pad-sink"
+              : primed
+                ? "pad-rise"
+                : undefined
+            : undefined;
         return (
           <Fragment key={slot.key}>
-            <path d={part.d} fill={part.f} />
-            {tint && <path d={part.d} className="fill-accent" opacity={0.85} />}
+            <g
+              className={cls}
+              style={
+                pushes && centre
+                  ? { transformOrigin: `${centre[0]}px ${centre[1]}px` }
+                  : undefined
+              }
+            >
+              <path
+                d={part.d}
+                fill={tint ? "var(--color-accent)" : part.f}
+                style={tintable ? { transition: "fill 110ms ease-in-out" } : undefined}
+              />
+            </g>
             {slot.key === "p0" && layout === "ps" && (
               <>
                 {psBumper("l", down("lb"))}

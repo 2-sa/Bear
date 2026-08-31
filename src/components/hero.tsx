@@ -346,7 +346,7 @@ export const Hero = memo(function Hero({
         <div className="max-w-2xl">
           {rank && (
             <div className="group/rank relative mb-5 inline-flex self-start">
-              <div className="inline-flex cursor-help items-center gap-1.5 rounded-md bg-canvas/85 px-2.5 py-1 text-[12px] font-semibold text-ink">
+              <div className="inline-flex cursor-help items-center gap-1.5 rounded-md bg-canvas px-2.5 py-1 text-[12px] font-semibold text-ink ring-1 ring-inset ring-edge-soft">
                 <TrendingUp size={12} className="text-accent" />
                 <span>
                   {t("#{position} in {label} Today", {
@@ -356,22 +356,22 @@ export const Hero = memo(function Hero({
                 </span>
               </div>
               {rank.sources && rank.sources.length > 0 && (
-                <div className="pointer-events-none absolute left-0 top-full z-30 mt-2 w-max min-w-[210px] translate-y-1 rounded-xl border border-edge bg-elevated/95 p-3 opacity-0 shadow-[0_20px_50px_-16px_rgba(0,0,0,0.75)] backdrop-blur-xl transition-all duration-150 group-hover/rank:translate-y-0 group-hover/rank:opacity-100">
-                  <div className="mb-2 text-[10.5px] font-bold uppercase tracking-[0.16em] text-ink-subtle">
+                <div className="pointer-events-none absolute left-0 top-full z-30 mt-2 w-max min-w-[232px] translate-y-1 rounded-md bg-elevated p-2.5 opacity-0 shadow-[0_10px_30px_-12px_rgba(0,0,0,0.6)] ring-1 ring-edge transition-[opacity,transform] duration-150 ease-out group-hover/rank:translate-y-0 group-hover/rank:opacity-100 motion-reduce:transition-none">
+                  <div className="px-1 pb-2 text-[10.5px] font-semibold uppercase tracking-[0.18em] text-ink-subtle">
                     {t("Consensus ranking")}
                   </div>
-                  <div className="flex flex-col gap-1.5">
+                  <div className="flex flex-col gap-1">
                     {rank.sources.map((s) => (
                       <div
                         key={s.label}
-                        className="flex items-center justify-between gap-8 text-[12.5px]"
+                        className="flex items-center justify-between gap-6 px-1 py-1.5"
                       >
-                        <span className="inline-flex items-center gap-2 text-ink-muted">
+                        <span className="inline-flex items-center gap-2 text-[12.5px] font-medium text-ink">
                           {SOURCE_ICON[s.label] && (
                             <img
                               src={SOURCE_ICON[s.label]}
                               alt=""
-                              className={`h-5 w-5 shrink-0 ${
+                              className={`h-[18px] w-[18px] shrink-0 ${
                                 ROUNDED_ICON.has(s.label)
                                   ? "rounded-full object-cover"
                                   : "object-contain"
@@ -380,11 +380,13 @@ export const Hero = memo(function Hero({
                           )}
                           {s.label}
                         </span>
-                        <span className="font-mono font-bold tabular-nums text-ink">#{s.rank}</span>
+                        <span className="text-[12px] font-semibold tabular-nums text-ink-muted">
+                          #{s.rank}
+                        </span>
                       </div>
                     ))}
                   </div>
-                  <div className="mt-2.5 border-t border-edge-soft pt-2 text-[11px] leading-snug text-ink-subtle">
+                  <div className="px-1 pt-2.5 text-[11px] leading-snug text-ink-subtle">
                     {t("Blended across TMDB, Trakt, Simkl and Cinemeta.")}
                   </div>
                 </div>

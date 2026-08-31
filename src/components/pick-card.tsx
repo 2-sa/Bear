@@ -20,6 +20,7 @@ import { isTop10, useTop10Version } from "@/lib/top10-set";
 import { meta as fetchMeta, narrowMediaType, type Meta } from "@/lib/cinemeta";
 import { useContextMenu } from "@/lib/context-menu";
 import { useT } from "@/lib/i18n";
+import { preferredMeta } from "@/lib/meta-resource";
 import {
   hoverPreviewBlur,
   hoverPreviewEnter,
@@ -393,6 +394,31 @@ const PosterCard = memo(function PosterCard({
     };
   }, [posterSrc, hydratedPoster, meta.type, meta.id, posterPending]);
 
+  const [preferredTitle, setPreferredTitle] = useState<string | null>(null);
+
+  useEffect(() => {
+    setPreferredTitle(null);
+    if (!settings.preferCustomMetaAddon || isAnimeCardId) return;
+    if (meta.type !== "movie" && meta.type !== "series") return;
+    const el = ref.current;
+    if (!el) return;
+    let cancelled = false;
+    let off: (() => void) | null = null;
+    off = observe(el, (visible) => {
+      if (!visible) return;
+      off?.();
+      off = null;
+      void preferredMeta(narrowMediaType(meta.type), meta.id).then((full) => {
+        if (cancelled || !full?.name) return;
+        setPreferredTitle(full.name);
+      });
+    });
+    return () => {
+      cancelled = true;
+      off?.();
+    };
+  }, [meta.id, meta.type, isAnimeCardId, settings.preferCustomMetaAddon]);
+
   const [translatedTitle, setTranslatedTitle] = useState<string | null>(null);
 
   useEffect(() => {
@@ -728,7 +754,7 @@ const PosterCard = memo(function PosterCard({
           )}
           {inWatchlist && settings.watchlistBadge !== "off" && (
             <span
-              className={`pointer-events-none absolute flex h-6 w-6 items-center justify-center rounded-full bg-canvas/85 text-ink ring-1 ring-edge-soft/70 backdrop-blur-sm ${watchlistPos}`}
+              className={`pointer-events-none absolute flex h-6 w-6 items-center justify-center rounded-full bg-canvas/95 text-ink ring-1 ring-edge-soft/70 ${watchlistPos}`}
               title={t("In your watchlist")}
               aria-label={t("In watchlist")}
             >
@@ -737,7 +763,7 @@ const PosterCard = memo(function PosterCard({
           )}
           {settings.showWatchedBadge && watched && (
             <span
-              className={`pointer-events-none absolute flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/90 text-white ring-1 ring-emerald-300/40 backdrop-blur-sm ${watchedPos}`}
+              className={`pointer-events-none absolute flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-white ring-1 ring-emerald-300/40 ${watchedPos}`}
               title={t("Watched")}
               aria-label={t("Watched")}
             >
@@ -770,7 +796,7 @@ const PosterCard = memo(function PosterCard({
               : "line-clamp-2 min-h-9 text-[13px] font-medium leading-snug text-ink"
           }
         >
-          {translatedTitle || meta.name}
+          {preferredTitle || translatedTitle || meta.name}
         </p>
       )}
     </button>
@@ -1114,7 +1140,7 @@ function AnimeAwardBadge({
   const topClass = stackTop(above, ribbonShift);
   return (
     <span
-      className={`pointer-events-none absolute start-2 inline-flex max-w-[calc(100%-1rem)] items-center gap-1 rounded-md bg-canvas/85 px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.14em] text-ink backdrop-blur-md ring-1 ring-edge-soft/60 ${topClass}`}
+      className={`pointer-events-none absolute start-2 inline-flex max-w-[calc(100%-1rem)] items-center gap-1 rounded-md bg-canvas/95 px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.14em] text-ink ring-1 ring-edge-soft/60 ${topClass}`}
       title={`${src.name} · ${win.categoryName} (${win.year})`}
     >
       <img

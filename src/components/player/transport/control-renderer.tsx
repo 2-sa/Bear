@@ -247,13 +247,14 @@ export function renderControl(id: PlayerControlId, ctx: ControlContext): ReactNo
       );
     }
     case "local-time":
-      return ctx.fullscreen ? (
+      return (
         <FullscreenClock
           durationSec={ctx.snap.durationSec}
           playbackRate={ctx.snap.rate}
           active={ctx.active}
+          fullscreen={ctx.fullscreen}
         />
-      ) : null;
+      );
     case "time-start": {
       return (
         <TimeStart

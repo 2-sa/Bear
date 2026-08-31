@@ -1,6 +1,7 @@
 import { Pencil, RotateCcw, SlidersHorizontal } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { AnimeGenrePicker } from "@/components/anime-genre-picker";
+import { preloadAnimeGenreArt } from "@/lib/anime-genre-art-map";
 import { AnimeHero, AnimeHeroSkeleton } from "@/components/anime-hero";
 import { BackToTop } from "@/components/back-to-top";
 import { ContinueCard } from "@/components/continue-card";
@@ -544,6 +545,11 @@ export function AnimeView({ active = true }: { active?: boolean }) {
     heroMetas,
     isAnimeWatched,
   ]);
+  useEffect(() => {
+    if (!active) return;
+    const timer = window.setTimeout(preloadAnimeGenreArt, 1500);
+    return () => window.clearTimeout(timer);
+  }, [active]);
   const [staticPoolReady, setStaticPoolReady] = useState(0);
   useEffect(() => {
     if (!active) return;

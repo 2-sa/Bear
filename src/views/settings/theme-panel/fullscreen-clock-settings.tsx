@@ -90,6 +90,18 @@ export function FullscreenClockSettings() {
           />
 
           <ToggleRow
+            label={t("Show in windowed mode")}
+            sub={t("Keep the clock on screen when the player is not fullscreen.")}
+            value={settings.fullscreenClockWindowed}
+            onChange={(fullscreenClockWindowed) => update({ fullscreenClockWindowed })}
+            leading={
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-raised text-ink-muted">
+                <Clock3 size={16} strokeWidth={2.2} />
+              </span>
+            }
+          />
+
+          <ToggleRow
             label={t("Show estimated finish time")}
             sub={t("Display the local time when the current video is expected to end.")}
             value={settings.fullscreenClockShowEndTime}

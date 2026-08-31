@@ -90,8 +90,6 @@ const settingsFill: Record<string, string> = {
   "Turns your phone into a remote for this computer: play, pause, seek, volume, and casting, all from the couch. Open the Wi-Fi address on your phone's browser.": "يحوّل هاتفك إلى جهاز تحكم عن بُعد لهذا الحاسوب: التشغيل والإيقاف المؤقت والتنقل ومستوى الصوت والبث، كل ذلك من الأريكة. افتح عنوان Wi-Fi في متصفّح هاتفك.",
   "Manga reader remote": "جهاز تحكم في قارئ المانغا",
   "Control the manga flipbook from your phone while reading on the big screen: turn pages, zoom, and switch modes. The reader also shows this link while you read.": "تحكّم في دفتر تقليب المانجا من هاتفك أثناء القراءة على الشاشة الكبيرة: قلّب الصفحات، وكبّر، وبدّل الأوضاع. يعرض القارئ هذا الرابط أيضًا أثناء قراءتك.",
-  "Manga remote (this computer)": "جهاز التحكم بالمانجا (هذا الحاسوب)",
-  "Manga remote (Wi-Fi)": "جهاز التحكم بالمانجا (Wi-Fi)",
   "Flip the switch above and the phone remote and manga reader remote addresses appear here.": "فعّل المفتاح أعلاه وستظهر هنا عناوين جهاز التحكم عبر الهاتف وجهاز التحكم بقارئ المانجا.",
   "On a beta that's giving you trouble? Pick an earlier build below and run its installer over your current copy. Your library, settings, and downloads all stay put.": "هل تواجه مشكلة في إصدار تجريبي؟ اختر إصدارًا أقدم أدناه وشغّل مثبّته فوق نسختك الحالية. تبقى مكتبتك وإعداداتك وتنزيلاتك جميعها كما هي.",
   "While beta updates are on, Bear offers the newest build again on its next check. Turn beta updates off above to stay on an earlier one.": "أثناء تفعيل التحديثات التجريبية، يعرض Bear أحدث إصدار مجددًا عند فحصه التالي. عطّل التحديثات التجريبية أعلاه للبقاء على إصدار أقدم.",

@@ -29,9 +29,11 @@ export function AutoDownloadRow({ series }: { series: AutoDlSeries }) {
     series.grabbedCount - (series.stop.from ?? series.grabbedCount) >= series.stop.value;
   const statusText = grabbed
     ? `${series.grabbedCount} grabbed`
-    : series.lastCheckedAt == null
-      ? "first check pending"
-      : "up to date";
+    : series.lastError
+      ? series.lastError
+      : series.lastCheckedAt == null
+        ? "first check pending"
+        : "up to date";
   const air = limitReached ? null : airText(series.nextAirDate, now);
   const tailText = limitReached ? "limit reached" : nextCheckText(nextRunAt, now);
 
@@ -50,6 +52,9 @@ export function AutoDownloadRow({ series }: { series: AutoDlSeries }) {
               </span>
               {grabbed && series.lastGrabbed && (
                 <span className="text-ink-muted">· last {series.lastGrabbed}</span>
+              )}
+              {grabbed && series.lastError && (
+                <span className="text-ink-muted">· {series.lastError}</span>
               )}
               {air && <span className="text-ink-muted">· {air}</span>}
               {checking ? (

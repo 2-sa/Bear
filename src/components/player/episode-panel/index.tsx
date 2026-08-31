@@ -29,6 +29,8 @@ import { SeasonPicker } from "./season-picker";
 import { StreamsView } from "./streams-view";
 import { useSeasonBrowser } from "./use-season-browser";
 
+const RESOLVE_TIMEOUT_MS = 150_000;
+
 function sameEpisode(a: PlayEpisode, b: PlayEpisode): boolean {
   if (a.kitsuStreamId && b.kitsuStreamId) return a.kitsuStreamId === b.kitsuStreamId;
   return (
@@ -81,6 +83,16 @@ export function EpisodePanel({
   const [expandedEp, setExpandedEp] = useState<string | null>(null);
   const [pickingFor, setPickingFor] = useState<PlayEpisode | null>(null);
   const [resolvingFor, setResolvingFor] = useState<PlayEpisode | null>(null);
+  const resolveAcRef = useRef<AbortController | null>(null);
+  useEffect(() => {
+    if (!resolvingFor) return;
+    const t = window.setTimeout(() => {
+      resolveAcRef.current?.abort();
+      setResolvingFor(null);
+    }, RESOLVE_TIMEOUT_MS);
+    return () => window.clearTimeout(t);
+  }, [resolvingFor]);
+  useEffect(() => () => resolveAcRef.current?.abort(), []);
   const [showEpsOpen, setShowEpsOpen] = useState(false);
   const hasQueue = queue.length > 0;
   const isSeries = meta.type === "series";
@@ -90,6 +102,7 @@ export function EpisodePanel({
     if (!open) {
       setExpandedEp(null);
       setPickingFor(null);
+      resolveAcRef.current?.abort();
       setResolvingFor(null);
     }
   }, [open]);
@@ -128,17 +141,14 @@ export function EpisodePanel({
     let proxySessionId: string | undefined;
     let proxyTransferred = false;
     markPlaybackTrace(playbackTraceId, "resolve-start");
+    resolveAcRef.current?.abort();
+    const ac = new AbortController();
+    resolveAcRef.current = ac;
     setResolvingFor(ep);
     try {
       const hint = { season: ep.season ?? null, episode: ep.episode ?? null };
-      const r = await resolveStream(
-        stream,
-        debrids,
-        new AbortController().signal,
-        true,
-        false,
-        hint,
-      );
+      const r = await resolveStream(stream, debrids, ac.signal, true, false, hint);
+      if (ac.signal.aborted) return;
       if (!r.ok) {
         setResolvingFor(null);
         return;
@@ -222,6 +232,15 @@ export function EpisodePanel({
               }`,
             })}
           </p>
+          <button
+            onClick={() => {
+              resolveAcRef.current?.abort();
+              setResolvingFor(null);
+            }}
+            className="mt-1 rounded-lg border border-white/20 bg-white/10 px-4 py-2 text-[13px] font-semibold text-white transition-colors duration-150 ease-in-out hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/60"
+          >
+            {t("Cancel")}
+          </button>
         </div>
       )}
       <button

@@ -57,11 +57,14 @@ export async function searchSubtitles(
       name: "wyzie",
       p: withSubtitleTimeout(searchWyzie(q), tmo, []),
     });
-  if (addonsOn && opts.addons && opts.addons.length > 0)
-    tasks.push({
-      name: "addons",
-      p: searchAddons(opts.addons, q, tmo),
-    });
+  if (addonsOn && opts.addons && opts.addons.length > 0) {
+    for (const addon of opts.addons) {
+      tasks.push({
+        name: `addon:${addon.manifest.name}`,
+        p: searchAddons([addon], q, tmo),
+      });
+    }
+  }
   if (opts.extra) {
     const extraTimeout = opts.extra.timeoutMs ?? tmo;
     for (const source of pickSources(q, opts.extra)) {

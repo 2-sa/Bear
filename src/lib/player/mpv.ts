@@ -215,7 +215,7 @@ export function createMpvBridge(mpvOptions?: MpvOptions): PlayerBridge {
   let hdrToSdr = mpvOptions?.hdrToSdr ?? true;
   const applyAudioFilters = () => {
     const parts: string[] = [];
-    if (snap.audioNormalize) parts.push("dynaudnorm=f=500:g=31:p=0.9:m=4");
+    if (snap.audioNormalize) parts.push("dynaudnorm=f=500:g=31:p=0.9:m=4:b=1");
     if (profileAf) parts.push(profileAf);
     if (parts.length > 0) parts.push("lavfi=[alimiter=limit=0.97]");
     invoke("mpv_command", { cmd: ["af", "set", parts.join(",")] }).catch(() => {});

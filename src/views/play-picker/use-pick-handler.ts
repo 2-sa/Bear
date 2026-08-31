@@ -9,7 +9,12 @@ import { markStreamDead, recordStubEvent } from "@/lib/dead-streams";
 const PREFLIGHT_STUB_TTL_MS = 15 * 60 * 1000;
 const SAME_SOURCE_MAX_RETRIES = 4;
 const SAME_SOURCE_RETRY_DELAY_MS = 1500;
-const RETRYABLE_ENGINE_FAILURES = new Set(["engine-no-peers", "engine-not-ready"]);
+const RETRYABLE_ENGINE_FAILURES = new Set([
+  "engine-no-peers",
+  "engine-not-ready",
+  "remote-server-unreachable",
+  "remote-server-unreachable-strict",
+]);
 import { engineP2pEligible } from "@/lib/torrent/stremio-stream";
 import { hasUncachedMarker } from "@/lib/streams/cached";
 import { preflightCheck } from "@/lib/streams/preflight";
@@ -335,6 +340,7 @@ export function usePickHandler({
           title: meta.name,
           parsedTitle: stream.parsedTitle ?? null,
           resolution: stream.resolution ?? null,
+          releaseGroup: stream.releaseGroupNormalized ?? null,
           source: stream.source ?? null,
           size: stream.size ?? null,
           bingeGroup: stream.behaviorHints?.bingeGroup ?? null,

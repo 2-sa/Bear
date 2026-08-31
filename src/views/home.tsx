@@ -49,7 +49,7 @@ import {
   episodeFromVideoId,
   isAnimeCwItem,
   isCwMember,
-  library,
+  libraryIfChanged,
   type LibraryItem,
 } from "@/lib/stremio";
 import { useTrakt } from "@/lib/trakt/provider";
@@ -173,23 +173,28 @@ export function Home({ active = true, onReady }: { active?: boolean; onReady?: (
     };
   }, []);
 
+  const buildRetryRef = useRef(0);
   useEffect(() => {
     let cancelled = false;
+    let retryTimer: number | null = null;
     (async () => {
       const isClassic = settings.homeMode === "classic";
 
-      let built: { rows: HomeRow[]; hero: Meta[] } = { rows: [], hero: [] };
+      let built: { rows: HomeRow[]; hero: Meta[]; failed?: number } = { rows: [], hero: [] };
       if (!isClassic) {
         built = settings.tmdbKey
-          ? await buildTmdbRows(settings).catch(() => ({ rows: [] as HomeRow[], hero: [] as Meta[] }))
-          : await buildCinemetaRows().catch(() => ({ rows: [] as HomeRow[], hero: [] as Meta[] }));
+          ? await buildTmdbRows(settings).catch(() => ({ rows: [] as HomeRow[], hero: [] as Meta[], failed: 1 }))
+          : await buildCinemetaRows().catch(() => ({ rows: [] as HomeRow[], hero: [] as Meta[], failed: 1 }));
         if (built.rows.length === 0) {
-          built = await buildCinemetaRows().catch(() => ({ rows: [] as HomeRow[], hero: [] as Meta[] }));
+          built = await buildCinemetaRows().catch(() => ({ rows: [] as HomeRow[], hero: [] as Meta[], failed: 1 }));
         }
       }
       if (cancelled) return;
-      setRows(mergeRows(built.rows, []));
-      setHeroPool(built.hero);
+      let degraded = (built.failed ?? 0) > 0;
+      const commitRows = (next: HomeRow[]) =>
+        setRows((prev) => (degraded && next.length === 0 && prev.length > 0 ? prev : next));
+      commitRows(mergeRows(built.rows, []));
+      if (!degraded || built.hero.length > 0) setHeroPool(built.hero);
       setHeroReady(true);
       if (settings.heroFeed && settings.heroFeed !== "classic") {
         const feed = await fetchHeroFeed(settings.heroFeed).catch(() => [] as Meta[]);
@@ -197,16 +202,26 @@ export function Home({ active = true, onReady }: { active?: boolean; onReady?: (
       }
 
       const dedupRows = isClassic ? false : !settings.homeShowAllAddonRows;
-      const addons = await loadAddonRows(authKey, { dedup: dedupRows }).catch(
-        () => [] as AddonRow[],
-      );
+      const addons = await loadAddonRows(authKey, { dedup: dedupRows }).catch(() => {
+        degraded = true;
+        return [] as AddonRow[];
+      });
       if (cancelled) return;
       const filtered = isClassic
         ? addons
         : addons.filter((a) => !isAnimeRow(a) && !isStreamingServiceRow(a.name));
+      const nextRows = mergeRows(built.rows, filtered, { dedup: dedupRows });
       startTransition(() => {
-        setRows(mergeRows(built.rows, filtered, { dedup: dedupRows }));
+        commitRows(nextRows);
       });
+      const halfMissing = nextRows.length === 0 || (!isClassic && built.rows.length === 0);
+      if (!degraded) {
+        buildRetryRef.current = 0;
+      } else if (halfMissing && buildRetryRef.current < 3) {
+        const attempt = buildRetryRef.current;
+        buildRetryRef.current = attempt + 1;
+        retryTimer = window.setTimeout(() => setBuildTick((n) => n + 1), 1500 * 2 ** attempt);
+      }
 
       if (authKey) {
         const installed = await userAddons(authKey).catch(() => []);
@@ -216,18 +231,26 @@ export function Home({ active = true, onReady }: { active?: boolean; onReady?: (
     })().catch(console.error);
     return () => {
       cancelled = true;
+      if (retryTimer != null) window.clearTimeout(retryTimer);
     };
   }, [authKey, settings.tmdbKey, settings.tmdbLanguage, settings.region, settings.homeMode, settings.homeShowAllAddonRows, settings.heroFeed, addonsTick, buildTick]);
 
   useEffect(() => {
     if (!active) return;
+    const rebuildIfEmpty = () => {
+      if (rowsRef.current.length > 0) return;
+      buildRetryRef.current = 0;
+      setBuildTick((n) => n + 1);
+    };
     const onVisible = () => {
-      if (document.visibilityState === "visible" && rowsRef.current.length === 0) {
-        setBuildTick((n) => n + 1);
-      }
+      if (document.visibilityState === "visible") rebuildIfEmpty();
     };
     document.addEventListener("visibilitychange", onVisible);
-    return () => document.removeEventListener("visibilitychange", onVisible);
+    window.addEventListener("online", rebuildIfEmpty);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("online", rebuildIfEmpty);
+    };
   }, [active]);
 
   useEffect(() => {
@@ -409,7 +432,7 @@ export function Home({ active = true, onReady }: { active?: boolean; onReady?: (
     }
     let cancelled = false;
     const load = () => {
-      library(authKey)
+      libraryIfChanged(authKey)
         .then((libItems) => {
           if (cancelled) return;
           const view = libItems.some(isCorruptAnimeEntry)

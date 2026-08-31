@@ -1,3 +1,5 @@
+import type { Addon } from "@/lib/addons";
+import { resolveBestDownload } from "@/lib/auto-download/resolve";
 import type { Meta } from "@/lib/cinemeta";
 import type { PlayEpisode } from "@/lib/view";
 import { gatherContext } from "@/lib/auto-download/context";
@@ -59,4 +61,64 @@ export async function downloadSeason(meta: Meta, episodes: PlayEpisode[]): Promi
     ),
   );
   return queued;
+}
+
+export async function downloadSeasonPerEpisode({
+  meta,
+  episodes,
+  addons,
+  debrids,
+  allowP2p,
+  signal,
+  onProgress,
+}: {
+  meta: Meta;
+  episodes: PlayEpisode[];
+  addons: Addon[];
+  debrids: DebridStore[];
+  allowP2p: boolean;
+  signal: AbortSignal;
+  onProgress?: (done: number, total: number) => void;
+}): Promise<SeasonDownloadResult> {
+  const targets = pendingSeasonEpisodes(meta.id, episodes);
+  const result: SeasonDownloadResult = { total: targets.length, queued: 0, failed: 0 };
+  if (targets.length === 0 || signal.aborted) return result;
+
+  let settled = 0;
+  const limit = limiter(MAX_CONCURRENT);
+  await Promise.all(
+    targets.map((ep) =>
+      limit(async () => {
+        if (signal.aborted) return;
+        const hit = await resolveBestDownload(meta, ep, {
+          allowP2p,
+          maxHeight: null,
+          imdbId: null,
+          debrids,
+          addons,
+          signal,
+        }).catch(() => null);
+        if (signal.aborted) return;
+        if (!hit) {
+          result.failed += 1;
+        } else {
+          try {
+            await enqueueDownload({
+              meta,
+              episode: ep,
+              streamLabel: hit.label,
+              url: hit.url,
+              headers: hit.headers ?? null,
+            });
+            result.queued += 1;
+          } catch {
+            result.failed += 1;
+          }
+        }
+        settled += 1;
+        onProgress?.(settled, targets.length);
+      }),
+    ),
+  );
+  return result;
 }

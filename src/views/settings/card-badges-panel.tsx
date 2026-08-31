@@ -230,7 +230,7 @@ function Choice({
   );
 }
 
-function WatchlistControl({
+export function WatchlistControl({
   value,
   onChange,
 }: {

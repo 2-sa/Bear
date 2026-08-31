@@ -19,12 +19,12 @@ import {
 import { loadFirstWorkingSubtitle } from "./autoload";
 import type { SubResult } from "./types";
 
-const EXTRA_TRACKS_PER_LANGUAGE = 35;
-const DEEP_EXTRA_TRACKS = 60;
+const EXTRA_TRACKS_PER_LANGUAGE = 6;
+const DEEP_EXTRA_TRACKS = 12;
 const DEEP_TIMEOUT_MS = 20_000;
 const BUILT_IN_TIMEOUT_MS = 12_000;
 const BUILT_IN_EAGER_LIMIT_PER_LANGUAGE = 1;
-const PROGRESSIVE_TRACKS_PER_LANGUAGE = 35;
+const PROGRESSIVE_TRACKS_PER_LANGUAGE = 6;
 const SUBTITLE_ADD_CONCURRENCY = 4;
 const ON_DEMAND_SOURCES = new Set<SubResult["source"]>([
   "podnapisi",

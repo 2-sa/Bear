@@ -416,8 +416,6 @@ const settings: Record<string, string> = {
   "Paste an image URL (png, webp, svg)": "الصق رابط صورة (png، webp، svg)",
   "Pattern (e.g. \\\\bremux\\\\b)": "النمط (مثل \\\\bremux\\\\b)",
   "Peers, speed and progress while a torrent streams. Sits clear of the exit button, top left.": "الأقران والسرعة والتقدّم أثناء بث التورنت. يظهر بعيدًا عن زر الخروج، أعلى اليسار.",
-  "Phone remote (Wi-Fi)": "جهاز تحكم عبر الهاتف (Wi-Fi)",
-  "Phone remote (this computer)": "جهاز تحكم عبر الهاتف (هذا الحاسوب)",
   "Pick OLED for perfect-black panels to unlock shadow detail in tonemapped HDR.": "اختر OLED لشاشات الأسود المثالي لإظهار تفاصيل الظلال في HDR المُحوَّل درجاته اللونية.",
   "Pick a display and body pairing, or upload your own font to use across Bear.": "اختر اقترانًا بين خط العناوين وخط المتن، أو ارفع خطك الخاص لاستخدامه عبر Bear.",
   "Pick a look. Every color and surface updates instantly.": "اختر مظهرًا. يتحدّث كل لون وكل سطح فورًا.",

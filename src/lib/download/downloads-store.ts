@@ -210,6 +210,24 @@ export async function completedTorrentDownloadFor(
   return (await exists(match.path).catch(() => false)) ? match : null;
 }
 
+export async function completedDownloadFor(
+  metaId: string,
+  season: number | null,
+  episode: number | null,
+): Promise<DownloadItem | null> {
+  const candidates = [...items.values()]
+    .filter((d) => {
+      if (d.status !== "done" || d.metaId !== metaId) return false;
+      if (season == null && episode == null) return d.season == null && d.episode == null;
+      return d.season === season && d.episode === episode;
+    })
+    .sort((a, b) => b.startedAt - a.startedAt);
+  for (const item of candidates) {
+    if (await exists(item.path).catch(() => false)) return item;
+  }
+  return null;
+}
+
 export function activeDownloadFor(
   metaId: string,
   season?: number | null,
