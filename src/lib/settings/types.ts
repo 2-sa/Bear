@@ -4,6 +4,7 @@ import type { SourceRow } from "@/lib/custom-sources";
 import type { CustomStreamFilter } from "@/lib/streams/custom-filters";
 import type { SyncIndicatorPosition } from "@/lib/sync-toast-position";
 import type { FullscreenClockFormat, FullscreenClockStyle } from "@/lib/local-time";
+import type { SubtitleOffsetPosition, SubtitleOffsetSize } from "@/lib/player/subtitle-offset";
 
 export type StreamingService =
   | "netflix"
@@ -306,6 +307,9 @@ export type Settings = {
     subdl?: boolean;
     subsource?: boolean;
   };
+  subOffsetIndicatorEnabled: boolean;
+  subOffsetIndicatorPosition: SubtitleOffsetPosition;
+  subOffsetIndicatorSize: SubtitleOffsetSize;
   subShowInPip: boolean;
   secondarySubLang: string;
   subSecondaryPlacement: "top" | "bottom";
