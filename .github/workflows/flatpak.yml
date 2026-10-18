@@ -48,5 +48,5 @@ jobs:
         with:
           name: Bear-flatpak-x86_64
           path: Bear.flatpak
-          retention-days: 14
+          retention-days: 1
           if-no-files-found: error
